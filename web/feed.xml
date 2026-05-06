@@ -6,13 +6,22 @@
     <description>A comprehensive guide to Draft's Context-Driven Development methodology. 24 chapters covering specs, plans, TDD enforcement, 3-stage code review, 14-dimension bug hunting, and ACID audits for AI coding agents.</description>
     <language>en-us</language>
     <managingEditor>mayur@getdraft.dev (Mayur Pise)</managingEditor>
-    <lastBuildDate>Sun, 03 May 2026 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sun, 10 May 2026 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://getdraft.dev/feed.xml" rel="self" type="application/rss+xml"/>
     <image>
       <url>https://getdraft.dev/social-preview.png</url>
       <title>Draft -- Context-Driven Development</title>
       <link>https://getdraft.dev</link>
     </image>
+
+    <item>
+      <title>What Will This Change Break? A Real Blast-Radius Walkthrough</title>
+      <link>https://getdraft.dev/blog/blast-radius-walkthrough/</link>
+      <description>Before /draft:implement writes a line, Draft's graph engine answers a question your AI assistant cannot: what actually breaks when you change this file? A real impact-mode run on a hotspot, the per-track impact memory it leaves behind, and the overlap warning that fires two weeks later. 47 downstream files, 12 tests, 3 config templates -- and a refactor plan reshaped before any code lands.</description>
+      <pubDate>Sun, 10 May 2026 00:00:00 +0000</pubDate>
+      <guid>https://getdraft.dev/blog/blast-radius-walkthrough/</guid>
+      <category>Blog</category>
+    </item>
 
     <item>
       <title>Decomposing a Payment Gateway Integration: A Real /draft:decompose Walkthrough</title>
