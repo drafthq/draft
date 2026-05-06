@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What Will This Change Break? A Real Blast-Radius Walkthrough — Draft Blog</title>
+    <meta name="description" content="Before /draft:implement writes a line, Draft's graph engine answers a question your AI assistant cannot: what actually breaks when you change this file? A real impact-mode run on a hotspot, the per-track impact memory it leaves behind, and the overlap warning that fires two weeks later.">
+    <meta name="author" content="Mayur Pise">
+    <meta name="theme-color" content="#0a0d12">
+    <meta name="keywords" content="blast radius analysis, code change impact, dependency graph, fanIn fanOut, draft graph engine, knowledge graph for code, ai code refactoring, claude code plugin, hotspot analysis">
+    <meta name="robots" content="index, follow">
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+    <meta property="og:title" content="What Will This Change Break? A Real Blast-Radius Walkthrough">
+    <meta property="og:description" content="A real impact-mode run on a hotspot before a single line gets written. 47 downstream files, 12 tests, 3 config templates — and a refactor plan reshaped before /draft:implement starts.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://getdraft.dev/blog/blast-radius-walkthrough/">
+    <meta property="og:image" content="https://getdraft.dev/social-preview.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="What Will This Change Break? A Real Blast-Radius Walkthrough">
+    <meta name="twitter:description" content="From 'small change' to 47 downstream files, 12 tests, 3 config templates — and the refactor plan reshaped before any code lands.">
+    <meta name="twitter:image" content="https://getdraft.dev/social-preview.png">
+    <link rel="canonical" href="https://getdraft.dev/blog/blast-radius-walkthrough/">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": "What Will This Change Break? A Real Blast-Radius Walkthrough",
+      "description": "Before /draft:implement writes a line, Draft's graph engine answers a question your AI assistant cannot: what actually breaks when you change this file? A real impact-mode run on a hotspot, the per-track impact memory it leaves behind, and the overlap warning that fires two weeks later.",
+      "datePublished": "2026-05-10",
+      "dateModified": "2026-05-10",
+      "url": "https://getdraft.dev/blog/blast-radius-walkthrough/",
+      "author": { "@type": "Person", "name": "Mayur Pise", "url": "https://github.com/mayurpise" },
+      "publisher": { "@type": "Organization", "name": "Draft", "url": "https://getdraft.dev" },
+      "image": "https://getdraft.dev/social-preview.png",
+      "inLanguage": "en"
+    }
+    </script>
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-F6X062B4B7"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-F6X062B4B7');
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style"
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap"
+        onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    </noscript>
+
+    <link rel="stylesheet" href="../../css/base.css">
+    <link rel="stylesheet" href="../../css/layout.css">
+    <link rel="stylesheet" href="../../css/components.css">
+    <link rel="stylesheet" href="../../css/animations.css">
+    <link rel="stylesheet" href="../../css/redesign-v24.css">
+    <link rel="stylesheet" href="../blog.css">
+    <script>
+    (function(){try{var t=localStorage.getItem('draft-theme');if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
+    </script>
+</head>
+<body>
+    <div id="cursor-glow" aria-hidden="true"></div>
+
+    <nav class="top-nav" id="top-nav">
+        <a href="../../" class="nav-logo">Draft</a>
+        <div class="nav-links">
+            <a href="../../#features">Features</a>
+            <a href="../../#commands">Commands</a>
+            <a href="../../#install">Install</a>
+            <a href="../../#audience">Who It's For</a>
+            <a href="../../book/">Book</a>
+            <a href="../" class="active">Blog</a>
+        </div>
+        <div class="nav-actions">
+            <a href="https://github.com/mayurpise/draft" target="_blank" rel="noopener noreferrer" class="nav-github">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                Star on GitHub
+            </a>
+        </div>
+        <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+            <span></span><span></span><span></span>
+        </button>
+    </nav>
+
+    <main class="blog-page">
+        <article class="blog-container">
+
+            <a href="../" class="post-back">&larr; All posts</a>
+
+            <header class="post-header">
+                <p class="post-meta"><time datetime="2026-05-10">May 10, 2026</time> &middot; 7 min read</p>
+                <h1>What Will This Change Break? A Real Blast-Radius Walkthrough</h1>
+                <p class="post-deck">A real impact-mode run on a hotspot before a single line gets written. 47 downstream files, 12 tests, 3 config templates &mdash; and a refactor plan reshaped <em>before</em> <code>/draft:implement</code> starts.</p>
+            </header>
+
+            <div class="post-body">
+                <h2>The Bottom Line</h2>
+                <p>Your AI assistant doesn't know what your code depends on. It reads the file in front of it, infers a plausible change, and ships. The graph knows. <strong>Draft's graph engine treats blast radius as a first-class query &mdash; before code is written, while it's being written, and as memory after the track lands.</strong> Three loops, one shared answer to a question every senior engineer asks instinctively: <em>what else does this break?</em></p>
+                <p>Below is a real run on a Go service refactor that started as "add audit logging to write paths" and ended as "extract a transaction-hook interface" &mdash; because the impact query said so before any code existed.</p>
+
+                <h2>The Track: "Add Structured Audit Logging to Writes"</h2>
+                <p>Existing system: a Go monorepo, ~80,000 lines, internal tooling for a fintech ops team. Writes go through <code>internal/db/transaction.go</code>: every <code>Commit()</code> ends up there. The spec landed in <code>draft/tracks/audit-write-trail/spec.md</code>:</p>
+<pre><code># Structured Audit Logging on Writes
+
+## Problem
+Compliance review flagged that we cannot reconstruct who
+mutated which row, when, or with what payload. Existing
+log lines are unstructured and missing actor identity.
+
+## Acceptance
+- Every committed write produces one structured audit record
+- Record contains: actor, table, op, row pk, before/after, ts
+- No measurable latency regression on hot paths
+- Records retained 7 years per compliance policy</code></pre>
+                <p>The naive plan: open <code>internal/db/transaction.go</code>, wrap <code>Commit()</code>, write to an audit table inside the same transaction. One file. Two hours. Done.</p>
+                <p>The graph disagrees.</p>
+
+                <h2>Step 1: The Hotspot Warning Fires Before Anything Runs</h2>
+                <p>When <code>/draft:implement</code> picks up the first task, it loads <code>draft/graph/hotspots.jsonl</code> and checks every file the task plans to touch. <code>internal/db/transaction.go</code> is on the list:</p>
+<pre><code>⚠ Hotspot detected
+  File:   internal/db/transaction.go
+  fanIn:  31
+  Lines:  412
+
+  Changes here affect many downstream files.
+  Consider running a graph impact query before writing code.
+
+  graph --repo . --out draft/graph \
+        --query --file internal/db/transaction.go \
+        --mode impact</code></pre>
+                <p>This warning is in <code>skills/implement/SKILL.md</code> at line 48. The graph's <code>hotspots.jsonl</code> was built from <code>lines + fanIn * 50</code> &mdash; complexity weighted by how many other files include or import the file. <code>transaction.go</code> isn't large; it's <em>central</em>. Thirty-one direct dependents.</p>
+                <p>Most AI assistants ignore this kind of signal. The Draft skill stops and waits.</p>
+
+                <h2>Step 2: The Impact Query &mdash; What Actually Breaks</h2>
+                <p>Run the suggested command:</p>
+<pre><code>graph --repo . --out draft/graph \
+      --query --file internal/db/transaction.go \
+      --mode impact</code></pre>
+                <p>Output (trimmed for the post):</p>
+<pre><code>{
+  "target": "internal/db/transaction.go",
+  "impact": {
+    "files": 47,
+    "modules": 9,
+    "affected_modules": [
+      "internal/db", "internal/api/orders",
+      "internal/api/billing", "internal/api/users",
+      "internal/jobs/reconcile", "internal/audit",
+      "cmd/server", "deploy/charts",
+      "docs/runbooks"
+    ],
+    "by_category": {
+      "code":   29,
+      "test":   12,
+      "doc":     3,
+      "config":  3
+    },
+    "files_by_depth": {
+      "1": 14, "2": 21, "3": 9, "4": 3
+    },
+    "files_by_category": {
+      "test": [
+        "internal/api/orders/orders_test.go",
+        "internal/api/billing/billing_test.go",
+        ... (10 more)
+      ],
+      "config": [
+        "deploy/charts/values.yaml",
+        "deploy/charts/templates/deployment.yaml",
+        "ops/migrations/0042_audit_index.sql"
+      ],
+      "doc": [
+        "docs/runbooks/incident-rollback.md",
+        "docs/architecture/transactions.md",
+        "docs/api/audit-fields.md"
+      ]
+    }
+  },
+  "warning": "High fanIn — review affected_modules before merging."
+}</code></pre>
+                <p>Read it once and the "two-hour change" plan dies:</p>
+                <ul>
+                    <li><strong>47 downstream files</strong> reach <code>transaction.go</code> through dependency chains up to four hops deep. Wrapping <code>Commit()</code> changes the contract for every one of them.</li>
+                    <li><strong>12 tests</strong> &mdash; that's the regression bill. Any change to commit semantics needs them re-asserted, not just re-run.</li>
+                    <li><strong>3 config files</strong> &mdash; the Helm chart and a migration. Adding an audit table means a deploy-time migration <em>and</em> a chart change. Easy to miss without the graph spelling it out.</li>
+                    <li><strong>3 doc files</strong> &mdash; the runbook references the current commit semantics. Stale docs after a refactor become an incident in six weeks.</li>
+                    <li><strong>Nine affected modules</strong>, including <code>cmd/server</code> &mdash; the binary entry point. Anything touching <code>transaction.go</code> recompiles the world.</li>
+                </ul>
+                <p>The categorization comes from <code>scripts/tools/classify-files.sh</code> &mdash; the same classifier the graph uses everywhere. The <code>by_category</code> bucket is the one to read first: it's the difference between "five-line change" and "regression sweep."</p>
+
+                <h2>Step 3: Reshaping the Plan</h2>
+                <p>Knowing this <em>before</em> writing code changes the plan. The original task &mdash; "wrap <code>Commit()</code>" &mdash; would have rippled through 47 files. The reshape:</p>
+                <ul>
+                    <li>Extract a <code>TransactionHook</code> interface in <code>internal/db</code> &mdash; one new file, zero touches to <code>transaction.go</code>'s public surface.</li>
+                    <li>Implement <code>AuditHook</code> in the existing <code>internal/audit</code> module &mdash; isolated unit with its own tests.</li>
+                    <li>Wire the hook in <code>cmd/server</code> at construction time &mdash; one diff, one place.</li>
+                </ul>
+                <p>Same outcome (every commit produces an audit record) with one structural touch on the hotspot instead of forty-seven cascading ones. The graph didn't write that plan &mdash; the engineer did. The graph stopped the engineer from accepting the worse one.</p>
+
+                <h2>Step 4: The Memory &mdash; <code>metadata.json.impact</code></h2>
+                <p>Once the track's first phase passed review, <code>/draft:implement</code> snapshotted the actual blast radius into the track's <code>metadata.json</code>. The relevant block:</p>
+<pre><code>{
+  "id": "audit-write-trail",
+  "title": "Structured Audit Logging on Writes",
+  "status": "completed",
+  ...
+  "impact": {
+    "files_touched": [
+      "internal/db/transaction.go",
+      "internal/db/hooks.go",
+      "internal/audit/recorder.go",
+      "internal/audit/recorder_test.go",
+      "cmd/server/main.go",
+      "deploy/charts/templates/deployment.yaml",
+      "ops/migrations/0042_audit_index.sql",
+      "docs/architecture/transactions.md"
+    ],
+    "modules_touched": [
+      "internal/db", "internal/audit",
+      "cmd/server", "deploy/charts",
+      "ops/migrations", "docs/architecture"
+    ],
+    "downstream_files": 47,
+    "downstream_modules": [
+      "internal/api/orders", "internal/api/billing",
+      "internal/api/users", "internal/jobs/reconcile",
+      ...
+    ],
+    "max_depth": 4,
+    "by_category": {
+      "code": 29, "test": 12, "doc": 3, "config": 3
+    },
+    "computed_at": "2026-05-08T14:32:11Z"
+  }
+}</code></pre>
+                <p>This isn't analytics. It's <strong>track memory</strong>. <code>files_touched</code> is computed from <code>git diff --name-only &lt;first_sha&gt;^..HEAD</code> &mdash; what the track actually changed, not what it was scoped to. <code>downstream_*</code> fields come from the same impact query rerun against every touched file. The full procedure is in <code>skills/implement/SKILL.md</code> &sect;5.</p>
+                <p>Ten seconds of compute that a normal workflow throws away. Draft writes it down.</p>
+
+                <h2>Step 5: Two Weeks Later, the Overlap Warning Fires</h2>
+                <p>A different engineer, different sprint, different track. They run <code>/draft:new-track "add row-level encryption to writes"</code> and start the intake conversation. Before the spec is even drafted, the skill scans every <code>draft/tracks/*/metadata.json</code> updated in the last 30 days, reads each <code>impact</code> block, and builds a module &rarr; recent-tracks map. When the new track's candidate modules resolve to <code>internal/db</code>, the intake summary surfaces:</p>
+<pre><code>Overlap warning:
+  Track `audit-write-trail` recently touched modules
+  internal/db, internal/audit (completed 2026-05-08).
+
+  Review draft/tracks/audit-write-trail/metadata.json#impact
+  before proceeding.
+
+  Suggested actions:
+    • Coordinate with the prior track's owner
+    • Consider whether to extend the existing TransactionHook
+      interface rather than introduce a parallel mechanism
+    • Rebase scope to avoid touching internal/db/transaction.go
+      again within the same compliance window</code></pre>
+                <p>This is informational, not blocking. The user decides. But the question that used to require tribal memory &mdash; <em>"didn't somebody just touch this?"</em> &mdash; is answered automatically. The procedure is in <code>skills/new-track/SKILL.md</code> at line 45.</p>
+                <p>The engineer chose to extend the existing hook interface. Both tracks shipped without trampling each other.</p>
+
+                <h2>The Three Loops, Composed</h2>
+                <p>Pull back and the architecture is one shared graph used in three places:</p>
+                <ol>
+                    <li><strong>Pre-change risk assessment.</strong> Before <code>/draft:implement</code> touches a hotspot, it loads <code>hotspots.jsonl</code>, warns, and points at the impact query. The query returns categorized blast radius &mdash; the actual answer to "what breaks?"</li>
+                    <li><strong>Post-completion memory.</strong> When a phase passes review, <code>/draft:implement</code> snapshots <code>files_touched</code> + downstream blast radius into <code>metadata.json.impact</code>. Ten extra seconds, written into git.</li>
+                    <li><strong>Cross-track overlap detection.</strong> When <code>/draft:new-track</code> opens, it reads recent impact memory and flags candidate modules already touched within 30 days. No coordination meeting required.</li>
+                </ol>
+                <p>The same data structure threads through all three. <code>by_category</code> sized the regression bill in loop 1; the same field is preserved as memory in loop 2; the same touched-modules list keys overlap detection in loop 3.</p>
+
+                <h2>What This Buys You</h2>
+                <ul>
+                    <li><strong>The "small change" trap stops being free.</strong> Every hotspot touch costs an impact query. Most are still small. The ones that aren't &mdash; you find out before code is written, not at PR time.</li>
+                    <li><strong>Test scope is sized, not guessed.</strong> The <code>test</code> bucket is the regression list. No wondering if you missed something three modules over.</li>
+                    <li><strong>Config and doc drift gets surfaced.</strong> The graph's <code>config</code> and <code>doc</code> buckets catch the deploy chart and the runbook the file authors forgot. These are the post-merge incidents the team didn't connect to the original PR.</li>
+                    <li><strong>Tracks stop colliding silently.</strong> Two engineers refactoring adjacent code in adjacent weeks now find out at intake instead of at merge.</li>
+                    <li><strong>Memory survives turnover.</strong> Six months later, when nobody remembers why <code>internal/db/hooks.go</code> exists, the track that introduced it is one <code>jq</code> away from telling you.</li>
+                </ul>
+                <p>None of this requires the AI to be smarter. It requires the codebase to remember things.</p>
+
+                <h2>Try It</h2>
+<pre><code># In a Draft-initialized repo with a built graph
+graph --repo . --out draft/graph \
+      --query --file path/to/your/file.go \
+      --mode impact | jq
+
+# Then start a track and let /draft:implement
+# wire up the warning + memory loops
+/draft:new-track "your next change"
+/draft:implement</code></pre>
+                <p>The graph is local, deterministic, and version-controlled &mdash; same engine the <a href="../local-graph-engine/">previous post</a> walked through. Impact mode is one of six query modes; the rest are documented in <code>core/shared/graph-query.md</code>. No SaaS, no embeddings, no API key &mdash; just a JSON answer to the most expensive question in code review.</p>
+                <p>The graph is not a planner. It is a memory. Use it before you write code, after you ship code, and the next time someone is about to retrace your steps.</p>
+            </div>
+
+            <aside class="post-share" aria-label="Share this post">
+                <span class="post-share-label">Share</span>
+                <div class="post-share-buttons">
+                    <button type="button" class="share-btn" data-net="linkedin" aria-label="Share on LinkedIn">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.13 1.45-2.13 2.94v5.67H9.35V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z"/></svg>
+                        <span class="share-btn-label">LinkedIn</span>
+                    </button>
+                    <button type="button" class="share-btn" data-net="x" aria-label="Share on X">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.66l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25h6.83l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                        <span class="share-btn-label">X</span>
+                    </button>
+                    <button type="button" class="share-btn" data-net="hn" aria-label="Share on Hacker News">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M0 0v24h24V0zm6.51 4h2.27l3.22 6.24L15.21 4h2.28l-4.36 8.21V20h-2.26v-7.79z"/></svg>
+                        <span class="share-btn-label">Hacker News</span>
+                    </button>
+                    <button type="button" class="share-btn" data-net="copy" aria-label="Copy link">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                        <span class="share-btn-label">Copy link</span>
+                    </button>
+                </div>
+            </aside>
+
+            <footer class="post-footer">
+                <p>Draft is open source: <a href="https://github.com/mayurpise/draft">github.com/mayurpise/draft</a>. The impact-mode query lives in <code>graph/src/</code> and is documented in <code>core/shared/graph-query.md</code>; the implement-side guardrail is in <code>skills/implement/SKILL.md</code>; the new-track overlap scan is in <code>skills/new-track/SKILL.md</code>.</p>
+                <p><a href="../">&larr; Back to all posts</a></p>
+            </footer>
+        </article>
+    </main>
+
+    <script src="../../js/theme-toggle.js"></script>
+    <script src="../../js/main.js"></script>
+    <script src="../share.js"></script>
+</body>
+</html>
