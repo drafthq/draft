@@ -5,7 +5,7 @@ description: Lightweight ad-hoc code review for a PR, diff, or file. Four dimens
 
 # Quick Review
 
-You are performing a lightweight, ad-hoc code review. This is the fast alternative to `/draft:review` — no track context needed, focused on a specific PR, diff, or file set.
+Perform a lightweight, ad-hoc code review. This is the fast alternative to `/draft:review` — no track context needed, focused on a specific PR, diff, or file set.
 
 ## Red Flags — STOP if you're:
 

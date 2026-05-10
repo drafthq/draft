@@ -5,7 +5,7 @@ description: Compute code coverage for active track or module. Targets 95%+ cove
 
 # Coverage Report
 
-You are computing and reporting code coverage for the active track or a specific module. This complements the TDD workflow — TDD is the process (write test, implement, refactor), coverage is the measurement (how much code do those tests exercise).
+Compute and report code coverage for the active track or a specific module. This complements the TDD workflow — TDD is the process (write test, implement, refactor), coverage is the measurement (how much code do those tests exercise).
 
 ## Red Flags - STOP if you're:
 

@@ -5,7 +5,7 @@ description: Generate standup summary from git history, track progress, and opti
 
 # Standup
 
-You are generating a standup summary from recent development activity. This is a **read-only** skill — it makes no changes to the codebase or track files.
+Generate a standup summary from recent development activity. This is a **read-only** skill — it makes no changes to the codebase or track files.
 
 ## Red Flags — STOP if you're:
 

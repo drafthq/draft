@@ -5,7 +5,7 @@ description: Create and manage Architecture Decision Records. Documents signific
 
 # Architecture Decision Records
 
-You are creating or managing Architecture Decision Records (ADRs) for this project.
+Create or manage Architecture Decision Records (ADRs) for this project.
 
 ## Red Flags - STOP if you're:
 

@@ -5,7 +5,7 @@ description: Handle mid-track requirement changes. Analyzes impact on completed 
 
 # Course Correction
 
-You are handling a mid-track requirement change using Draft's Context-Driven Development methodology.
+Handle a mid-track requirement change using Draft's Context-Driven Development methodology.
 
 ## Red Flags - STOP if you're:
 

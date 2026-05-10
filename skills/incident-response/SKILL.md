@@ -5,7 +5,7 @@ description: Incident management lifecycle — triage, communicate, mitigate, po
 
 # Incident Response
 
-You are managing an incident through its full lifecycle using structured incident management practices.
+Manage an incident through its full lifecycle using structured incident management practices.
 
 ## Red Flags — STOP if you're:
 

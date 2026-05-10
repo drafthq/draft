@@ -5,7 +5,7 @@ description: "Performs an exhaustive 14-dimension bug hunt across the codebase u
 
 # Bug Hunt
 
-You are conducting an exhaustive bug hunt on this Git repository, enhanced by Draft context when available.
+Conduct an exhaustive bug hunt on this Git repository, enhanced by Draft context when available.
 
 ## Primary Deliverable
 

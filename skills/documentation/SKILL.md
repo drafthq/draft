@@ -5,7 +5,7 @@ description: Technical documentation writing and maintenance. Modes — readme, 
 
 # Documentation
 
-You are generating or updating technical documentation for this project using structured writing principles.
+Generate or update technical documentation for this project using structured writing principles.
 
 ## Red Flags — STOP if you're:
 

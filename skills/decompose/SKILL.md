@@ -5,7 +5,7 @@ description: Decompose project or track into modules with dependency mapping. Up
 
 # Decompose
 
-You are decomposing a project or track into modules with clear responsibilities, dependencies, and implementation order.
+Decompose a project or track into modules with clear responsibilities, dependencies, and implementation order.
 
 ## Red Flags - STOP if you're:
 

@@ -5,7 +5,7 @@ description: "Orchestrates multi-file code reviews at track level (against spec.
 
 # Code Review
 
-You are conducting a code review using Draft's Context-Driven Development methodology.
+Conduct a code review using Draft's Context-Driven Development methodology.
 
 ## Red Flags - STOP if you're:
 

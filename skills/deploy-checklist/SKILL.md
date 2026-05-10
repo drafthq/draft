@@ -5,7 +5,7 @@ description: Pre-deployment verification checklist. Generates customized checkli
 
 # Deploy Checklist
 
-You are generating a pre-deployment verification checklist customized to this project's technology stack.
+Generate a pre-deployment verification checklist customized to this project's technology stack.
 
 ## Red Flags — STOP if you're:
 

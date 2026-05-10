@@ -5,7 +5,7 @@ description: Build federated index from all child draft/ directories. Aggregates
 
 # Draft Index
 
-You are building a federated knowledge index for a monorepo with multiple services.
+Build a federated knowledge index for a monorepo with multiple services.
 
 ## Red Flags - STOP if you're:
 

@@ -5,7 +5,7 @@ description: "Executes tasks from the current track's plan using TDD workflow (r
 
 # Implement Track
 
-You are implementing tasks from the active track's plan following the TDD workflow.
+Implement tasks from the active track's plan following the TDD workflow.
 
 ## Red Flags - STOP if you're:
 

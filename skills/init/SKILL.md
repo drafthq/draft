@@ -5,7 +5,7 @@ description: Initialize Draft project context for Context-Driven Development. Ru
 
 # Draft Init
 
-You are initializing a Draft project for Context-Driven Development.
+Initialize a Draft project for Context-Driven Development.
 
 ## Red Flags - STOP if you're:
 

@@ -5,7 +5,7 @@ description: Design test strategies and test plans with coverage targets. Comple
 
 # Testing Strategy
 
-You are designing a testing strategy and test plan for this project or track.
+Design a testing strategy and test plan for this project or track.
 
 ## Red Flags — STOP if you're:
 

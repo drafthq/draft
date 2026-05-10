@@ -120,7 +120,7 @@ Recognize and use these throughout plan.md:
 
 When user says "init draft" or "draft init [refresh]":
 
-You are initializing a Draft project for Context-Driven Development.
+Initialize a Draft project for Context-Driven Development.
 
 ## Red Flags - STOP if you're:
 
@@ -3478,7 +3478,7 @@ If Jira MCP is available and a project ticket is linked, sync initialization art
 
 When user says "index services" or "draft index [--init-missing]":
 
-You are building a federated knowledge index for a monorepo with multiple services.
+Build a federated knowledge index for a monorepo with multiple services.
 
 ## Red Flags - STOP if you're:
 
@@ -4353,7 +4353,7 @@ When regenerating, the skill:
 
 When user says "new feature" or "draft new-track <description>":
 
-You are creating a new track (feature, bug fix, or refactor) for Context-Driven Development. This is a **collaborative process** — you are an active participant providing guidance, fact-checking, and expertise grounded in vetted sources.
+Create a new track (feature, bug fix, or refactor) for Context-Driven Development. This is a **collaborative process** — be an active participant providing guidance, fact-checking, and expertise grounded in vetted sources.
 
 **Feature Description:** $ARGUMENTS
 
@@ -5193,7 +5193,7 @@ Based on track type, suggest relevant follow-ups:
 
 When user says "break into modules" or "draft decompose":
 
-You are decomposing a project or track into modules with clear responsibilities, dependencies, and implementation order.
+Decompose a project or track into modules with clear responsibilities, dependencies, and implementation order.
 
 ## Red Flags - STOP if you're:
 
@@ -5624,7 +5624,7 @@ When decomposition involves breaking a monolith, choosing module boundaries, or 
 
 When user says "implement" or "draft implement":
 
-You are implementing tasks from the active track's plan following the TDD workflow.
+Implement tasks from the active track's plan following the TDD workflow.
 
 ## Red Flags - STOP if you're:
 
@@ -6290,7 +6290,7 @@ If implementing a bug track and `draft/tracks/<id>/rca.md` exists:
 
 When user says "check coverage" or "draft coverage":
 
-You are computing and reporting code coverage for the active track or a specific module. This complements the TDD workflow — TDD is the process (write test, implement, refactor), coverage is the measurement (how much code do those tests exercise).
+Compute and report code coverage for the active track or a specific module. This complements the TDD workflow — TDD is the process (write test, implement, refactor), coverage is the measurement (how much code do those tests exercise).
 
 ## Red Flags - STOP if you're:
 
@@ -6607,7 +6607,7 @@ When coverage is run again on the same track/module:
 
 When user says "deploy checklist" or "draft deploy-checklist [track <id>]":
 
-You are generating a pre-deployment verification checklist customized to this project's technology stack.
+Generate a pre-deployment verification checklist customized to this project's technology stack.
 
 ## Red Flags — STOP if you're:
 
@@ -6784,7 +6784,7 @@ ln -sf deploy-checklist-${TIMESTAMP}.md draft/deploy-checklist-latest.md
 
 When user says "hunt bugs" or "draft bughunt [--track <id>]":
 
-You are conducting an exhaustive bug hunt on this Git repository, enhanced by Draft context when available.
+Conduct an exhaustive bug hunt on this Git repository, enhanced by Draft context when available.
 
 ## Primary Deliverable
 
@@ -7839,7 +7839,7 @@ If Jira ticket linked, sync via `core/shared/jira-sync.md`:
 
 When user says "review code" or "draft review [--track <id>] [--full]":
 
-You are conducting a code review using Draft's Context-Driven Development methodology.
+Conduct a code review using Draft's Context-Driven Development methodology.
 
 ## Red Flags - STOP if you're:
 
@@ -8617,7 +8617,7 @@ If Jira ticket linked, sync via `core/shared/jira-sync.md`:
 
 When user says "quick review" or "draft quick-review [file|pr <number>]":
 
-You are performing a lightweight, ad-hoc code review. This is the fast alternative to `draft review` — no track context needed, focused on a specific PR, diff, or file set.
+Perform a lightweight, ad-hoc code review. This is the fast alternative to `draft review` — no track context needed, focused on a specific PR, diff, or file set.
 
 ## Red Flags — STOP if you're:
 
@@ -9003,7 +9003,7 @@ After deep-review audit completion:
 
 When user says "test strategy" or "draft testing-strategy [track <id>|path]":
 
-You are designing a testing strategy and test plan for this project or track.
+Design a testing strategy and test plan for this project or track.
 
 ## Red Flags — STOP if you're:
 
@@ -9639,7 +9639,7 @@ This creates a **continuous improvement loop**:
 
 When user says "document decision" or "draft adr [title]":
 
-You are creating or managing Architecture Decision Records (ADRs) for this project.
+Create or manage Architecture Decision Records (ADRs) for this project.
 
 ## Red Flags - STOP if you're:
 
@@ -9979,7 +9979,7 @@ Proposed → Accepted → [Deprecated | Superseded by ADR-xxx]
 
 When user says "debug bug" or "draft debug [description|track <id>]":
 
-You are conducting a structured debugging session following systematic investigation methodology.
+Conduct a structured debugging session following systematic investigation methodology.
 
 ## Red Flags — STOP if you're:
 
@@ -10151,7 +10151,7 @@ ln -sf debug-report-${TIMESTAMP}.md draft/debug-report-latest.md
 
 When user says "standup" or "draft standup [date|week|save]":
 
-You are generating a standup summary from recent development activity. This is a **read-only** skill — it makes no changes to the codebase or track files.
+Generate a standup summary from recent development activity. This is a **read-only** skill — it makes no changes to the codebase or track files.
 
 ## Red Flags — STOP if you're:
 
@@ -10307,7 +10307,7 @@ Include the report header table immediately after frontmatter:
 
 When user says "tech debt" or "draft tech-debt [path|track <id>]":
 
-You are conducting a technical debt analysis to catalog, prioritize, and plan remediation of debt across the codebase.
+Conduct a technical debt analysis to catalog, prioritize, and plan remediation of debt across the codebase.
 
 ## Red Flags — STOP if you're:
 
@@ -10539,7 +10539,7 @@ Report structure:
 
 When user says "incident" or "draft incident-response [new|update|postmortem]":
 
-You are managing an incident through its full lifecycle using structured incident management practices.
+Manage an incident through its full lifecycle using structured incident management practices.
 
 ## Red Flags — STOP if you're:
 
@@ -10768,7 +10768,7 @@ Follow `core/shared/jira-sync.md`:
 
 When user says "write docs" or "draft documentation [readme|runbook|api|onboarding]":
 
-You are generating or updating technical documentation for this project using structured writing principles.
+Generate or update technical documentation for this project using structured writing principles.
 
 ## Red Flags — STOP if you're:
 
@@ -11298,7 +11298,7 @@ Draft state NOT updated (pending revert completion).
 
 When user says "handle change" or "draft change <description>":
 
-You are handling a mid-track requirement change using Draft's Context-Driven Development methodology.
+Handle a mid-track requirement change using Draft's Context-Driven Development methodology.
 
 ## Red Flags - STOP if you're:
 

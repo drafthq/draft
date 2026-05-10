@@ -5,7 +5,7 @@ description: Identify, categorize, and prioritize technical debt across six dime
 
 # Tech Debt
 
-You are conducting a technical debt analysis to catalog, prioritize, and plan remediation of debt across the codebase.
+Conduct a technical debt analysis to catalog, prioritize, and plan remediation of debt across the codebase.
 
 ## Red Flags — STOP if you're:
 

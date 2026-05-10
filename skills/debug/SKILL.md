@@ -5,7 +5,7 @@ description: "Runs a structured debugging session: reproduces the bug, isolates 
 
 # Debug
 
-You are conducting a structured debugging session following systematic investigation methodology.
+Conduct a structured debugging session following systematic investigation methodology.
 
 ## Red Flags — STOP if you're:
 

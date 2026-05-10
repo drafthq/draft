@@ -5,7 +5,7 @@ description: Start a new feature or bug track. Collaborative intake process with
 
 # Create New Track
 
-You are creating a new track (feature, bug fix, or refactor) for Context-Driven Development. This is a **collaborative process** — you are an active participant providing guidance, fact-checking, and expertise grounded in vetted sources.
+Create a new track (feature, bug fix, or refactor) for Context-Driven Development. This is a **collaborative process** — be an active participant providing guidance, fact-checking, and expertise grounded in vetted sources.
 
 **Feature Description:** $ARGUMENTS
 
