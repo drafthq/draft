@@ -1,6 +1,6 @@
 ---
 name: coverage
-description: Compute code coverage for active track or module. Targets 95%+ coverage with report and justification for uncovered lines. Complements TDD workflow.
+description: "Compute code coverage for active track or module. Targets 95%+ coverage with report and justification for uncovered lines. Complements TDD workflow. Use when the user asks to 'check coverage', 'measure test coverage', 'run coverage', or says 'what's our coverage', 'are we hitting the coverage target'."
 ---
 
 # Coverage Report

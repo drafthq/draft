@@ -1,6 +1,6 @@
 ---
 name: jira-preview
-description: Generate Jira export file from track plan for review before creating issues.
+description: "Generate Jira export file from track plan for review before creating issues. Use when the user asks to 'preview Jira export', 'review Jira issues before creating', 'see the Jira draft', or says 'what would Jira creation look like'."
 ---
 
 # Preview Jira Issues from Track Plan

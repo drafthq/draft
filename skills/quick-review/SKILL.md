@@ -1,6 +1,6 @@
 ---
 name: quick-review
-description: Lightweight ad-hoc code review for a PR, diff, or file. Four dimensions — security, performance, correctness, maintainability. No track context required.
+description: "Lightweight ad-hoc code review for a PR, diff, or file. Four dimensions — security, performance, correctness, maintainability. No track context required. Use when the user asks for a 'quick review', 'review this diff', 'review this PR', or says 'eyes on this change', 'sanity-check this'."
 ---
 
 # Quick Review

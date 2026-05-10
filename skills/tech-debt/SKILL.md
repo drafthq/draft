@@ -1,6 +1,6 @@
 ---
 name: tech-debt
-description: Identify, categorize, and prioritize technical debt across six dimensions. Generates remediation plans with effort estimates. Offered by /draft:new-track for refactor tracks.
+description: "Identify, categorize, and prioritize technical debt across six dimensions. Generates remediation plans with effort estimates. Offered by /draft:new-track for refactor tracks. Use when the user asks to 'analyze tech debt', 'catalog debt', 'plan debt remediation', or says 'what should we refactor', 'where is our tech debt'."
 ---
 
 # Tech Debt

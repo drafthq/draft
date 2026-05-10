@@ -1,6 +1,6 @@
 ---
 name: tour
-description: Engaging, interactive onboarding tour of the repository to train new engineers on system architecture and patterns without passive reading.
+description: "Engaging, interactive onboarding tour of the repository to train new engineers on system architecture and patterns without passive reading. Use when the user asks for a 'code tour', 'walk me through the codebase', 'onboard me', 'show me the architecture', or says 'I am new here, where do I start'."
 ---
 
 # Draft Tour: Interactive Onboarding

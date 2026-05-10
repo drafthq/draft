@@ -1,6 +1,6 @@
 ---
 name: index
-description: Build federated index from all child draft/ directories. Aggregates service-level context into root-level knowledge without deep code analysis. Use at monorepo root after services have been initialized with /draft:init.
+description: "Build federated index from all child draft/ directories. Aggregates service-level context into root-level knowledge without deep code analysis. Run at monorepo root after services have been initialized with /draft:init. Use when the user asks to 'index services', 'aggregate monorepo context', 'build root index', or says 'index this monorepo'."
 ---
 
 # Draft Index

@@ -1,6 +1,6 @@
 ---
 name: jira-create
-description: Create Jira issues from jira-export-latest.md via MCP. Auto-generates export if missing.
+description: "Create Jira issues from jira-export-latest.md via MCP. Auto-generates export if missing. Use when the user asks to 'create Jira issues', 'push to Jira', 'sync track to Jira', or says 'file these as Jira tickets'."
 ---
 
 # Create Jira Issues from Export

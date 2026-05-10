@@ -1,6 +1,6 @@
 ---
 name: status
-description: Display current progress of Draft tracks and active tasks. Shows phases, completion percentages, and blocked items.
+description: "Display current progress of Draft tracks and active tasks. Shows phases, completion percentages, and blocked items. Use when the user asks for 'track status', 'where am I', 'show progress', 'list active tracks', or says 'what is pending'."
 ---
 
 # Draft Status

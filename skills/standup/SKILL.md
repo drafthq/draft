@@ -1,6 +1,6 @@
 ---
 name: standup
-description: Generate standup summary from git history, track progress, and optional Jira/GitHub PR activity. Read-only — makes no changes to the codebase.
+description: "Generate standup summary from git history, track progress, and optional Jira/GitHub PR activity. Read-only — makes no changes to the codebase. Use when the user asks for 'a standup', 'daily summary', 'standup notes', or says 'what did I do yesterday', 'summarize my week'."
 ---
 
 # Standup

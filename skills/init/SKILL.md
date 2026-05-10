@@ -1,6 +1,6 @@
 ---
 name: init
-description: Initialize Draft project context for Context-Driven Development. Run once per project to create product.md, tech-stack.md, workflow.md, tracks.md, architecture.md (brownfield), .ai-context.md (derived), and .ai-profile.md (ultra-compact profile). Always performs deep analysis.
+description: "Initialize Draft project context for Context-Driven Development. Run once per project to create product.md, tech-stack.md, workflow.md, tracks.md, architecture.md (brownfield), .ai-context.md (derived), and .ai-profile.md (ultra-compact profile). Always performs deep analysis. Use when the user asks to 'init draft', 'set up Draft for this project', 'bootstrap context', or says 'start using Draft', 'I want to use Draft here'."
 ---
 
 # Draft Init

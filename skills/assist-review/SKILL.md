@@ -1,6 +1,6 @@
 ---
 name: assist-review
-description: Lower cognitive load for human reviewers by auditing specifically for architectural risks mapped to the original track specification.
+description: "Lower cognitive load for human reviewers by auditing specifically for architectural risks mapped to the original track specification. Use when the user asks to 'help me review this', 'audit for risks', 'review against spec', or says 'eyes on this PR before I merge', 'flag review-blockers'."
 ---
 
 # Draft Assist Review: Human-in-the-Loop Gateway

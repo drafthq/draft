@@ -1,6 +1,6 @@
 ---
 name: adr
-description: Create and manage Architecture Decision Records. Documents significant technical decisions with context, alternatives, and consequences. Also supports evaluate (assess proposals) and design (system design) modes.
+description: "Create and manage Architecture Decision Records. Documents significant technical decisions with context, alternatives, and consequences. Also supports evaluate (assess proposals) and design (system design) modes. Use when the user asks to 'document a decision', 'create an ADR', 'evaluate a proposal', 'design a system', or says 'why did we choose X', 'record this decision'."
 ---
 
 # Architecture Decision Records

@@ -1,6 +1,6 @@
 ---
 name: incident-response
-description: Incident management lifecycle — triage, communicate, mitigate, postmortem. Three modes — new (start incident), update (status update), postmortem (blameless RCA report).
+description: "Incident management lifecycle — triage, communicate, mitigate, postmortem. Three modes — new (start incident), update (status update), postmortem (blameless RCA report). Use when the user asks to 'start an incident', 'incident triage', 'write a postmortem', or says 'we're down', 'production is broken', 'page received'."
 ---
 
 # Incident Response

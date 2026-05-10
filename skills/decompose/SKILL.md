@@ -1,6 +1,6 @@
 ---
 name: decompose
-description: Decompose project or track into modules with dependency mapping. Updates architecture.md (source of truth) and derives .ai-context.md (token-optimized, derived from architecture.md) with module definitions, dependency diagram, and implementation order.
+description: "Decompose project or track into modules with dependency mapping. Updates architecture.md (source of truth) and derives .ai-context.md (token-optimized) with module definitions, dependency diagram, and implementation order. Use when the user asks to 'decompose this project', 'break into modules', 'design module boundaries', or says 'split this up', 'plan module structure'."
 ---
 
 # Decompose

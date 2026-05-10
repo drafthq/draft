@@ -1,6 +1,6 @@
 ---
 name: impact
-description: Telemetry and analytics suite generating project-wide insights by parsing execution timestamps, revert history, and phase tracking.
+description: "Telemetry and analytics suite generating project-wide insights by parsing execution timestamps, revert history, and phase tracking. Use when the user asks to 'show track telemetry', 'measure impact', 'project insights', 'how effective is Draft', or says 'show me Draft analytics'."
 ---
 
 # Draft Impact: Track Telemetry & Analytics

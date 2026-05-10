@@ -1,6 +1,6 @@
 ---
 name: learn
-description: Scan codebase to discover coding patterns and update draft/guardrails.md. Learns conventions (skip in future) and anti-patterns (always flag). Supports migration from workflow.md and pattern promotion.
+description: "Scan codebase to discover coding patterns and update draft/guardrails.md. Learns conventions (skip in future) and anti-patterns (always flag). Supports migration from workflow.md and pattern promotion. Use when the user asks to 'learn the codebase patterns', 'discover conventions', 'update guardrails', 'promote a pattern', or says 'what conventions does this repo follow'."
 ---
 
 # Learn — Pattern Discovery & Guardrails Update

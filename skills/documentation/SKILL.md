@@ -1,6 +1,6 @@
 ---
 name: documentation
-description: Technical documentation writing and maintenance. Modes — readme, runbook, api, onboarding. Uses writer agent principles for audience-appropriate, maintainable docs.
+description: "Technical documentation writing and maintenance. Modes — readme, runbook, api, onboarding. Uses writer agent principles for audience-appropriate, maintainable docs. Use when the user asks to 'write a README', 'generate a runbook', 'document the API', 'write onboarding docs', or says 'we need docs for X'."
 ---
 
 # Documentation

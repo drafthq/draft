@@ -1,6 +1,6 @@
 ---
 name: deploy-checklist
-description: Pre-deployment verification checklist. Generates customized checklists based on tech-stack with rollback triggers.
+description: "Pre-deployment verification checklist. Generates customized checklists based on tech-stack with rollback triggers. Use when the user asks to 'generate a deploy checklist', 'pre-deploy verification', 'rollback plan', or says 'we're shipping', 'about to deploy'."
 ---
 
 # Deploy Checklist

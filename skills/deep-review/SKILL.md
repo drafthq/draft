@@ -1,6 +1,6 @@
 ---
 name: deep-review
-description: Perform an exhaustive end-to-end lifecycle review of a service, component, or module. Evaluates ACID compliance, architectural resilience, and production-grade enterprise quality.
+description: "Perform an exhaustive end-to-end lifecycle review of a service, component, or module. Evaluates ACID compliance, architectural resilience, and production-grade enterprise quality. Use when the user asks for a 'deep review', 'enterprise review', 'production-grade audit', 'lifecycle review', or says 'is this production-ready', 'review this for prod'."
 ---
 
 # Deep Review — Production-Grade Module Audit

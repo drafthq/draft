@@ -1,6 +1,6 @@
 ---
 name: new-track
-description: Start a new feature or bug track. Collaborative intake process with structured questions, AI guidance, and progressive refinement before generating spec.md and plan.md.
+description: "Start a new feature or bug track. Collaborative intake process with structured questions, AI guidance, and progressive refinement before generating spec.md and plan.md. Use when the user asks to 'start a new track', 'create a feature track', 'add a bug fix track', or says 'I want to build X', 'fix the Y bug', 'plan a refactor'."
 ---
 
 # Create New Track

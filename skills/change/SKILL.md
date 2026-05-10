@@ -1,6 +1,6 @@
 ---
 name: change
-description: Handle mid-track requirement changes. Analyzes impact on completed and pending tasks, proposes amendments to spec.md and plan.md before applying.
+description: "Handle mid-track requirement changes. Analyzes impact on completed and pending tasks, proposes amendments to spec.md and plan.md before applying. Use when the user asks to 'change the spec', 'amend the plan', 'modify requirements mid-track', or says 'we need to add X to this track', 'requirements changed'."
 ---
 
 # Course Correction

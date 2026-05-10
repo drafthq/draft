@@ -1,6 +1,6 @@
 ---
 name: testing-strategy
-description: Design test strategies and test plans with coverage targets. Complements /draft:coverage which measures what this skill plans. Auto-loaded by /draft:implement before TDD.
+description: "Design test strategies and test plans with coverage targets. Complements /draft:coverage which measures what this skill plans. Auto-loaded by /draft:implement before TDD. Use when the user asks for a 'testing strategy', 'design a test plan', 'choose test types', 'set coverage targets', or says 'how should we test this'."
 ---
 
 # Testing Strategy

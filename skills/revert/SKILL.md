@@ -1,6 +1,6 @@
 ---
 name: revert
-description: Git-aware revert that understands Draft tracks, phases, and tasks. Safely undo work at task, phase, or track level.
+description: "Git-aware revert that understands Draft tracks, phases, and tasks. Safely undo work at task, phase, or track level. Use when the user asks to 'revert this track', 'undo a phase', 'revert task X', or says 'roll back the last task', 'undo this work'."
 ---
 
 # Draft Revert
