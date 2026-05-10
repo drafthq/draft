@@ -1177,6 +1177,817 @@ Follow these steps in order. The specific files to look for depend on the langua
 
 ## architecture.md Specification
 
+Generate `draft/architecture.md` as a comprehensive human-readable engineering reference using the canonical 28-section structure plus appendices A–E. The document MUST follow the exact numbered headings listed in **MANDATORY SECTION CHECKLIST** above; freeform sections, renamed headings, or missing sections are failures.
+
+**Full specification, per-section instructions, anti-patterns, and quality gates** — see `references/architecture-spec.md`. It covers:
+
+- MANDATORY YAML frontmatter format (project, module, generated_by, generated_at, git, synced_to_commit)
+- Required body header (`# Architecture: {PROJECT_NAME}`) and Table of Contents
+- Per-section guidance for sections 1–28 (Executive Summary through Glossary) with word budgets and depth requirements
+- Appendix structure (A: File Structure Summary, B: Data Source → Implementation Mapping, C: Output Flow, D: Mermaid Sequence Diagrams, E: Proto Service Map)
+- Tier classification gates (S/M/L/XL) and anti-patterns (Shallow Sub-Module Treatment, Copy-Paste Module Descriptions, etc.)
+- Pre-finalization quality checklist
+
+The canonical output template lives at `core/templates/architecture.md` (already inlined into integrations).
+
+**After completing analysis AND passing all checks**, write the content to `draft/architecture.md` using the Write tool. This is the PRIMARY output. Then run the Condensation Subroutine to derive `.ai-context.md`.
+
+## .ai-context.md Specification
+
+Generate `draft/.ai-context.md` — a **machine-optimized** context file for AI/LLM consumption (200-400 lines).
+
+### Design Principles
+
+This file is **NOT for humans**. It is optimized for:
+1. **Token efficiency** — minimize tokens while maximizing information density
+2. **Machine parseability** — use consistent, structured formats that LLMs process efficiently
+3. **Self-containment** — complete context without referencing other files
+4. **Action-orientation** — everything an AI needs to make safe, correct code changes
+
+**Format choices**:
+- Use YAML-like key-value pairs (not prose paragraphs)
+- Use arrow notation for graphs (not Mermaid)
+- Use compact tables with `|` separators
+- Use structured lists with consistent prefixes
+- Abbreviate common patterns (e.g., `fn` for function, `ret` for returns)
+- No markdown formatting for emphasis (no `**bold**` or `_italic_`)
+
+### MANDATORY Header Format
+
+**CRITICAL**: Every .ai-context.md file MUST start with this exact structure:
+
+```markdown
+---
+project: "{PROJECT_NAME}"
+module: "root"
+generated_by: "draft:init"
+generated_at: "{ISO_TIMESTAMP}"
+git:
+  branch: "{LOCAL_BRANCH}"
+  remote: "{REMOTE/BRANCH}"
+  commit: "{FULL_SHA}"
+  commit_short: "{SHORT_SHA}"
+  commit_date: "{COMMIT_DATE}"
+  commit_message: "{COMMIT_MESSAGE}"
+  dirty: {true|false}
+synced_to_commit: "{FULL_SHA}"
+---
+```
+
+**Do NOT skip the YAML frontmatter. It enables incremental refresh tracking.**
+
+---
+
+### Required Sections (all mandatory)
+
+```markdown
+# {PROJECT_NAME}
+
+## META
+type: {microservice|cli|library|daemon|webapp|api}
+lang: {language} {version}
+pattern: {Hexagonal|MVC|Pipeline|Event-driven|Layered}
+build: {exact command}
+test: {exact command}
+entry: {file}:{function|class}
+config: {mechanism}@{location}
+
+## GRAPH:COMPONENTS
+{ComponentA}
+  ├─{SubComponentA1}: {5-word purpose}
+  ├─{SubComponentA2}: {5-word purpose}
+  └─{SubComponentA3}
+      ├─{NestedComponent}: {purpose}
+      └─{NestedComponent}: {purpose}
+{ComponentB}
+  └─...
+
+## GRAPH:DEPENDENCIES
+{Internal} -[{protocol}]-> {External}
+{Internal} -[{protocol}]-> {External}
+Examples:
+  AuthService -[gRPC]-> UserDB
+  API -[HTTP/REST]-> PaymentGateway
+  Worker -[AMQP]-> MessageQueue
+
+## GRAPH:DATAFLOW
+FLOW:{FlowName}
+  {source} --{data_type}--> {stage1} --{data_type}--> {stage2} --> {sink}
+FLOW:{AnotherFlow}
+  {source} --> {stage} --> {sink}
+FLOW:ERROR
+  {component} --{error_type}--> {handler} --> {recovery_action}
+
+## WIRING
+mechanism: {constructor_injection|context_struct|module_imports|DI_container|singleton}
+tokens: [{token1}, {token2}, {token3}]
+getters: [{getter1}, {getter2}]
+
+## INVARIANTS
+[DATA] {name}: {rule} @{file}:{line}
+[DATA] {name}: {rule} @{file}:{line}
+[SEC] {name}: {rule} @{file}:{line}
+[CONC] {name}: {rule} @{file}:{line}
+[ORD] {name}: {rule} @{file}:{line}
+[COMPAT] {name}: {rule} @{file}:{line}
+[IDEM] {name}: {rule} @{file}:{line}
+
+## INTERFACES
+```{language}
+// Condensed interface definitions - signatures only
+interface {Name} {
+  {method}({params}): {return}  // {one-line purpose}
+  {method}?({params}): {return} // optional
+}
+```
+
+## CATALOG:{Category}
+{id}|{type}|{file}|{purpose}
+{id}|{type}|{file}|{purpose}
+
+## CATALOG:{AnotherCategory}
+{id}|{type}|{file}|{purpose}
+
+## THREADS
+{pool_name}|{count}|{runs_what}
+{pool_name}|{count}|{runs_what}
+
+## CONFIG
+{param}|{default}|{critical:Y/N}|{purpose}
+{param}|{default}|{critical:Y/N}|{purpose}
+
+## ERRORS
+{scenario}: {recovery}
+{scenario}: {recovery}
+retry_policy: {policy}
+backoff: {strategy}
+
+## CONCURRENCY
+{component}: {rule} -> {violation_consequence}
+{component}: {rule} -> {violation_consequence}
+locks: [{lock1}@{file}, {lock2}@{file}]
+lock_order: {lock1} < {lock2} < {lock3}
+
+## EXTEND:{ExtensionType}
+create: {path/pattern}
+implement: {interface}@{file}
+required: [{method1}, {method2}]
+optional: [{method3}]
+register: {registry}@{file}:{function}
+deps: [{dep1}, {dep2}]
+test: {test_pattern}
+
+## EXTEND:{AnotherType}
+...
+
+## TEST
+unit: {command}
+integration: {command}
+hooks: [{hook1}@{file}, {hook2}@{file}]
+
+## FILES
+entry: {path}
+config: {path}
+routes: {path}
+models: {path}
+services: {path}
+tests: {path}
+build: {path}
+
+## VOCAB
+{term}: {definition}
+{term}: {definition}
+
+## REFS
+tech_stack: draft/tech-stack.md
+workflow: draft/workflow.md
+product: draft/product.md
+```
+
+### Machine-Readable Graph Notation
+
+Use these consistent notations for graphs:
+
+**Component hierarchy** (tree notation):
+```
+Root
+  ├─Child1: purpose
+  ├─Child2: purpose
+  │   ├─Grandchild1: purpose
+  │   └─Grandchild2: purpose
+  └─Child3: purpose
+```
+
+**Dependency arrows** (directed graph):
+```
+A -[protocol]-> B      # A depends on B via protocol
+A --> B                # A depends on B (direct call)
+A -.-> B               # A optionally depends on B
+A <--> B               # bidirectional dependency
+```
+
+**Data flow** (pipeline notation):
+```
+Source --{DataType}--> Transform --{DataType}--> Sink
+         |
+         +--> Branch --{DataType}--> AlternateSink
+```
+
+**State transitions**:
+```
+State1 --(event)--> State2
+State2 --(event)--> State3 | State4  # conditional
+```
+
+### Compression Techniques
+
+Apply these to minimize tokens:
+
+1. **Abbreviate common words**:
+   - `fn` = function, `ret` = returns, `req` = required, `opt` = optional
+   - `cfg` = config, `impl` = implementation, `dep` = dependency
+   - `auth` = authentication, `authz` = authorization
+
+2. **Use symbols**:
+   - `@` = at/in file, `->` = leads to/calls, `|` = or/separator
+   - `?` = optional, `!` = critical/required, `~` = approximate
+
+3. **Omit obvious context**:
+   - Skip "The" and "This" at start of descriptions
+   - Skip file extensions when unambiguous
+   - Skip common prefixes (e.g., `src/` if all files are there)
+
+4. **Use consistent column formats**:
+   - Tables: `col1|col2|col3` (no spaces around `|`)
+   - Key-value: `key: value` (single space after colon)
+   - Lists: `[item1, item2, item3]` (comma-space separator)
+
+### What to EXCLUDE from .ai-context.md
+
+Exclude (belongs only in architecture.md):
+- Mermaid diagram syntax (use text graphs)
+- Full code implementations (use signatures only)
+- Prose explanations (use structured key-values)
+- Human formatting (bold, italic, headers beyond ##)
+- Redundant information (don't repeat across sections)
+- Historical context (focus on current state)
+- Performance details (unless critical for correctness)
+- Security details (unless needed for code changes)
+
+### Quality Checklist for .ai-context.md
+
+Verify before writing:
+- [ ] Agent can implement new extension using ONLY this file
+- [ ] Agent knows correct thread pool for async work
+- [ ] Agent knows invariants to check before side effects
+- [ ] Agent knows error handling pattern
+- [ ] Agent can find correct file for any modification
+- [ ] Agent knows test command and patterns
+- [ ] Agent knows V1/V2 boundary (if applicable)
+- [ ] No prose paragraphs (all structured data)
+- [ ] No references to architecture.md
+- [ ] 200-400 lines total
+
+---
+
+## Architecture Discovery Output (End of Step 1.5)
+
+After completing the 5-phase analysis:
+
+1. **Gather git metadata FIRST**: Run these commands to collect current state:
+   ```bash
+   PROJECT_NAME=$(basename "$(pwd)")
+   GIT_BRANCH=$(git branch --show-current)
+   GIT_REMOTE=$(git rev-parse --abbrev-ref --symbolic-full-name @{upstream} 2>/dev/null || echo "none")
+   GIT_COMMIT=$(git rev-parse HEAD)
+   GIT_COMMIT_SHORT=$(git rev-parse --short HEAD)
+   GIT_COMMIT_DATE=$(git log -1 --format="%ci")
+   GIT_COMMIT_MSG=$(git log -1 --format="%s")
+   GIT_DIRTY=$([ -n "$(git status --porcelain)" ] && echo "true" || echo "false")
+   ISO_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+   ```
+
+2. **Write `draft/architecture.md`** with this EXACT structure:
+   ```markdown
+   ---
+   project: "{PROJECT_NAME from above}"
+   module: "root"
+   generated_by: "draft:init"
+   generated_at: "{ISO_TIMESTAMP from above}"
+   git:
+     branch: "{GIT_BRANCH}"
+     remote: "{GIT_REMOTE}"
+     commit: "{GIT_COMMIT}"
+     commit_short: "{GIT_COMMIT_SHORT}"
+     commit_date: "{GIT_COMMIT_DATE}"
+     commit_message: "{GIT_COMMIT_MSG}"
+     dirty: {GIT_DIRTY}
+   synced_to_commit: "{GIT_COMMIT}"
+   ---
+
+   # Architecture: {PROJECT_NAME}
+
+   > Comprehensive human-readable engineering reference.
+   > For token-optimized AI context, see `draft/.ai-context.md`.
+
+   ---
+
+   ## Table of Contents
+   ... (then continue with full 28 sections + appendices)
+   ```
+
+3. **Run Completion Verification (MANDATORY)** — Before proceeding to `.ai-context.md`, verify architecture.md meets all hard minimums:
+
+   ```
+   COMPLETION VERIFICATION — Score against Hard Minimum Thresholds:
+
+   Step 1: Count total lines in draft/architecture.md
+     → Hard minimum: 2000 (3000+ for 500+ file codebases using multi-pass protocol)
+     → PASS / FAIL: ___
+
+   Step 2: Count Mermaid diagram blocks (```mermaid)
+     → Hard minimum: 8
+     → PASS / FAIL: ___
+
+   Step 3: Count tables with 3+ data rows (including sub-module tables and op catalogs)
+     → Hard minimum: 25
+     → PASS / FAIL: ___
+
+   Step 4: Count non-Mermaid code blocks with actual source code
+     → Hard minimum: 8
+     → PASS / FAIL: ___
+
+   Step 5: Count backtick-quoted file path references
+     → Hard minimum: 100
+     → PASS / FAIL: ___
+
+   Step 6: Check Section 7 — verify UNIQUE descriptions at ALL levels
+     → Compare Responsibilities text across all modules AND sub-modules
+     → If 3+ entries (modules or sub-modules) share >50% of text: FAIL
+     → PASS / FAIL: ___
+
+   Step 7: Check Section 7 — verify sub-module tiering was applied
+     → Every module with 50+ files MUST have a sub-module structure table
+     → Every Large sub-module (50+ files) MUST have its own ##### deep-dive subsection
+     → Every Medium sub-module (10-49 files) MUST have its own ##### summary subsection
+     → Every ops/handler directory MUST have a numbered operation catalog
+     → PASS / FAIL: ___
+
+   Step 8: Check Section 15 — count invariants documented
+     → Hard minimum: 10
+     → PASS / FAIL: ___
+
+   Step 9: Check Appendix D — verify sequence diagrams have alt/opt blocks and 15+ lines each
+     → PASS / FAIL: ___
+
+   Step 10: Check Section 28 — count glossary terms
+     → Hard minimum: 20
+     → PASS / FAIL: ___
+
+   Step 11: Check Appendix B and C — count table rows
+     → Hard minimum: 10 rows each
+     → PASS / FAIL: ___
+
+   Step 12: Check operation catalogs — verify completeness
+     → For each ops/handler directory, compare catalog entry count against file count from graph data
+     → If catalog entries < 80% of actual files in the directory: FAIL
+     → PASS / FAIL: ___
+     → PASS / FAIL: ___
+
+   OVERALL: If ANY step is FAIL, identify the weakest sections and expand them.
+   Do NOT proceed to .ai-context.md until ALL steps PASS.
+   ```
+
+   If any verification step fails:
+   - Read additional source files relevant to the failing sections
+   - Expand the weak sections with real content
+   - Re-run verification
+   - Repeat until all steps pass
+
+4. **Derive `draft/.ai-context.md`** with the SAME metadata header, then use the Condensation Subroutine to transform architecture.md content into machine-optimized format.
+
+5. **Derive `draft/.ai-profile.md`** — ultra-compact 20-50 line always-injected profile using the Profile Generation Subroutine (defined at the end of this skill).
+
+6. **Present for review**: Show the user a summary of what was discovered, including the Completion Verification scores, before proceeding to Step 2.
+
+**CRITICAL**:
+- Do NOT skip the YAML frontmatter metadata block — it enables incremental refresh
+- Do NOT skip the Completion Verification — it catches shallow output before it becomes permanent
+- Generate architecture.md FIRST, verify it meets thresholds, then derive .ai-context.md, then .ai-profile.md
+- All three files MUST have the metadata header at the very top
+
+---
+
+> **Note:** After generating or updating `architecture.md`, run the **Completion Verification** above, then the **Condensation Subroutine** (defined at the end of this skill) to derive `.ai-context.md`.
+
+## Step 1.7: Persist State (Brownfield Only)
+
+**Skip for Greenfield projects** — there are no source files to hash and no signals to classify. Greenfield projects only get `run-memory.json` (written during Completion).
+
+After generating `architecture.md`, `.ai-context.md`, and `.ai-profile.md`, persist four state files to `draft/.state/` for incremental refresh and cross-session continuity.
+
+### 1.7.0 Fact Registry (`draft/.state/facts.json`)
+
+Extract atomic architectural facts discovered during Phases 1-5. Each fact is a single, verifiable claim about the codebase with dual-layer timestamps and relationship edges.
+
+```json
+{
+  "generated_at": "{ISO_TIMESTAMP}",
+  "git_commit": "{FULL_SHA}",
+  "total_facts": 0,
+  "categories": ["data-flow", "architecture", "invariant", "dependency", "api", "security", "concurrency", "configuration", "testing", "convention"],
+  "facts": [
+    {
+      "id": "fact-001",
+      "category": "architecture",
+      "statement": "Express app uses service layer pattern — routes delegate to services, services access repositories",
+      "confidence": 0.95,
+      "source_files": ["src/routes/users.ts", "src/services/user.service.ts", "src/repositories/user.repo.ts"],
+      "discovered_at": "{ISO_TIMESTAMP}",
+      "established_at": "{ISO_TIMESTAMP from git blame}",
+      "last_verified_at": "{ISO_TIMESTAMP}",
+      "last_active_at": "{ISO_TIMESTAMP from file modification}",
+      "access_count": 0,
+      "edges": {
+        "updates": [],
+        "extends": [],
+        "derives": ["fact-003"],
+        "superseded_by": null
+      }
+    }
+  ]
+}
+```
+
+**Fact categories:**
+- `data-flow` — How data moves through the system
+- `architecture` — Structural patterns and module organization
+- `invariant` — Rules that must always hold true
+- `dependency` — External service and library dependencies
+- `api` — Endpoint definitions and contracts
+- `security` — Auth, authz, crypto, and access control patterns
+- `concurrency` — Thread safety, async patterns, lock ordering
+- `configuration` — Config mechanisms and critical settings
+- `testing` — Test infrastructure and patterns
+- `convention` — Coding conventions and naming patterns
+
+**Target:** 50-150 facts per typical project. Focus on facts that are actionable for AI agents making code changes.
+
+### 1.7.1 Freshness State (`draft/.state/freshness.json`)
+
+Compute SHA-256 hashes of all source files analyzed during Phases 1-5. This enables **file-level staleness detection** on subsequent refreshes — more granular than `synced_to_commit` which only detects that _some_ commits happened.
+
+```bash
+# Generate SHA-256 hashes for all analyzed source files (exclude draft/, node_modules/, .git/, vendor/)
+find . -type f \
+  ! -path "./draft/*" ! -path "./.git/*" ! -path "*/node_modules/*" ! -path "*/vendor/*" \
+  ! -path "*/__pycache__/*" ! -path "*/dist/*" ! -path "*/build/*" \
+  \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \
+     -o -name "*.py" -o -name "*.go" -o -name "*.rs" -o -name "*.java" -o -name "*.kt" \
+     -o -name "*.c" -o -name "*.cc" -o -name "*.cpp" -o -name "*.h" \
+     -o -name "*.rb" -o -name "*.php" -o -name "*.swift" -o -name "*.cs" \
+     -o -name "*.proto" -o -name "*.graphql" -o -name "*.gql" \
+     -o -name "*.yaml" -o -name "*.yml" -o -name "*.toml" -o -name "*.json" \
+     -o -name "*.sql" -o -name "*.md" -o -name "Dockerfile" -o -name "Makefile" \) \
+  -exec sha256sum {} \; 2>/dev/null | sort -k2
+```
+
+Write `draft/.state/freshness.json`:
+
+```json
+{
+  "generated_at": "{ISO_TIMESTAMP}",
+  "git_commit": "{FULL_SHA}",
+  "total_files": 0,
+  "files": {
+    "src/index.ts": "sha256:a1b2c3d4...",
+    "src/auth/login.ts": "sha256:e5f6a7b8...",
+    "package.json": "sha256:c9d0e1f2..."
+  }
+}
+```
+
+**On refresh:** Compare stored hashes against current file hashes. Files with changed/new/deleted hashes are the delta that drives targeted section updates.
+
+### 1.7.2 Signal State (`draft/.state/signals.json`)
+
+Persist the signal classification from Phase 1 step 5:
+
+```json
+{
+  "generated_at": "{ISO_TIMESTAMP}",
+  "git_commit": "{FULL_SHA}",
+  "total_files_scanned": 0,
+  "signals": {
+    "backend_routes": { "count": 12, "sample_files": ["src/routes/auth.ts", "src/routes/users.ts"] },
+    "frontend_routes": { "count": 0, "sample_files": [] },
+    "components": { "count": 0, "sample_files": [] },
+    "services": { "count": 8, "sample_files": ["src/services/auth.service.ts"] },
+    "data_models": { "count": 6, "sample_files": ["src/models/user.ts"] },
+    "auth_files": { "count": 3, "sample_files": ["src/auth/guard.ts"] },
+    "state_management": { "count": 0, "sample_files": [] },
+    "background_jobs": { "count": 0, "sample_files": [] },
+    "persistence": { "count": 4, "sample_files": ["src/db/repository.ts"] },
+    "test_infra": { "count": 15, "sample_files": ["tests/auth.test.ts"] },
+    "config_files": { "count": 5, "sample_files": [".env.example", "config/default.yml"] }
+  }
+}
+```
+
+**Section relevance is derived at read-time**, not persisted. Use the signal counts and the "Drives Section(s)" column from the Phase 1 step 5 signal table to determine which architecture.md sections need deep treatment (signal count ≥ 3), brief treatment (1-2), or can be skipped (0).
+
+**On refresh:** Compare current signals against stored signals. New signal categories appearing (e.g., `auth_files` going from 0→3) indicate **structural drift** — new architecture sections may need to be generated for the first time.
+
+### 1.7.3 Run Memory (`draft/.state/run-memory.json`)
+
+Persist run state for cross-session continuity. If `draft:init` is interrupted mid-analysis, the next invocation can detect the incomplete run and offer to resume.
+
+```json
+{
+  "run_id": "{UUID}",
+  "started_at": "{ISO_TIMESTAMP}",
+  "completed_at": null,
+  "run_type": "init",
+  "status": "in_progress",
+  "phases_completed": ["phase_1", "phase_2", "phase_3"],
+  "phases_remaining": ["phase_4", "phase_5"],
+  "files_analyzed": 142,
+  "files_generated": ["draft/architecture.md", "draft/.ai-context.md", "draft/.ai-profile.md"],
+  "unresolved_questions": [
+    "Could not determine if src/legacy/ is actively used or deprecated",
+    "Multiple auth patterns detected — unclear which is canonical"
+  ],
+  "active_focus_areas": ["backend_routes", "services", "data_models"],
+  "resumable_checkpoint": {
+    "last_phase": "phase_3",
+    "last_file_read": "src/services/billing.service.ts",
+    "pending_sections": ["§14 Cross-Module Integration", "§15 Critical Invariants"]
+  }
+}
+```
+
+**On completion:** Update `status` to `"completed"` and set `completed_at`. Keep `unresolved_questions` — these are surfaced to the user in the completion report and are valuable context for future refreshes.
+
+**On next invocation:** If `run-memory.json` exists with `status: "in_progress"`:
+- Announce: "Detected incomplete previous run (started {started_at}, completed phases: {list}). Resume from {last_phase} or start fresh?"
+- If resume: Skip completed phases, continue from `resumable_checkpoint`
+- If fresh: Overwrite run memory and start from Phase 1
+
+---
+
+## Step 2: Product Definition
+
+Create `draft/product.md` using the template from `core/templates/product.md`.
+
+**Include the Standard File Metadata header at the top of the file.**
+
+Engage in structured dialogue:
+
+1. **Vision**: "What does this product do and why does it matter?"
+2. **Users**: "Who uses this? What are their primary needs?"
+3. **Core Features**: "What are the must-have (P0), should-have (P1), and nice-to-have (P2) features?"
+4. **Success Criteria**: "How will you measure if this product is successful?"
+5. **Constraints**: "What technical, business, or timeline constraints exist?"
+6. **Non-Goals**: "What is explicitly out of scope?"
+
+Present for approval, iterate if needed, then write to `draft/product.md`.
+
+## Step 3: Tech Stack
+
+For Brownfield projects, auto-detect from:
+- `package.json` → Node.js/TypeScript
+- `requirements.txt` / `pyproject.toml` → Python
+- `go.mod` → Go
+- `Cargo.toml` → Rust
+
+Create `draft/tech-stack.md` using the template from `core/templates/tech-stack.md`.
+
+**Include the Standard File Metadata header at the top of the file.**
+
+Present detected stack for verification before writing.
+
+## Step 4: Workflow Configuration
+
+Create `draft/workflow.md` using the template from `core/templates/workflow.md`.
+
+**Include the Standard File Metadata header at the top of the file.**
+
+Ask about:
+- TDD preference (strict/flexible/none)
+- Commit style and frequency
+- Validation settings (auto-validate, blocking behavior)
+
+## Step 4.1: Guardrails Configuration
+
+Create `draft/guardrails.md` using the template from `core/templates/guardrails.md`.
+
+**Include the Standard File Metadata header at the top of the file.**
+
+The template includes general hard guardrails (Git, Code Quality, Security, Testing) — ask which to enable for this project. The Learned Conventions and Learned Anti-Patterns sections start empty — they are populated automatically by the learn step at the end of init (brownfield only) and by quality commands over time.
+
+## Step 5: Initialize Tracks
+
+Create `draft/tracks.md` with metadata header:
+
+```markdown
+---
+project: "{PROJECT_NAME}"
+module: "root"
+generated_by: "draft:init"
+generated_at: "{ISO_TIMESTAMP}"
+git:
+  branch: "{LOCAL_BRANCH}"
+  remote: "{REMOTE/BRANCH}"
+  commit: "{FULL_SHA}"
+  commit_short: "{SHORT_SHA}"
+  commit_date: "{COMMIT_DATE}"
+  commit_message: "{COMMIT_MESSAGE}"
+  dirty: {true|false}
+synced_to_commit: "{FULL_SHA}"
+---
+
+# Tracks
+
+## Active
+<!-- No active tracks -->
+
+## Completed
+<!-- No completed tracks -->
+
+## Archived
+<!-- No archived tracks -->
+```
+
+## Step 6: Create Directory Structure
+
+```bash
+mkdir -p draft/tracks draft/.state
+```
+
+## Step 7: Pattern Discovery (Brownfield Only)
+
+For **brownfield** projects, run `draft learn` (no arguments — full codebase scan) to populate `draft/guardrails.md` with initial learned conventions and anti-patterns. This ensures quality commands (`draft bughunt`, `draft review`, `draft deep-review`) have guardrails data from the first run.
+
+**Skip this step for greenfield projects** — there is no existing codebase to scan.
+
+> **Note:** This is the same full scan that `draft learn` performs when run standalone. The guardrails can be further refined later with `draft learn promote` or by quality commands that discover new patterns.
+
+---
+
+## Completion
+
+**Finalize run memory:** Update `draft/.state/run-memory.json`:
+- `status`: `"completed"`
+- `completed_at`: current ISO timestamp
+- Preserve `unresolved_questions` — these are displayed in the completion report below
+
+For **Brownfield** projects, announce:
+"Draft initialized successfully with comprehensive analysis!
+
+Created:
+- draft/.ai-profile.md (20-50 lines — ultra-compact always-injected profile, Tier 0)
+- draft/.ai-context.md (200-400 lines — token-optimized AI context, self-contained, Tier 1)
+- draft/architecture.md (comprehensive human-readable engineering reference, Tier 2)
+- draft/product.md
+- draft/tech-stack.md
+- draft/workflow.md
+- draft/guardrails.md (populated with learned conventions and anti-patterns from codebase scan)
+- draft/tracks.md
+- draft/.state/facts.json (atomic fact registry with knowledge graph edges)
+- draft/.state/freshness.json (file-level hash baseline for incremental refresh)
+- draft/.state/signals.json (codebase signal classification)
+- draft/.state/run-memory.json (run metadata and unresolved questions)
+
+{Include draft learn summary report here — conventions learned, anti-patterns detected, skipped entries}
+
+{If unresolved_questions is non-empty, show:}
+Unresolved questions from analysis:
+{list each question — these are areas where the AI couldn't determine the answer with confidence}
+
+Next steps:
+1. Review draft/product.md — verify product vision, users, and goals reflect current reality
+2. Review draft/tech-stack.md — verify languages, frameworks, and accepted patterns are accurate
+3. Review draft/workflow.md — verify TDD, commit, and review settings match your team's process
+4. Review draft/guardrails.md — verify learned conventions and anti-patterns are accurate
+5. Review draft/.ai-context.md — verify the AI context is complete and accurate
+6. Review draft/architecture.md — human-friendly version for team onboarding
+7. Run `draft new-track` to start planning a feature
+8. Run `draft init refresh` after significant codebase changes — refresh is now incremental (only stale files re-analyzed)
+9. Run `draft learn promote` to promote high-confidence patterns to Hard Guardrails"
+
+For **Greenfield** projects, announce:
+"Draft initialized successfully!
+
+Created:
+- draft/product.md
+- draft/tech-stack.md
+- draft/workflow.md
+- draft/guardrails.md
+- draft/tracks.md
+- draft/.state/run-memory.json (run metadata)
+
+Next steps:
+1. Review draft/product.md — verify product vision, users, and goals reflect current reality
+2. Review draft/tech-stack.md — verify languages, frameworks, and accepted patterns are accurate
+3. Review draft/workflow.md — verify TDD, commit, and review settings match your team's process
+4. Review draft/guardrails.md — configure hard guardrails for your project
+5. Run `draft new-track` to start planning a feature
+6. Run `draft init refresh` after adding substantial code — this will generate architecture context and auto-run `draft learn` to populate guardrails"
+
+---
+
+## Condensation Subroutine
+
+A self-contained procedure for generating `draft/.ai-context.md` from `draft/architecture.md`. Any skill that mutates `architecture.md` should execute this subroutine afterward to keep derived context in sync.
+
+**Authoritative definition** lives at `core/shared/condensation.md` (already inlined into integrations). It covers inputs, outputs, tier-scaled budgets, the META/GRAPH/INVARIANTS/INTERFACES/CATALOG/THREADS/CONFIG/ERRORS/EXTEND sections, and the GRAPH:MODULE-HOTSPOTS / GRAPH:FAN-IN / GRAPH:PROTO-MAP enrichments.
+
+After running condensation, also run the **Profile Generation Subroutine** below to regenerate `draft/.ai-profile.md`.
+
+
+## Profile Generation Subroutine
+
+This is a self-contained procedure for generating `draft/.ai-profile.md` from `draft/.ai-context.md`. Run after every Condensation Subroutine execution.
+
+### Purpose
+
+The profile is the **Tier 0 context** — an ultra-compact 20-50 line file always loaded by every Draft command. It provides the absolute minimum context needed for simple tasks (quick edits, config changes, small fixes) without requiring the full `.ai-context.md`.
+
+### Procedure
+
+#### Step 1: Read Source
+
+Read `draft/.ai-context.md`. Extract the YAML frontmatter metadata block.
+
+#### Step 2: Write YAML Frontmatter
+
+Start `draft/.ai-profile.md` with an updated YAML frontmatter block. Copy all `git.*` and `synced_to_commit` fields. Set:
+- `generated_by`: the calling command (e.g., `draft:init`, `draft:implement`)
+- `generated_at`: current ISO 8601 timestamp
+
+#### Step 3: Extract Profile Content
+
+From `.ai-context.md`, extract:
+
+1. **Stack** — Language, framework, database, auth method, API style, test framework, deploy target, build command, entry point (from `## META`)
+2. **INVARIANTS** — Top 3-5 critical invariants with `file:line` references (from `## INVARIANTS`)
+3. **NEVER** — 2-3 safety rules — the most dangerous things that must never happen (from `## INVARIANTS` or architecture.md safety rules)
+4. **Active Tracks** — List of currently active track IDs and one-line descriptions (from `draft/tracks.md`)
+5. **Recent Changes** — Last 3-5 significant commits (from `git log --oneline -5`)
+
+#### Step 4: Write Output
+
+Write to `draft/.ai-profile.md` using the template from `core/templates/ai-profile.md`.
+
+#### Step 5: Size Check
+
+- **Minimum**: 20 lines
+- **Maximum**: 50 lines
+- If over 50 lines, trim Recent Changes and reduce INVARIANTS to top 3
+
+---
+
+## Cross-Skill Dispatch
+
+After initialization completes, suggest relevant follow-up skills based on project type:
+
+### Brownfield Projects (Debt Signals Detected)
+
+If during architecture discovery (Step 1.5), anti-patterns or technical debt signals are detected in signal classification:
+
+```
+"Detected architectural debt patterns in this codebase. Consider running:
+  → draft tech-debt — Catalog and prioritize existing technical debt"
+```
+
+### All Projects (Post-Init Suggestions)
+
+At completion (Step 6), after announcing next steps, present categorized follow-up skills:
+
+```
+What's Next:
+─────────────────────────────
+Start building:
+  → draft new-track "description" — Start a feature, bug fix, or refactor
+
+Quality & Testing:
+  → draft testing-strategy — Establish test coverage targets and testing pyramid
+  → draft tech-debt — Catalog technical debt (recommended for brownfield projects)
+
+Documentation:
+  → draft documentation readme — Generate README from discovered context
+
+Debugging & Operations:
+  → draft debug — Investigate a specific bug
+  → draft standup — Generate standup from recent activity
+```
+
+### Jira Sync
+
+If Jira MCP is available and a project ticket is linked, sync initialization artifacts via `core/shared/jira-sync.md`.
+
+## architecture.md Specification
+
 Generate `draft/architecture.md` — a comprehensive human-readable engineering reference.
 
 **Output format**:
@@ -2506,971 +3317,6 @@ Run this checklist before writing architecture.md:
 **After completing analysis AND passing all checks: Write this content to `draft/architecture.md` using the Write tool. This is the PRIMARY output. Then run the Condensation Subroutine to derive .ai-context.md.**
 
 ---
-
-## .ai-context.md Specification
-
-Generate `draft/.ai-context.md` — a **machine-optimized** context file for AI/LLM consumption (200-400 lines).
-
-### Design Principles
-
-This file is **NOT for humans**. It is optimized for:
-1. **Token efficiency** — minimize tokens while maximizing information density
-2. **Machine parseability** — use consistent, structured formats that LLMs process efficiently
-3. **Self-containment** — complete context without referencing other files
-4. **Action-orientation** — everything an AI needs to make safe, correct code changes
-
-**Format choices**:
-- Use YAML-like key-value pairs (not prose paragraphs)
-- Use arrow notation for graphs (not Mermaid)
-- Use compact tables with `|` separators
-- Use structured lists with consistent prefixes
-- Abbreviate common patterns (e.g., `fn` for function, `ret` for returns)
-- No markdown formatting for emphasis (no `**bold**` or `_italic_`)
-
-### MANDATORY Header Format
-
-**CRITICAL**: Every .ai-context.md file MUST start with this exact structure:
-
-```markdown
----
-project: "{PROJECT_NAME}"
-module: "root"
-generated_by: "draft:init"
-generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{COMMIT_MESSAGE}"
-  dirty: {true|false}
-synced_to_commit: "{FULL_SHA}"
----
-```
-
-**Do NOT skip the YAML frontmatter. It enables incremental refresh tracking.**
-
----
-
-### Required Sections (all mandatory)
-
-```markdown
-# {PROJECT_NAME}
-
-## META
-type: {microservice|cli|library|daemon|webapp|api}
-lang: {language} {version}
-pattern: {Hexagonal|MVC|Pipeline|Event-driven|Layered}
-build: {exact command}
-test: {exact command}
-entry: {file}:{function|class}
-config: {mechanism}@{location}
-
-## GRAPH:COMPONENTS
-{ComponentA}
-  ├─{SubComponentA1}: {5-word purpose}
-  ├─{SubComponentA2}: {5-word purpose}
-  └─{SubComponentA3}
-      ├─{NestedComponent}: {purpose}
-      └─{NestedComponent}: {purpose}
-{ComponentB}
-  └─...
-
-## GRAPH:DEPENDENCIES
-{Internal} -[{protocol}]-> {External}
-{Internal} -[{protocol}]-> {External}
-Examples:
-  AuthService -[gRPC]-> UserDB
-  API -[HTTP/REST]-> PaymentGateway
-  Worker -[AMQP]-> MessageQueue
-
-## GRAPH:DATAFLOW
-FLOW:{FlowName}
-  {source} --{data_type}--> {stage1} --{data_type}--> {stage2} --> {sink}
-FLOW:{AnotherFlow}
-  {source} --> {stage} --> {sink}
-FLOW:ERROR
-  {component} --{error_type}--> {handler} --> {recovery_action}
-
-## WIRING
-mechanism: {constructor_injection|context_struct|module_imports|DI_container|singleton}
-tokens: [{token1}, {token2}, {token3}]
-getters: [{getter1}, {getter2}]
-
-## INVARIANTS
-[DATA] {name}: {rule} @{file}:{line}
-[DATA] {name}: {rule} @{file}:{line}
-[SEC] {name}: {rule} @{file}:{line}
-[CONC] {name}: {rule} @{file}:{line}
-[ORD] {name}: {rule} @{file}:{line}
-[COMPAT] {name}: {rule} @{file}:{line}
-[IDEM] {name}: {rule} @{file}:{line}
-
-## INTERFACES
-```{language}
-// Condensed interface definitions - signatures only
-interface {Name} {
-  {method}({params}): {return}  // {one-line purpose}
-  {method}?({params}): {return} // optional
-}
-```
-
-## CATALOG:{Category}
-{id}|{type}|{file}|{purpose}
-{id}|{type}|{file}|{purpose}
-
-## CATALOG:{AnotherCategory}
-{id}|{type}|{file}|{purpose}
-
-## THREADS
-{pool_name}|{count}|{runs_what}
-{pool_name}|{count}|{runs_what}
-
-## CONFIG
-{param}|{default}|{critical:Y/N}|{purpose}
-{param}|{default}|{critical:Y/N}|{purpose}
-
-## ERRORS
-{scenario}: {recovery}
-{scenario}: {recovery}
-retry_policy: {policy}
-backoff: {strategy}
-
-## CONCURRENCY
-{component}: {rule} -> {violation_consequence}
-{component}: {rule} -> {violation_consequence}
-locks: [{lock1}@{file}, {lock2}@{file}]
-lock_order: {lock1} < {lock2} < {lock3}
-
-## EXTEND:{ExtensionType}
-create: {path/pattern}
-implement: {interface}@{file}
-required: [{method1}, {method2}]
-optional: [{method3}]
-register: {registry}@{file}:{function}
-deps: [{dep1}, {dep2}]
-test: {test_pattern}
-
-## EXTEND:{AnotherType}
-...
-
-## TEST
-unit: {command}
-integration: {command}
-hooks: [{hook1}@{file}, {hook2}@{file}]
-
-## FILES
-entry: {path}
-config: {path}
-routes: {path}
-models: {path}
-services: {path}
-tests: {path}
-build: {path}
-
-## VOCAB
-{term}: {definition}
-{term}: {definition}
-
-## REFS
-tech_stack: draft/tech-stack.md
-workflow: draft/workflow.md
-product: draft/product.md
-```
-
-### Machine-Readable Graph Notation
-
-Use these consistent notations for graphs:
-
-**Component hierarchy** (tree notation):
-```
-Root
-  ├─Child1: purpose
-  ├─Child2: purpose
-  │   ├─Grandchild1: purpose
-  │   └─Grandchild2: purpose
-  └─Child3: purpose
-```
-
-**Dependency arrows** (directed graph):
-```
-A -[protocol]-> B      # A depends on B via protocol
-A --> B                # A depends on B (direct call)
-A -.-> B               # A optionally depends on B
-A <--> B               # bidirectional dependency
-```
-
-**Data flow** (pipeline notation):
-```
-Source --{DataType}--> Transform --{DataType}--> Sink
-         |
-         +--> Branch --{DataType}--> AlternateSink
-```
-
-**State transitions**:
-```
-State1 --(event)--> State2
-State2 --(event)--> State3 | State4  # conditional
-```
-
-### Compression Techniques
-
-Apply these to minimize tokens:
-
-1. **Abbreviate common words**:
-   - `fn` = function, `ret` = returns, `req` = required, `opt` = optional
-   - `cfg` = config, `impl` = implementation, `dep` = dependency
-   - `auth` = authentication, `authz` = authorization
-
-2. **Use symbols**:
-   - `@` = at/in file, `->` = leads to/calls, `|` = or/separator
-   - `?` = optional, `!` = critical/required, `~` = approximate
-
-3. **Omit obvious context**:
-   - Skip "The" and "This" at start of descriptions
-   - Skip file extensions when unambiguous
-   - Skip common prefixes (e.g., `src/` if all files are there)
-
-4. **Use consistent column formats**:
-   - Tables: `col1|col2|col3` (no spaces around `|`)
-   - Key-value: `key: value` (single space after colon)
-   - Lists: `[item1, item2, item3]` (comma-space separator)
-
-### What to EXCLUDE from .ai-context.md
-
-Exclude (belongs only in architecture.md):
-- Mermaid diagram syntax (use text graphs)
-- Full code implementations (use signatures only)
-- Prose explanations (use structured key-values)
-- Human formatting (bold, italic, headers beyond ##)
-- Redundant information (don't repeat across sections)
-- Historical context (focus on current state)
-- Performance details (unless critical for correctness)
-- Security details (unless needed for code changes)
-
-### Quality Checklist for .ai-context.md
-
-Verify before writing:
-- [ ] Agent can implement new extension using ONLY this file
-- [ ] Agent knows correct thread pool for async work
-- [ ] Agent knows invariants to check before side effects
-- [ ] Agent knows error handling pattern
-- [ ] Agent can find correct file for any modification
-- [ ] Agent knows test command and patterns
-- [ ] Agent knows V1/V2 boundary (if applicable)
-- [ ] No prose paragraphs (all structured data)
-- [ ] No references to architecture.md
-- [ ] 200-400 lines total
-
----
-
-## Architecture Discovery Output (End of Step 1.5)
-
-After completing the 5-phase analysis:
-
-1. **Gather git metadata FIRST**: Run these commands to collect current state:
-   ```bash
-   PROJECT_NAME=$(basename "$(pwd)")
-   GIT_BRANCH=$(git branch --show-current)
-   GIT_REMOTE=$(git rev-parse --abbrev-ref --symbolic-full-name @{upstream} 2>/dev/null || echo "none")
-   GIT_COMMIT=$(git rev-parse HEAD)
-   GIT_COMMIT_SHORT=$(git rev-parse --short HEAD)
-   GIT_COMMIT_DATE=$(git log -1 --format="%ci")
-   GIT_COMMIT_MSG=$(git log -1 --format="%s")
-   GIT_DIRTY=$([ -n "$(git status --porcelain)" ] && echo "true" || echo "false")
-   ISO_TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-   ```
-
-2. **Write `draft/architecture.md`** with this EXACT structure:
-   ```markdown
-   ---
-   project: "{PROJECT_NAME from above}"
-   module: "root"
-   generated_by: "draft:init"
-   generated_at: "{ISO_TIMESTAMP from above}"
-   git:
-     branch: "{GIT_BRANCH}"
-     remote: "{GIT_REMOTE}"
-     commit: "{GIT_COMMIT}"
-     commit_short: "{GIT_COMMIT_SHORT}"
-     commit_date: "{GIT_COMMIT_DATE}"
-     commit_message: "{GIT_COMMIT_MSG}"
-     dirty: {GIT_DIRTY}
-   synced_to_commit: "{GIT_COMMIT}"
-   ---
-
-   # Architecture: {PROJECT_NAME}
-
-   > Comprehensive human-readable engineering reference.
-   > For token-optimized AI context, see `draft/.ai-context.md`.
-
-   ---
-
-   ## Table of Contents
-   ... (then continue with full 28 sections + appendices)
-   ```
-
-3. **Run Completion Verification (MANDATORY)** — Before proceeding to `.ai-context.md`, verify architecture.md meets all hard minimums:
-
-   ```
-   COMPLETION VERIFICATION — Score against Hard Minimum Thresholds:
-
-   Step 1: Count total lines in draft/architecture.md
-     → Hard minimum: 2000 (3000+ for 500+ file codebases using multi-pass protocol)
-     → PASS / FAIL: ___
-
-   Step 2: Count Mermaid diagram blocks (```mermaid)
-     → Hard minimum: 8
-     → PASS / FAIL: ___
-
-   Step 3: Count tables with 3+ data rows (including sub-module tables and op catalogs)
-     → Hard minimum: 25
-     → PASS / FAIL: ___
-
-   Step 4: Count non-Mermaid code blocks with actual source code
-     → Hard minimum: 8
-     → PASS / FAIL: ___
-
-   Step 5: Count backtick-quoted file path references
-     → Hard minimum: 100
-     → PASS / FAIL: ___
-
-   Step 6: Check Section 7 — verify UNIQUE descriptions at ALL levels
-     → Compare Responsibilities text across all modules AND sub-modules
-     → If 3+ entries (modules or sub-modules) share >50% of text: FAIL
-     → PASS / FAIL: ___
-
-   Step 7: Check Section 7 — verify sub-module tiering was applied
-     → Every module with 50+ files MUST have a sub-module structure table
-     → Every Large sub-module (50+ files) MUST have its own ##### deep-dive subsection
-     → Every Medium sub-module (10-49 files) MUST have its own ##### summary subsection
-     → Every ops/handler directory MUST have a numbered operation catalog
-     → PASS / FAIL: ___
-
-   Step 8: Check Section 15 — count invariants documented
-     → Hard minimum: 10
-     → PASS / FAIL: ___
-
-   Step 9: Check Appendix D — verify sequence diagrams have alt/opt blocks and 15+ lines each
-     → PASS / FAIL: ___
-
-   Step 10: Check Section 28 — count glossary terms
-     → Hard minimum: 20
-     → PASS / FAIL: ___
-
-   Step 11: Check Appendix B and C — count table rows
-     → Hard minimum: 10 rows each
-     → PASS / FAIL: ___
-
-   Step 12: Check operation catalogs — verify completeness
-     → For each ops/handler directory, compare catalog entry count against file count from graph data
-     → If catalog entries < 80% of actual files in the directory: FAIL
-     → PASS / FAIL: ___
-     → PASS / FAIL: ___
-
-   OVERALL: If ANY step is FAIL, identify the weakest sections and expand them.
-   Do NOT proceed to .ai-context.md until ALL steps PASS.
-   ```
-
-   If any verification step fails:
-   - Read additional source files relevant to the failing sections
-   - Expand the weak sections with real content
-   - Re-run verification
-   - Repeat until all steps pass
-
-4. **Derive `draft/.ai-context.md`** with the SAME metadata header, then use the Condensation Subroutine to transform architecture.md content into machine-optimized format.
-
-5. **Derive `draft/.ai-profile.md`** — ultra-compact 20-50 line always-injected profile using the Profile Generation Subroutine (defined at the end of this skill).
-
-6. **Present for review**: Show the user a summary of what was discovered, including the Completion Verification scores, before proceeding to Step 2.
-
-**CRITICAL**:
-- Do NOT skip the YAML frontmatter metadata block — it enables incremental refresh
-- Do NOT skip the Completion Verification — it catches shallow output before it becomes permanent
-- Generate architecture.md FIRST, verify it meets thresholds, then derive .ai-context.md, then .ai-profile.md
-- All three files MUST have the metadata header at the very top
-
----
-
-> **Note:** After generating or updating `architecture.md`, run the **Completion Verification** above, then the **Condensation Subroutine** (defined at the end of this skill) to derive `.ai-context.md`.
-
-## Step 1.7: Persist State (Brownfield Only)
-
-**Skip for Greenfield projects** — there are no source files to hash and no signals to classify. Greenfield projects only get `run-memory.json` (written during Completion).
-
-After generating `architecture.md`, `.ai-context.md`, and `.ai-profile.md`, persist four state files to `draft/.state/` for incremental refresh and cross-session continuity.
-
-### 1.7.0 Fact Registry (`draft/.state/facts.json`)
-
-Extract atomic architectural facts discovered during Phases 1-5. Each fact is a single, verifiable claim about the codebase with dual-layer timestamps and relationship edges.
-
-```json
-{
-  "generated_at": "{ISO_TIMESTAMP}",
-  "git_commit": "{FULL_SHA}",
-  "total_facts": 0,
-  "categories": ["data-flow", "architecture", "invariant", "dependency", "api", "security", "concurrency", "configuration", "testing", "convention"],
-  "facts": [
-    {
-      "id": "fact-001",
-      "category": "architecture",
-      "statement": "Express app uses service layer pattern — routes delegate to services, services access repositories",
-      "confidence": 0.95,
-      "source_files": ["src/routes/users.ts", "src/services/user.service.ts", "src/repositories/user.repo.ts"],
-      "discovered_at": "{ISO_TIMESTAMP}",
-      "established_at": "{ISO_TIMESTAMP from git blame}",
-      "last_verified_at": "{ISO_TIMESTAMP}",
-      "last_active_at": "{ISO_TIMESTAMP from file modification}",
-      "access_count": 0,
-      "edges": {
-        "updates": [],
-        "extends": [],
-        "derives": ["fact-003"],
-        "superseded_by": null
-      }
-    }
-  ]
-}
-```
-
-**Fact categories:**
-- `data-flow` — How data moves through the system
-- `architecture` — Structural patterns and module organization
-- `invariant` — Rules that must always hold true
-- `dependency` — External service and library dependencies
-- `api` — Endpoint definitions and contracts
-- `security` — Auth, authz, crypto, and access control patterns
-- `concurrency` — Thread safety, async patterns, lock ordering
-- `configuration` — Config mechanisms and critical settings
-- `testing` — Test infrastructure and patterns
-- `convention` — Coding conventions and naming patterns
-
-**Target:** 50-150 facts per typical project. Focus on facts that are actionable for AI agents making code changes.
-
-### 1.7.1 Freshness State (`draft/.state/freshness.json`)
-
-Compute SHA-256 hashes of all source files analyzed during Phases 1-5. This enables **file-level staleness detection** on subsequent refreshes — more granular than `synced_to_commit` which only detects that _some_ commits happened.
-
-```bash
-# Generate SHA-256 hashes for all analyzed source files (exclude draft/, node_modules/, .git/, vendor/)
-find . -type f \
-  ! -path "./draft/*" ! -path "./.git/*" ! -path "*/node_modules/*" ! -path "*/vendor/*" \
-  ! -path "*/__pycache__/*" ! -path "*/dist/*" ! -path "*/build/*" \
-  \( -name "*.ts" -o -name "*.tsx" -o -name "*.js" -o -name "*.jsx" \
-     -o -name "*.py" -o -name "*.go" -o -name "*.rs" -o -name "*.java" -o -name "*.kt" \
-     -o -name "*.c" -o -name "*.cc" -o -name "*.cpp" -o -name "*.h" \
-     -o -name "*.rb" -o -name "*.php" -o -name "*.swift" -o -name "*.cs" \
-     -o -name "*.proto" -o -name "*.graphql" -o -name "*.gql" \
-     -o -name "*.yaml" -o -name "*.yml" -o -name "*.toml" -o -name "*.json" \
-     -o -name "*.sql" -o -name "*.md" -o -name "Dockerfile" -o -name "Makefile" \) \
-  -exec sha256sum {} \; 2>/dev/null | sort -k2
-```
-
-Write `draft/.state/freshness.json`:
-
-```json
-{
-  "generated_at": "{ISO_TIMESTAMP}",
-  "git_commit": "{FULL_SHA}",
-  "total_files": 0,
-  "files": {
-    "src/index.ts": "sha256:a1b2c3d4...",
-    "src/auth/login.ts": "sha256:e5f6a7b8...",
-    "package.json": "sha256:c9d0e1f2..."
-  }
-}
-```
-
-**On refresh:** Compare stored hashes against current file hashes. Files with changed/new/deleted hashes are the delta that drives targeted section updates.
-
-### 1.7.2 Signal State (`draft/.state/signals.json`)
-
-Persist the signal classification from Phase 1 step 5:
-
-```json
-{
-  "generated_at": "{ISO_TIMESTAMP}",
-  "git_commit": "{FULL_SHA}",
-  "total_files_scanned": 0,
-  "signals": {
-    "backend_routes": { "count": 12, "sample_files": ["src/routes/auth.ts", "src/routes/users.ts"] },
-    "frontend_routes": { "count": 0, "sample_files": [] },
-    "components": { "count": 0, "sample_files": [] },
-    "services": { "count": 8, "sample_files": ["src/services/auth.service.ts"] },
-    "data_models": { "count": 6, "sample_files": ["src/models/user.ts"] },
-    "auth_files": { "count": 3, "sample_files": ["src/auth/guard.ts"] },
-    "state_management": { "count": 0, "sample_files": [] },
-    "background_jobs": { "count": 0, "sample_files": [] },
-    "persistence": { "count": 4, "sample_files": ["src/db/repository.ts"] },
-    "test_infra": { "count": 15, "sample_files": ["tests/auth.test.ts"] },
-    "config_files": { "count": 5, "sample_files": [".env.example", "config/default.yml"] }
-  }
-}
-```
-
-**Section relevance is derived at read-time**, not persisted. Use the signal counts and the "Drives Section(s)" column from the Phase 1 step 5 signal table to determine which architecture.md sections need deep treatment (signal count ≥ 3), brief treatment (1-2), or can be skipped (0).
-
-**On refresh:** Compare current signals against stored signals. New signal categories appearing (e.g., `auth_files` going from 0→3) indicate **structural drift** — new architecture sections may need to be generated for the first time.
-
-### 1.7.3 Run Memory (`draft/.state/run-memory.json`)
-
-Persist run state for cross-session continuity. If `draft:init` is interrupted mid-analysis, the next invocation can detect the incomplete run and offer to resume.
-
-```json
-{
-  "run_id": "{UUID}",
-  "started_at": "{ISO_TIMESTAMP}",
-  "completed_at": null,
-  "run_type": "init",
-  "status": "in_progress",
-  "phases_completed": ["phase_1", "phase_2", "phase_3"],
-  "phases_remaining": ["phase_4", "phase_5"],
-  "files_analyzed": 142,
-  "files_generated": ["draft/architecture.md", "draft/.ai-context.md", "draft/.ai-profile.md"],
-  "unresolved_questions": [
-    "Could not determine if src/legacy/ is actively used or deprecated",
-    "Multiple auth patterns detected — unclear which is canonical"
-  ],
-  "active_focus_areas": ["backend_routes", "services", "data_models"],
-  "resumable_checkpoint": {
-    "last_phase": "phase_3",
-    "last_file_read": "src/services/billing.service.ts",
-    "pending_sections": ["§14 Cross-Module Integration", "§15 Critical Invariants"]
-  }
-}
-```
-
-**On completion:** Update `status` to `"completed"` and set `completed_at`. Keep `unresolved_questions` — these are surfaced to the user in the completion report and are valuable context for future refreshes.
-
-**On next invocation:** If `run-memory.json` exists with `status: "in_progress"`:
-- Announce: "Detected incomplete previous run (started {started_at}, completed phases: {list}). Resume from {last_phase} or start fresh?"
-- If resume: Skip completed phases, continue from `resumable_checkpoint`
-- If fresh: Overwrite run memory and start from Phase 1
-
----
-
-## Step 2: Product Definition
-
-Create `draft/product.md` using the template from `core/templates/product.md`.
-
-**Include the Standard File Metadata header at the top of the file.**
-
-Engage in structured dialogue:
-
-1. **Vision**: "What does this product do and why does it matter?"
-2. **Users**: "Who uses this? What are their primary needs?"
-3. **Core Features**: "What are the must-have (P0), should-have (P1), and nice-to-have (P2) features?"
-4. **Success Criteria**: "How will you measure if this product is successful?"
-5. **Constraints**: "What technical, business, or timeline constraints exist?"
-6. **Non-Goals**: "What is explicitly out of scope?"
-
-Present for approval, iterate if needed, then write to `draft/product.md`.
-
-## Step 3: Tech Stack
-
-For Brownfield projects, auto-detect from:
-- `package.json` → Node.js/TypeScript
-- `requirements.txt` / `pyproject.toml` → Python
-- `go.mod` → Go
-- `Cargo.toml` → Rust
-
-Create `draft/tech-stack.md` using the template from `core/templates/tech-stack.md`.
-
-**Include the Standard File Metadata header at the top of the file.**
-
-Present detected stack for verification before writing.
-
-## Step 4: Workflow Configuration
-
-Create `draft/workflow.md` using the template from `core/templates/workflow.md`.
-
-**Include the Standard File Metadata header at the top of the file.**
-
-Ask about:
-- TDD preference (strict/flexible/none)
-- Commit style and frequency
-- Validation settings (auto-validate, blocking behavior)
-
-## Step 4.1: Guardrails Configuration
-
-Create `draft/guardrails.md` using the template from `core/templates/guardrails.md`.
-
-**Include the Standard File Metadata header at the top of the file.**
-
-The template includes general hard guardrails (Git, Code Quality, Security, Testing) — ask which to enable for this project. The Learned Conventions and Learned Anti-Patterns sections start empty — they are populated automatically by the learn step at the end of init (brownfield only) and by quality commands over time.
-
-## Step 5: Initialize Tracks
-
-Create `draft/tracks.md` with metadata header:
-
-```markdown
----
-project: "{PROJECT_NAME}"
-module: "root"
-generated_by: "draft:init"
-generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{COMMIT_MESSAGE}"
-  dirty: {true|false}
-synced_to_commit: "{FULL_SHA}"
----
-
-# Tracks
-
-## Active
-<!-- No active tracks -->
-
-## Completed
-<!-- No completed tracks -->
-
-## Archived
-<!-- No archived tracks -->
-```
-
-## Step 6: Create Directory Structure
-
-```bash
-mkdir -p draft/tracks draft/.state
-```
-
-## Step 7: Pattern Discovery (Brownfield Only)
-
-For **brownfield** projects, run `draft learn` (no arguments — full codebase scan) to populate `draft/guardrails.md` with initial learned conventions and anti-patterns. This ensures quality commands (`draft bughunt`, `draft review`, `draft deep-review`) have guardrails data from the first run.
-
-**Skip this step for greenfield projects** — there is no existing codebase to scan.
-
-> **Note:** This is the same full scan that `draft learn` performs when run standalone. The guardrails can be further refined later with `draft learn promote` or by quality commands that discover new patterns.
-
----
-
-## Completion
-
-**Finalize run memory:** Update `draft/.state/run-memory.json`:
-- `status`: `"completed"`
-- `completed_at`: current ISO timestamp
-- Preserve `unresolved_questions` — these are displayed in the completion report below
-
-For **Brownfield** projects, announce:
-"Draft initialized successfully with comprehensive analysis!
-
-Created:
-- draft/.ai-profile.md (20-50 lines — ultra-compact always-injected profile, Tier 0)
-- draft/.ai-context.md (200-400 lines — token-optimized AI context, self-contained, Tier 1)
-- draft/architecture.md (comprehensive human-readable engineering reference, Tier 2)
-- draft/product.md
-- draft/tech-stack.md
-- draft/workflow.md
-- draft/guardrails.md (populated with learned conventions and anti-patterns from codebase scan)
-- draft/tracks.md
-- draft/.state/facts.json (atomic fact registry with knowledge graph edges)
-- draft/.state/freshness.json (file-level hash baseline for incremental refresh)
-- draft/.state/signals.json (codebase signal classification)
-- draft/.state/run-memory.json (run metadata and unresolved questions)
-
-{Include draft learn summary report here — conventions learned, anti-patterns detected, skipped entries}
-
-{If unresolved_questions is non-empty, show:}
-Unresolved questions from analysis:
-{list each question — these are areas where the AI couldn't determine the answer with confidence}
-
-Next steps:
-1. Review draft/product.md — verify product vision, users, and goals reflect current reality
-2. Review draft/tech-stack.md — verify languages, frameworks, and accepted patterns are accurate
-3. Review draft/workflow.md — verify TDD, commit, and review settings match your team's process
-4. Review draft/guardrails.md — verify learned conventions and anti-patterns are accurate
-5. Review draft/.ai-context.md — verify the AI context is complete and accurate
-6. Review draft/architecture.md — human-friendly version for team onboarding
-7. Run `draft new-track` to start planning a feature
-8. Run `draft init refresh` after significant codebase changes — refresh is now incremental (only stale files re-analyzed)
-9. Run `draft learn promote` to promote high-confidence patterns to Hard Guardrails"
-
-For **Greenfield** projects, announce:
-"Draft initialized successfully!
-
-Created:
-- draft/product.md
-- draft/tech-stack.md
-- draft/workflow.md
-- draft/guardrails.md
-- draft/tracks.md
-- draft/.state/run-memory.json (run metadata)
-
-Next steps:
-1. Review draft/product.md — verify product vision, users, and goals reflect current reality
-2. Review draft/tech-stack.md — verify languages, frameworks, and accepted patterns are accurate
-3. Review draft/workflow.md — verify TDD, commit, and review settings match your team's process
-4. Review draft/guardrails.md — configure hard guardrails for your project
-5. Run `draft new-track` to start planning a feature
-6. Run `draft init refresh` after adding substantial code — this will generate architecture context and auto-run `draft learn` to populate guardrails"
-
----
-
-## Condensation Subroutine
-
-> This subroutine is also available at `core/shared/condensation.md` for cross-skill reference.
-
-This is a self-contained, callable procedure for generating `draft/.ai-context.md` and `draft/.ai-profile.md` from `draft/architecture.md`. Any skill that mutates `architecture.md` should execute this subroutine afterward to keep the derived context files in sync.
-
-**Called by:** `draft init`, `draft init refresh`, `draft implement`, `draft decompose`, `draft coverage`, `draft index`
-
-### Inputs
-
-| Input | Path | Description |
-|-------|------|-------------|
-| architecture.md | `draft/architecture.md` | Comprehensive human-readable engineering reference (source of truth) |
-| schema.yaml | `draft/graph/schema.yaml` | Graph metrics for tier computation (optional — skip if absent) |
-
-### Outputs
-
-| Output | Path | Description |
-|--------|------|-------------|
-| .ai-context.md | `draft/.ai-context.md` | Token-optimized, machine-readable AI context (tier-scaled budget) |
-| .ai-profile.md | `draft/.ai-profile.md` | Ultra-compact, always-injected project profile (20-50 lines) |
-
-### Target Size
-
-Compute tier from `draft/graph/schema.yaml` after graph build:
-
-  M = stats.modules
-  F = stats.go_functions + stats.py_functions
-  P = stats.proto_rpcs
-
-| Tier | Label  | Condition                              | Budget        |
-|------|--------|----------------------------------------|---------------|
-| 1    | micro  | M≤5 AND F≤50 AND P≤10                 | 100–180 lines |
-| 2    | small  | M≤15 AND F≤300 AND P≤30               | 180–280 lines |
-| 3    | medium | M≤40 AND F≤1000 AND P≤100             | 280–400 lines |
-| 4    | large  | M≤100 AND F≤5000 AND P≤500            | 400–600 lines |
-| 5    | XL     | M>100 OR F>5000 OR P>500              | 600–900 lines |
-
-If `schema.yaml` does not exist: default to tier 2 (180–280 lines).
-
-- Below tier minimum: incomplete condensation — ensure all sections are represented
-- Above tier maximum: insufficient compression — apply prioritization rules below
-
-### Procedure
-
-#### Step 1: Read Source
-
-Read the full contents of `draft/architecture.md`. Extract the YAML frontmatter metadata block — it will be reused (with updated `generated_by` and `generated_at`) for the output file.
-
-#### Step 2: Write YAML Frontmatter
-
-Start `draft/.ai-context.md` with an updated YAML frontmatter block. Copy all `git.*` and `synced_to_commit` fields from `architecture.md`. Set:
-- `generated_by`: the calling command (e.g., `draft:init`, `draft:implement`)
-- `generated_at`: current ISO 8601 timestamp
-
-#### Step 3: Transform Sections
-
-Transform each `architecture.md` section into machine-optimized format using this mapping:
-
-| architecture.md Section | .ai-context.md Section | Transformation |
-|------------------------|------------------------|----------------|
-| Executive Summary | META | Extract key-value pairs only (type, lang, pattern, build, test, entry, config) |
-| Architecture Overview (Mermaid) | GRAPH:COMPONENTS | Convert Mermaid diagrams to tree notation using `├─` / `└─` |
-| Component Map | GRAPH:COMPONENTS | Merge into the same tree |
-| Data Flow (Mermaid) | GRAPH:DATAFLOW | Convert to `FLOW:{Name}` with arrow notation: `source --{type}--> sink` |
-| External Dependencies | GRAPH:DEPENDENCIES | Convert to `A -[protocol]-> B` format |
-| Dependency Injection | WIRING | Extract mechanism + tokens/getters lists |
-| Critical Invariants | INVARIANTS | One line per invariant: `[CATEGORY] name: rule @file:line` |
-| Framework/Extension Points | INTERFACES + EXTEND | Condensed signatures + cookbook steps |
-| Full Catalog | CATALOG:{Category} | Pipe-separated rows: `id|type|file|purpose` |
-| Concurrency Model | THREADS + CONCURRENCY | Pipe-separated rows + rules with violation consequences |
-| Configuration | CONFIG | Pipe-separated rows: `param|default|critical:Y/N|purpose` |
-| Error Handling | ERRORS | Key-value pairs: `scenario: recovery` |
-| Build/Test | TEST + META | Extract exact commands |
-| File Structure | FILES | Concept-to-path mappings: `entry: path`, `config: path`, etc. |
-| Glossary | VOCAB | `term: definition` pairs |
-
-#### Step 3.5: Generate Graph Summary Sections
-
-If `draft/graph/schema.yaml` exists, generate these three sections from graph JSONL:
-
-**GRAPH:MODULES** (tier ≥ 2 only):
-- Read `draft/graph/module-graph.jsonl`, extract `kind: "node"` records and `kind: "edge"` records
-- For each node: `{name}|{sizeKB}KB|{lang_counts} → {comma-separated target modules}`
-- `lang_counts` = `go:N,proto:N,cc:N` from node.files (omit zero-count languages)
-- `deps` = edge targets where `source == this module name`
-- Order by sizeKB descending
-- Omit this section entirely for tier-1 codebases (≤5 modules) where Component Graph is sufficient
-
-**GRAPH:HOTSPOTS** (all tiers):
-- Read `draft/graph/hotspots.jsonl`, take top 10 by score (score = lines + fanIn × 50)
-- Format: `{file}|{lines}L|fanIn:{fanIn}`
-- Always include regardless of tier
-
-**GRAPH:CYCLES** (all tiers):
-- Inspect `draft/graph/module-graph.jsonl` edges; detect cycles using DFS
-- Output `None ✓` if no cycles
-- Otherwise output each cycle path on its own line: `"A → B → C → A"`
-- Always include — absence is positive signal that architecture is acyclic
-
-#### Step 4: Apply Compression
-
-- Remove all prose paragraphs — use structured key-value pairs instead
-- Remove Mermaid syntax — use text-based graph notation (`├─`, `-->`, `-[proto]->`)
-- Remove markdown formatting (no `**bold**`, no `_italic_`, no headers beyond `##`)
-- Abbreviate common words: `fn`=function, `ret`=returns, `cfg`=config, `impl`=implementation, `req`=required, `opt`=optional, `dep`=dependency, `auth`=authentication, `authz`=authorization
-- Use symbols: `@`=at/in file, `->`=calls/leads-to, `|`=column separator, `?`=optional, `!`=required/critical
-
-#### Step 5: Prioritize Content
-
-If the output exceeds the tier maximum, cut sections in this order (bottom = cut first):
-
-| Priority | Section | Rule |
-|----------|---------|------|
-| 1 (never cut) | INVARIANTS | Safety critical — preserve every invariant |
-| 2 (never cut) | EXTEND | Agent productivity critical — preserve all cookbook steps |
-| 3 (keep) | GRAPH:HOTSPOTS | Always include — needed for impact awareness |
-| 3 (keep) | GRAPH:CYCLES | Always include — always 1-2 lines; absence is signal |
-| 3 | GRAPH:* | Keep all component, dependency, and dataflow graphs |
-| 4 (scale) | GRAPH:MODULES | Include tier ≥ 2; omit for tier 1 |
-| 4 | INTERFACES | Keep all signatures |
-| 5 | CATALOG | Can abbreviate to top 20 entries per category |
-| 6 | CONFIG | Can abbreviate to `critical:Y` entries only |
-| 7 (cut first) | VOCAB | Can abbreviate to 10 most important terms |
-
-#### Step 6: Quality Check
-
-Before writing `draft/.ai-context.md`, verify:
-
-- [ ] No prose paragraphs remain (all content is structured data)
-- [ ] No Mermaid syntax (all diagrams converted to text graphs)
-- [ ] No references to `architecture.md` (file must be self-contained)
-- [ ] All invariants from architecture.md are preserved
-- [ ] Extension cookbooks are complete (an agent can follow them without other files)
-- [ ] Output is within tier budget bounds (compute from schema.yaml or default tier 2)
-- [ ] GRAPH:HOTSPOTS present (or note "No hotspot data available" if graph absent)
-- [ ] GRAPH:CYCLES present ("None ✓" or cycle list; or note if graph absent)
-- [ ] YAML frontmatter metadata is present at the top
-
-#### Step 7: Write Output
-
-Write the completed content to `draft/.ai-context.md`.
-
-### Example Transformation
-
-**architecture.md input:**
-```markdown
-### 4.1 High-Level Topology
-
-The AuthService is a microservice that handles user authentication...
-
-```mermaid
-flowchart TD
-    subgraph AuthService
-        API[API Layer] --> Logic[Auth Logic]
-        Logic --> Store[Token Store]
-    end
-    Logic --> UserDB[(User Database)]
-```
-```
-
-**.ai-context.md output:**
-```
-## GRAPH:COMPONENTS
-AuthService
-  ├─API: handles HTTP requests
-  ├─Logic: validates credentials, generates tokens
-  └─Store: caches active tokens
-
-## GRAPH:DEPENDENCIES
-AuthService.Logic -[PostgreSQL]-> UserDB
-```
-
-### Reference for Other Skills
-
-Other skills that mutate `draft/architecture.md` should invoke this subroutine with:
-> "After updating `draft/architecture.md`, regenerate `draft/.ai-context.md` and `draft/.ai-profile.md` using the Condensation Subroutine defined in `draft init`."
-
----
-
-## Profile Generation Subroutine
-
-This is a self-contained procedure for generating `draft/.ai-profile.md` from `draft/.ai-context.md`. Run after every Condensation Subroutine execution.
-
-### Purpose
-
-The profile is the **Tier 0 context** — an ultra-compact 20-50 line file always loaded by every Draft command. It provides the absolute minimum context needed for simple tasks (quick edits, config changes, small fixes) without requiring the full `.ai-context.md`.
-
-### Procedure
-
-#### Step 1: Read Source
-
-Read `draft/.ai-context.md`. Extract the YAML frontmatter metadata block.
-
-#### Step 2: Write YAML Frontmatter
-
-Start `draft/.ai-profile.md` with an updated YAML frontmatter block. Copy all `git.*` and `synced_to_commit` fields. Set:
-- `generated_by`: the calling command (e.g., `draft:init`, `draft:implement`)
-- `generated_at`: current ISO 8601 timestamp
-
-#### Step 3: Extract Profile Content
-
-From `.ai-context.md`, extract:
-
-1. **Stack** — Language, framework, database, auth method, API style, test framework, deploy target, build command, entry point (from `## META`)
-2. **INVARIANTS** — Top 3-5 critical invariants with `file:line` references (from `## INVARIANTS`)
-3. **NEVER** — 2-3 safety rules — the most dangerous things that must never happen (from `## INVARIANTS` or architecture.md safety rules)
-4. **Active Tracks** — List of currently active track IDs and one-line descriptions (from `draft/tracks.md`)
-5. **Recent Changes** — Last 3-5 significant commits (from `git log --oneline -5`)
-
-#### Step 4: Write Output
-
-Write to `draft/.ai-profile.md` using the template from `core/templates/ai-profile.md`.
-
-#### Step 5: Size Check
-
-- **Minimum**: 20 lines
-- **Maximum**: 50 lines
-- If over 50 lines, trim Recent Changes and reduce INVARIANTS to top 3
-
----
-
-## Cross-Skill Dispatch
-
-After initialization completes, suggest relevant follow-up skills based on project type:
-
-### Brownfield Projects (Debt Signals Detected)
-
-If during architecture discovery (Step 1.5), anti-patterns or technical debt signals are detected in signal classification:
-
-```
-"Detected architectural debt patterns in this codebase. Consider running:
-  → draft tech-debt — Catalog and prioritize existing technical debt"
-```
-
-### All Projects (Post-Init Suggestions)
-
-At completion (Step 6), after announcing next steps, present categorized follow-up skills:
-
-```
-What's Next:
-─────────────────────────────
-Start building:
-  → draft new-track "description" — Start a feature, bug fix, or refactor
-
-Quality & Testing:
-  → draft testing-strategy — Establish test coverage targets and testing pyramid
-  → draft tech-debt — Catalog technical debt (recommended for brownfield projects)
-
-Documentation:
-  → draft documentation readme — Generate README from discovered context
-
-Debugging & Operations:
-  → draft debug — Investigate a specific bug
-  → draft standup — Generate standup from recent activity
-```
-
-### Jira Sync
-
-If Jira MCP is available and a project ticket is linked, sync initialization artifacts via `core/shared/jira-sync.md`.
 
 ---
 
@@ -7111,6 +6957,343 @@ If test fails, upgrade confidence to CONFIRMED and include test in bug report.
 
 ## Regression Test Generation
 
+For each verified bug, generate a regression test in the project's native test framework that would expose the bug as a failing test. **Before writing any new test**, discover the project's language and test framework, then check whether existing tests already cover the bug scenario (COVERED / PARTIAL / WRONG_ASSERTION / NO_COVERAGE / N/A).
+
+If no test framework is detected, mark all bugs `Regression Test Status: N/A` and continue — the bug report is the primary deliverable.
+
+**Detailed procedure** — see `references/regression-tests.md` for:
+- Language and test-framework detection signals (C/C++, Go, Python, JS/TS, Rust, Java)
+- Existing-test discovery patterns and coverage classification
+- Test case requirements and language-specific templates
+- Build/syntax validation commands per toolchain
+
+
+## Fix Suggestion Generation
+
+For each bug with CONFIRMED or HIGH confidence, generate a minimal suggested fix alongside the bug report. Fix suggestions are advisory — they are never auto-applied.
+
+### Fix Generation Rules
+
+1. **Minimal change principle:** The fix must be the smallest code change that addresses the root cause. Do not refactor surrounding code, add features, or improve style.
+2. **Before/after format:** Include the exact current code (BEFORE) and the suggested fix (AFTER) as code snippets with file path and line numbers.
+3. **Root cause targeting:** The fix must address the root cause identified in the bug's data flow trace, not a symptom. If the root cause is in a different location than the symptom, fix at the root.
+4. **Mark as SUGGESTED:** Every fix must be clearly marked as `SUGGESTED (REVIEW REQUIRED)` — never imply auto-application.
+5. **One fix per bug:** Each bug gets exactly one suggested fix. If multiple fix strategies exist, choose the most conservative one and note alternatives.
+6. **Preserve behavior:** The fix must not change behavior beyond correcting the identified bug. No side-effect improvements.
+7. **Skip when inappropriate:** Mark fix as `N/A` for bugs where the fix requires architectural changes, significant refactoring, or domain knowledge beyond what the code provides.
+
+Reference: Meta SapFix — automated fix suggestion with human-in-the-loop validation.
+
+## Output Format
+
+For each verified bug:
+
+```markdown
+### [SEVERITY] Category: Brief Title
+
+**Location:** `path/to/file.ts:123`
+**Confidence:** [CONFIRMED | HIGH | MEDIUM]
+
+**Code Evidence:**
+```[language]
+// The actual problematic code
+```
+
+**Data Flow Trace:**
+[How data reaches this point: caller → caller → this function]
+
+**Issue:** [Precise technical description of what is wrong]
+
+**Impact:** [User-visible effect or system failure mode]
+
+**Verification Done:**
+- [x] Traced code path from [entry point]
+- [x] Checked architecture.md — not intentional
+- [x] Verified framework doesn't handle this
+- [x] No upstream guards found in [files checked]
+
+**Why Not a False Positive:**
+[Explicit statement: "No sanitization exists because X", "Framework Y doesn't escape Z in this context", etc.]
+
+**Fix:** [Minimal code change or mitigation]
+
+**Suggested Fix (REVIEW REQUIRED):**
+```[language]
+// BEFORE (current buggy code):
+[exact code snippet from the codebase]
+
+// AFTER (suggested fix):
+[minimal change that addresses root cause]
+```
+_This fix is SUGGESTED only — human review required before applying. Reference: Meta SapFix methodology._
+
+**Regression Test:**
+**Status:** [COVERED | PARTIAL | WRONG_ASSERTION | NO_COVERAGE | N/A]
+**Existing Test:** [`path/to/test_file:line` — test name | None found]
+[Action: existing test reference, proposed modification, or new test case]
+```[language]
+// New or modified test case (omit if COVERED or N/A)
+```
+```
+
+**Example — COVERED (no new test needed):**
+```markdown
+**Regression Test:**
+**Status:** COVERED — existing test already catches this bug
+**Existing Test:** `tests/validator_test.cpp:89` — `TEST(Validator, RejectsScriptTags)`
+No new test needed. Existing test fails when XSS sanitization is removed.
+```
+
+**Example — PARTIAL (C++ / GTest):**
+```markdown
+**Regression Test:**
+**Status:** PARTIAL — tests exist for processInput() but miss unsanitized HTML path
+**Existing Test File:** `tests/input_test.cpp`
+**Modification:** Add to existing file:
+```cpp
+TEST(InputSanitization, RejectsMaliciousScript) {
+  std::string malicious = "<script>alert('xss')</script>";
+  std::string result = processInput(malicious);
+  EXPECT_EQ(result.find("<script>"), std::string::npos)
+      << "Input should be sanitized to remove script tags";
+}
+```
+```
+
+**Example — NO_COVERAGE (Python / pytest):**
+```markdown
+**Regression Test:**
+**Status:** NO_COVERAGE — no tests found for process_input()
+**Target File:** `tests/test_input_processor.py` (new file)
+```python
+import pytest
+from input.processor import process_input
+
+def test_rejects_malicious_script():
+    """Input should be sanitized to remove script tags."""
+    malicious = "<script>alert('xss')</script>"
+    result = process_input(malicious)
+    assert "<script>" not in result, "XSS script tag should be stripped"
+# Expected: FAILS against current code (passes XSS through), PASSES after fix
+```
+```
+
+**Example — NO_COVERAGE (Go / testing):**
+```markdown
+**Regression Test:**
+**Status:** NO_COVERAGE — no tests found for ProcessInput()
+**Target File:** `input/processor_test.go` (new file)
+```go
+package input
+
+import (
+    "strings"
+    "testing"
+)
+
+func TestProcessInputRejectsMaliciousScript(t *testing.T) {
+    malicious := "<script>alert('xss')</script>"
+    result := ProcessInput(malicious)
+    if strings.Contains(result, "<script>") {
+        t.Error("XSS script tag should be stripped from input")
+    }
+}
+// Expected: FAILS against current code (passes XSS through), PASSES after fix
+```
+```
+
+**Example — N/A (not testable, but still report the bug):**
+```markdown
+**Regression Test:**
+**Status:** N/A — environment config, no executable code path
+**Reason:** Bug is in `config/production.yaml` which sets incorrect timeout value. Config files are not unit-testable; fix requires changing the YAML value directly.
+```
+
+Severity levels:
+- **Critical** — Blocks release, breaks functionality, security issue
+- **Important** — Degrades quality, creates tech debt
+- **Minor** — Style, optimization, edge cases
+
+## Report Generation
+
+Generate report at:
+- **Project-level:** `draft/bughunt-report-<timestamp>.md` (where `<timestamp>` is generated via `date +%Y-%m-%dT%H%M`, e.g., `2026-03-15T1430`)
+- **Track-level:** `draft/tracks/<track-id>/bughunt-report-<timestamp>.md` (if analyzing specific track)
+
+After writing the timestamped report, create a symlink pointing to it:
+```bash
+# Project-level
+ln -sf bughunt-report-<timestamp>.md draft/bughunt-report-latest.md
+
+# Track-level
+ln -sf bughunt-report-<timestamp>.md draft/tracks/<track-id>/bughunt-report-latest.md
+```
+
+Previous timestamped reports are preserved. The `-latest.md` symlink always points to the most recent report.
+
+**MANDATORY: Include YAML frontmatter with git metadata.** Follow the procedure in `core/shared/git-report-metadata.md` to gather git info and generate the frontmatter. Use `generated_by: "draft:bughunt"`.
+
+Report structure:
+
+```markdown
+[YAML frontmatter — see core/shared/git-report-metadata.md]
+
+# Bug Hunt Report
+
+[Report header table — see core/shared/git-report-metadata.md]
+
+**Scope:** [Entire repo | Specific paths | Track: <track-id>]
+**Draft Context:** [Loaded | Not available]
+
+## Summary
+
+| Severity | Count | Confirmed | High Confidence |
+|----------|-------|-----------|-----------------|
+| Critical | N | X | Y |
+| Important | N | X | Y |
+| Minor | N | X | Y |
+
+## Critical Issues
+
+[Issues...]
+
+## Important Issues
+
+[Issues...]
+
+## Minor Issues
+
+[Issues...]
+
+## Dimensions With No Findings
+
+| Dimension | Status |
+|-----------|--------|
+| Correctness | No bugs found |
+| Reliability | N/A — no runtime application |
+| Performance | N/A — static site, no dynamic content |
+| Concurrency | N/A — no async operations |
+
+## Regression Test Suite
+
+**Language:** [detected language]
+**Test Framework:** [detected framework]
+**Validation Command:** [command used]
+
+### Test Discovery Summary
+
+| # | Bug Title | Severity | Status | Existing Test | Action |
+|---|-----------|----------|--------|---------------|--------|
+| 1 | [Brief title] | [SEV] | COVERED | `path:line` | None needed |
+| 2 | [Brief title] | [SEV] | PARTIAL | `path:line` | Added case to existing file |
+| 3 | [Brief title] | [SEV] | WRONG_ASSERTION | `path:line` | Fixed assertion |
+| 4 | [Brief title] | [SEV] | NO_COVERAGE | — | Created new test |
+| 5 | [Brief title] | [SEV] | N/A | — | Not testable |
+
+### Validation Status
+
+| # | Bug Title | Test File / Target | Validation Status |
+|---|-----------|-------------------|-------------------|
+| 2 | [Brief title] | `tests/test_foo.py` | BUILD_OK (modified) |
+| 3 | [Brief title] | `tests/test_bar.py:67` | BUILD_OK (modified) |
+| 4 | [Brief title] | `tests/test_baz.py` | BUILD_OK (new) |
+| 5 | [Brief title] | — | SKIPPED (N/A) |
+
+```
+Validation Summary: 3 BUILD_OK, 0 BUILD_FAILED, 1 SKIPPED
+Validation Command: python -m py_compile <file>
+```
+
+### New Tests Written (NO_COVERAGE)
+
+New test files created for bugs with no existing test coverage.
+
+| Bug # | File Created | Build Target / Runner |
+|-------|-------------|----------------------|
+| 4 | `tests/test_baz.py` | `pytest tests/test_baz.py` |
+
+```[language]
+// Contents of new test file
+```
+
+### Modifications Applied (PARTIAL / WRONG_ASSERTION)
+
+Changes applied to existing test files.
+
+| File | Bug # | Change Applied |
+|------|-------|----------------|
+| `tests/test_foo.py` | 2 | Added `test_missing_case()` |
+| `tests/test_bar.py:67` | 3 | Changed `assert result == 0` → `assert result == 1` |
+
+### Already Covered (COVERED)
+
+Bugs already caught by existing tests — no action needed.
+
+| Bug # | Bug Title | Existing Test |
+|-------|-----------|---------------|
+| 1 | [Brief title] | `tests/test_foo.py:45` — `test_sanitize_input()` |
+
+### Not Testable (N/A)
+
+Bugs that cannot have automated regression tests (config issues, documentation, LLM workflows, etc.).
+
+| Bug # | Bug Title | Reason |
+|-------|-----------|--------|
+| 6 | [Brief title] | Config file — no executable code |
+```
+
+## Final Instructions
+
+**CRITICAL: All verified bugs appear in the main report body.** The Regression Test Suite section organizes test artifacts, but every bug — regardless of whether a test can be written — MUST be documented in the severity sections (Critical/Important/Minor Issues) above. Bugs with `N/A` regression test status are still valid bugs that need reporting.
+
+**CRITICAL: Regression tests are supplementary, not a filter.** If no test framework is detected, or if a bug cannot have a test written (config, docs, LLM workflows), mark it as `N/A` and **still include the bug in the report**. Never skip a verified bug because you cannot write a test for it.
+
+- **No unverified bugs** — Every finding must pass the verification protocol
+- **Evidence required** — Include code snippets and trace for every bug
+- **Explicit false positive elimination** — State why each bug isn't handled elsewhere
+- Analyze all applicable dimensions — skip N/A dimensions explicitly with reason (see Dimension Applicability Check)
+- Assume the reader is a senior engineer who will verify your findings
+- If Draft context is available, explicitly note which architectural violations or product requirement bugs were found
+- Be precise about file locations and line numbers
+- Include git branch and commit in report header
+- **Write regression tests when possible** — If a test framework is detected, write test files using the project's native framework (Steps 4-6). If no framework exists, skip Steps 2-6 and mark all bugs as `N/A` for regression tests
+- **Never modify production code** — Only create/modify test files and their build configs
+- **Validate before reporting** — If tests were written, validate syntax/compilation before finalizing; include validation status in the report
+- **Respect project conventions** — Match existing test directory structure, naming patterns, import conventions, and framework idioms
+- **Use native frameworks** — pytest for Python, `go test` for Go, GTest for C++, Jest/Vitest for JS/TS, `cargo test` for Rust, JUnit for Java — never force a foreign test framework
+- **Learn from findings** — After report generation, execute the pattern learning phase from `core/shared/pattern-learning.md` to update `draft/guardrails.md` with newly discovered conventions and anti-patterns
+
+---
+
+## Cross-Skill Dispatch
+
+### Suggestions at Completion
+
+After bughunt report generation:
+
+**If critical bugs found:**
+```
+"Critical bugs found. Consider:
+  → draft debug — Run structured debug session on critical finding #{n}
+  → git bisect — Find the exact commit that introduced the bug"
+```
+
+### Test Writing Guardrail
+
+When offering to write regression tests for found bugs:
+```
+ASK: "Want me to write regression tests for the {n} bugs found? [Y/n]"
+```
+Never auto-write tests — always ask first.
+
+### Jira Sync
+
+If Jira ticket linked, sync via `core/shared/jira-sync.md`:
+- Attach `bughunt-report-latest.md` to ticket
+- Post comment: "[draft] bughunt-complete: Found {n} issues — {critical} critical, {major} major."
+
+## Regression Test Generation
+
 For each verified bug, generate a regression test in the **project's native test framework** that would expose the bug as a failing test. **Before writing any new test**, first discover the project's language/framework and whether existing tests already cover (or partially cover) the bug scenario.
 
 ### Step 1: Detect Language & Test Framework
@@ -7508,330 +7691,6 @@ After writing all test files, validate them using the project's native toolchain
    BUILD_FAILED: 1 target (tests/config/test_loader.py — ImportError: no module named 'config.loader')
    SKIPPED:      1 target (N/A — race condition not reliably testable)
    ```
-
-## Fix Suggestion Generation
-
-For each bug with CONFIRMED or HIGH confidence, generate a minimal suggested fix alongside the bug report. Fix suggestions are advisory — they are never auto-applied.
-
-### Fix Generation Rules
-
-1. **Minimal change principle:** The fix must be the smallest code change that addresses the root cause. Do not refactor surrounding code, add features, or improve style.
-2. **Before/after format:** Include the exact current code (BEFORE) and the suggested fix (AFTER) as code snippets with file path and line numbers.
-3. **Root cause targeting:** The fix must address the root cause identified in the bug's data flow trace, not a symptom. If the root cause is in a different location than the symptom, fix at the root.
-4. **Mark as SUGGESTED:** Every fix must be clearly marked as `SUGGESTED (REVIEW REQUIRED)` — never imply auto-application.
-5. **One fix per bug:** Each bug gets exactly one suggested fix. If multiple fix strategies exist, choose the most conservative one and note alternatives.
-6. **Preserve behavior:** The fix must not change behavior beyond correcting the identified bug. No side-effect improvements.
-7. **Skip when inappropriate:** Mark fix as `N/A` for bugs where the fix requires architectural changes, significant refactoring, or domain knowledge beyond what the code provides.
-
-Reference: Meta SapFix — automated fix suggestion with human-in-the-loop validation.
-
-## Output Format
-
-For each verified bug:
-
-```markdown
-### [SEVERITY] Category: Brief Title
-
-**Location:** `path/to/file.ts:123`
-**Confidence:** [CONFIRMED | HIGH | MEDIUM]
-
-**Code Evidence:**
-```[language]
-// The actual problematic code
-```
-
-**Data Flow Trace:**
-[How data reaches this point: caller → caller → this function]
-
-**Issue:** [Precise technical description of what is wrong]
-
-**Impact:** [User-visible effect or system failure mode]
-
-**Verification Done:**
-- [x] Traced code path from [entry point]
-- [x] Checked architecture.md — not intentional
-- [x] Verified framework doesn't handle this
-- [x] No upstream guards found in [files checked]
-
-**Why Not a False Positive:**
-[Explicit statement: "No sanitization exists because X", "Framework Y doesn't escape Z in this context", etc.]
-
-**Fix:** [Minimal code change or mitigation]
-
-**Suggested Fix (REVIEW REQUIRED):**
-```[language]
-// BEFORE (current buggy code):
-[exact code snippet from the codebase]
-
-// AFTER (suggested fix):
-[minimal change that addresses root cause]
-```
-_This fix is SUGGESTED only — human review required before applying. Reference: Meta SapFix methodology._
-
-**Regression Test:**
-**Status:** [COVERED | PARTIAL | WRONG_ASSERTION | NO_COVERAGE | N/A]
-**Existing Test:** [`path/to/test_file:line` — test name | None found]
-[Action: existing test reference, proposed modification, or new test case]
-```[language]
-// New or modified test case (omit if COVERED or N/A)
-```
-```
-
-**Example — COVERED (no new test needed):**
-```markdown
-**Regression Test:**
-**Status:** COVERED — existing test already catches this bug
-**Existing Test:** `tests/validator_test.cpp:89` — `TEST(Validator, RejectsScriptTags)`
-No new test needed. Existing test fails when XSS sanitization is removed.
-```
-
-**Example — PARTIAL (C++ / GTest):**
-```markdown
-**Regression Test:**
-**Status:** PARTIAL — tests exist for processInput() but miss unsanitized HTML path
-**Existing Test File:** `tests/input_test.cpp`
-**Modification:** Add to existing file:
-```cpp
-TEST(InputSanitization, RejectsMaliciousScript) {
-  std::string malicious = "<script>alert('xss')</script>";
-  std::string result = processInput(malicious);
-  EXPECT_EQ(result.find("<script>"), std::string::npos)
-      << "Input should be sanitized to remove script tags";
-}
-```
-```
-
-**Example — NO_COVERAGE (Python / pytest):**
-```markdown
-**Regression Test:**
-**Status:** NO_COVERAGE — no tests found for process_input()
-**Target File:** `tests/test_input_processor.py` (new file)
-```python
-import pytest
-from input.processor import process_input
-
-def test_rejects_malicious_script():
-    """Input should be sanitized to remove script tags."""
-    malicious = "<script>alert('xss')</script>"
-    result = process_input(malicious)
-    assert "<script>" not in result, "XSS script tag should be stripped"
-# Expected: FAILS against current code (passes XSS through), PASSES after fix
-```
-```
-
-**Example — NO_COVERAGE (Go / testing):**
-```markdown
-**Regression Test:**
-**Status:** NO_COVERAGE — no tests found for ProcessInput()
-**Target File:** `input/processor_test.go` (new file)
-```go
-package input
-
-import (
-    "strings"
-    "testing"
-)
-
-func TestProcessInputRejectsMaliciousScript(t *testing.T) {
-    malicious := "<script>alert('xss')</script>"
-    result := ProcessInput(malicious)
-    if strings.Contains(result, "<script>") {
-        t.Error("XSS script tag should be stripped from input")
-    }
-}
-// Expected: FAILS against current code (passes XSS through), PASSES after fix
-```
-```
-
-**Example — N/A (not testable, but still report the bug):**
-```markdown
-**Regression Test:**
-**Status:** N/A — environment config, no executable code path
-**Reason:** Bug is in `config/production.yaml` which sets incorrect timeout value. Config files are not unit-testable; fix requires changing the YAML value directly.
-```
-
-Severity levels:
-- **Critical** — Blocks release, breaks functionality, security issue
-- **Important** — Degrades quality, creates tech debt
-- **Minor** — Style, optimization, edge cases
-
-## Report Generation
-
-Generate report at:
-- **Project-level:** `draft/bughunt-report-<timestamp>.md` (where `<timestamp>` is generated via `date +%Y-%m-%dT%H%M`, e.g., `2026-03-15T1430`)
-- **Track-level:** `draft/tracks/<track-id>/bughunt-report-<timestamp>.md` (if analyzing specific track)
-
-After writing the timestamped report, create a symlink pointing to it:
-```bash
-# Project-level
-ln -sf bughunt-report-<timestamp>.md draft/bughunt-report-latest.md
-
-# Track-level
-ln -sf bughunt-report-<timestamp>.md draft/tracks/<track-id>/bughunt-report-latest.md
-```
-
-Previous timestamped reports are preserved. The `-latest.md` symlink always points to the most recent report.
-
-**MANDATORY: Include YAML frontmatter with git metadata.** Follow the procedure in `core/shared/git-report-metadata.md` to gather git info and generate the frontmatter. Use `generated_by: "draft:bughunt"`.
-
-Report structure:
-
-```markdown
-[YAML frontmatter — see core/shared/git-report-metadata.md]
-
-# Bug Hunt Report
-
-[Report header table — see core/shared/git-report-metadata.md]
-
-**Scope:** [Entire repo | Specific paths | Track: <track-id>]
-**Draft Context:** [Loaded | Not available]
-
-## Summary
-
-| Severity | Count | Confirmed | High Confidence |
-|----------|-------|-----------|-----------------|
-| Critical | N | X | Y |
-| Important | N | X | Y |
-| Minor | N | X | Y |
-
-## Critical Issues
-
-[Issues...]
-
-## Important Issues
-
-[Issues...]
-
-## Minor Issues
-
-[Issues...]
-
-## Dimensions With No Findings
-
-| Dimension | Status |
-|-----------|--------|
-| Correctness | No bugs found |
-| Reliability | N/A — no runtime application |
-| Performance | N/A — static site, no dynamic content |
-| Concurrency | N/A — no async operations |
-
-## Regression Test Suite
-
-**Language:** [detected language]
-**Test Framework:** [detected framework]
-**Validation Command:** [command used]
-
-### Test Discovery Summary
-
-| # | Bug Title | Severity | Status | Existing Test | Action |
-|---|-----------|----------|--------|---------------|--------|
-| 1 | [Brief title] | [SEV] | COVERED | `path:line` | None needed |
-| 2 | [Brief title] | [SEV] | PARTIAL | `path:line` | Added case to existing file |
-| 3 | [Brief title] | [SEV] | WRONG_ASSERTION | `path:line` | Fixed assertion |
-| 4 | [Brief title] | [SEV] | NO_COVERAGE | — | Created new test |
-| 5 | [Brief title] | [SEV] | N/A | — | Not testable |
-
-### Validation Status
-
-| # | Bug Title | Test File / Target | Validation Status |
-|---|-----------|-------------------|-------------------|
-| 2 | [Brief title] | `tests/test_foo.py` | BUILD_OK (modified) |
-| 3 | [Brief title] | `tests/test_bar.py:67` | BUILD_OK (modified) |
-| 4 | [Brief title] | `tests/test_baz.py` | BUILD_OK (new) |
-| 5 | [Brief title] | — | SKIPPED (N/A) |
-
-```
-Validation Summary: 3 BUILD_OK, 0 BUILD_FAILED, 1 SKIPPED
-Validation Command: python -m py_compile <file>
-```
-
-### New Tests Written (NO_COVERAGE)
-
-New test files created for bugs with no existing test coverage.
-
-| Bug # | File Created | Build Target / Runner |
-|-------|-------------|----------------------|
-| 4 | `tests/test_baz.py` | `pytest tests/test_baz.py` |
-
-```[language]
-// Contents of new test file
-```
-
-### Modifications Applied (PARTIAL / WRONG_ASSERTION)
-
-Changes applied to existing test files.
-
-| File | Bug # | Change Applied |
-|------|-------|----------------|
-| `tests/test_foo.py` | 2 | Added `test_missing_case()` |
-| `tests/test_bar.py:67` | 3 | Changed `assert result == 0` → `assert result == 1` |
-
-### Already Covered (COVERED)
-
-Bugs already caught by existing tests — no action needed.
-
-| Bug # | Bug Title | Existing Test |
-|-------|-----------|---------------|
-| 1 | [Brief title] | `tests/test_foo.py:45` — `test_sanitize_input()` |
-
-### Not Testable (N/A)
-
-Bugs that cannot have automated regression tests (config issues, documentation, LLM workflows, etc.).
-
-| Bug # | Bug Title | Reason |
-|-------|-----------|--------|
-| 6 | [Brief title] | Config file — no executable code |
-```
-
-## Final Instructions
-
-**CRITICAL: All verified bugs appear in the main report body.** The Regression Test Suite section organizes test artifacts, but every bug — regardless of whether a test can be written — MUST be documented in the severity sections (Critical/Important/Minor Issues) above. Bugs with `N/A` regression test status are still valid bugs that need reporting.
-
-**CRITICAL: Regression tests are supplementary, not a filter.** If no test framework is detected, or if a bug cannot have a test written (config, docs, LLM workflows), mark it as `N/A` and **still include the bug in the report**. Never skip a verified bug because you cannot write a test for it.
-
-- **No unverified bugs** — Every finding must pass the verification protocol
-- **Evidence required** — Include code snippets and trace for every bug
-- **Explicit false positive elimination** — State why each bug isn't handled elsewhere
-- Analyze all applicable dimensions — skip N/A dimensions explicitly with reason (see Dimension Applicability Check)
-- Assume the reader is a senior engineer who will verify your findings
-- If Draft context is available, explicitly note which architectural violations or product requirement bugs were found
-- Be precise about file locations and line numbers
-- Include git branch and commit in report header
-- **Write regression tests when possible** — If a test framework is detected, write test files using the project's native framework (Steps 4-6). If no framework exists, skip Steps 2-6 and mark all bugs as `N/A` for regression tests
-- **Never modify production code** — Only create/modify test files and their build configs
-- **Validate before reporting** — If tests were written, validate syntax/compilation before finalizing; include validation status in the report
-- **Respect project conventions** — Match existing test directory structure, naming patterns, import conventions, and framework idioms
-- **Use native frameworks** — pytest for Python, `go test` for Go, GTest for C++, Jest/Vitest for JS/TS, `cargo test` for Rust, JUnit for Java — never force a foreign test framework
-- **Learn from findings** — After report generation, execute the pattern learning phase from `core/shared/pattern-learning.md` to update `draft/guardrails.md` with newly discovered conventions and anti-patterns
-
----
-
-## Cross-Skill Dispatch
-
-### Suggestions at Completion
-
-After bughunt report generation:
-
-**If critical bugs found:**
-```
-"Critical bugs found. Consider:
-  → draft debug — Run structured debug session on critical finding #{n}
-  → git bisect — Find the exact commit that introduced the bug"
-```
-
-### Test Writing Guardrail
-
-When offering to write regression tests for found bugs:
-```
-ASK: "Want me to write regression tests for the {n} bugs found? [Y/n]"
-```
-Never auto-write tests — always ask first.
-
-### Jira Sync
-
-If Jira ticket linked, sync via `core/shared/jira-sync.md`:
-- Attach `bughunt-report-latest.md` to ticket
-- Post comment: "[draft] bughunt-complete: Found {n} issues — {critical} critical, {major} major."
 
 ---
 
