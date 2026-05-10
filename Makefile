@@ -6,6 +6,7 @@ TEST_SCRIPTS = \
 	./tests/test-skill-name-security.sh \
 	./tests/test-skill-order.sh \
 	./tests/test-skill-headers.sh \
+	./tests/test-skill-references.sh \
 	./tests/test-core-files.sh \
 	./tests/test-plugin-manifest.sh \
 	./tests/test-build-integrations.sh \

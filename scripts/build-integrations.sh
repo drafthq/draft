@@ -457,6 +457,17 @@ COMMON_HEADER2
             echo ""
             # Emit body from line 4 onward (skip blank, title, blank)
             echo "$skill_body" | transform_copilot_syntax | tail -n +4
+
+            # Inline progressive-disclosure references (skills/<skill>/references/*.md)
+            # Sorted alphabetically for determinism. Skills with no references/ dir are skipped.
+            local refs_dir="$SKILLS_DIR/$skill/references"
+            if [[ -d "$refs_dir" ]]; then
+                local ref_file
+                while IFS= read -r -d '' ref_file; do
+                    echo ""
+                    transform_copilot_syntax < "$ref_file"
+                done < <(find "$refs_dir" -maxdepth 1 -type f -name '*.md' -print0 | sort -z)
+            fi
         else
             echo "" >&2
             echo "ERROR: Skill file not found: $skill_file" >&2

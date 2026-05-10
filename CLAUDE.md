@@ -88,6 +88,12 @@ Execution instructions below...
 
 After the closing `---`, the body **must** be: (1) blank line, (2) `# Title` heading, (3) blank line, (4) content. The build script skips the first 3 body lines (`tail -n +4`) when inlining into integrations. Violating this format produces silent corruption in the generated output.
 
+### Progressive Disclosure: `skills/<skill>/references/*.md`
+
+A skill may ship supplementary content under `skills/<skill>/references/*.md` (top-level `.md` files only). The build script inlines these into the Copilot integration immediately after the SKILL body, sorted alphabetically, with the same syntax transforms applied. Use this for detail that bloats SKILL.md beyond the 1,500–2,000-word target (advanced patterns, schemas, exhaustive examples).
+
+Coverage in tests: `tests/test-skill-references.sh`.
+
 ### Syntax Transformation Rules
 
 The build script transforms skill content for platform compatibility:
