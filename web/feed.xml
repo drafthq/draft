@@ -6,13 +6,22 @@
     <description>A comprehensive guide to Draft's Context-Driven Development methodology. 24 chapters covering specs, plans, TDD enforcement, 3-stage code review, 14-dimension bug hunting, and ACID audits for AI coding agents.</description>
     <language>en-us</language>
     <managingEditor>mayur@getdraft.dev (Mayur Pise)</managingEditor>
-    <lastBuildDate>Sun, 10 May 2026 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Mon, 11 May 2026 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://getdraft.dev/feed.xml" rel="self" type="application/rss+xml"/>
     <image>
       <url>https://getdraft.dev/social-preview.png</url>
       <title>Draft -- Context-Driven Development</title>
       <link>https://getdraft.dev</link>
     </image>
+
+    <item>
+      <title>The Tool Tax: How Claude Code, Cursor, Copilot, and Codex Handle 200 MCP Tools</title>
+      <link>https://getdraft.dev/blog/mcp-tool-discovery/</link>
+      <description>Loading every MCP tool schema upfront costs 50-140K tokens and breaks selection accuracy past 30-50 visible tools. The four major coding agents converged on the same architectural pattern -- defer schemas, expand on demand -- but shipped four incompatible implementations. One still hasn't shipped at all. A 2026 field comparison of Claude Code, Cursor, GitHub Copilot, and OpenAI Codex CLI.</description>
+      <pubDate>Mon, 11 May 2026 00:00:00 +0000</pubDate>
+      <guid>https://getdraft.dev/blog/mcp-tool-discovery/</guid>
+      <category>Blog</category>
+    </item>
 
     <item>
       <title>What Will This Change Break? A Real Blast-Radius Walkthrough</title>
