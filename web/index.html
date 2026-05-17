@@ -4,21 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Draft — Code Intelligence Built Into Your AI Coding Agent</title>
-    <meta name="description" content="Free open-source plugin for Claude Code, Cursor, Copilot, Antigravity, and Gemini. Built-in knowledge graph engine, spec-driven planning, three-stage review, 14-dimension bug hunting. 28 commands, 9 languages, MIT.">
+    <meta name="description" content="Free open-source plugin for Claude Code, Cursor, Copilot, Antigravity, and Gemini. Built-in knowledge graph engine, spec-driven planning, three-stage review, 14-dimension bug hunting. 32 commands, 9 languages, MIT.">
     <meta name="author" content="mayurpise">
     <meta name="theme-color" content="#7c3aed">
     <meta name="keywords" content="claude code plugin, code intelligence, knowledge graph, ai code review, ai tdd, context-driven development, spec-driven development, tree-sitter, callers, blast radius, hotspots, ai bug hunting, github copilot plugin, gemini plugin, cursor ai plugin, antigravity ide, ai coding agent, ACID audit, open source developer tools, MIT licensed">
     <meta name="robots" content="index, follow">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <meta property="og:title" content="Draft — Code Intelligence for Your AI Coding Agent">
-    <meta property="og:description" content="Knowledge graph engine, spec-driven planning, three-stage review &mdash; in one plugin for Claude Code, Cursor, Copilot, Antigravity, and Gemini. 28 commands, 9 languages, free forever.">
+    <meta property="og:description" content="Knowledge graph engine, spec-driven planning, three-stage review &mdash; in one plugin for Claude Code, Cursor, Copilot, Antigravity, and Gemini. 32 commands, 9 languages, free forever.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://getdraft.dev">
     <meta property="og:image" content="https://getdraft.dev/social-preview.png">
     <meta property="og:image:alt" content="Draft: Code intelligence built into your AI coding agent">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Draft — Code Intelligence for Your AI Coding Agent">
-    <meta name="twitter:description" content="Knowledge graph + spec-driven planning + three-stage review. One plugin for Claude Code, Cursor, Copilot, Antigravity, Gemini. 28 commands. Free forever.">
+    <meta name="twitter:description" content="Knowledge graph + spec-driven planning + three-stage review. One plugin for Claude Code, Cursor, Copilot, Antigravity, Gemini. 32 commands. Free forever.">
     <meta name="twitter:image" content="https://getdraft.dev/social-preview.png">
     <meta name="twitter:image:alt" content="Draft: Code intelligence built into your AI coding agent">
     <link rel="canonical" href="https://getdraft.dev">
@@ -77,7 +77,7 @@
           "name": "What is Draft?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Draft is a free, open-source plugin that adds Context-Driven Development to AI coding agents. It provides 28 commands covering spec-driven planning, TDD enforcement, 3-stage code review, 14-dimension bug hunting, and architecture discovery for Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Gemini."
+            "text": "Draft is a free, open-source plugin that adds Context-Driven Development to AI coding agents. It provides 32 commands covering spec-driven planning, TDD enforcement, 3-stage code review, 14-dimension bug hunting, and architecture discovery for Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Gemini."
           }
         },
         {
@@ -232,8 +232,8 @@
         <canvas id="hero-canvas" aria-hidden="true"></canvas>
         <div class="hero-content">
             <a href="#changelog-strip" class="release-pill">
-                <span class="release-pill-tag">v2.4</span>
-                <span class="release-pill-text">Knowledge graph engine, 14 deterministic helpers, track impact memory</span>
+                <span class="release-pill-tag">v2.5</span>
+                <span class="release-pill-text">Command reduction plan, canonical parent commands, universal install script</span>
                 <span class="release-pill-arrow">→</span>
             </a>
             <h1>Stop shipping<br><span class="gradient-text">AI-generated bugs</span>.</h1>
@@ -261,7 +261,7 @@
             <!-- Hero stats strip -->
             <div class="hero-stats">
                 <div class="hero-stat">
-                    <span class="hero-stat-num">28</span>
+                    <span class="hero-stat-num">32</span>
                     <span class="hero-stat-label">Commands</span>
                 </div>
                 <div class="hero-stat-divider"></div>
@@ -299,16 +299,16 @@
         <div class="release-strip-inner">
             <div class="release-strip-meta">
                 <span class="release-strip-tag">Latest</span>
-                <span class="release-strip-version">v2.4 &middot; April 26, 2026</span>
+                <span class="release-strip-version">v2.5 &middot; May 17, 2026</span>
             </div>
             <div class="release-strip-headline">
-                <h3>Draft 2.4 ships built-in code intelligence</h3>
-                <p>Knowledge graph engine. 14 deterministic helpers. Track-level impact memory. Confidence-tagged call edges. <a href="changelog/" class="link-cyan">View full changelog &rarr;</a></p>
+                <h3>Draft 2.5 ships streamlined command architecture</h3>
+                <p>Command reduction plan via parent commands, Phase 0 Graph Build, universal install script. <a href="changelog/" class="link-cyan">View full changelog &rarr;</a></p>
             </div>
             <div class="release-strip-tags">
-                <span class="release-strip-pill">Tree-sitter graph</span>
-                <span class="release-strip-pill">Atomic incremental</span>
-                <span class="release-strip-pill">28 sections</span>
+                <span class="release-strip-pill">Command Reduction</span>
+                <span class="release-strip-pill">Phase 0 Graph Build</span>
+                <span class="release-strip-pill">Universal Install</span>
                 <span class="release-strip-pill">Free forever</span>
             </div>
         </div>
@@ -579,27 +579,32 @@
             <!-- Init phases showcase -->
             <div class="init-phases">
                 <div class="glass-card init-phase">
-                    <div class="init-phase-num init-phase-num--cyan">1</div>
+                    <div class="init-phase-num init-phase-num--cyan">0</div>
+                    <h3>Graph Build</h3>
+                    <p>Builds a tree-sitter knowledge graph mapping module boundaries, dependencies, call paths, and hotspots. This powers precise impact analysis and accelerates subsequent phases.</p>
+                </div>
+                <div class="glass-card init-phase">
+                    <div class="init-phase-num init-phase-num--amber">1</div>
                     <h3>Discovery</h3>
                     <p>Directory structure, build files, API definitions, interface/type files. <strong>Signal classification</strong> categorizes every source file into 11 categories (routes, services, auth, models, state, jobs, persistence, tests, config...) to drive adaptive analysis depth.</p>
                 </div>
                 <div class="glass-card init-phase">
-                    <div class="init-phase-num init-phase-num--amber">2</div>
+                    <div class="init-phase-num init-phase-num--rose">2</div>
                     <h3>Wiring</h3>
                     <p>Entry points, orchestrator initialization, registry/registration code, dependency injection, module system, import graph. Maps how components find and connect to each other.</p>
                 </div>
                 <div class="glass-card init-phase">
-                    <div class="init-phase-num init-phase-num--rose">3</div>
+                    <div class="init-phase-num init-phase-num--emerald">3</div>
                     <h3>Depth</h3>
                     <p>End-to-end data flows, core module implementations, concurrency model, safety checks. Traces invariants, validation, auth gates. Identifies state machines and consistency boundaries.</p>
                 </div>
                 <div class="glass-card init-phase">
-                    <div class="init-phase-num init-phase-num--emerald">4</div>
+                    <div class="init-phase-num init-phase-num--violet">4</div>
                     <h3>Periphery</h3>
                     <p>External dependencies, test infrastructure, configuration mechanisms, existing documentation. Maps the full operational envelope of your system.</p>
                 </div>
                 <div class="glass-card init-phase">
-                    <div class="init-phase-num init-phase-num--violet">5</div>
+                    <div class="init-phase-num init-phase-num--cyan">5</div>
                     <h3>Synthesis</h3>
                     <p>Cross-reference, completeness validation, pattern identification, Mermaid diagram generation. Produces <strong>architecture.md</strong> (28 sections + 5 appendices) and derives <strong>.ai-context.md</strong> (200-400 lines, token-optimized).</p>
                 </div>
@@ -839,7 +844,7 @@
     <section id="commands" class="section">
         <div class="section-glow section-glow--emerald"></div>
         <div class="section-inner">
-            <span class="section-label">28 Commands &middot; 7 Specialized Agents</span>
+            <span class="section-label">32 Commands &middot; 7 Specialized Agents</span>
             <h2>Full development <span class="text-emerald">lifecycle</span></h2>
 
             <!-- Interactive terminal -->
@@ -875,6 +880,10 @@
                 <div class="cmd-card" data-category="setup">
                     <span class="cmd-name">/draft:index</span>
                     <span class="cmd-desc">Monorepo federation</span>
+                </div>
+                <div class="cmd-card" data-category="lifecycle">
+                    <span class="cmd-name">/draft:plan</span>
+                    <span class="cmd-desc">Canonical planning parent command</span>
                 </div>
                 <div class="cmd-card" data-category="lifecycle">
                     <span class="cmd-name">/draft:new-track</span>
@@ -932,6 +941,10 @@
                     <span class="cmd-name">/draft:jira-create</span>
                     <span class="cmd-desc">Push to Jira via MCP</span>
                 </div>
+                <div class="cmd-card" data-category="enterprise">
+                    <span class="cmd-name">/draft:integrations</span>
+                    <span class="cmd-desc">Canonical integrations parent command</span>
+                </div>
                 <div class="cmd-card" data-category="quality">
                     <span class="cmd-name">/draft:debug</span>
                     <span class="cmd-desc">Structured debugging sessions</span>
@@ -939,6 +952,10 @@
                 <div class="cmd-card" data-category="quality">
                     <span class="cmd-name">/draft:quick-review</span>
                     <span class="cmd-desc">Lightweight code review</span>
+                </div>
+                <div class="cmd-card" data-category="lifecycle">
+                    <span class="cmd-name">/draft:ops</span>
+                    <span class="cmd-desc">Canonical operations parent command</span>
                 </div>
                 <div class="cmd-card" data-category="lifecycle">
                     <span class="cmd-name">/draft:deploy-checklist</span>
@@ -963,6 +980,10 @@
                 <div class="cmd-card" data-category="architecture">
                     <span class="cmd-name">/draft:documentation</span>
                     <span class="cmd-desc">Technical documentation generation</span>
+                </div>
+                <div class="cmd-card" data-category="architecture">
+                    <span class="cmd-name">/draft:docs</span>
+                    <span class="cmd-desc">Canonical docs parent command</span>
                 </div>
                 <div class="cmd-card" data-category="lifecycle">
                     <span class="cmd-name">/draft:tour</span>
@@ -1370,7 +1391,7 @@
                 <details class="faq-item glass-card">
                     <summary class="faq-question">What is Draft?</summary>
                     <div class="faq-answer">
-                        <p>Draft is a free, open-source plugin that adds Context-Driven Development to AI coding agents. It provides 28 commands covering spec-driven planning, TDD enforcement, 3-stage code review, 14-dimension bug hunting, and architecture discovery for Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Gemini.</p>
+                        <p>Draft is a free, open-source plugin that adds Context-Driven Development to AI coding agents. It provides 32 commands covering spec-driven planning, TDD enforcement, 3-stage code review, 14-dimension bug hunting, and architecture discovery for Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Gemini.</p>
                     </div>
                 </details>
 
@@ -1454,16 +1475,19 @@
             </div>
             <div class="footer-social">
                 <span class="footer-social-label">Share</span>
-                <a href="https://api.whatsapp.com/send?text=Free%20plugin%20that%20adds%20spec-driven%20development%2C%20TDD%2C%20and%2014-dimension%20bug%20hunting%20to%20Claude%20Code%2C%20Copilot%20%26%20Gemini.%20https%3A%2F%2Fgetdraft.dev" target="_blank" rel="noopener noreferrer" class="social-btn" title="WhatsApp">
+                <a href="https://api.whatsapp.com/send?text=Draft%3A%20Code%20intelligence%20built%20into%20your%20AI%20coding%20agent.%20Free%20open-source%20plugin%20with%20knowledge%20graph%2C%20spec-driven%20planning%2C%20and%203-stage%20review.%20https%3A%2F%2Fgetdraft.dev" target="_blank" rel="noopener noreferrer" class="social-btn" title="WhatsApp">
                     <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
                 </a>
                 <a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fgetdraft.dev" target="_blank" rel="noopener noreferrer" class="social-btn" title="LinkedIn">
                     <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
                 </a>
-                <a href="https://reddit.com/submit?url=https%3A%2F%2Fgetdraft.dev&title=Draft%3A%20Free%20spec-driven%20dev%20plugin%20for%20Claude%20Code%2C%20Copilot%20%26%20Gemini" target="_blank" rel="noopener noreferrer" class="social-btn" title="Reddit">
+                <a href="https://news.ycombinator.com/submitlink?u=https%3A%2F%2Fgetdraft.dev&t=Draft%3A%20Code%20Intelligence%20Built%20Into%20Your%20AI%20Coding%20Agent" target="_blank" rel="noopener noreferrer" class="social-btn" title="Hacker News">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M0 24V0h24v24H0zM6.951 5.896l4.047 7.61V22h2.004v-8.494l4.047-7.61h-2.19l-2.859 5.83-2.859-5.83H6.951z"/></svg>
+                </a>
+                <a href="https://reddit.com/submit?url=https%3A%2F%2Fgetdraft.dev&title=Draft%3A%20Code%20Intelligence%20Built%20Into%20Your%20AI%20Coding%20Agent" target="_blank" rel="noopener noreferrer" class="social-btn" title="Reddit">
                     <svg viewBox="0 0 24 24"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
                 </a>
-                <a href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fgetdraft.dev&text=Free%20plugin%20for%20Claude%20Code%2C%20Copilot%20%26%20Gemini.%20Adds%20specs%2C%20TDD%2C%2014-dimension%20bug%20hunting%2C%20and%20ACID%20audits." target="_blank" rel="noopener noreferrer" class="social-btn" title="X">
+                <a href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fgetdraft.dev&text=Draft%3A%20Code%20intelligence%20built%20into%20your%20AI%20coding%20agent.%20Free%20open-source%20plugin%20with%20knowledge%20graph%2C%20spec-driven%20planning%2C%20and%203-stage%20review." target="_blank" rel="noopener noreferrer" class="social-btn" title="X">
                     <svg viewBox="0 0 24 24"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>
                 </a>
             </div>

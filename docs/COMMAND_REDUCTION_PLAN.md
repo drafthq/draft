@@ -2,40 +2,95 @@
 
 ## Status
 
-Strategic plan for reducing Draft's public command surface while preserving existing capabilities and backward compatibility.
+Strategic plan for reducing Draft's public command surface while preserving depth.
+
+This revision sharpens one product rule:
+
+- parent commands own orchestration
+- specialist commands remain available as explicit modes or compatibility aliases
+- developers should not have to memorize command soup to get high-quality outcomes
 
 Scope of this document:
 
-- user-facing command reduction only
-- routing and alias strategy
-- rollout and migration plan
+- user-facing command reduction
+- parent-command orchestration model
+- alias and routing strategy
+- rollout and messaging changes
 
 Out of scope:
 
-- context-pack design
-- runtime architecture changes
-- deep implementation details for skill internals
+- skill-internal implementation details
+- context-pack redesign
+- runtime architecture changes outside routing/orchestration
 
 ---
 
-## Why Reduce Commands
+## Problem
 
-Draft currently exposes a broad top-level command surface:
+Draft currently presents a long list of top-level commands in README and integrations. Even when each command is useful, the product asks the developer to pick the right specialist up front.
 
-- planning commands
-- implementation commands
-- multiple review/audit commands
-- operations commands
-- documentation/support commands
-- integration commands
+That creates four problems:
 
-This breadth creates three problems:
+1. **Discovery cost**: new users must scan a large menu before they can act.
+2. **Intent burden**: users have to translate "I want a safe review" into "should I run review, quick-review, deep-review, bughunt, impact, or assist-review?"
+3. **Workflow fragmentation**: Draft feels like a toolbox, not a system.
+4. **Capability underuse**: lower-level analyzers stay unused unless the developer already knows they exist.
 
-1. **Discovery cost**: new users must choose among too many adjacent commands.
-2. **Intent ambiguity**: multiple commands compete for the same job-to-be-done.
-3. **Product dilution**: Draft feels like a toolbox of commands instead of one coherent workflow.
+The reduction plan should not just rename commands. It should move orchestration responsibility from the developer to Draft.
 
-The product gets stronger if the public surface is small and the internal capability surface remains rich.
+---
+
+## Core Thesis
+
+Draft should expose a small set of **workflow parents**.
+
+Each parent command should:
+
+- accept the user's high-level intent
+- invoke the right lower-level analyzers, checks, and helpers in the right order
+- escalate depth when signals justify it
+- still allow explicit specialist invocation when the user asks for it
+
+In short:
+
+- **public surface stays small**
+- **internal capability surface stays rich**
+- **defaults get smarter**
+
+---
+
+## Design Goals
+
+1. Reduce visible top-level commands to a small, memorable set.
+2. Preserve existing capability depth behind parent workflows.
+3. Make bare parent commands useful enough that most developers never need the specialist list.
+4. Keep routing explicit and predictable when a user names a specialist mode.
+5. Maintain backward compatibility during migration.
+
+## Non-Goals
+
+1. Removing useful capabilities in the first pass.
+2. Hiding all specialist behavior from advanced users.
+3. Replacing explicit expert workflows with opaque automation.
+4. Rewriting every skill before the routing model is defined.
+
+---
+
+## Product Rule
+
+**A parent command must be better than a command directory.**
+
+That means `/draft:review` should not merely say "available modes: quick, deep, bughunt..."
+
+It should perform an opinionated review workflow that composes the right primitives by default.
+
+Likewise:
+
+- `/draft:plan` should coordinate planning primitives
+- `/draft:implement` should coordinate implementation, progress, and recovery primitives
+- `/draft:ops` should coordinate debugging and operational workflows
+
+If a parent command does not orchestrate real work, developers will keep falling back to the long command list.
 
 ---
 
@@ -73,45 +128,11 @@ Current top-level user-facing commands include:
 - `/draft:impact`
 - `/draft:discover`
 
-Not all of these should remain first-class entry points.
+Not all of these should remain first-class public entry points.
 
 ---
 
-## Design Goals
-
-1. Reduce visible top-level commands to a smaller, memorable set.
-2. Preserve current functionality behind grouped commands and sub-modes.
-3. Maintain backward compatibility during migration.
-4. Keep user intent routing predictable and explicit.
-5. Avoid breaking existing workflows abruptly.
-
-## Non-Goals
-
-1. Removing useful capabilities outright in the first pass.
-2. Rewriting all skills immediately.
-3. Forcing hidden automation when the user asked for a specific mode.
-
----
-
-## Guiding Principle
-
-Draft should expose **workflow verbs**, not every internal specialization.
-
-Users should think in terms of:
-
-- initialize context
-- plan work
-- implement work
-- review work
-- run ops workflows
-- produce docs
-- use integrations
-
-Internal sub-modules can remain specialized. Public top-level entry points should be few.
-
----
-
-## Proposed Public Command Taxonomy
+## Proposed Public Taxonomy
 
 ## Keep as Top-Level
 
@@ -132,21 +153,107 @@ Optional later:
 
 Rationale:
 
-- `learn` is the only borderline case. It is conceptually distinct, but it can also be folded under `review` or `docs` later if needed.
+- this is a small enough set to remember
+- each command maps to a clear developer job-to-be-done
+- the taxonomy reflects workflow stages, not internal implementation details
 
 ---
 
-## Command Grouping
+## Public vs Internal Surface
+
+The command model should split into three layers.
+
+## Layer 1: Primary Public Commands
+
+These appear in README, install flows, and generated integrations:
+
+- `/draft:init`
+- `/draft:plan`
+- `/draft:implement`
+- `/draft:review`
+- `/draft:ops`
+- `/draft:docs`
+- `/draft:integrations`
+
+## Layer 2: Named Specialist Modes
+
+These remain callable, but are taught as subcommands of a parent:
+
+- `/draft:review deep`
+- `/draft:review bughunt`
+- `/draft:plan adr`
+- `/draft:implement coverage`
+- `/draft:ops debug`
+
+## Layer 3: Compatibility Aliases
+
+These continue to work during migration, but should not lead product messaging:
+
+- `/draft:deep-review`
+- `/draft:bughunt`
+- `/draft:new-track`
+- `/draft:coverage`
+- `/draft:debug`
+
+This separation is important. The goal is not to delete sophistication. The goal is to stop leading with it.
+
+---
+
+## Orchestration Model
+
+## Principle
+
+Bare parent commands should perform a **progressive workflow**, not a shallow wrapper.
+
+Progressive workflow means:
+
+1. start with the default happy-path analysis
+2. invoke specialist helpers automatically when they add clear value
+3. escalate only when evidence or user intent justifies extra depth
+4. summarize what ran and why
+
+## Rules
+
+1. Explicit user intent always wins.
+2. Bare parent commands should choose a sensible default workflow.
+3. Specialist helpers may run automatically inside the parent workflow.
+4. Automatic escalation must be explainable in output.
+5. Advanced modes remain directly invocable.
+
+Example output shape:
+
+```text
+Running /draft:review
+- Baseline review
+- Impact scan
+- Escalated to deep review because high-risk files and auth boundary changes were detected
+```
+
+That gives the user the best result without making them choose the stack manually.
+
+---
+
+## Parent Command Contracts
+
+Each parent command needs a clear contract: what it owns, what it may call, and what a developer should expect by default.
 
 ## 1. `/draft:init`
 
 Purpose:
 
 - repository onboarding
-- project indexing
-- refresh and discovery
+- context generation
+- discovery and refresh
+- monorepo aggregation when relevant
 
-Subcommands:
+Default behavior:
+
+- initialize repo context
+- discover repo shape
+- refresh stale generated context if needed
+- suggest indexing when monorepo signals are detected
+
+Named modes:
 
 - `/draft:init`
 - `/draft:init refresh`
@@ -159,22 +266,30 @@ Current commands absorbed:
 - `/draft:index`
 - `/draft:discover`
 
-Rationale:
+Parent orchestration expectation:
 
-These all concern repo understanding and initialization of Draft context.
-
----
+- a developer should not need to decide between "init" and "discover" just to get started
+- `/draft:init` should own the startup flow and call discovery/index helpers when appropriate
 
 ## 2. `/draft:plan`
 
 Purpose:
 
-- creating and evolving planned work
-- decomposition
-- architecture decisions
+- define the work
+- break it down
+- evolve it safely when requirements change
+- capture architecture decisions
 
-Subcommands:
+Default behavior:
 
+- start or continue a track plan
+- create or refine task breakdown
+- surface architecture decision points when needed
+- route to change handling when an existing track is being modified
+
+Named modes:
+
+- `/draft:plan`
 - `/draft:plan new-track`
 - `/draft:plan decompose`
 - `/draft:plan change`
@@ -187,22 +302,28 @@ Current commands absorbed:
 - `/draft:change`
 - `/draft:adr`
 
-Rationale:
+Parent orchestration expectation:
 
-These are all pre-implementation planning and design evolution activities.
-
----
+- a developer saying "plan this work" should get track creation plus decomposition support without needing to pick separate verbs
+- ADR generation should be an escalation or explicit mode, not a separate product entrance
 
 ## 3. `/draft:implement`
 
 Purpose:
 
-- execute planned work
-- observe progress
-- validate implementation completeness
-- recover from mistakes
+- execute the plan
+- track progress
+- validate completeness
+- recover safely when implementation goes off track
 
-Subcommands:
+Default behavior:
+
+- continue the next task in the active track
+- run implementation workflow and verification gates
+- update task/progress state
+- surface coverage gaps or revert guidance only when needed
+
+Named modes:
 
 - `/draft:implement`
 - `/draft:implement status`
@@ -216,28 +337,35 @@ Current commands absorbed:
 - `/draft:coverage`
 - `/draft:revert`
 
-Rationale:
+Parent orchestration expectation:
 
-These all sit on the implementation loop and do not need separate first-class commands.
-
----
+- a developer should not need to manually switch to `/draft:status` or `/draft:coverage` in the common path
+- `/draft:implement` should own those checks where they materially improve the implementation loop
 
 ## 4. `/draft:review`
 
 Purpose:
 
-- quality evaluation
-- code review
-- risk discovery
-- audit depth selection
+- evaluate change quality
+- detect risk
+- choose appropriate review depth
+- prepare reviewers with the right context
 
-Subcommands:
+Default behavior:
+
+- run baseline review
+- run impact analysis automatically
+- escalate to deeper review when risk signals justify it
+- include reviewer-assist summarization when useful
+
+Named modes:
 
 - `/draft:review`
 - `/draft:review quick`
 - `/draft:review deep`
 - `/draft:review bughunt`
 - `/draft:review assist`
+- `/draft:review impact`
 
 Current commands absorbed:
 
@@ -248,29 +376,46 @@ Current commands absorbed:
 - `/draft:assist-review`
 - `/draft:impact`
 
-Notes:
+Parent orchestration expectation:
 
-- `impact` should not remain a separate top-level public command.
-- It should become a review/analysis mode:
-  - `/draft:review impact`
-  - or an internal primitive used by `review`, `bughunt`, and `deep`
+- most developers should be able to run `/draft:review` and trust Draft to apply the right stack
+- specialist modes remain available for explicit intent, CI hooks, or power users
 
-Rationale:
+Recommended default review stack:
 
-These commands all answer some version of "analyze change risk or quality." Users should not have to distinguish five review verbs upfront.
+1. baseline review
+2. impact scan
+3. escalate to deep review on structural-risk signals
+4. escalate to bughunt on defect-risk signals
+5. attach assist-review style summary when the output is likely to be consumed by another reviewer
 
----
+Possible escalation signals:
+
+- high fan-in or hotspot files
+- auth, money, persistence, concurrency, or migration paths
+- large blast radius
+- broad interface changes
+- weak or missing tests
+- generated diff patterns historically correlated with defects
+
+This is the clearest example of the new product model: `/draft:review` should be the orchestrator, not just one peer in a list of review commands.
 
 ## 5. `/draft:ops`
 
 Purpose:
 
-- incident workflows
 - debugging
-- deployment readiness
-- activity summaries
+- incident handling
+- deploy readiness
+- operational summaries
 
-Subcommands:
+Default behavior:
+
+- if user intent is clear, route directly
+- if intent is broad, present a small ops menu with recommended default path
+- reuse debugging or incident helpers without forcing command memorization
+
+Named modes:
 
 - `/draft:ops debug`
 - `/draft:ops deploy-checklist`
@@ -284,21 +429,21 @@ Current commands absorbed:
 - `/draft:incident-response`
 - `/draft:standup`
 
-Rationale:
-
-These belong to operational and support workflows, not to the core build-plan-review loop.
-
----
-
 ## 6. `/draft:docs`
 
 Purpose:
 
-- produce or analyze supporting engineering documentation
-- explain systems
-- define test and debt work
+- produce engineering documentation
+- explain the system
+- define testing strategy
+- capture debt and onboarding material
 
-Subcommands:
+Default behavior:
+
+- route to the relevant documentation workflow based on request intent
+- reuse architecture/tour/test-strategy helpers as internal specialists
+
+Named modes:
 
 - `/draft:docs documentation`
 - `/draft:docs testing-strategy`
@@ -312,19 +457,13 @@ Current commands absorbed:
 - `/draft:tech-debt`
 - `/draft:tour`
 
-Rationale:
-
-These are all supporting-document or knowledge-transfer workflows.
-
----
-
 ## 7. `/draft:integrations`
 
 Purpose:
 
 - external system export and sync
 
-Subcommands:
+Named modes:
 
 - `/draft:integrations jira-preview`
 - `/draft:integrations jira-create`
@@ -336,47 +475,46 @@ Current commands absorbed:
 
 Rationale:
 
-These are connectors, not core workflow verbs.
+- integrations are connectors, not core workflow verbs
 
 ---
 
-## What Stays Out of the Reduction Scope
+## What Stays Out of Scope
 
 ## `/draft`
 
-Keep `/draft` as the main overview/help/router entry point.
+Keep `/draft` as the overview, help, and intent router.
 
 It should:
 
-- explain the reduced command model
-- show recommended flows
-- route users to the right top-level command
+- explain the reduced workflow model
+- show canonical commands only
+- route to the right parent command
+- point to compatibility aliases separately, not in the main flow
 
 ## `/draft:learn`
 
 Recommendation:
 
-- keep it temporarily as its own top-level command
-- reassess after command reduction lands
+- keep temporarily as top-level or advanced standalone
+- reassess after the new parent-command model lands
 
 Why:
 
-- it has a distinct pattern-learning and guardrail-maintenance role
-- folding it immediately may make the first migration too disruptive
+- it has a distinct pattern-learning role
+- folding it immediately adds migration risk without much simplification benefit
 
 Longer-term options:
 
-- move under `/draft:review learn`
-- move under `/draft:docs learn`
-- keep as advanced standalone command
+- `/draft:review learn`
+- `/draft:docs learn`
+- advanced standalone command outside the primary onboarding path
 
 ---
 
 ## Routing Rules
 
-The reduced surface should be explicit-first, routed-second.
-
-## Rule 1: Explicit Subcommand Wins
+## Rule 1: Explicit Specialist Intent Wins
 
 If the user invokes:
 
@@ -384,18 +522,18 @@ If the user invokes:
 - `/draft:plan adr`
 - `/draft:ops debug`
 
-Draft should dispatch directly to that sub-module.
+Draft dispatches directly to that mode.
 
 No auto-routing should override explicit intent.
 
-## Rule 2: Top-Level Bare Commands Use Defaults
+## Rule 2: Bare Parent Commands Run Canonical Workflows
 
 Examples:
 
-- `/draft:plan` -> default to `new-track` help or guided planner intake
-- `/draft:implement` -> implementation workflow
-- `/draft:review` -> standard review
-- `/draft:ops` -> show available ops modes or ask for target intent if ambiguous
+- `/draft:init` -> initialization flow with discovery/refresh as needed
+- `/draft:plan` -> guided planning plus decomposition support
+- `/draft:implement` -> implementation workflow with progress/verification
+- `/draft:review` -> review stack with automatic impact scan and risk-based escalation
 
 ## Rule 3: Compatibility Aliases Route to Canonical Form
 
@@ -407,15 +545,28 @@ Examples:
 
 Aliases should continue to work during migration.
 
-## Rule 4: Deprecation Message Is Visible
+## Rule 4: Automatic Orchestration Must Be Visible
 
-When an alias is used, Draft should say:
+When parent commands invoke specialist helpers, Draft should say so briefly.
+
+Example:
+
+```text
+Running /draft:review
+- baseline review complete
+- impact analysis triggered automatically
+- deep review triggered because 3 hotspot files changed
+```
+
+## Rule 5: Deprecation Message Is Visible
+
+When a legacy alias is used, Draft should say:
 
 ```text
 `/draft:bughunt` is deprecated; routing to `/draft:review bughunt`.
 ```
 
-This keeps the new model visible without breaking current users.
+This keeps the canonical model visible without breaking current usage.
 
 ---
 
@@ -450,70 +601,94 @@ This keeps the new model visible without breaking current users.
 
 ---
 
-## Product Messaging Changes
+## README and Messaging Changes
 
 The command reduction only works if the product story changes with it.
 
 ## Current Story
 
-Draft advertises many commands and a broad lifecycle toolbox.
+README currently emphasizes breadth:
+
+- "`/draft:review` is the wedge"
+- "27 more commands"
+- a long "What You Get" table
+
+That messaging proves power, but it also reinforces the burden we are trying to remove.
 
 ## Proposed Story
 
-Draft should market a smaller workflow:
+Lead with the workflow:
 
 1. `/draft:init` — understand the repo
 2. `/draft:plan` — define the work
 3. `/draft:implement` — execute safely
 4. `/draft:review` — catch risk before push
 
-Supporting areas:
+Supporting families:
 
 - `/draft:ops`
 - `/draft:docs`
 - `/draft:integrations`
 
-This makes Draft easier to explain and easier to adopt.
+Messaging rule:
+
+- primary docs should market parent commands
+- specialist modes should appear as "what the parent can do" or "advanced modes"
+- legacy aliases should live in migration/reference sections only
+
+## Recommended README change
+
+Replace "27 more commands" framing with:
+
+- "7 workflow commands"
+- "specialist modes built in"
+- "advanced review, bug hunting, impact analysis, debugging, and documentation workflows are invoked through these parents"
+
+This better matches the product we want developers to experience.
 
 ---
 
 ## Rollout Plan
 
-## Phase 1: Documentation-First Consolidation
+## Phase 1: Documentation-First Realignment
 
 Change:
 
-- README command table
-- methodology docs
+- README
+- command reference
+- generated integration docs
 - examples and walkthroughs
 
 Actions:
 
-1. Introduce the new top-level taxonomy in docs.
-2. Keep old commands documented as compatibility aliases.
-3. Update examples to use canonical commands first.
+1. Introduce the reduced parent taxonomy in primary docs.
+2. Reframe specialist commands as modes/helpers, not peers.
+3. Add orchestration language to parent command descriptions.
+4. Keep legacy commands documented as compatibility aliases.
 
 Success criteria:
 
-- new users see only the reduced top-level taxonomy in primary docs
-- old users can still find the old commands in migration notes
+- new users primarily encounter 4-7 workflow parents
+- the docs explain that parent commands compose deeper checks automatically
 
-## Phase 2: Router Layer
+## Phase 2: Canonical Routing Layer
 
 Change:
 
-- add explicit canonical routing in plugin instructions and integrations
+- define canonical destinations for every old command
+- define default workflows for each bare parent command
 
 Actions:
 
 1. Implement alias dispatch messages.
-2. Route old commands to new canonical command families.
-3. Keep telemetry or lightweight logging on alias usage if available.
+2. Implement parent-command default routing behavior.
+3. Expose short "what ran" summaries when orchestration triggers specialist helpers.
 
 Success criteria:
 
-- existing commands continue to function
-- user-visible output reinforces canonical destinations
+- legacy commands still work
+- bare parent commands do real work
+- output teaches the canonical model implicitly
 
 ## Phase 3: Integration Surface Cleanup
 
@@ -523,31 +698,31 @@ Change:
 
 Actions:
 
-1. Update `build-integrations.sh` metadata and triggers.
-2. Prefer canonical forms in Copilot/Gemini/other generated files.
-3. Move alias commands into a compatibility or legacy section.
+1. Update integration metadata to prefer canonical parent commands.
+2. Teach Copilot/Gemini/other generated files to recommend parent workflows first.
+3. Move aliases into compatibility sections.
 
 Success criteria:
 
-- generated integrations teach new command families first
-- aliases remain available but no longer lead the product
+- generated integrations stop advertising the full legacy command soup
+- specialist capabilities remain reachable without dominating the surface
 
 ## Phase 4: Soft Deprecation
 
 Change:
 
-- old commands remain functional but are clearly secondary
+- old commands remain functional but clearly secondary
 
 Actions:
 
 1. Mark old commands as deprecated in docs.
 2. Continue alias routing for at least one release cycle.
-3. Gather user feedback before any hard removal.
+3. Gather feedback on where parent orchestration still feels too shallow.
 
 Success criteria:
 
-- the majority of examples and user flows use the reduced surface
-- there is no major confusion or workflow breakage
+- most examples use the reduced command model
+- developers trust parent commands to choose the right depth in common cases
 
 ## Phase 5: Hard Removal Decision
 
@@ -556,29 +731,42 @@ Not automatic.
 Before any hard removal:
 
 1. check alias usage
-2. confirm integrations and docs are fully migrated
-3. confirm that no major workflow depends on legacy naming
+2. confirm integrations and docs are migrated
+3. confirm parent workflows cover the old common paths
+4. confirm specialist access is still available where expert users need it
 
 Recommendation:
 
-- do not hard-remove legacy aliases until the reduced model has proven itself
+- do not hard-remove aliases until the parent-command experience is clearly superior
 
 ---
 
 ## Risks
 
-## 1. Over-Consolidation
+## 1. Over-Automation
 
 Risk:
 
-- users may lose a sense of specialized power if everything looks too generic
+- parent commands may become unpredictable if they trigger too much hidden behavior
 
 Mitigation:
 
-- preserve rich subcommands
-- keep explicit sub-mode invocation available
+- keep explicit modes available
+- explain automatic escalation in output
+- use clear heuristics for when specialist helpers are invoked
 
-## 2. Migration Confusion
+## 2. Shallow Parents
+
+Risk:
+
+- if parent commands only rename groups without meaningful orchestration, users will keep using the old commands
+
+Mitigation:
+
+- define parent-command contracts
+- require bare parent commands to own a useful default workflow
+
+## 3. Migration Confusion
 
 Risk:
 
@@ -586,11 +774,11 @@ Risk:
 
 Mitigation:
 
-- explicit alias messages
-- migration table in docs
+- alias routing messages
+- migration table
 - compatibility period
 
-## 3. Documentation Drift
+## 4. Documentation Drift
 
 Risk:
 
@@ -598,44 +786,40 @@ Risk:
 
 Mitigation:
 
-- canonical command audit across README, methodology, integrations, skills
-
-## 4. Internal Coupling
-
-Risk:
-
-- grouped commands may be implemented inconsistently if the router layer is weak
-
-Mitigation:
-
-- define canonical destinations first
-- keep internal sub-modules modular
+- canonical command audit across README, methodology, integrations, and skills
 
 ---
 
 ## Success Criteria
 
-The command reduction is successful if:
+The reduction is successful if:
 
 1. A new user can understand Draft from 4-7 top-level commands.
-2. Existing capabilities remain reachable without functional regression.
-3. Old commands still work during migration.
-4. README and generated integrations teach the new taxonomy first.
-5. Draft feels like a coherent workflow rather than a menu of unrelated commands.
+2. Bare parent commands are sufficient for most common workflows.
+3. Existing capabilities remain reachable without regression.
+4. Old commands still work during migration.
+5. README and integrations teach parent workflows first.
+6. Draft feels like a coherent workflow engine, not a command directory.
 
 ---
 
 ## Recommendation
 
-Proceed with the highest-value reductions first:
+Proceed with reduction as an orchestration project, not just a taxonomy cleanup.
 
-1. Consolidate all review-adjacent commands under `/draft:review`.
-2. Consolidate all planning/design commands under `/draft:plan`.
-3. Consolidate all implementation loop support under `/draft:implement`.
-4. Consolidate all ops/support workflows under `/draft:ops`.
-5. Consolidate docs/helping workflows under `/draft:docs`.
-6. Consolidate Jira under `/draft:integrations`.
+Priority order:
+
+1. Consolidate review-adjacent commands under `/draft:review`.
+2. Make `/draft:review` automatically compose impact and risk-based depth selection.
+3. Consolidate planning commands under `/draft:plan`.
+4. Consolidate implementation-loop support under `/draft:implement`.
+5. Consolidate ops, docs, and integrations under their respective parents.
+6. Update README so parent workflows lead and specialist modes support them.
 
 Keep `/draft`, `/draft:init`, and `/draft:learn` stable during the first migration wave.
 
-This gives Draft a smaller and clearer public API without losing its existing depth.
+The target outcome is simple:
+
+- developers remember a few commands
+- Draft chooses the right specialist helpers most of the time
+- power users still have explicit depth controls when they want them
