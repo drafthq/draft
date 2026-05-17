@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-Draft is a Claude Code plugin that implements Context-Driven Development methodology. It provides 28 slash commands organized in a two-tier architecture: 4 primary workflow commands (`/draft:init`, `/draft:new-track`, `/draft:implement`, `/draft:review`) with auto-invocation, plus 24 specialist commands for debugging (`/draft:debug`), operations (`/draft:deploy-checklist`, `/draft:incident-response`, `/draft:standup`), quality (`/draft:quick-review`, `/draft:testing-strategy`, `/draft:tech-debt`), authoring (`/draft:documentation`), DX (`/draft:assist-review`, `/draft:impact`, `/draft:tour`), and more (`/draft:status`, `/draft:revert`, `/draft:decompose`, `/draft:coverage`, `/draft:deep-review`, `/draft:bughunt`, `/draft:learn`, `/draft:adr`, `/draft:change`, `/draft:index`, `/draft:jira-preview`, `/draft:jira-create`). Run `/draft` for overview.
+Draft is a Claude Code plugin that implements Context-Driven Development methodology. It now exposes `/draft:plan` as the canonical planning parent command alongside `/draft:init`, `/draft:implement`, and `/draft:review`. The older planning commands (`/draft:new-track`, `/draft:decompose`, `/draft:change`, `/draft:adr`) remain available as specialist modes and compatibility entry points. Run `/draft` for the current command overview.
 
 Draft also ships a **knowledge graph engine** under `graph/` (Node.js + tree-sitter WASM) and **14 deterministic shell helpers** under `scripts/tools/`. Skills are markdown (source of truth, processed by a bash build script into platform-specific integration files for Copilot and Gemini); the graph engine and shell helpers handle mechanical work that markdown can't.
 
@@ -47,7 +47,7 @@ core/agents/*.md          ──┘
 ```
 
 The build script (`scripts/build-integrations.sh`) reads `SKILL_ORDER`, `CORE_FILES`, and `TOOLS` from `scripts/lib.sh` (sourced) and:
-1. Iterates `SKILL_ORDER` (28 skills, order matters)
+1. Iterates `SKILL_ORDER` (order matters)
 2. Validates YAML frontmatter (`name:` and `description:` required)
 3. Validates body format: blank, `# Title`, blank, then content
 4. Extracts body via `extract_body()`, skipping frontmatter

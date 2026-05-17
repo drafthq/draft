@@ -29,6 +29,7 @@ Draft solves this through **Context-Driven Development**: structured documents t
 - [Plan Structure](#plan-structure)
 - [Command Workflows](#command-workflows)
   - [/draft:init](#draftinit--initialize-project)
+  - [/draft:plan](#draftplan--planning-orchestrator)
   - [/draft:index](#draftindex--monorepo-service-index)
   - [/draft:new-track](#draftnew-track--create-feature-track)
   - [/draft:implement](#draftimplement--execute-tasks)
@@ -63,7 +64,7 @@ Draft solves this through **Context-Driven Development**: structured documents t
 |----------|---------|----------|
 | `product.md` | Defines users, goals, success criteria, guidelines | AI building features nobody asked for |
 | `tech-stack.md` | Languages, frameworks, patterns, accepted patterns | AI introducing random dependencies |
-| `architecture.md` | **Source of truth.** Comprehensive human-readable engineering reference with 28 sections + 5 appendices, Mermaid diagrams, and code snippets. Generated from 5-phase codebase analysis. | Engineers needing onboarding documentation |
+| `architecture.md` | **Source of truth.** Comprehensive human-readable engineering reference with 28 sections + 5 appendices, Mermaid diagrams, and code snippets. Generated from Graph build + 5-phase codebase analysis. | Engineers needing onboarding documentation |
 | `.ai-profile.md` | **Derived from .ai-context.md.** 20-50 lines, ultra-compact always-injected project profile. Contains: language, framework, database, auth, API style, critical invariants, safety rules, active tracks, recent changes. Auto-refreshed on mutations. | AI needing full context for simple tasks |
 | `.ai-context.md` | **Derived from architecture.md.** 200-400 lines, token-optimized, self-contained AI context. 15+ mandatory sections: architecture, invariants, interface contracts, data flows, concurrency rules, error handling, implementation catalogs, extension cookbooks, testing strategy, glossary. Auto-refreshed on mutations. | AI re-analyzing codebase every session |
 | `workflow.md` | TDD preference, commit style, review process | AI skipping tests or making giant commits |
@@ -106,28 +107,29 @@ Layer 2: draft/.state/facts.json — Fact-level precision (queried by relevance)
 
 ```mermaid
 graph TD
-    A["/draft:init"] -->|"Creates draft/"| B["/draft:new-track"]
-    B -->|"Creates spec.md + plan.md"| C{Complex?}
-    C -->|Yes| D["/draft:decompose"]
-    C -->|No| E["/draft:implement"]
-    D -->|"Creates architecture.md"| E
-    E -->|"TDD cycle per task"| F{Phase done?}
-    F -->|No| E
-    F -->|Yes| G["Three-Stage Review"]
-    G -->|Pass| H{All phases?}
-    G -->|Fail| E
-    H -->|No| E
-    H -->|Yes| I["Track Complete"]
-    I -->|"Upload for review"| U["/draft:upload"]
+    A["/draft:init"] -->|"Creates draft/"| B["/draft:plan"]
+    B -->|"Routes to new-track/change/adr"| C["/draft:new-track"]
+    C -->|"Creates spec.md + plan.md"| D{Complex?}
+    D -->|Yes| E["/draft:decompose"]
+    D -->|No| F["/draft:implement"]
+    E -->|"Creates architecture.md"| F
+    F -->|"TDD cycle per task"| G{Phase done?}
+    G -->|No| F
+    G -->|Yes| H["Three-Stage Review"]
+    H -->|Pass| I{All phases?}
+    H -->|Fail| F
+    I -->|No| F
+    I -->|Yes| J["Track Complete"]
+    J -->|"Upload for review"| U["/draft:upload"]
 
-    J["/draft:status"] -.->|"Check anytime"| E
-    K["/draft:revert"] -.->|"Undo if needed"| E
-    L["/draft:coverage"] -.->|"After implementation"| E
-    N["/draft:bughunt"] -.->|"Quality check"| E
-    O["/draft:review"] -.->|"At track end"| G
+    K["/draft:status"] -.->|"Check anytime"| F
+    L["/draft:revert"] -.->|"Undo if needed"| F
+    M["/draft:coverage"] -.->|"After implementation"| F
+    N["/draft:bughunt"] -.->|"Quality check"| F
+    O["/draft:review"] -.->|"At track end"| H
     P["/draft:adr"] -.->|"Document decisions"| B
-    Q["/draft:jira-preview"] -.->|"Export to Jira"| B
-    R["/draft:deep-review"] -.->|"Audit module"| E
+    Q["/draft:jira-preview"] -.->|"Export to Jira"| C
+    R["/draft:deep-review"] -.->|"Audit module"| F
 ```
 
 ### Context Hierarchy
@@ -163,7 +165,7 @@ The AI becomes an executor of pre-approved work, not an autonomous decision-make
 **This is Draft's most important feature.**
 
 The workflow:
-1. Developer runs `/draft:new-track` — AI creates `spec.md` and `plan.md`
+1. Developer runs `/draft:plan` — AI routes to the right planning workflow, usually `/draft:new-track`
 2. Developer reviews and edits these documents
 3. Developer commits them for peer review
 4. Team approves the approach
@@ -190,8 +192,8 @@ Draft's artifacts are designed for team collaboration through standard git workf
 **The PR cycle on documents:**
 
 1. **Project context** — Tech lead runs `/draft:init`. Team reviews `product.md`, `tech-stack.md`, and `workflow.md` via PR. Product managers review vision without reading code. Engineers review technical choices without context-switching into implementation.
-2. **Spec & plan** — Lead runs `/draft:new-track`. Team reviews `spec.md` (requirements, acceptance criteria) and `plan.md` (phased task breakdown, dependencies) via PR. Disagreements surface as markdown comments — resolved by editing a paragraph, not rewriting a module.
-3. **Architecture** — Lead runs `/draft:decompose`. Team reviews `architecture.md` (derived human-readable guide with module boundaries, API surfaces, dependency graph, implementation order) via PR. Senior engineers validate architecture without touching the codebase. The machine-optimized `.ai-context.md` is the source of truth.
+2. **Spec & plan** — Lead runs `/draft:plan` for new work. In the common case, Draft routes to `/draft:new-track`. Team reviews `spec.md` (requirements, acceptance criteria) and `plan.md` (phased task breakdown, dependencies) via PR. Disagreements surface as markdown comments — resolved by editing a paragraph, not rewriting a module.
+3. **Architecture** — When planning reveals structural complexity, `/draft:plan` escalates to `/draft:decompose`. Team reviews `architecture.md` (derived human-readable guide with module boundaries, API surfaces, dependency graph, implementation order) via PR. Senior engineers validate architecture without touching the codebase. The machine-optimized `.ai-context.md` is the source of truth.
 4. **Work distribution** — Lead runs `/draft:jira-preview` and `/draft:jira-create`. Epics, stories, and sub-tasks are created from the approved plan. Individual team members pick up Jira stories and implement — with or without `/draft:implement`.
 5. **Implementation** — Only after all documents are merged does coding start. Every developer has full context: what to build (`spec.md`), in what order (`plan.md`), with what boundaries (`.ai-context.md` / `architecture.md`).
 
@@ -287,8 +289,8 @@ You should see the list of available Draft commands. If not, check that the plug
 # 1. Initialize project context (once per project)
 /draft:init
 
-# 2. Create a feature track with spec and plan
-/draft:new-track "Add user authentication"
+# 2. Plan a feature track with spec and plan
+/draft:plan "Add user authentication"
 
 # 3. Review the generated spec.md and plan.md, then implement
 /draft:implement
@@ -346,7 +348,7 @@ Located in `draft/` of the target project:
 |------|---------|
 | `product.md` | Product vision, users, goals, guidelines (optional section) |
 | `tech-stack.md` | Languages, frameworks, patterns, accepted patterns |
-| `architecture.md` | **Source of truth.** Comprehensive human-readable engineering reference with 28 sections + 5 appendices. Generated from 5-phase codebase analysis. |
+| `architecture.md` | **Source of truth.** Comprehensive human-readable engineering reference with 28 sections + 5 appendices. Generated from Graph build + 5-phase codebase analysis. |
 | `.ai-context.md` | **Derived from architecture.md.** 200-400 lines, token-optimized, self-contained AI context with 15+ mandatory sections. Consumed by all Draft commands and external AI tools. Auto-refreshed on mutations. |
 | `workflow.md` | TDD preferences, commit strategy, validation config |
 | `guardrails.md` | Hard guardrails, learned conventions, learned anti-patterns |
@@ -438,7 +440,7 @@ Draft auto-classifies the project:
 
 > **Note:** Architecture features (module decomposition, stories, execution state, skeletons, chunk reviews) are automatically enabled when you run `/draft:decompose` on a track. File-based activation — no opt-in needed.
 
-If `draft/` already exists with context files, init reports "already initialized" and suggests using `/draft:init refresh` or `/draft:new-track`.
+If `draft/` already exists with context files, init reports "already initialized" and suggests using `/draft:init refresh` or `/draft:plan`.
 
 #### Refresh Mode (`/draft:init refresh`)
 
@@ -452,6 +454,48 @@ Re-scans and updates existing context without starting from scratch. Uses stored
 5. **Workflow Review** — Asks if `draft/workflow.md` settings (TDD, commits) need changing.
 6. **State Refresh** — Regenerates all state files (`facts.json`, `freshness.json`, `signals.json`, `run-memory.json`) with current baseline. Updates profile.
 7. **Preserve** — Does NOT modify `draft/tracks.md` unless explicitly requested.
+
+---
+
+### `/draft:plan` — Planning Orchestrator
+
+Canonical parent command for planning and design work.
+
+#### Purpose
+
+`/draft:plan` routes to the right specialist planning workflow:
+
+- `/draft:new-track` for fresh feature, bugfix, or refactor planning
+- `/draft:decompose` for architecture and module boundary work
+- `/draft:change` for mid-track requirement changes
+- `/draft:adr` for durable technical decisions
+
+#### Routing Rules
+
+1. **Explicit mode wins** — `/draft:plan new-track|decompose|change|adr`
+2. **Requirement drift beats deeper design** — existing-scope changes route to `/draft:change` first
+3. **Complexity escalates to decomposition** — multi-module or structurally risky tracks route to `/draft:decompose`
+4. **Decision capture is explicit or tradeoff-driven** — `/draft:adr` records lasting rationale
+5. **Otherwise default to new-track** — fresh planning requests usually become `/draft:new-track`
+
+#### Bare `/draft:plan`
+
+When run without a clear mode, Draft inspects:
+
+- `draft/tracks.md`
+- active track `spec.md` and `plan.md`
+- `hld.md` / `lld.md` when present
+
+Then it announces the selected planning mode and reason before continuing.
+
+Example:
+
+```text
+Planning mode selected: decompose
+Reason: the active track spans multiple modules and has no HLD yet.
+```
+
+The parent command should move planning forward rather than listing options.
 
 ---
 
@@ -555,6 +599,23 @@ Auto-generated kebab-case from the description:
 
 ### `/draft:implement` — Execute Tasks
 
+Canonical implementation parent command.
+
+#### Parent Behavior
+
+`/draft:implement` owns the implementation family:
+
+- baseline task-by-task execution
+- `/draft:status` for progress inspection
+- `/draft:coverage` for test-coverage measurement
+- `/draft:revert` for safe rollback
+
+Explicit parent modes route directly:
+
+- `/draft:implement status`
+- `/draft:implement coverage`
+- `/draft:implement revert`
+
 Implements tasks from the active track's plan, following the TDD workflow when enabled.
 
 #### Task Selection
@@ -595,6 +656,16 @@ Additionally, implementation chunks are limited to ~200 lines with a review chec
 
 After each task: update `plan.md` status markers, increment `metadata.json` counters, commit per workflow conventions.
 
+#### Parent-Owned Escalations
+
+The baseline implementation loop should absorb adjacent execution helpers when they are the obvious next step:
+
+- **Status-style checkpoint** when blocked or ambiguous task state needs to be surfaced before continuing
+- **Coverage checkpoint** after a phase or high-risk module completes
+- **Revert guidance** when progress should not continue without undoing invalid work
+
+This keeps `/draft:implement` as the common entry point while preserving explicit child modes for power users.
+
 #### Phase Boundary Review
 
 When all tasks in a phase are `[x]`, a three-stage review is triggered:
@@ -607,6 +678,15 @@ Only proceeds to the next phase if no Critical issues remain.
 #### Track Completion
 
 When all phases complete: update `plan.md`, `metadata.json`, and `draft/tracks.md`. Move the track from Active to Completed.
+
+#### Examples
+
+```bash
+/draft:implement # continue the next task
+/draft:implement status # inspect current execution state
+/draft:implement coverage # measure coverage for the active implementation scope
+/draft:implement revert # start rollback flow
+```
 
 ---
 
@@ -725,7 +805,7 @@ Documents significant technical decisions with context, alternatives, and conseq
 
 #### When to Use
 
-Create an ADR during or after `/draft:new-track` when making architectural decisions:
+Create an ADR during or after `/draft:plan` when making architectural decisions:
 - Adopting a new technology or framework
 - Changing system architecture or module boundaries
 - Selecting between multiple viable approaches with trade-offs
@@ -786,7 +866,38 @@ Test files are written directly to the project using native test conventions.
 
 ### `/draft:review` — Code Review Orchestrator
 
-Standalone review command that orchestrates a three-stage code review.
+Canonical review parent command.
+
+#### Parent Behavior
+
+`/draft:review` owns the review family:
+
+- baseline three-stage review
+- `/draft:quick-review` for small ad-hoc change review
+- `/draft:bughunt` for defect-focused escalation
+- `/draft:deep-review` for module-level production-readiness escalation
+- `/draft:assist-review` for human-review handoff summaries
+
+Explicit parent modes route directly:
+
+- `/draft:review quick`
+- `/draft:review bughunt`
+- `/draft:review deep`
+- `/draft:review assist`
+
+Important scope note:
+
+- `/draft:impact` is not part of this family in the current implementation; it measures project delivery telemetry, not code-review depth.
+
+#### Baseline Review
+
+The default `/draft:review` path is the baseline three-stage review:
+
+- Stage 1 automated validation
+- Stage 2 spec compliance (track review only)
+- Stage 3 code quality
+
+When graph data exists, baseline review always includes blast-radius / hotspot impact analysis.
 
 #### Track-Level Review
 
@@ -807,7 +918,8 @@ Reviews arbitrary changes (static validation + code quality only, no spec compli
 #### Quality Integration
 
 - `with-bughunt` — include `/draft:bughunt` findings
-- `full` — run review and bughunt
+- `with-assist` — include `/draft:assist-review` structural handoff summary
+- `full` — enable bughunt + assist, and allow justified deep-review escalation
 
 Generates unified report at `draft/tracks/<id>/review-report.md` or `draft/review-report.md`.
 
@@ -820,6 +932,9 @@ Generates unified report at `draft/tracks/<id>/review-report.md` or `draft/revie
 /draft:review files "src/**/*.ts" # review specific files
 /draft:review commits main...HEAD # review commit range
 /draft:review track my-feature full # comprehensive review with bughunt
+/draft:review quick files "src/**/*.ts" # explicit quick review via parent
+/draft:review deep auth # explicit deep review via parent
+/draft:review assist track my-feature # reviewer handoff summary via parent
 ```
 
 ---
@@ -989,7 +1104,7 @@ Coverage complements TDD — TDD is the process (write test, implement, refactor
 /draft:init
      │ (creates draft/architecture.md + draft/.ai-context.md for brownfield)
      │
-/draft:new-track "feature"
+/draft:plan "feature"
      │ (creates draft/tracks/feature/spec.md + plan.md)
      │
 /draft:decompose
@@ -1042,8 +1157,9 @@ Natural language patterns that map to Draft commands:
 | User Says | Action |
 |-----------|--------|
 | "set up the project" | Initialize Draft |
+| "plan this", "scope this work", "continue planning" | Planning orchestrator |
 | "index services", "aggregate context" | Monorepo service index |
-| "new feature", "add X" | Create new track |
+| "new feature", "add X" | Planning orchestrator (usually routes to new track) |
 | "start implementing" | Execute tasks from plan |
 | "what's the status" | Show progress overview |
 | "undo", "revert" | Rollback changes |
@@ -1053,7 +1169,7 @@ Natural language patterns that map to Draft commands:
 | "hunt bugs", "find bugs" | Systematic bug discovery |
 | "review code", "review track", "check quality" | Code review orchestrator (track/project) |
 | "learn patterns", "update guardrails", "discover conventions" | Pattern discovery & guardrails update |
-| "requirements changed", "scope changed", "update the spec" | Handle mid-track requirement change |
+| "requirements changed", "scope changed", "update the spec" | Planning orchestrator (routes to course correction) |
 | "preview jira", "export to jira" | Preview Jira issues |
 | "create jira issues" | Create Jira issues via MCP |
 | "upload for review", "open a PR", "submit code" | Upload for review |
@@ -1094,7 +1210,7 @@ Canonical agent behavior lives in `core/agents/*.md` — those files are inlined
 | RCA | `core/agents/rca.md` | Activated for bug/RCA tracks. Structured SRE-style postmortem methodology. |
 | Reviewer | `core/agents/reviewer.md` | Activated at phase boundaries. Three-stage automated + spec + quality review. |
 | Architect | `core/agents/architect.md` | Activated in `/draft:decompose` and architecture-mode `/draft:implement`. Module decomposition, story writing, function skeletons. |
-| Planner | `core/agents/planner.md` | Activated during `/draft:new-track` and `/draft:decompose`. Phased plan generation. |
+| Planner | `core/agents/planner.md` | Activated during `/draft:plan`, `/draft:new-track`, and `/draft:decompose`. Phased plan generation. |
 | Writer | `core/agents/writer.md` | Activated during `/draft:documentation`. Doc generation and condensation. |
 | Ops | `core/agents/ops.md` | Activated for `/draft:incident-response`, `/draft:deploy-checklist`, `/draft:standup`. Hands off to RCA for deep investigation. |
 

@@ -1,6 +1,6 @@
 ---
 name: review
-description: In an active track? Run end-to-end review against spec+plan+HLD. Requires an active Draft track. Use when the track is implementation-complete and you need spec compliance + design conformance + code quality verdict before upload.
+description: "Canonical review parent command. Runs the default three-stage review for tracks or project changes, and routes to quick-review, bughunt, deep-review, or assist-review when the user asks for explicit review depth or when the review context justifies escalation."
 ---
 
 # Code Review
@@ -34,12 +34,26 @@ Skill-specific:
 
 ## Overview
 
-This command orchestrates code review workflows at two levels:
+This command is the **canonical review parent**.
+
+It orchestrates review workflows at two levels:
 - **Track-level:** Review against spec.md and plan.md (three-stage: automated validation, spec compliance, code quality)
 - **Project-level:** Review arbitrary changes (automated validation + code quality)
 
-Optionally integrates `/draft:bughunt` for finding logic errors and writing regression tests.
-Note: Automated static validation (OWASP secrets, dead code, dependency cycles, N+1 patterns) is natively built into Phase 1 of this review.
+Specialist review workflows remain available:
+
+- `/draft:quick-review`
+- `/draft:bughunt`
+- `/draft:deep-review`
+- `/draft:assist-review`
+
+`/draft:review` should remove the burden of choosing among them when the right depth is obvious from user intent or track state.
+
+Important semantic note:
+
+- `/draft:impact` is **not** a review-depth mode in the current product. It measures project/track delivery telemetry, not code-change review depth. Do not route `/draft:review` to `/draft:impact`.
+
+Automated static validation (OWASP secrets, dead code, dependency cycles, N+1 patterns) is natively built into Stage 1 of this review.
 
 ---
 
@@ -49,7 +63,13 @@ Extract and validate command arguments from user input.
 
 ### Supported Arguments
 
-**Scope specifiers (mutually exclusive):**
+**Explicit review modes:**
+- `quick` - Route to `/draft:quick-review`
+- `bughunt` - Route to `/draft:bughunt`
+- `deep` - Route to `/draft:deep-review`
+- `assist` - Route to `/draft:assist-review`
+
+**Scope specifiers (mutually exclusive for baseline review):**
 - `track <id|name>` - Review specific track (exact ID or fuzzy name match)
 - `project` - Review uncommitted changes (`git diff HEAD`)
 - `files <pattern>` - Review specific file pattern (e.g., `src/**/*.ts`)
@@ -57,21 +77,50 @@ Extract and validate command arguments from user input.
 
 **Quality integration modifiers:**
 - `with-bughunt` - Include `/draft:bughunt` results
-- `full` - Include bughunt results
+- `with-assist` - Include `/draft:assist-review` summary
+- `full` - Enable all sensible add-ons for the selected scope (`with-bughunt`, `with-assist`, and any justified deep-review escalation)
 
 ### Validation Rules
 
-1. **Scope requirement:** At least one scope specifier OR no arguments (auto-detect track)
-2. **Mutual exclusivity:** Only one of `track`, `project`, `files`, `commits`
-3. **Modifier normalization:** If `full` is present, enable `with-bughunt`, discarding redundant individual modifiers. No error — silently normalize.
+1. **Mode exclusivity:** At most one explicit mode among `quick`, `bughunt`, `deep`, `assist`
+2. **Scope requirement:** At least one scope specifier OR no arguments (auto-detect track/project)
+3. **Scope exclusivity:** Only one of `track`, `project`, `files`, `commits`
+4. **Modifier normalization:** If `full` is present, enable `with-bughunt` and `with-assist`. Do not silently force `deep`; deep-review is module-scoped and must still satisfy escalation rules.
 
 ### Default Behavior
 
 If no arguments provided:
 - Auto-detect active `[~]` In Progress track from `draft/tracks.md`
 - If no `[~]` track, find first `[ ]` Pending track
-- Display: `Auto-detected track: <id> - <name> [<status>]` and proceed
-- If no tracks available, error: "No tracks found. Run `/draft:new-track` to create one."
+- If track found: display `Auto-detected track: <id> - <name> [<status>]` and proceed
+- If no track is found but the repo has local changes: default to project-level review of current changes
+- If no track and no changes: error "No review scope found. Specify a track, files, commit range, or create changes to review."
+
+---
+
+## Step 1.5: Route Explicit Modes Before Baseline Review
+
+If the user explicitly invoked a specialist mode, route directly.
+
+### Explicit Mode Routing
+
+- `/draft:review quick ...` → follow `/draft:quick-review`
+- `/draft:review bughunt ...` → follow `/draft:bughunt`
+- `/draft:review deep ...` → follow `/draft:deep-review`
+- `/draft:review assist ...` → follow `/draft:assist-review`
+
+When routing, preserve any scope that can be mapped sensibly.
+
+Examples:
+
+- `/draft:review quick files "src/**/*.ts"` → quick review of those files
+- `/draft:review bughunt track payments-refactor` → bughunt scoped to that track
+- `/draft:review deep auth` → deep-review of the `auth` module
+- `/draft:review assist track add-user-auth` → reviewer-assist summary for that track
+
+Explicit mode always wins over automatic escalation.
+
+If no explicit mode is present, continue with the baseline `/draft:review` workflow below.
 
 ---
 
@@ -157,7 +206,7 @@ Once track is resolved:
 
 ### Project-Level Review
 
-**Trigger:** `project`, `files <pattern>`, or `commits <range>` argument
+**Trigger:** `project`, `files <pattern>`, `commits <range>` argument, or no active track with local changes
 
 #### 2.3: Project Scope Detection
 
@@ -193,6 +242,67 @@ For project-level reviews (no track context):
 2. **Note limitations:**
    - No spec.md → Skip Stage 1 (spec compliance)
    - Run Stage 2 (code quality) only
+
+---
+
+## Step 2.5: Choose Baseline Review Depth
+
+After scope is resolved, decide whether baseline `/draft:review` should proceed as the full three-stage review or should delegate to a specialist by default.
+
+### Routing Heuristics for Bare `/draft:review`
+
+1. **Tiny ad-hoc scope with no track context**  
+   If scope is project/files/commits and the diff is small, prefer `/draft:quick-review`.
+
+   Good signals:
+   - single file or very small file set
+   - no spec/plan context available
+   - user asks for a sanity check rather than a formal gate
+
+2. **Track-complete or handoff review**  
+   If the review is track-scoped and the output is likely for another reviewer or approver, attach `/draft:assist-review` unless the user explicitly opted out.
+
+   Good signals:
+   - all tasks completed
+   - upload / PR / handoff language
+   - `full` or `with-assist` modifier present
+
+3. **High defect-risk changes**  
+   If the diff touches high-risk surfaces, attach `/draft:bughunt`.
+
+   Good signals:
+   - auth, payments, persistence, concurrency, migrations, public API boundaries
+   - hotspot / high-fanIn files
+   - weak or missing tests
+   - `full` or `with-bughunt` modifier present
+
+4. **Single-module structural risk**  
+   If the review scope maps cleanly to one high-risk module, attach `/draft:deep-review`.
+
+   Good signals:
+   - single module or service dominates the diff
+   - structural or resilience-sensitive changes
+   - high blast radius plus concurrency / durability / resiliency concerns
+
+   If the diff spans many modules, do **not** auto-run multiple deep reviews. Instead, finish baseline review and recommend targeted deep-review follow-ups for the highest-risk modules.
+
+### Mandatory Baseline Behavior
+
+Even when no specialist command is attached:
+
+- always compute and report blast radius / hotspot impact from graph data when available
+- always explain which specialist workflows were auto-invoked and why
+
+Example:
+
+```text
+Running /draft:review
+- baseline three-stage review
+- bughunt attached because auth and persistence paths changed
+- assist-review attached because this is a completed track handoff
+```
+
+If the heuristic selects `/draft:quick-review` instead of baseline review, route there directly and stop this workflow.
 
 ---
 
@@ -487,9 +597,9 @@ Cite the most specific guardrail rule ID that applies. If no numbered rule cover
 
 ---
 
-## Step 5: Run Quality Tools (Optional)
+## Step 5: Run Specialist Integrations (Optional / Heuristic)
 
-If `with-bughunt` or `full` modifier is set, integrate bug hunting.
+Run the specialist workflows selected explicitly or by the Step 2.5 heuristics.
 
 ### 5.1: Run Bughunt
 
@@ -505,16 +615,42 @@ If `with-bughunt` or `full` modifier is set, integrate bug hunting.
 
 Parse output from `draft/tracks/<id>/bughunt-report-latest.md` or `draft/bughunt-report-latest.md`
 
-### 5.2: Aggregate Findings
+### 5.2: Run Assist Review
+
+If `with-assist`, `full`, or handoff heuristics selected assist-review:
+
+- run `/draft:assist-review` for the same track context
+- extract:
+  - intent summary
+  - structural edits
+  - HLD/LLD drift flags
+  - suggested review order
+
+Append this as a dedicated section in the final review report rather than merging it into bug findings.
+
+### 5.3: Run Deep Review
+
+If deep-review escalation is justified and the scope maps to one dominant module:
+
+- run `/draft:deep-review <module>`
+- extract critical and important findings relevant to the current diff
+- include a short `Deep Review Escalation` section in the report
+
+If deep-review is recommended but not auto-run:
+
+- add a `Next Actions` row pointing to `/draft:review deep <module>` or `/draft:deep-review <module>`
+
+### 5.4: Aggregate Findings
 
 Merge findings from:
 1. Reviewer agent (Stage 1, 2, 3)
 2. Bughunt results (if run)
+3. Deep-review findings relevant to the current diff (if run)
 
 **Deduplication:**
 - Two findings are duplicates if they reference the **same file and line number**
 - Severity ordering: **Critical > Important > Minor**
-- On duplicate: keep the finding with highest severity; merge tool attribution as "Found by: reviewer, bughunt"
+- On duplicate: keep the finding with highest severity; merge tool attribution as "Found by: reviewer, bughunt, deep-review" as applicable
 - If same severity from different tools: merge into single finding, combine descriptions
 
 ---
@@ -866,6 +1002,21 @@ After generating the review report, execute the pattern learning phase from `cor
 ### Review with bughunt
 ```bash
 /draft:review track my-feature with-bughunt
+```
+
+### Explicit quick review via parent
+```bash
+/draft:review quick files "src/**/*.ts"
+```
+
+### Explicit deep review via parent
+```bash
+/draft:review deep auth
+```
+
+### Explicit assist review via parent
+```bash
+/draft:review assist track my-feature
 ```
 
 ---

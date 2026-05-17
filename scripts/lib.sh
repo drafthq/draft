@@ -24,6 +24,7 @@ TOOLS_DIR="$ROOT_DIR/scripts/tools"
 SKILL_ORDER=(
     draft
     init
+    plan
     index
     new-track
     decompose

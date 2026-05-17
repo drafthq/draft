@@ -1,11 +1,19 @@
 ---
 name: implement
-description: "Executes tasks from the current track's plan using TDD workflow (red-green-refactor). Implements one task at a time, commits after each, runs three-stage review at phase boundaries, and tracks progress in plan.md. Use when the user asks to implement the next task, start coding, continue a plan, run test-driven development, or says 'start implementing'."
+description: "Canonical implementation parent command. Executes the active track task-by-task using TDD and verification gates, and routes to status, coverage, or revert when the user asks for progress, measurement, or rollback explicitly."
 ---
 
 # Implement Track
 
 Implement tasks from the active track's plan following the TDD workflow.
+
+`/draft:implement` is the **canonical implementation parent**.
+
+It owns the common execution loop and absorbs three adjacent commands when appropriate:
+
+- `/draft:status`
+- `/draft:coverage`
+- `/draft:revert`
 
 ## Red Flags - STOP if you're:
 
@@ -22,6 +30,87 @@ Implement tasks from the active track's plan following the TDD workflow.
 ## Constraints
 
 Draft skills are designed for single-agent, single-track execution. Do not run multiple Draft commands concurrently on the same track.
+
+---
+
+## Parent Contract
+
+`/draft:implement` owns four execution jobs:
+
+1. **Build the next task** → baseline `/draft:implement`
+2. **Show current execution state** → `/draft:status`
+3. **Measure implementation completeness via coverage** → `/draft:coverage`
+4. **Undo implementation safely** → `/draft:revert`
+
+Most developers should only need `/draft:implement` in the common path.
+
+### Explicit Child Modes
+
+If the user invokes explicit child intent, route directly:
+
+- `/draft:implement status` → follow `/draft:status`
+- `/draft:implement coverage` → follow `/draft:coverage`
+- `/draft:implement revert` → follow `/draft:revert`
+
+Examples:
+
+- `/draft:implement status`
+- `/draft:implement coverage src/auth`
+- `/draft:implement revert phase 2`
+
+Explicit child mode always wins over the baseline implementation workflow.
+
+### Bare `/draft:implement`
+
+Without an explicit child mode, `/draft:implement` should:
+
+- continue the active track's next task
+- surface blocked-task conditions immediately
+- run review and verification gates at phase boundaries
+- suggest or attach coverage only when the implementation state justifies it
+
+Do not make the user remember `status` or `coverage` in the happy path just to continue safe execution.
+
+---
+
+## Step 0: Route Explicit Child Modes
+
+Before loading implementation context, check whether the request is really:
+
+- progress inspection
+- coverage measurement
+- rollback / undo
+
+### Route to `/draft:status`
+
+Route when the user asks:
+
+- `status`
+- `progress`
+- `what's left`
+- `where am I`
+
+### Route to `/draft:coverage`
+
+Route when the user asks:
+
+- `coverage`
+- `measure tests`
+- `how much is covered`
+- `coverage for <module/path>`
+
+### Route to `/draft:revert`
+
+Route when the user asks:
+
+- `revert`
+- `undo`
+- `roll back`
+- `revert task`
+- `revert phase`
+- `revert track`
+
+If one of these applies, route directly to the specialist workflow and stop this baseline implementation flow.
 
 ---
 
@@ -51,7 +140,7 @@ Draft skills are designed for single-agent, single-track execution. Do not run m
 10. Update the track's entry in `draft/tracks.md` from `[ ]` to `[~]` In Progress
 
 If no active track found:
-- Tell user: "No active track found. Run `/draft:new-track` to create one."
+- Tell user: "No active track found. Run `/draft:plan` to create or resume planned work."
 
 **Architecture Mode Activation:**
 - Automatically enabled when `.ai-context.md` or `architecture.md` exists (file-based, no flag needed)
@@ -121,6 +210,45 @@ Scan `plan.md` for the first uncompleted task:
 - Do NOT attempt to implement blocked tasks
 
 If resuming `[~]` task, check for partial work.
+
+### Implementation-State Escalations
+
+After choosing the next task, check whether baseline implementation should remain in build mode or whether it should surface another execution helper.
+
+#### Escalate to Status-Style Summary
+
+If the track has:
+
+- many blocked tasks
+- no obvious next runnable task
+- conflicting in-progress markers
+
+then present a concise status summary before proceeding so the user can see the execution state clearly.
+
+This does **not** require fully routing to `/draft:status`; it is an implementation-owned checkpoint.
+
+#### Escalate to Coverage Guidance
+
+If the implementation is at one of these points:
+
+- phase just completed
+- track just completed
+- high-risk module just changed and tests exist but coverage is unknown
+
+then `/draft:implement` should suggest coverage or auto-attach it when the workflow and user intent imply measurement is expected.
+
+Examples:
+
+```text
+Implementation checkpoint:
+- Phase 2 is complete
+- Next recommended action: /draft:implement coverage
+- Reason: high-risk auth code changed and coverage has not been measured for this phase
+```
+
+#### Escalate to Revert Guidance
+
+If the selected task is blocked because earlier implementation appears invalid, conflicting, or partially reverted, `/draft:implement` should recommend `/draft:implement revert` explicitly rather than pushing forward blindly.
 
 ## Step 2.5: Write Story (Architecture Mode Only)
 

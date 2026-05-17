@@ -35,6 +35,7 @@ get_skill_header() {
     case "$skill" in
         draft) echo "Draft Overview" ;;
         init) echo "Init Command" ;;
+        plan) echo "Plan Command" ;;
         index) echo "Index Command" ;;
         new-track) echo "New Track Command" ;;
         decompose) echo "Decompose Command" ;;
@@ -75,14 +76,15 @@ get_copilot_trigger() {
     case "$skill" in
         draft) echo "\"help\" or \"draft\"" ;;
         init) echo "\"init draft\" or \"draft init [refresh]\"" ;;
+        plan) echo "\"plan this\" or \"draft plan [new-track|decompose|change|adr]\"" ;;
         index) echo "\"index services\" or \"draft index [--init-missing]\"" ;;
         new-track) echo "\"new feature\" or \"draft new-track <description>\"" ;;
         decompose) echo "\"break into modules\" or \"draft decompose\"" ;;
-        implement) echo "\"implement\" or \"draft implement\"" ;;
+        implement) echo "\"implement\" or \"draft implement [status|coverage|revert]\"" ;;
         coverage) echo "\"check coverage\" or \"draft coverage\"" ;;
         deploy-checklist) echo "\"deploy checklist\" or \"draft deploy-checklist [track <id>]\"" ;;
         bughunt) echo "\"hunt bugs\" or \"draft bughunt [--track <id>]\"" ;;
-        review) echo "\"review code\" or \"draft review [--track <id>] [--full]\"" ;;
+        review) echo "\"review code\" or \"draft review [quick|bughunt|deep|assist|track <id>|project|files <pattern>|commits <range>|full]\"" ;;
         quick-review) echo "\"quick review\" or \"draft quick-review [file|pr <number>]\"" ;;
         deep-review) echo "\"deep review\" or \"draft deep-review [module]\"" ;;
         testing-strategy) echo "\"test strategy\" or \"draft testing-strategy [track <id>|path]\"" ;;

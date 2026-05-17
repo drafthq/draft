@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 - Ongoing refinements to agent behavior protocols.
 
+## [2.5.0] - 2026-05-17
+
+### Added
+- **Command Reduction Plan** — Introduced canonical parent commands (`/draft:plan`, `/draft:ops`, `/draft:docs`, `/draft:integrations`) to logically group and reduce surface-level command sprawl. The legacy specialist commands are now intelligently routed through these parent entry points.
+- **Phase 0 Graph Build** — The knowledge graph build is now officially Phase 0 of the `/draft:init` workflow, executing before the 5-phase analysis to provide exact module boundaries and dependencies.
+- **Universal Install Script** — A single installation script (`scripts/install.sh`) has been created to unify and simplify the onboarding experience across all supported IDE environments (Claude Code, Cursor, Copilot, Gemini, Antigravity).
+
 ## [2.4.0] - 2026-04-26
 
 ### Added

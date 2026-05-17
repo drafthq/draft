@@ -46,7 +46,7 @@ Free. No API keys. No paid tier. No vendor lock-in. Catches the 3 bugs you misse
 ```bash
 /plugin marketplace add mayurpise/draft
 /plugin install draft
-/draft:init       # 5-phase codebase analysis (one-time)
+/draft:init       # Graph + 5-phase codebase analysis (one-time)
 /draft:review     # ← run this on every branch before you push
 ```
 
@@ -55,41 +55,43 @@ That's it. Run `/draft` for the full command map.
 <details>
 <summary><strong>Also works with Cursor, GitHub Copilot, Antigravity, and Gemini →</strong></summary>
 
+You can use the universal installation script to configure Draft for your environment:
+
+### Claude Code (Local Installation)
+If you prefer not to use the marketplace, you can install the plugin locally to your project:
+```bash
+curl -fsSL https://raw.githubusercontent.com/mayurpise/draft/main/scripts/install.sh | bash -s -- --claude
+```
+
 ### Cursor
-Cursor natively supports the `.claude/` plugin structure. Add via *Settings > Rules, Skills, Subagents > Rules > New > Add from Github*:
+```bash
+curl -fsSL https://raw.githubusercontent.com/mayurpise/draft/main/scripts/install.sh | bash -s -- --cursor
 ```
-https://github.com/mayurpise/draft.git
-```
-Then use: `@draft init`, `@draft new-track`, `@draft implement`.
 
 ### GitHub Copilot
 ```bash
-mkdir -p .github && curl -o .github/copilot-instructions.md \
-  https://raw.githubusercontent.com/mayurpise/draft/main/integrations/copilot/.github/copilot-instructions.md
+curl -fsSL https://raw.githubusercontent.com/mayurpise/draft/main/scripts/install.sh | bash -s -- --copilot
 ```
 
 ### Gemini
 ```bash
-curl -o .gemini.md https://raw.githubusercontent.com/mayurpise/draft/main/integrations/gemini/.gemini.md
+curl -fsSL https://raw.githubusercontent.com/mayurpise/draft/main/scripts/install.sh | bash -s -- --gemini
 ```
 
 ### Antigravity IDE
-Draft is used globally by installing skills to a central location:
-1. Clone Draft to `~/.gemini/antigravity/skills/draft`
-2. Configure `~/.gemini.md` to point to the global skills:
-```markdown
-**Skill Locations:**
-The authoritative Draft implementation skills are located at:
-`/Users/mayurpise/.gemini/antigravity/skills/draft/skills`
+```bash
+curl -fsSL https://raw.githubusercontent.com/mayurpise/draft/main/scripts/install.sh | bash -s -- --antigravity
 ```
 
 </details>
 
 ---
 
-## Beyond `/draft:review` — 27 more commands
+## The 7 Core Workflows
 
-`/draft:review` is the wedge. Once Draft has indexed your repo, you also get spec-driven planning, TDD-enforced implementation, exhaustive bug hunting, deep architectural audits, and 23 more commands covering the full development lifecycle.
+Draft provides a complete system for spec-driven planning, TDD-enforced implementation, and operational workflows.
+
+Specialist modes are built in. Advanced review, bug hunting, impact analysis, debugging, and documentation workflows are invoked intelligently through these parent commands.
 
 ---
 
@@ -98,33 +100,15 @@ The authoritative Draft implementation skills are located at:
 | Command | What It Does |
 |---------|--------------|
 | **`/draft`** | Overview, intent mapping, and command reference |
-| **`/draft:init`** | Analyze codebase, create context files + state tracking |
-| **`/draft:index`** | Aggregate monorepo service contexts |
-| **`/draft:new-track`** | Collaborative spec + plan with AI |
-| **`/draft:decompose`** | Module decomposition with dependency mapping |
-| **`/draft:implement`** | TDD workflow with checkpoints |
-| **`/draft:coverage`** | Code coverage report (target 95%+) |
-| **`/draft:review`** | 3-stage review (validation + spec compliance + code quality) |
-| **`/draft:deep-review`** | Enterprise-grade module lifecycle and ACID audit |
-| **`/draft:bughunt`** | Exhaustive 14-dimension defect discovery with taint tracking |
-| **`/draft:learn`** | Discover coding patterns, update guardrails |
-| **`/draft:adr`** | Architecture Decision Records |
-| **`/draft:status`** | Show progress overview |
-| **`/draft:revert`** | Git-aware rollback |
-| **`/draft:change`** | Handle mid-track requirement changes |
-| **`/draft:debug`** | Structured debugging: reproduce, isolate, diagnose, fix |
-| **`/draft:quick-review`** | Lightweight 4-dimension code review |
-| **`/draft:deploy-checklist`** | Pre-deployment verification with rollback triggers |
-| **`/draft:testing-strategy`** | Test plan design with coverage targets |
-| **`/draft:tech-debt`** | Technical debt analysis across 6 dimensions |
-| **`/draft:standup`** | Git activity standup summary (read-only) |
-| **`/draft:incident-response`** | Incident lifecycle: triage, communicate, mitigate, postmortem |
-| **`/draft:documentation`** | Technical docs: readme, runbook, api, onboarding |
-| **`/draft:jira-preview`** | Generate Jira export for review |
-| **`/draft:jira-create`** | Push issues to Jira via MCP |
-| **`/draft:tour`** | Interactive architecture mentorship and codebase walk-through |
-| **`/draft:impact`** | ROI analytics tracking friction and timeline metrics |
-| **`/draft:assist-review`** | Summarize intent and highlight structural PR risks for reviewers |
+| **`/draft:init`** | Analyze codebase, create context files, or route to `refresh`/`index`/`discover` |
+| **`/draft:plan`** | Canonical planning entry point (routes to `new-track`, `decompose`, `change`, `adr`) |
+| **`/draft:implement`** | TDD workflow, routes to `status`, `coverage`, `revert` |
+| **`/draft:review`** | 3-stage review, routes to `quick`, `bughunt`, `deep`, `assist` |
+| **`/draft:ops`** | Operations entry point (routes to `debug`, `deploy-checklist`, `incident-response`, `standup`) |
+| **`/draft:docs`** | Documentation entry point (routes to `documentation`, `testing-strategy`, `tech-debt`, `tour`) |
+| **`/draft:integrations`**| External systems entry point (routes to `jira-preview`, `jira-create`) |
+
+*(Legacy specialist commands remain supported via their canonical parent commands.)*
 
 [See full command reference →](core/methodology.md#command-workflows)
 
@@ -164,9 +148,9 @@ Skills also call into **14 shell helpers** under `scripts/tools/` for mechanical
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                        /draft:init                          │
-│    5-phase codebase analysis + signal detection + state     │
-│  architecture.md + .ai-context.md + .state/ (freshness,    │
-│                   signals, run memory)                      │
+│  Phase 0: Graph build (module boundaries, impact, cycles)   │
+│  Phase 1-5: Codebase analysis + signal detection + state    │
+│  architecture.md + .ai-context.md + graph/ + .state/        │
 └────────────────────────────┬────────────────────────────────┘
                              │
                              ▼
@@ -204,6 +188,7 @@ product.md       →  "Build a task manager"
 tech-stack.md    →  "React, TypeScript, Tailwind"
 architecture.md  →  Comprehensive: 28 sections + 5 appendices, Mermaid diagrams (source of truth)
 .ai-context.md   →  200-400 lines: condensed from architecture.md (token-optimized AI context)
+graph/           →  knowledge graph artifacts (modules, proto APIs, hotspots)
 .state/          →  freshness hashes, signal classification, run memory (incremental refresh)
 spec.md          →  "Add drag-and-drop reordering"
 plan.md          →  "Phase 1: sortable, Phase 2: persist"
