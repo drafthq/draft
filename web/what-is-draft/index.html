@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>What is Draft? — Context-Driven Development Plugin for AI Coding Agents</title>
-    <meta name="description" content="Draft is a free, open-source plugin that adds code intelligence to AI coding agents: knowledge graph engine, spec-driven planning, three-stage review. Works with Claude Code, Cursor, Copilot, Antigravity, and Gemini. 28 commands, 9 languages, MIT licensed.">
+    <meta name="description" content="Draft is a free, open-source plugin that adds code intelligence to AI coding agents: knowledge graph engine, spec-driven planning, three-stage review. Works with Claude Code, Cursor, Copilot, Antigravity, and Gemini. 32 commands, 9 languages, MIT licensed.">
     <meta name="author" content="Mayur Pise">
     <meta name="theme-color" content="#7c3aed">
     <meta name="keywords" content="what is draft, draft ai, knowledge graph, code intelligence, context driven development, ai coding plugin, claude code plugin, github copilot plugin, gemini plugin, cursor plugin, antigravity ide, spec driven development, three stage review, ai bug hunting, open source developer tools, MIT licensed">
@@ -13,7 +13,7 @@
 
     <!-- Open Graph -->
     <meta property="og:title" content="What is Draft? — Code Intelligence for Your AI Coding Agent">
-    <meta property="og:description" content="Knowledge graph engine + spec-driven planning + three-stage review &mdash; in one plugin for Claude Code, Cursor, Copilot, Antigravity, and Gemini. 28 commands, 9 languages, free forever.">
+    <meta property="og:description" content="Knowledge graph engine + spec-driven planning + three-stage review &mdash; in one plugin for Claude Code, Cursor, Copilot, Antigravity, and Gemini. 32 commands, 9 languages, free forever.">
     <meta property="og:type" content="article">
     <meta property="og:url" content="https://getdraft.dev/what-is-draft/">
     <meta property="og:image" content="https://getdraft.dev/social-preview.png">
@@ -23,7 +23,7 @@
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="What is Draft? — Code Intelligence for Your AI Coding Agent">
-    <meta name="twitter:description" content="Knowledge graph + spec-driven planning + three-stage review. One plugin for Claude Code, Cursor, Copilot, Antigravity, Gemini. 28 commands. Free forever.">
+    <meta name="twitter:description" content="Knowledge graph + spec-driven planning + three-stage review. One plugin for Claude Code, Cursor, Copilot, Antigravity, Gemini. 32 commands. Free forever.">
     <meta name="twitter:image" content="https://getdraft.dev/social-preview.png">
     <meta name="twitter:image:alt" content="Draft: Code intelligence built into your AI coding agent">
 
@@ -527,25 +527,31 @@
             <p class="ref-subtitle">Context-Driven Development plugin for AI coding agents</p>
 
             <!-- Opening definition paragraph — optimized for AI citation and featured snippets -->
-            <p class="ref-lead">Draft is a free, open-source Context-Driven Development (CDD) plugin that adds structured methodology to AI coding agents. It works with Claude Code, GitHub Copilot, Google Gemini, Cursor, and Antigravity IDE to enforce spec-driven development, test-driven development (TDD), and automated code review. Draft provides 25 slash commands and 7 specialized agents that turn AI assistants from autonomous guessing machines into disciplined executors of pre-approved work.</p>
+            <p class="ref-lead">Draft is a free, open-source Context-Driven Development (CDD) plugin that adds structured methodology to AI coding agents. It works with Claude Code, GitHub Copilot, Google Gemini, Cursor, and Antigravity IDE to enforce spec-driven development, test-driven development (TDD), and automated code review. Draft provides 32 commands and 7 specialized agents that turn AI assistants from autonomous guessing machines into disciplined executors of pre-approved work.</p>
 
             <p>The core idea: before AI writes a single line of code, it analyzes your codebase, generates a specification, builds a phased plan, and waits for your approval. Only then does implementation begin &mdash; constrained by your architecture, your conventions, and your acceptance criteria. Every decision is grounded in explicit, versioned, reviewable documents rather than implicit assumptions buried in a chat window.</p>
 
             <!-- How Draft Works -->
             <h2>How Draft Works</h2>
-            <p>Draft operates through a 4-phase workflow that mirrors how experienced engineering teams ship software:</p>
+            <p>Draft operates through a graph-first, phase-driven workflow that mirrors how experienced engineering teams ship software:</p>
 
             <div class="workflow-phases">
+                <div class="workflow-phase">
+                    <div class="workflow-phase-num">Phase 0</div>
+                    <div class="workflow-phase-name">Graph</div>
+                    <div class="workflow-phase-cmd">/draft:init</div>
+                    <div class="workflow-phase-desc">Builds a tree-sitter knowledge graph of your codebase — callers, exports, hotspots, blast radius — before analysis begins.</div>
+                </div>
                 <div class="workflow-phase">
                     <div class="workflow-phase-num">Phase 1</div>
                     <div class="workflow-phase-name">Init</div>
                     <div class="workflow-phase-cmd">/draft:init</div>
-                    <div class="workflow-phase-desc">Analyzes your codebase and generates architecture docs, AI context files, and project configuration.</div>
+                    <div class="workflow-phase-desc">5-phase codebase analysis on top of the graph. Generates architecture docs, AI context files, and project configuration.</div>
                 </div>
                 <div class="workflow-phase">
                     <div class="workflow-phase-num">Phase 2</div>
                     <div class="workflow-phase-name">Plan</div>
-                    <div class="workflow-phase-cmd">/draft:new-track</div>
+                    <div class="workflow-phase-cmd">/draft:plan</div>
                     <div class="workflow-phase-desc">Creates a specification and phased implementation plan through collaborative dialogue. You approve before code begins.</div>
                 </div>
                 <div class="workflow-phase">
@@ -562,12 +568,12 @@
                 </div>
             </div>
 
-            <p>This workflow is supported by 21 additional specialist commands for debugging, operations, quality assurance, documentation, and more. Each command loads only the context it needs, keeping token usage efficient while maintaining full project awareness.</p>
+            <p>This workflow is supported by 28 additional specialist commands for debugging, operations, quality assurance, documentation, and more. Each command loads only the context it needs, keeping token usage efficient while maintaining full project awareness.</p>
 
             <!-- Key Features -->
             <h2>Key Features</h2>
             <ul>
-                <li><strong>25 slash commands</strong> organized in a two-tier architecture: 4 primary workflow commands with auto-invocation, plus 21 specialist commands</li>
+                <li><strong>32 commands</strong> organized in a two-tier architecture: 7 primary workflow commands with orchestration, plus 25 specialist commands</li>
                 <li><strong>7 specialized agents</strong> &mdash; Architect, Debugger, Planner, Reviewer, RCA (root cause analysis), Ops, and Writer &mdash; each with behavioral protocols tuned for their domain</li>
                 <li><strong>Context tiering</strong> &mdash; three-layer system (profile &rarr; context &rarr; architecture) that loads the right amount of project knowledge for each task</li>
                 <li><strong>TDD enforcement</strong> &mdash; RED &rarr; GREEN &rarr; REFACTOR cycle with test-first implementation and architecture checkpoints</li>

@@ -45,7 +45,7 @@
     </div>
 
     <h2>What Draft Is</h2>
-    <p>Draft is a free, open-source plugin that adds structured development methodology to AI coding agents. It provides 28 slash commands and 7 specialized agents that turn your AI assistant from an autonomous guessing machine into a disciplined executor of pre-approved work.</p>
+    <p>Draft is a free, open-source plugin that adds structured development methodology to AI coding agents. It provides 32 commands and 7 specialized agents that turn your AI assistant from an autonomous guessing machine into a disciplined executor of pre-approved work.</p>
 
     <p>The core idea: before AI writes a single line of code, it analyzes your codebase, generates a specification, builds a phased plan, and waits for your approval. Only then does implementation begin &mdash; constrained by your architecture, your conventions, and your acceptance criteria.</p>
 
@@ -63,18 +63,18 @@
     <p>Draft is for developers and teams who use AI coding assistants and have experienced the gap between "it generated code" and "it generated the right code." If you've ever had an AI assistant introduce a dependency your team doesn't use, violate your project's naming conventions, or build a feature that doesn't match what was actually needed &mdash; Draft addresses that gap structurally.</p>
 
     <h2>What You Get</h2>
-    <p><strong>28 commands</strong> covering the full development lifecycle:</p>
+    <p><strong>32 commands</strong> covering the full development lifecycle:</p>
     <ul>
-        <li><strong>Context</strong> &mdash; <code>/draft:init</code>, <code>/draft:tour</code> (exploratory walkthroughs), architecture documentation, AI context files, and state tracking</li>
-        <li><strong>Planning</strong> &mdash; <code>/draft:new-track</code> creates specifications and phased plans through collaborative dialogue</li>
+        <li><strong>Context</strong> &mdash; <code>/draft:init</code> performs Phase 0 graph build (tree-sitter knowledge graph) followed by 5-phase deep analysis. <code>/draft:tour</code> for exploratory walkthroughs. Generates architecture docs, AI context files, and state tracking.</li>
+        <li><strong>Planning</strong> &mdash; <code>/draft:plan</code> orchestrates feature planning: routes to <code>/draft:new-track</code>, <code>/draft:decompose</code>, or <code>/draft:change</code>.</li>
         <li><strong>Execution</strong> &mdash; <code>/draft:implement</code> builds features task-by-task with TDD cycles and architecture checkpoints</li>
         <li><strong>Debugging</strong> &mdash; <code>/draft:debug</code> provides structured debugging: reproduce, isolate, diagnose, fix</li>
-        <li><strong>Quality</strong> &mdash; <code>/draft:review</code>, <code>/draft:deep-review</code>, <code>/draft:bughunt</code>, <code>/draft:quick-review</code>, <code>/draft:impact</code> (risk analysis), <code>/draft:assist-review</code> (intent summaries), and <code>/draft:testing-strategy</code></li>
-        <li><strong>Operations</strong> &mdash; <code>/draft:deploy-checklist</code>, <code>/draft:incident-response</code>, <code>/draft:standup</code>, <code>/draft:status</code>, <code>/draft:revert</code>, <code>/draft:change</code>, <code>/draft:coverage</code></li>
+        <li><strong>Quality</strong> &mdash; <code>/draft:review</code> runs 3-stage pipeline. <code>/draft:deep-review</code>, <code>/draft:bughunt</code>, <code>/draft:quick-review</code>, <code>/draft:impact</code>, <code>/draft:assist-review</code>, and <code>/draft:testing-strategy</code> for specialized quality workflows</li>
+        <li><strong>Operations</strong> &mdash; <code>/draft:ops</code> orchestrates operational workflows: <code>/draft:deploy-checklist</code>, <code>/draft:incident-response</code>, <code>/draft:standup</code>, <code>/draft:status</code>, <code>/draft:revert</code>, <code>/draft:change</code>, <code>/draft:coverage</code></li>
         <li><strong>Strategy</strong> &mdash; <code>/draft:tech-debt</code> for technical debt analysis across 6 dimensions with prioritization</li>
-        <li><strong>Authoring</strong> &mdash; <code>/draft:documentation</code> generates technical docs: readme, runbook, api, onboarding</li>
+        <li><strong>Documentation</strong> &mdash; <code>/draft:docs</code> orchestrates doc generation: readme, runbook, api, onboarding via <code>/draft:documentation</code></li>
         <li><strong>Knowledge &amp; Governance</strong> &mdash; <code>/draft:adr</code>, <code>/draft:learn</code>, <code>/draft:decompose</code>, <code>/draft:index</code></li>
-        <li><strong>Integration</strong> &mdash; <code>/draft:jira-preview</code>, <code>/draft:jira-create</code></li>
+        <li><strong>Integrations</strong> &mdash; <code>/draft:integrations</code> orchestrates external tool workflows: <code>/draft:jira-preview</code>, <code>/draft:jira-create</code></li>
     </ul>
 
     <p><strong>7 specialized agents</strong> &mdash; Architect, Debugger, Planner, RCA, Reviewer, Ops, and Writer &mdash; each with behavioral protocols tuned for their domain.</p>
@@ -86,7 +86,7 @@
                     <filter id="shadowCat" x="-4%" y="-4%" width="108%" height="116%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.08"/></filter>
                 </defs>
                 <!-- Title -->
-                <text x="360" y="28" text-anchor="middle" fill="#1a1a2e" font-size="14" font-weight="700">28 Commands Across 8 Categories</text>
+                <text x="360" y="28" text-anchor="middle" fill="#1a1a2e" font-size="14" font-weight="700">32 Commands Across 8 Categories</text>
 
                 <!-- Row 1 -->
                 <!-- Context -->
@@ -164,7 +164,7 @@
                 <text x="360" y="278" text-anchor="middle" fill="#718096" font-size="11" font-style="italic">Supporting categories provide operational, knowledge, authoring, and integration capabilities</text>
             </svg>
         </div>
-        <div class="figure-caption">Draft's 28 commands organized into 8 categories. The primary workflow flows from Context through Quality; supporting categories extend the lifecycle.</div>
+        <div class="figure-caption">Draft's 32 commands organized into 8 categories. The primary workflow flows from Context through Quality; supporting categories extend the lifecycle.</div>
     </div>
 
     <h2>Platform Support</h2>

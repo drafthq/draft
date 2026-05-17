@@ -39,27 +39,24 @@
     <h3>Claude Code (Recommended)</h3>
     <pre class="terminal"><code>$ /plugin marketplace add mayurpise/draft
 $ /plugin install draft</code></pre>
-    <p>That's it. You now have all 28 commands available as <code>/draft:*</code> slash commands.</p>
+    <p>That's it. You now have all 32 commands available as <code>/draft:*</code> slash commands.</p>
 
     <h3>Cursor</h3>
-    <p>Cursor natively supports the <code>.claude/</code> plugin structure:</p>
-    <pre class="terminal"><code>Cursor > Settings > Rules, Skills, Subagents > Rules > New > Add from Github:
-https://github.com/mayurpise/draft.git</code></pre>
+    <p>Cursor natively supports the <code>.claude/</code> plugin structure. Use the universal install script:</p>
+    <pre class="terminal"><code>$ curl -fsSL https://raw.githubusercontent.com/mayurpise/draft/main/scripts/install.sh | bash -s -- --cursor</code></pre>
     <p>Commands use <code>@draft init</code>, <code>@draft new-track</code>, <code>@draft implement</code> syntax.</p>
 
     <h3>GitHub Copilot</h3>
     <p>Copilot uses a <code>copilot-instructions.md</code> file in your project:</p>
-    <pre class="terminal"><code>$ mkdir -p .github
-$ curl -o .github/copilot-instructions.md \
-    https://raw.githubusercontent.com/mayurpise/draft/main/integrations/copilot/.github/copilot-instructions.md</code></pre>
+    <pre class="terminal"><code>$ curl -fsSL https://raw.githubusercontent.com/mayurpise/draft/main/scripts/install.sh | bash -s -- --copilot</code></pre>
 
     <h3>Gemini</h3>
     <p>Gemini uses a <code>.gemini.md</code> bootstrap file:</p>
-    <pre class="terminal"><code>$ curl -o .gemini.md \
-    https://raw.githubusercontent.com/mayurpise/draft/main/integrations/gemini/.gemini.md</code></pre>
+    <pre class="terminal"><code>$ curl -fsSL https://raw.githubusercontent.com/mayurpise/draft/main/scripts/install.sh | bash -s -- --gemini</code></pre>
 
     <h3>Antigravity IDE</h3>
-    <p>Clone Draft to a global skill location and configure your <code>~/.gemini.md</code> to point to the skills directory.</p>
+    <p>Install Draft globally for all projects:</p>
+    <pre class="terminal"><code>$ curl -fsSL https://raw.githubusercontent.com/mayurpise/draft/main/scripts/install.sh | bash -s -- --antigravity</code></pre>
 
     <div class="callout callout-tip">
         <div class="callout-title">Cross-Platform</div>
@@ -70,7 +67,7 @@ $ curl -o .github/copilot-instructions.md \
     <p>Navigate to your project root and run:</p>
     <pre class="terminal"><code>$ /draft:init</code></pre>
 
-    <p>Draft performs a five-phase analysis of your codebase. This is not a quick scan &mdash; it is an exhaustive, deep analysis designed to produce a permanent reference document that future AI sessions and human engineers will use instead of re-reading source code.</p>
+    <p>Draft first builds a <strong>tree-sitter knowledge graph</strong> of your codebase (Phase 0), then performs a five-phase analysis. This is not a quick scan &mdash; it is an exhaustive, deep analysis designed to produce a permanent reference document that future AI sessions and human engineers will use instead of re-reading source code.</p>
 
     <h3>Phase 1: Discovery (Broad Scan)</h3>
     <p>Draft maps your entire project structure. It reads the directory tree, identifies the file layout, and processes your build and dependency files &mdash; <code>package.json</code>, <code>go.mod</code>, <code>Cargo.toml</code>, <code>requirements.txt</code>, <code>pom.xml</code>, or whatever applies to your stack.</p>

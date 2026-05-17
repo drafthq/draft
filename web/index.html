@@ -1083,10 +1083,10 @@
                     <div class="code-block glass-card">
                         <div class="code-header">
                             <div class="terminal-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
-                            <span class="code-filename">Cursor Setup</span>
+                            <span class="code-filename">Cursor</span>
                         </div>
-                        <pre><code><span class="c-comment"># Cursor > Settings > Rules > New > Add from Github:</span>
-<span class="c-str">https://github.com/mayurpise/draft.git</span>
+                        <pre><code><span class="c-comment"># Universal install script</span>
+<span class="c-cmd">curl</span> -fsSL <span class="c-str">https://raw.githubusercontent.com/mayurpise/draft/main/scripts/install.sh</span> | <span class="c-cmd">bash</span> -s -- <span class="c-flag">--cursor</span>
 
 <span class="c-comment"># Then use:</span>
 <span class="c-cmd">@draft init</span>
@@ -1100,9 +1100,8 @@
                             <div class="terminal-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
                             <span class="code-filename">GitHub Copilot</span>
                         </div>
-                        <pre><code><span class="c-comment"># Download copilot-instructions.md</span>
-<span class="c-cmd">mkdir</span> -p .github && <span class="c-cmd">curl</span> -o .github/copilot-instructions.md \
-  <span class="c-str">https://raw.githubusercontent.com/mayurpise/draft/main/integrations/copilot/.github/copilot-instructions.md</span></code></pre>
+                        <pre><code><span class="c-comment"># Universal install script</span>
+<span class="c-cmd">curl</span> -fsSL <span class="c-str">https://raw.githubusercontent.com/mayurpise/draft/main/scripts/install.sh</span> | <span class="c-cmd">bash</span> -s -- <span class="c-flag">--copilot</span></code></pre>
                     </div>
                     <p class="install-note">Works in VS Code, JetBrains, Neovim</p>
                 </div>
@@ -1112,12 +1111,8 @@
                             <div class="terminal-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
                             <span class="code-filename">Antigravity IDE</span>
                         </div>
-                        <pre><code><span class="c-comment"># Install globally</span>
-<span class="c-cmd">mkdir</span> -p ~/.gemini/antigravity/skills
-<span class="c-cmd">git clone</span> <span class="c-str">https://github.com/mayurpise/draft.git</span> ~/.gemini/antigravity/skills/draft
-
-<span class="c-comment"># Bootstrap</span>
-<span class="c-cmd">curl</span> -o ~/.gemini.md <span class="c-str">https://raw.githubusercontent.com/mayurpise/draft/main/integrations/gemini/.gemini.md</span></code></pre>
+                        <pre><code><span class="c-comment"># Universal install script</span>
+<span class="c-cmd">curl</span> -fsSL <span class="c-str">https://raw.githubusercontent.com/mayurpise/draft/main/scripts/install.sh</span> | <span class="c-cmd">bash</span> -s -- <span class="c-flag">--antigravity</span></code></pre>
                     </div>
                 </div>
                 <div class="install-panel" id="panel-gemini">
@@ -1126,8 +1121,8 @@
                             <div class="terminal-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
                             <span class="code-filename">Gemini</span>
                         </div>
-                        <pre><code><span class="c-comment"># Add bootstrap to your project</span>
-<span class="c-cmd">curl</span> -o .gemini.md <span class="c-str">https://raw.githubusercontent.com/mayurpise/draft/main/integrations/gemini/.gemini.md</span></code></pre>
+                        <pre><code><span class="c-comment"># Universal install script</span>
+<span class="c-cmd">curl</span> -fsSL <span class="c-str">https://raw.githubusercontent.com/mayurpise/draft/main/scripts/install.sh</span> | <span class="c-cmd">bash</span> -s -- <span class="c-flag">--gemini</span></code></pre>
                     </div>
                 </div>
             </div>

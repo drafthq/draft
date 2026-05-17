@@ -257,24 +257,20 @@
     <pre><code>/plugin marketplace add mayurpise/draft
 /plugin install draft</code></pre>
 
-    <p>All 28 commands are available as <code>/draft:*</code> slash commands. Skills are loaded from the <code>.claude-plugin/plugin.json</code> manifest, which points to the <code>skills/</code> directory. Each skill's <code>SKILL.md</code> file is read at invocation time, giving Claude Code direct access to the full methodology without any transformation.</p>
+    <p>All 32 commands are available as <code>/draft:*</code> slash commands. Skills are loaded from the <code>.claude-plugin/plugin.json</code> manifest, which points to the <code>skills/</code> directory. Each skill's <code>SKILL.md</code> file is read at invocation time, giving Claude Code direct access to the full methodology without any transformation.</p>
 
     <p>The 7 specialized agents (Architect, Debugger, Planner, RCA, Reviewer, Ops, Writer) are referenced as <code>@architect</code>, <code>@debugger</code>, etc., and resolved from <code>core/agents/</code>.</p>
 
-    <h2>Cursor</h2>
-    <p>Cursor natively supports the <code>.claude/</code> plugin structure, making it a near-identical experience to Claude Code. Installation is through Cursor's settings:</p>
+    <p>Commands use <code>@draft</code> syntax: <code>@draft init</code>, <code>@draft new-track</code>, <code>@draft implement</code>. The same plugin.json, the same skill files, the same agent definitions &mdash; no separate build step required. Or use the universal install script:</p>
 
-    <pre><code>Cursor &gt; Settings &gt; Rules, Skills, Subagents &gt; Rules &gt; New &gt; Add from Github
-https://github.com/mayurpise/draft.git</code></pre>
-
-    <p>Commands use <code>@draft</code> syntax: <code>@draft init</code>, <code>@draft new-track</code>, <code>@draft implement</code>. The same plugin.json, the same skill files, the same agent definitions &mdash; no separate build step required.</p>
+    <pre><code>curl -fsSL https://raw.githubusercontent.com/mayurpise/draft/main/scripts/install.sh | bash -s -- --cursor</code></pre>
 
     <h2>GitHub Copilot</h2>
     <p>Copilot does not have a plugin system that can read skill files at runtime. Instead, Draft uses a <code>.github/copilot-instructions.md</code> file &mdash; a single, large generated file (15,000+ lines) that encodes the entire Draft methodology inline.</p>
 
     <p>This file is produced by the build pipeline (<code>scripts/build-integrations.sh</code>) and includes:</p>
     <ul>
-        <li>All 28 skill definitions (minus frontmatter, plus syntax transforms)</li>
+        <li>All 32 skill definitions (minus frontmatter, plus syntax transforms)</li>
         <li>All core reference files (methodology, knowledge base, shared procedures, templates, agent definitions)</li>
         <li>Quality disciplines, communication style, and proactive behaviors</li>
         <li>Intent mapping for natural language triggers</li>
@@ -291,26 +287,18 @@ https://github.com/mayurpise/draft.git</code></pre>
         </tbody>
     </table>
 
-    <p>Installation is a single curl command that drops the generated file into the project:</p>
-    <pre><code>mkdir -p .github &amp;&amp; curl -o .github/copilot-instructions.md \
-  https://raw.githubusercontent.com/mayurpise/draft/main/integrations/copilot/.github/copilot-instructions.md</code></pre>
+    <p>Installation uses the universal install script:</p>
+    <pre><code>curl -fsSL https://raw.githubusercontent.com/mayurpise/draft/main/scripts/install.sh | bash -s -- --copilot</code></pre>
 
     <h2>Gemini</h2>
     <p>Gemini uses a <code>.gemini.md</code> bootstrap file that instructs Gemini where to find Draft's skill files. Rather than inlining all content (as Copilot requires), the bootstrap points to the skills directory and lets Gemini read files as needed.</p>
 
-    <pre><code>curl -o .gemini.md \
-  https://raw.githubusercontent.com/mayurpise/draft/main/integrations/gemini/.gemini.md</code></pre>
+    <pre><code>curl -fsSL https://raw.githubusercontent.com/mayurpise/draft/main/scripts/install.sh | bash -s -- --gemini</code></pre>
 
     <h2>Antigravity IDE</h2>
-    <p>Antigravity IDE supports global skill installation. Draft is cloned to a central location and configured via a global <code>.gemini.md</code> bootstrap:</p>
+    <p>Antigravity IDE supports global skill installation. Use the universal install script:</p>
 
-    <pre><code># Clone to global skills directory
-git clone https://github.com/mayurpise/draft.git \
-  ~/.gemini/antigravity/skills/draft
-
-# Configure bootstrap
-echo 'Skill Locations:
-/Users/you/.gemini/antigravity/skills/draft/skills' &gt;&gt; ~/.gemini.md</code></pre>
+    <pre><code>curl -fsSL https://raw.githubusercontent.com/mayurpise/draft/main/scripts/install.sh | bash -s -- --antigravity</code></pre>
 
     <p>This makes Draft available across all projects without per-project setup.</p>
 
@@ -319,7 +307,7 @@ echo 'Skill Locations:
 
     <p>The pipeline works as follows:</p>
     <ol>
-        <li><strong>Skill ordering</strong> &mdash; A <code>SKILL_ORDER</code> array defines the 28 skills and their generation order. This order is independent of the alphabetical order in <code>plugin.json</code>.</li>
+        <li><strong>Skill ordering</strong> &mdash; A <code>SKILL_ORDER</code> array defines the 32 skills and their generation order. This order is independent of the alphabetical order in <code>plugin.json</code>.</li>
         <li><strong>Frontmatter extraction</strong> &mdash; Each skill's YAML frontmatter (<code>name:</code> and <code>description:</code>) is validated. The body is extracted via <code>extract_body()</code>, which strips the frontmatter delimiters.</li>
         <li><strong>Body format validation</strong> &mdash; The body must follow a strict format: blank line, <code># Title</code> heading, blank line, then content. The build skips the first 3 body lines when inlining (the title is replaced by the integration's section header).</li>
         <li><strong>Syntax transformation</strong> &mdash; Platform-specific transforms are applied: <code>/draft:command</code> becomes <code>draft command</code> for Copilot, agent references become <code>@workspace</code>.</li>
@@ -344,7 +332,7 @@ echo 'Skill Locations:
                 <rect x="4" y="40" width="74" height="60" rx="6" fill="#f8f9fa" stroke="#e2e8f0" stroke-width="1.5" filter="url(#bp-shadow)"/>
                 <text x="41" y="62" text-anchor="middle" fill="#1a1a2e" font-family="Arial,sans-serif" font-size="10" font-weight="bold">skills/</text>
                 <text x="41" y="76" text-anchor="middle" fill="#718096" font-family="Arial,sans-serif" font-size="9">*.md</text>
-                <text x="41" y="90" text-anchor="middle" fill="#718096" font-family="Arial,sans-serif" font-size="9">(28 files)</text>
+                <text x="41" y="90" text-anchor="middle" fill="#718096" font-family="Arial,sans-serif" font-size="9">(32 files)</text>
                 <!-- Arrow -->
                 <line x1="78" y1="70" x2="96" y2="70" stroke="#718096" stroke-width="1.5" marker-end="url(#bp-arrow)"/>
                 <!-- Stage 1: SKILL_ORDER -->
@@ -393,10 +381,10 @@ echo 'Skill Locations:
                 <text x="657" y="148" text-anchor="middle" fill="#2563eb" font-family="Arial,sans-serif" font-size="9" font-weight="bold">copilot-</text>
                 <text x="657" y="160" text-anchor="middle" fill="#2563eb" font-family="Arial,sans-serif" font-size="9" font-weight="bold">instructions.md</text>
                 <!-- Legend -->
-                <text x="300" y="166" text-anchor="middle" fill="#718096" font-family="Arial,sans-serif" font-size="11">Build pipeline: 28 skill files &#8594; 6 stages &#8594; 1 generated integration file (15,000+ lines)</text>
+                <text x="300" y="166" text-anchor="middle" fill="#718096" font-family="Arial,sans-serif" font-size="11">Build pipeline: 32 skill files &#8594; 6 stages &#8594; 1 generated integration file (15,000+ lines)</text>
             </svg>
         </div>
-        <div class="figure-caption">The build pipeline: 28 skill source files pass through 6 transformation stages to produce a single platform-specific integration file, with atomic output and post-build verification.</div>
+        <div class="figure-caption">The build pipeline: 32 skill source files pass through 6 transformation stages to produce a single platform-specific integration file, with atomic output and post-build verification.</div>
     </div>
 
     <h2>Choosing Your IDE</h2>
