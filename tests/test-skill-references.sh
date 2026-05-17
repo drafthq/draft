@@ -8,7 +8,7 @@
 # - syntax transforms (e.g. /draft: → draft) apply to reference files
 #
 # Usage:
-#   ./tests/test-skill-references.sh
+# ./tests/test-skill-references.sh
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

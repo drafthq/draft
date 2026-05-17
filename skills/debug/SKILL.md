@@ -1,14 +1,28 @@
 ---
 name: debug
-description: "Runs a structured debugging session: reproduces the bug, isolates the failing code path, forms and tests hypotheses one at a time, fixes with developer approval, and generates a debug report. Use when the user reports an error, crash, broken feature, exception, stack trace, or says 'not working', 'debug this', or 'investigate bug'. Invoked by /draft:new-track for bug tracks or directly for ad-hoc debugging."
+description: Structured debugging session. Reproduce, isolate, diagnose, and fix bugs using systematic investigation. Invoked by /draft:new-track for bug tracks or directly for ad-hoc debugging.
 ---
 
 # Debug
 
-Conduct a structured debugging session following systematic investigation methodology.
+You are conducting a structured debugging session following systematic investigation methodology.
+
+## MANDATORY GRAPH LOOKUP (read before Isolate/Diagnose)
+
+When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. During Steps 3–4 (Isolate, Diagnose):
+
+1. Locate the suspect file's module via `draft/graph/module-graph.jsonl` before tracing data flow.
+2. Use `graph --query --symbol <fn> --mode callers` to enumerate call sites of suspect functions — not `grep`.
+3. Use `graph --query --file <path> --mode impact` to size the blast radius before proposing a fix.
+4. Cross-check `draft/graph/hotspots.jsonl` to know whether the file is high-fanIn (any fix needs extra caution).
+
+Filesystem `grep` is reserved for source-text scans (literal error strings, stack-trace symbols when the graph misses). Use the fallback sentence on graph miss.
 
 ## Red Flags — STOP if you're:
 
+See [shared red flags](../../core/shared/red-flags.md) — applies to all code-touching skills.
+
+Skill-specific:
 - Making code changes before reproducing the bug
 - Guessing at the cause instead of tracing data/control flow
 - Trying multiple fixes simultaneously ("shotgun debugging")
@@ -26,8 +40,8 @@ Conduct a structured debugging session following systematic investigation method
 Before starting, capture the current git state:
 
 ```bash
-git branch --show-current    # Current branch name
-git rev-parse --short HEAD   # Current commit hash
+git branch --show-current # Current branch name
+git rev-parse --short HEAD # Current commit hash
 ```
 
 Store this for the debug report header. The session is scoped to this specific branch/commit.
@@ -48,7 +62,7 @@ Key context for debugging:
 - `.ai-context.md` — Module boundaries, data flows, invariants (crucial for tracing)
 - `tech-stack.md` — Language-specific debugging tools and techniques
 - `guardrails.md` — Known anti-patterns that may be causing the issue
-- `draft/graph/` (if available) — Load `module-graph.jsonl` for dependency context, `hotspots.jsonl` for complexity awareness. Use graph callers query to find all files that include a suspect file, and impact query to understand blast radius of potential fixes. See `core/shared/graph-query.md`.
+- `draft/graph/` (MANDATORY when present) — Load `module-graph.jsonl` for dependency context, `hotspots.jsonl` for complexity awareness, and `modules/<module>.jsonl` for the suspect module. Use `graph --query --symbol <fn> --mode callers` to find all callers, and `--mode impact` to size blast radius before any fix. See [core/shared/graph-query.md](../../core/shared/graph-query.md).
 
 ## Step 1: Parse Arguments
 
@@ -74,8 +88,8 @@ If a Jira ticket is provided:
 3. **Capture evidence** — Error messages, stack traces, log output (verbatim, not summarized)
 4. **Classify reproducibility:**
    - Always reproducible — proceed to Step 3
-   - Intermittent — document frequency, conditions, patterns (time, load, data-dependent)
-   - Cannot reproduce — gather more context, check environment differences
+   - Intermittent — document frequency, conditions, patterns (time, load, data-dependent); proceed to Step 3 with the failure mode tagged `intermittent` in the hypothesis log
+   - Cannot reproduce — **halt diagnostic claims.** Do not proceed to Step 4 (Diagnose) until reproduction is established or the user explicitly opts into hypothesis work without reproduction. Hypotheses formed without reproduction routinely converge on confidently-wrong root causes. If the user opts in: every hypothesis must be tagged `unreproduced` and the final report must mark the root cause as `unconfirmed pending repro`.
 
 Reference `core/agents/debugger.md` Phase 1 for detailed investigation techniques.
 
@@ -96,16 +110,18 @@ Reference `core/agents/debugger.md` Phase 2 for language-specific debugging tech
 
 **Goal:** Confirm root cause with evidence.
 
-1. **Form hypothesis** — "The bug is caused by [X] at `file:line` because [evidence]"
+**Ground-truth gate (per hypothesis):** Before forming hypothesis N, **open and Read** the file at the `file:line` you are about to cite. Quote the relevant lines in the hypothesis log. A hypothesis written from graph metadata or recollection is a [Ground-Truth Red Flag](../../core/shared/red-flags.md) G4 violation — it produces hypothesis loops on assumptions rather than evidence.
+
+1. **Form hypothesis** — "The bug is caused by [X] at `file:line` because [evidence quoted from Read]"
 2. **Predict outcome** — "If this hypothesis is correct, then [Y] should be observable"
 3. **Test minimally** — Smallest possible test to prove or disprove
 4. **Record result** — Document in hypothesis log:
 
-| # | Hypothesis | Test | Prediction | Actual | Result |
-|---|-----------|------|-----------|--------|--------|
-| 1 | [description] | [test] | [expected] | [actual] | Confirmed/Rejected |
+| # | Hypothesis (cite + quote) | Test | Prediction | Actual | Result |
+|---|--------------------------|------|-----------|--------|--------|
+| 1 | [description with `path:line` and quoted line] | [test] | [expected] | [actual] | Confirmed/Rejected |
 
-**If hypothesis fails:** Return to Step 3 with updated understanding. After 3 failed cycles, escalate (see Error Handling).
+**If hypothesis fails:** Return to Step 3 with updated understanding. After 3 failed cycles, escalate (see Error Handling). Do not increase confidence on a rejected hypothesis just because alternatives are running out — that's how anchoring bias produces wrong root causes.
 
 Reference `core/agents/debugger.md` Phase 3 and `core/agents/rca.md` for 5 Whys analysis.
 
@@ -154,13 +170,26 @@ TIMESTAMP=$(date +%Y-%m-%dT%H%M)
 ln -sf debug-report-${TIMESTAMP}.md draft/debug-report-latest.md
 ```
 
+## Mandatory Self-Check (before debug report)
+
+Before printing the debug report, internally verify and report:
+
+1. **Graph files queried** — JSONL files loaded plus any live `graph --query` invocations.
+2. **Layer 1 files deliberately skipped** — list any context sections skipped.
+3. **Filesystem grep fallback justification** — for every `grep`/`find` run, name the concept it searched for.
+
+If `draft/graph/schema.yaml` does not exist, set `Graph files queried: NONE` and use justification `graph data unavailable`.
+
+## Graph Usage Report (append to debug report)
+
+Emit the canonical footer from [core/shared/graph-usage-report.md](../../core/shared/graph-usage-report.md) §Canonical footer. The lint hook `scripts/tools/check-graph-usage-report.sh` validates the section on save.
 ## Cross-Skill Dispatch
 
 - **Auto-invoked by:** `/draft:new-track` (bug tracks — Offer tier), `/draft:implement` (blocked tasks — Offer tier)
 - **Invokes:** RCA agent (`core/agents/rca.md`) for 5 Whys and blast radius analysis
 - **Feeds into:** `/draft:new-track` spec.md (reproduction and root cause sections via Detect+Auto-Feed)
 - **Suggests at completion:**
-  - "Run `git bisect` to find the exact commit that introduced this bug"
+  - "Run `/draft:regression` to find the exact commit that introduced this bug"
   - "Run `/draft:new-track` to create a bug fix track from these findings"
 - **Jira sync:** If ticket linked, attach debug report and post summary via `core/shared/jira-sync.md`
 

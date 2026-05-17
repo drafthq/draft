@@ -3,14 +3,14 @@
 #
 # Dispatches to a language-specific coverage runner and emits a normalized
 # JSON report:
-#   {language, tool, total:{lines,branches}, per_file:[{path,lines,branches,uncovered_lines}]}
+# {language, tool, total:{lines,branches}, per_file:[{path,lines,branches,uncovered_lines}]}
 #
 # The actual coverage run is language-specific and may be slow. Use
 # `--schema-check` in CI to validate output shape without running tests.
 #
 # Usage:
-#   scripts/tools/run-coverage.sh <language> [--path DIR]
-#                                 [--schema-check]
+# scripts/tools/run-coverage.sh <language> [--path DIR]
+# [--schema-check]
 #
 # Languages: python (pytest --cov), go (go test -coverprofile), javascript (nyc), shell (n/a → 2)
 #
@@ -29,15 +29,15 @@ Usage:
   scripts/tools/run-coverage.sh <language> [--path DIR] [--schema-check]
 
 Languages:
-  python       pytest --cov (requires pytest-cov)
-  go           go test -coverprofile
-  javascript   nyc/c8 (via package.json)
-  shell        not supported — emits schema-valid empty report (exit 2)
+  python pytest --cov (requires pytest-cov)
+  go go test -coverprofile
+  javascript nyc/c8 (via package.json)
+  shell not supported — emits schema-valid empty report (exit 2)
 
 Flags:
-  --path DIR       Path to run coverage against (default: cwd).
-  --schema-check   Emit schema-valid empty JSON without running any tests (for CI).
-  --help           Show this help.
+  --path DIR Path to run coverage against (default: cwd).
+  --schema-check Emit schema-valid empty JSON without running any tests (for CI).
+  --help Show this help.
 
 Output schema (always present, even on exit 2):
   {
@@ -79,11 +79,11 @@ emit_empty() {
 # Schema-only mode: never run the real coverage tool.
 if [[ "$SCHEMA_CHECK" == "true" ]]; then
     case "$LANGUAGE" in
-        python)     tool="pytest-cov";;
-        go)         tool="go-cover";;
+        python) tool="pytest-cov";;
+        go) tool="go-cover";;
         javascript) tool="nyc";;
         typescript) tool="nyc";;
-        shell)      tool="none";;
+        shell) tool="none";;
         *)
             echo "ERROR: unsupported language '$LANGUAGE'" >&2
             exit 1

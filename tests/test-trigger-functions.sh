@@ -9,7 +9,7 @@
 # - No skill falls through to the wildcard (*) case
 #
 # Usage:
-#   ./tests/test-trigger-functions.sh
+# ./tests/test-trigger-functions.sh
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -42,7 +42,7 @@ ALL_HEADER=true
 for skill in "${SKILL_ORDER[@]}"; do
     [[ -z "$skill" ]] && continue
     if ! echo "$HEADER_CASES" | grep -qx "$skill"; then
-        echo "  MISSING in get_skill_header: $skill"
+        echo " MISSING in get_skill_header: $skill"
         ALL_HEADER=false
     fi
 done
@@ -56,7 +56,7 @@ ALL_TRIGGER=true
 for skill in "${SKILL_ORDER[@]}"; do
     [[ -z "$skill" ]] && continue
     if ! echo "$TRIGGER_CASES" | grep -qx "$skill"; then
-        echo "  MISSING in get_copilot_trigger: $skill"
+        echo " MISSING in get_copilot_trigger: $skill"
         ALL_TRIGGER=false
     fi
 done
@@ -74,7 +74,7 @@ for skill in "${SKILL_ORDER[@]}"; do
     [[ -z "$skill" ]] && continue
     TRIGGER=$(bash -c "$(cat "$COPILOT_FUNC_FILE"); get_copilot_trigger '$skill'" 2>/dev/null)
     if [[ -n "$TRIGGER" ]] && echo "$TRIGGER" | grep -q '@draft'; then
-        echo "  HAS @draft in trigger for: $skill → $TRIGGER"
+        echo " HAS @draft in trigger for: $skill → $TRIGGER"
         ALL_COPILOT_SYNTAX=false
     fi
 done

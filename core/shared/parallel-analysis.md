@@ -9,17 +9,17 @@
 ## Architecture
 
 ```
-Phase 1 (Map)    N parallel reader agents  bounded scope per agent (4 modules each)
-                 each agent reads          source files in its assigned modules
-                 each agent outputs        (A) IR JSON array  — structured metadata for tables/diagrams
+Phase 1 (Map) N parallel reader agents bounded scope per agent (4 modules each)
+                 each agent reads source files in its assigned modules
+                 each agent outputs (A) IR JSON array — structured metadata for tables/diagrams
                                            (B) Markdown deep-dives — per-module prose (§7 sections)
 
-Phase 2 (Reduce) 1 synthesis agent         receives all IRs + all reader deep-dives
+Phase 2 (Reduce) 1 synthesis agent receives all IRs + all reader deep-dives
                  assembles architecture.md by composing reader prose (§7) + deriving cross-cutting
                                            sections from IR; targeted source reads for §6, §14, §15, §18
-                 context budget:           ~20K tokens (reader prose replaces need to re-read source)
+                 context budget: ~20K tokens (reader prose replaces need to re-read source)
 
-Phase 3 (Finalize) 2 parallel agents       .ai-context.md + .ai-profile.md
+Phase 3 (Finalize) 2 parallel agents .ai-context.md + .ai-profile.md
                                            state files (facts.json, freshness.json, etc.)
 ```
 
@@ -61,7 +61,7 @@ Each reader agent outputs a JSON array of objects matching this schema — one o
   ],
 
   "dependencies_out": ["<ModuleA>", "<ModuleB>"],
-  "dependencies_in":  ["<CallerA>", "<CallerB>"],
+  "dependencies_in": ["<CallerA>", "<CallerB>"],
 
   "invariants": [
     "<rule that must always hold>",
@@ -337,13 +337,13 @@ Every section heading MUST match the template numbering exactly.
 
 ## Tier-Adaptive Agent Counts
 
-| Tier | Label  | Reader Agents                  |
+| Tier | Label | Reader Agents |
 |------|--------|--------------------------------|
-| 1    | micro  | 1 (all modules)                |
-| 2    | small  | 1–2                            |
-| 3    | medium | ceil(M/6)                      |
-| 4    | large  | ceil(M/4)                      |
-| 5    | XL     | ceil(M/4)                      |
+| 1 | micro | 1 (all modules) |
+| 2 | small | 1–2 |
+| 3 | medium | ceil(M/6) |
+| 4 | large | ceil(M/4) |
+| 5 | XL | ceil(M/4) |
 
 For tier 1–2, skip parallelism — one reader agent handles all modules sequentially.
 
@@ -368,11 +368,11 @@ Rule 4: Use tier table above for modules-per-agent target
 
 Example grouping heuristic (adapt to actual fan-in data from graph):
 ```
-reader_A: [highest fan-in module alone]       — never share high-fan-in with others
+reader_A: [highest fan-in module alone] — never share high-fan-in with others
 reader_B: [coupled pair: module_X + module_Y] — modules that call each other
-reader_C: [data layer modules]                — shared persistence/cache modules together
-reader_D: [consumer/feature modules]          — modules that call many others
-reader_E: [infra/bootstrap modules]           — low fan-in, foundational
+reader_C: [data layer modules] — shared persistence/cache modules together
+reader_D: [consumer/feature modules] — modules that call many others
+reader_E: [infra/bootstrap modules] — low fan-in, foundational
 ```
 
 ---
@@ -409,7 +409,7 @@ This is the blast-radius advantage over single-agent: a reader failure is a part
 
 ```
 Phase 1 readers (parallel, ceil(M/4) agents):
-  Per agent:     4 modules × ~4K source tokens = ~16K input
+  Per agent: 4 modules × ~4K source tokens = ~16K input
                  IR output: ~2K tokens/agent
                  Deep-dive output: ~8K tokens/agent (4 modules × ~2K prose each)
                  Total per agent: ~26K
@@ -417,10 +417,10 @@ Phase 1 readers (parallel, ceil(M/4) agents):
   Total Phase 1: ceil(M/4) agents × 26K (parallel — wall clock = slowest reader)
 
 Phase 2 synthesis:
-  Input:         N modules × ~450 IR tokens + N modules × ~2K prose tokens + 4K instructions
+  Input: N modules × ~450 IR tokens + N modules × ~2K prose tokens + 4K instructions
                  ≈ 20K context at XL tier (vs 60K+ for raw source re-reads)
-  Output:        §7 paste (from readers) + cross-cutting sections ≈ 30K output tokens
-  Total:         ~50K tokens
+  Output: §7 paste (from readers) + cross-cutting sections ≈ 30K output tokens
+  Total: ~50K tokens
 
 Phase 3 finalizers (parallel, 2 agents):
   ~20K tokens total

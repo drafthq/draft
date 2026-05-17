@@ -6,7 +6,7 @@
 # present, else filename without extension.
 #
 # Usage:
-#   scripts/tools/adr-index.sh [--root DIR]
+# scripts/tools/adr-index.sh [--root DIR]
 set -euo pipefail
 
 # shellcheck source=_lib.sh
@@ -22,8 +22,8 @@ Usage:
   scripts/tools/adr-index.sh [--root DIR]
 
 Flags:
-  --root DIR   Directory containing ADR markdown files (default: draft/adrs).
-  --help       Show this help.
+  --root DIR Directory containing ADR markdown files (default: draft/adrs).
+  --help Show this help.
 
 Reads YAML frontmatter (title, date, status, related_tracks) from each ADR file.
 Output: {adrs:[{id,title,date,status,path,related_tracks}]}
@@ -47,7 +47,7 @@ if [[ ! -d "$ROOT" ]]; then
     exit 0
 fi
 
-# Related tracks: YAML list under "related_tracks:" — one item per line like "  - XYZ".
+# Related tracks: YAML list under "related_tracks:" — one item per line like " - XYZ".
 get_related_tracks() {
     local file="$1"
     awk '
@@ -101,7 +101,7 @@ while IFS= read -r -d '' file; do
     tr_json+=']'
 
     if $first; then first=false; else printf ','; fi
-    printf '\n  {"id":"%s","title":"%s","date":"%s","status":"%s","path":"%s","related_tracks":%s}' \
+    printf '\n {"id":"%s","title":"%s","date":"%s","status":"%s","path":"%s","related_tracks":%s}' \
         "$(json_escape "$id")" \
         "$(json_escape "$title")" \
         "$(json_escape "$date_val")" \

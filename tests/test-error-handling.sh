@@ -12,7 +12,7 @@
 # its ROOT_DIR pointing back at the real repo so it still finds skills/.
 #
 # Usage:
-#   ./tests/test-error-handling.sh
+# ./tests/test-error-handling.sh
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -36,7 +36,7 @@ make_test_env() {
 
     mkdir -p "$dest/scripts"
     cp "$ROOT_DIR/scripts/build-integrations.sh" "$dest/scripts/build-integrations.sh"
-    cp "$ROOT_DIR/scripts/lib.sh"                "$dest/scripts/lib.sh"
+    cp "$ROOT_DIR/scripts/lib.sh" "$dest/scripts/lib.sh"
     chmod +x "$dest/scripts/build-integrations.sh"
 
     # Override ROOT_DIR in lib.sh so the copied build still reads the real
@@ -50,7 +50,7 @@ make_test_env() {
     # Insert extra skill into SKILL_ORDER inside the copied lib.sh
     if [[ -n "$extra_skill" ]]; then
         awk -v inject="$extra_skill" '
-            /^SKILL_ORDER=\(/ { print; print "    " inject; next }
+            /^SKILL_ORDER=\(/ { print; print " " inject; next }
             { print }
         ' "$dest/scripts/lib.sh" > "$dest/scripts/lib.sh.tmp" && \
             mv "$dest/scripts/lib.sh.tmp" "$dest/scripts/lib.sh"

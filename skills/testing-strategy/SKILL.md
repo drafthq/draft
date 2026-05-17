@@ -1,11 +1,11 @@
 ---
 name: testing-strategy
-description: "Design test strategies and test plans with coverage targets. Complements /draft:coverage which measures what this skill plans. Auto-loaded by /draft:implement before TDD. Use when the user asks for a 'testing strategy', 'design a test plan', 'choose test types', 'set coverage targets', or says 'how should we test this'."
+description: Design test strategies and test plans with coverage targets. Complements /draft:coverage which measures what this skill plans. Auto-loaded by /draft:implement before TDD.
 ---
 
 # Testing Strategy
 
-Design a testing strategy and test plan for this project or track.
+You are designing a testing strategy and test plan for this project or track.
 
 ## Red Flags — STOP if you're:
 
@@ -26,8 +26,8 @@ Design a testing strategy and test plan for this project or track.
 Before starting, capture the current git state:
 
 ```bash
-git branch --show-current    # Current branch name
-git rev-parse --short HEAD   # Current commit hash
+git branch --show-current # Current branch name
+git rev-parse --short HEAD # Current commit hash
 ```
 
 Store this for the report header. The strategy is scoped to this specific branch/commit.
@@ -87,11 +87,11 @@ Tailor to the project architecture:
 
 ```
         ┌─────────┐
-        │  E2E    │  Few, critical paths only
+        │ E2E │ Few, critical paths only
         ├─────────┤
-        │ Integr. │  Service boundaries, DB, APIs
+        │ Integr. │ Service boundaries, DB, APIs
         ├─────────┤
-        │  Unit   │  Business logic, utilities
+        │ Unit │ Business logic, utilities
         └─────────┘
 ```
 

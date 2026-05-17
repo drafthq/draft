@@ -19,6 +19,36 @@
     "completed": 0
   },
 
+  "template_version": "2.0.0",
+
+  "scope_includes": [],
+  "scope_excludes": [],
+
+  "classification": {
+    "criticality": "_TBD_criticality_",
+    "data_classification": "_TBD_data_classification_",
+    "deployment_surface": "_TBD_deployment_surface_"
+  },
+
+  "git": {
+    "branch": "_TBD_branch_",
+    "remote": "_TBD_remote_",
+    "commit": "_TBD_commit_",
+    "commit_short": "_TBD_commit_short_",
+    "commit_date": "_TBD_commit_date_",
+    "commit_message": "_TBD_commit_message_",
+    "dirty": false
+  },
+  "synced_to_commit": "_TBD_synced_to_commit_",
+
+  "hygiene_budget": {
+    "draft_tbd_cap": -1,
+    "ready_for_review_tbd_cap": 3,
+    "discovery_min_hotspots": 3
+  },
+
+  "pre_deploy_status": "unrun",
+
   "lastReviewed": "<ISO 8601 timestamp — set by /draft:review>",
   "reviewCount": 0,
   "lastReviewVerdict": "PASS|PASS_WITH_NOTES|FAIL",

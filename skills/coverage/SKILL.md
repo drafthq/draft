@@ -1,11 +1,11 @@
 ---
 name: coverage
-description: "Compute code coverage for active track or module. Targets 95%+ coverage with report and justification for uncovered lines. Complements TDD workflow. Use when the user asks to 'check coverage', 'measure test coverage', 'run coverage', or says 'what's our coverage', 'are we hitting the coverage target'."
+description: Compute code coverage for active track or module. Targets 95%+ coverage with report and justification for uncovered lines. Complements TDD workflow.
 ---
 
 # Coverage Report
 
-Compute and report code coverage for the active track or a specific module. This complements the TDD workflow — TDD is the process (write test, implement, refactor), coverage is the measurement (how much code do those tests exercise).
+You are computing and reporting code coverage for the active track or a specific module. This complements the TDD workflow — TDD is the process (write test, implement, refactor), coverage is the measurement (how much code do those tests exercise).
 
 ## Red Flags - STOP if you're:
 
@@ -30,7 +30,17 @@ If no active track and no argument provided:
 
 ## Step 2: Detect Coverage Tool
 
-Auto-detect from tech stack:
+**Preferred:** use the deterministic `detect-test-framework.sh` wrapper — it emits JSON `{languages:[{language,framework,runner_command,test_globs,config_file}]}`. Resolve via the canonical tool resolver (see [core/shared/tool-resolver.md](../../core/shared/tool-resolver.md)):
+
+```bash
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+[ -x "$DRAFT_TOOLS/detect-test-framework.sh" ] && \
+  bash "$DRAFT_TOOLS/detect-test-framework.sh" --root .
+```
+
+If the script is unavailable or returns `framework: unknown`, fall back to the heuristic table below:
 
 | Language | Coverage Tools |
 |----------|---------------|
@@ -42,7 +52,7 @@ Auto-detect from tech stack:
 | Java/Kotlin | `jacoco`, `gradle jacocoTestReport` |
 | Ruby | `simplecov` |
 
-**Detection order:**
+**Detection order (fallback path):**
 1. Check `tech-stack.md` for explicit testing section
 2. Check config files (`jest.config.*`, `vitest.config.*`, `pytest.ini`, `setup.cfg`, `pyproject.toml`, `.nycrc`)
 3. Check `package.json` scripts for coverage commands
@@ -60,6 +70,15 @@ Build the coverage command with the appropriate scope/filter flags.
 
 ## Step 4: Run Coverage
 
+**Preferred:** invoke the normalized `run-coverage.sh` dispatcher — it dispatches to the language-specific runner and emits a normalized JSON `{language,tool,total:{lines,branches},per_file:[{path,lines,branches,uncovered_lines}]}`. This avoids per-language ad-hoc parsing in Step 5.
+
+```bash
+# DRAFT_TOOLS resolved in Step 2 above
+[ -x "$DRAFT_TOOLS/run-coverage.sh" ] && \
+  bash "$DRAFT_TOOLS/run-coverage.sh" --root .
+```
+
+If the script is unavailable or returns `tool: unsupported`:
 1. Execute the coverage command. Request machine-readable output when possible: `--json` for Jest, `--cov-report=json` for pytest, `-coverprofile` for Go, `--coverage-output-format json` for dotnet.
 2. Capture full output
 3. If command fails:
@@ -72,29 +91,29 @@ Build the coverage command with the appropriate scope/filter flags.
 Parse coverage output and present in a standardized format:
 
 ```
-═══════════════════════════════════════════════════════════
+---
                      COVERAGE REPORT
-═══════════════════════════════════════════════════════════
+---
 Track: [track-id]
 Module: [module name, if applicable]
 Target: [from workflow.md, default 95%]
 
 SUMMARY
-─────────────────────────────────────────────────────────
-Overall: 87.3% (target: 95%)  ← BELOW TARGET
+---
+Overall: 87.3% (target: 95%) ← BELOW TARGET
 
 PER-FILE BREAKDOWN
-─────────────────────────────────────────────────────────
-src/auth/middleware.ts    96.2%  PASS
-src/auth/jwt.ts           72.1%  FAIL
-src/auth/types.ts        100.0%  PASS
+---
+src/auth/middleware.ts 96.2% PASS
+src/auth/jwt.ts 72.1% FAIL
+src/auth/types.ts 100.0% PASS
 
 UNCOVERED LINES
-─────────────────────────────────────────────────────────
-src/auth/jwt.ts:45-52    Error handler for malformed token
-src/auth/jwt.ts:78       Defensive null check (unreachable via public API)
+---
+src/auth/jwt.ts:45-52 Error handler for malformed token
+src/auth/jwt.ts:78 Defensive null check (unreachable via public API)
 
-═══════════════════════════════════════════════════════════
+---
 ```
 
 ## Step 6: Branch/Condition Coverage (Optional)
@@ -169,10 +188,10 @@ After measuring line coverage (and branch coverage if applicable), prompt the en
 |----------|------|-----------|
 | Java | PIT | https://pitest.org/ |
 | JavaScript/TypeScript | Stryker | https://stryker-mutator.io/ |
-| Python | mutmut | https://github.com/boxed/mutmut |
-| Rust | cargo-mutants | https://github.com/sourcefrog/cargo-mutants |
+| Python | mutmut | (Mutation testing tool) |
+| Rust | cargo-mutants | (Mutation testing tool) |
 | C# | Stryker.NET | https://stryker-mutator.io/ |
-| Go | go-mutesting | https://github.com/zimmski/go-mutesting |
+| Go | go-mutesting | (Mutation testing tool) |
 
 **Reference:** Google's mutation testing program is used by 6,000+ engineers and processes approximately 30% of all code diffs, validating that mutation testing scales to large codebases.
 
@@ -205,7 +224,7 @@ Instead of applying a single global coverage target, support differentiated targ
 ```yaml
 # Example workflow.md configuration
 coverage_targets:
-  high_risk: 95    # auth, payments, crypto, data persistence
+  high_risk: 95 # auth, payments, crypto, data persistence
   business_logic: 85
   infrastructure: 70
   generated: exclude
@@ -233,11 +252,11 @@ coverage_targets:
 In the coverage report, show per-module targets alongside actual coverage:
 ```
 PER-FILE BREAKDOWN (module-level targets)
-─────────────────────────────────────────────────────────
-src/auth/middleware.ts    96.2%  [high_risk: 95%]    PASS
-src/auth/jwt.ts           72.1%  [high_risk: 95%]    FAIL
-src/utils/logger.ts       75.0%  [infrastructure: 70%]  PASS
-src/generated/api.ts       —     [generated: excluded]
+---
+src/auth/middleware.ts 96.2% [high_risk: 95%] PASS
+src/auth/jwt.ts 72.1% [high_risk: 95%] FAIL
+src/utils/logger.ts 75.0% [infrastructure: 70%] PASS
+src/generated/api.ts — [generated: excluded]
 ```
 
 ## Step 8: Developer Review

@@ -34,6 +34,7 @@ SKILL_ORDER=(
     review
     quick-review
     deep-review
+    discover
     testing-strategy
     learn
     adr
@@ -69,10 +70,29 @@ CORE_FILES=(
     "shared/jira-sync.md"
     "shared/graph-query.md"
     "shared/parallel-analysis.md"
+    "shared/context-verify.md"
+    "shared/discovery-schema.md"
+    "shared/graph-usage-report.md"
+    "shared/red-flags.md"
+    "shared/template-contract.md"
+    "shared/template-hygiene.md"
+    "shared/tool-resolver.md"
+    "shared/verification-gates.md"
+    # Guardrails
+    "guardrails.md"
+    "guardrails/code-quality.md"
+    "guardrails/dependency-triage.md"
+    "guardrails/design-norms.md"
+    "guardrails/language-standards.md"
+    "guardrails/README.md"
+    "guardrails/review-checks.md"
+    "guardrails/secure-patterns.md"
+    "guardrails/security.md"
     # Templates
     "templates/guardrails.md"
     "templates/intake-questions.md"
     "templates/ai-context.md"
+    "templates/ai-context-export.md"
     "templates/ai-profile.md"
     "templates/architecture.md"
     "templates/track-architecture.md"
@@ -83,6 +103,11 @@ CORE_FILES=(
     "templates/spec.md"
     "templates/plan.md"
     "templates/metadata.json"
+    "templates/hld.md"
+    "templates/lld.md"
+    "templates/discovery.md"
+    "templates/session-summary.md"
+    "templates/CHANGELOG.md"
     # Index templates (monorepo)
     "templates/service-index.md"
     "templates/dependency-graph.md"
@@ -124,6 +149,18 @@ TOOLS=(
     "manage-symlinks.sh"
     "mermaid-from-graph.sh"
     "validate-frontmatter.sh"
+    "check-graph-usage-report.sh"
+    "check-scope-conflicts.sh"
+    "check-skill-line-caps.sh"
+    "check-template-noop.sh"
+    "check-track-hygiene.sh"
+    "diff-templates-vs-tracks.sh"
+    "emit-skill-metrics.sh"
+    "fix-whitespace.sh"
+    "migrate-track-frontmatter.sh"
+    "render-track.sh"
+    "verify-citations.sh"
+    "verify-doc-anchors.sh"
 )
 
 # ─────────────────────────────────────────────────────────

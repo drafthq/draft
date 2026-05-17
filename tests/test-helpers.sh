@@ -14,10 +14,10 @@ assert() {
     local description="$1"
     local result="$2"
     if [[ "$result" == "true" ]]; then
-        echo "  PASS: $description"
+        echo " PASS: $description"
         PASS=$((PASS + 1))
     else
-        echo "  FAIL: $description"
+        echo " FAIL: $description"
         FAIL=$((FAIL + 1))
     fi
 }

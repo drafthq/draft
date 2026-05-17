@@ -26,19 +26,21 @@ Draft is for developers and teams who use AI coding assistants and have experien
 
 ## What You Get
 
-28 commandscovering the full development lifecycle:
+29 commands covering the full development lifecycle:
 
-* Context—/draft:init,/draft:tour(exploratory walkthroughs), architecture documentation, AI context files, and state tracking
-* Planning—/draft:new-trackcreates specifications and phased plans through collaborative dialogue
-* Execution—/draft:implementbuilds features task-by-task with TDD cycles and architecture checkpoints
-* Debugging—/draft:debugprovides structured debugging: reproduce, isolate, diagnose, fix
-* Quality—/draft:review,/draft:deep-review,/draft:bughunt,/draft:quick-review,/draft:impact(risk analysis),/draft:assist-review(intent summaries), and/draft:testing-strategy
-* Operations—/draft:deploy-checklist,/draft:incident-response,/draft:standup,/draft:status,/draft:revert,/draft:change,/draft:coverage
-* Strategy—/draft:tech-debtfor technical debt analysis across 6 dimensions with prioritization
-* Authoring—/draft:documentationgenerates technical docs: readme, runbook, api, onboarding
-* Knowledge & Governance—/draft:adr,/draft:learn,/draft:decompose,/draft:index
-* Integration—/draft:jira-preview,/draft:jira-create
-7 specialized agents— Architect, Debugger, Planner, RCA, Reviewer, Ops, and Writer — each with behavioral protocols tuned for their domain.
+* Context — `/draft:init`, `/draft:tour` (exploratory walkthroughs), architecture documentation, AI context files, and state tracking
+* Planning — `/draft:new-track` creates specifications and phased plans through collaborative dialogue
+* Execution — `/draft:implement` builds features task-by-task with TDD cycles and architecture checkpoints
+* Debugging — `/draft:debug` provides structured debugging: reproduce, isolate, diagnose, fix
+* Quality — `/draft:review`, `/draft:deep-review`, `/draft:bughunt`, `/draft:quick-review`, `/draft:impact` (risk analysis), `/draft:assist-review` (intent summaries), `/draft:coverage`, and `/draft:testing-strategy`
+* Operations — `/draft:deploy-checklist`, `/draft:incident-response`, `/draft:standup`, `/draft:status`, `/draft:revert`, `/draft:change`
+* Strategy — `/draft:tech-debt` for technical debt analysis with prioritization
+* Authoring — `/draft:documentation` generates technical docs: readme, runbook, api, onboarding
+* Knowledge & Governance — `/draft:adr`, `/draft:learn`, `/draft:decompose`, `/draft:index`, `/draft:discover`
+* Integration — `/draft:jira-preview`, `/draft:jira-create`
+
+7 specialized agents — Architect, Debugger, Planner, RCA, Reviewer, Ops, and Writer — each with behavioral protocols tuned for their domain.
+
 
 ## Platform Support
 

@@ -1,11 +1,11 @@
 ---
 name: incident-response
-description: "Incident management lifecycle — triage, communicate, mitigate, postmortem. Three modes — new (start incident), update (status update), postmortem (blameless RCA report). Use when the user asks to 'start an incident', 'incident triage', 'write a postmortem', or says 'we're down', 'production is broken', 'page received'."
+description: Incident management lifecycle — triage, communicate, mitigate, postmortem. Three modes — new (start incident), update (status update), postmortem (blameless RCA report).
 ---
 
 # Incident Response
 
-Manage an incident through its full lifecycle using structured incident management practices.
+You are managing an incident through its full lifecycle using structured incident management practices.
 
 ## Red Flags — STOP if you're:
 
@@ -77,7 +77,7 @@ Next update: {time — SEV1: 15min, SEV2: 30min, SEV3: 1hr}
 - Extract URLs and log paths from ticket
 - Use `curl`/`wget` to fetch dashboards or error pages mentioned
 - Use `ssh` to access remote log paths if mentioned
-- If GitHub MCP / `gh` CLI available: check recent deployments and merged PRs (`gh pr list --state merged --search "merged:>2024-01-01"`)
+- If GitHub MCP available: check recent deployments (`last 24h`)
 - Record all evidence in incident timeline
 
 ### Step 5: Mitigate
@@ -140,7 +140,7 @@ Save to: `draft/incidents/incident-<timestamp>.md` or `draft/tracks/<id>/inciden
 - Read incident file for timeline and evidence
 - `git log` for related commits during incident window
 - If Jira MCP: pull ticket history and transitions
-- If GitHub MCP / `gh` CLI: pull PRs submitted during/after incident
+- If GitHub MCP: pull changes submitted during/after incident
 
 ### Step 3: Root Cause Analysis
 
@@ -158,6 +158,14 @@ Reference `core/agents/rca.md` methodology:
 3. **Detection Lag:** When was the bug introduced vs when was it detected?
 
 4. **SLO Impact:** Which SLOs were affected and by how much?
+
+5. **HLD Claims vs Reality ():** If the affected service has a `hld.md` (search `draft/tracks/*/hld.md` for §Detailed Design components matching the failing module), compare incident behavior against HLD claims:
+   - Did §Resiliency claims (graceful degradation, circuit breakers, timeout handling) actually hold during the incident?
+   - Did §Multi-tenancy claims (tenant isolation, predictable performance) hold? Did one tenant impact another?
+   - Did §Upgrade claims (backward compat, dependent service order) hold? Did an upgrade trigger this?
+   - Did §Scale claims hold under the load that triggered the incident?
+   - Did §Observability claims hold — were the listed key metrics sufficient for detection?
+   - Cite the specific HLD §section using section text (`draft/tracks/<id>/hld.md §Resiliency`) for each gap — avoid markdown anchor slugs since renderers (GitHub, mkdocs, Hugo) generate different slugs for nested headings. These citations feed the §Action Items as "amend HLD §X — claim was {claim} but reality showed {reality}."
 
 ### Step 4: Generate Postmortem
 
@@ -201,12 +209,20 @@ Or track-scoped: `draft/tracks/<id>/postmortem.md`
 ## What Went Wrong
 - {things that made the incident worse}
 
+## Design Claims vs Reality
+{populated when an HLD was available — list each HLD claim that did not hold, citing the specific §section}
+
+| HLD Section | Claim | Reality During Incident | Recommended HLD Amendment |
+|-------------|-------|-------------------------|---------------------------|
+| §Resiliency | {what was claimed} | {what actually happened} | {how to update HLD} |
+
 ## Action Items
 | # | Action | Owner | Deadline | Status |
 |---|--------|-------|----------|--------|
 | 1 | {detection improvement} | {name} | {date} | [ ] |
 | 2 | {process improvement} | {name} | {date} | [ ] |
 | 3 | {code improvement} | {name} | {date} | [ ] |
+| 4 | Amend `draft/tracks/<id>/hld.md` §{section} (if claim drift identified) | {design owner} | {date} | [ ] |
 ```
 
 ### Step 5: Jira Sync
@@ -220,7 +236,7 @@ Follow `core/shared/jira-sync.md`:
 ## Cross-Skill Dispatch
 
 - **Triggered by:** `/draft:new-track` when incident keywords detected in description
-- **Postmortem feeds into:** `git bisect` (find the breaking commit), `/draft:learn` (update guardrails)
+- **Postmortem feeds into:** `/draft:regression` (find the breaking commit), `/draft:learn` (update guardrails)
 - **Can create:** Bug track via `/draft:new-track` for the fix
 
 ## Error Handling

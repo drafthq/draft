@@ -1,6 +1,6 @@
 ---
 name: jira-preview
-description: "Generate Jira export file from track plan for review before creating issues. Use when the user asks to 'preview Jira export', 'review Jira issues before creating', 'see the Jira draft', or says 'what would Jira creation look like'."
+description: Generate Jira export file from track plan for review before creating issues.
 ---
 
 # Preview Jira Issues from Track Plan
@@ -92,8 +92,8 @@ synced_to_commit: "{FULL_SHA}"
 
 1. **Capture git context first:**
    ```bash
-   git branch --show-current    # Current branch name
-   git rev-parse --short HEAD   # Current commit hash
+   git branch --show-current # Current branch name
+   git rev-parse --short HEAD # Current commit hash
    ```
 2. Find active track from `draft/tracks.md` (look for `[~] In Progress` or first `[ ]` track)
 3. If track ID provided as argument, use that instead
@@ -133,10 +133,10 @@ Count tasks per phase and assign points to the **story**:
 
 | Task Count | Story Points |
 |------------|--------------|
-| 1-2 tasks  | 1 point      |
-| 3-4 tasks  | 2 points     |
-| 5-6 tasks  | 3 points     |
-| 7+ tasks   | 5 points     |
+| 1-2 tasks | 1 point |
+| 3-4 tasks | 2 points |
+| 5-6 tasks | 3 points |
+| 7+ tasks | 5 points |
 
 ## Step 3: Extract Quality Findings (if reports exist)
 

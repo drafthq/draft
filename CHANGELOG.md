@@ -59,7 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Three vendor-specific skills (`upload`, `regression`, `epic-status`) and their cross-references — Draft is GitHub-first; users wanting bisect should use `git bisect` directly.
 - `core/guardrails.md` (legacy C++ systems-programming rules) and the C++ guardrails backfill paths in `learn`/`init` — six broken refs cleaned up.
-- All `cot` CLI / Gerrit branches in `core/shared/vcs-commands.md` — rewritten as git + GitHub conventions only.
+- All legacy CLI / GitHub branches in `core/shared/vcs-commands.md` — rewritten as git + GitHub conventions only.
 
 ## [2.3.0] - 2026-04-05
 

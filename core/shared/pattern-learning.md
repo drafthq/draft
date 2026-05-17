@@ -68,11 +68,9 @@ Before adding a new entry to `draft/guardrails.md`:
 
 ## Step 4: Write to guardrails.md
 
-### 4.0: Update File Metadata
+### 4.0: Update Project Metadata
 
-Before writing entries, update the YAML frontmatter in `draft/guardrails.md`:
-- Set `synced_to_commit` to the current HEAD commit SHA
-- Update `git.commit`, `git.commit_short`, `git.commit_date`, `git.commit_message` fields
+Before writing entries, update `draft/metadata.json` with the current git state — this is the single source of truth for `synced_to_commit` and all `git.*` fields for project-level artifacts including `guardrails.md`. Use `git-metadata.sh --project-metadata --generated-by "draft:learn"` or update `git.commit`, `git.commit_short`, `git.commit_date`, `git.commit_message`, and `synced_to_commit` manually. Do NOT write these fields to `guardrails.md` frontmatter (WS-8).
 
 ### Convention Entry Format
 
@@ -99,8 +97,8 @@ Append under `## Learned Anti-Patterns`:
 ### [Anti-Pattern Name]
 - **Category:** security | reliability | performance | correctness | concurrency
 - **Severity:** critical | high | medium
-- **graph_severity:** critical | high | medium | low | unresolved  (derived from fanIn of evidence files; "unresolved" if no graph data available)
-- **high_fanin_files:** `path/file.go` (fanIn:12), `path/other.go` (fanIn:7)  (omit line if none meet fanIn ≥ 5)
+- **graph_severity:** critical | high | medium | low | unresolved (derived from fanIn of evidence files; "unresolved" if no graph data available)
+- **high_fanin_files:** `path/file.go` (fanIn:12), `path/other.go` (fanIn:7) (omit line if none meet fanIn ≥ 5)
 - **Evidence:** Found in N files — `path/file1.ext:line`, `path/file2.ext:line`
 - **Discovered at:** YYYY-MM-DD (when Draft first observed this pattern)
 - **Established at:** YYYY-MM-DD (when the pattern entered the codebase, via git blame)
@@ -145,4 +143,4 @@ After updating guardrails.md, append a brief learning summary to the end of the 
 - **Never remove** existing entries — only update evidence/confidence/dates
 - **Cap at 50 learned entries** per section — if at capacity, replace the oldest `medium` confidence entry that hasn't been re-verified in 90+ days
 - **Human-curated always wins** — Hard Guardrails and `tech-stack.md ## Accepted Patterns` take precedence over learned patterns if there's a conflict
-- **Preserve file metadata** — update `synced_to_commit` in the YAML frontmatter when modifying guardrails.md
+- **Preserve project metadata** — update `draft/metadata.json:synced_to_commit` when modifying `guardrails.md`; do NOT write `synced_to_commit` to `guardrails.md` frontmatter (WS-8)

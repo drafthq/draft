@@ -3,18 +3,15 @@ project: "{PROJECT_NAME}"
 module: "{MODULE_NAME or 'root'}"
 generated_by: "draft:{COMMAND_NAME}"
 generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH or 'none'}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{COMMIT_MESSAGE}"
-  dirty: {true|false}
-synced_to_commit: "{FULL_SHA}"
 ---
 
 # {PROJECT_NAME} Profile
+
+## Project
+- Name: {PROJECT_NAME}
+- One-liner: {ONE_LINE_PRODUCT_DESCRIPTION}
+- Primary users: {USER_TYPES}
+- Repository layout: {monorepo|polyrepo|single-service}
 
 ## Stack
 - Language: {LANGUAGE}

@@ -10,7 +10,7 @@
 # The build script validates: [[ ! "$skill" =~ ^[a-z][a-z0-9]*(-[a-z0-9]+)*$ ]]
 #
 # Usage:
-#   ./tests/test-skill-name-security.sh
+# ./tests/test-skill-name-security.sh
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -83,7 +83,7 @@ ALL_VALID=true
 for skill_dir in "$SKILLS_DIR"/*/; do
     skill_name=$(basename "$skill_dir")
     if ! is_valid_skill_name "$skill_name"; then
-        echo "  FAIL: Real skill directory '$skill_name' has invalid name"
+        echo " FAIL: Real skill directory '$skill_name' has invalid name"
         ALL_VALID=false
     fi
 done

@@ -1,6 +1,6 @@
 ---
 name: impact
-description: "Telemetry and analytics suite generating project-wide insights by parsing execution timestamps, revert history, and phase tracking. Use when the user asks to 'show track telemetry', 'measure impact', 'project insights', 'how effective is Draft', or says 'show me Draft analytics'."
+description: Generate a project-wide impact report on Draft track delivery — pace, phase duration, completion rate, friction hotspots, ADR/guardrail/decomposition adoption — by parsing track metadata, git revert history, and phase timestamps. Use when measuring CDD effectiveness ("show project impact", "where are bottlenecks", "measure track delivery").
 ---
 
 # Draft Impact: Track Telemetry & Analytics
@@ -18,8 +18,12 @@ Generate a project-wide impact report measuring Context-Driven Development effec
 
 1. **Load Track State:**
    - Read all `draft/tracks.md` entries.
-   - For each track, read `metadata.json` to extract: `created_at`, `updated`, `status`, phase counts, task counts.
+   - For each track, read `metadata.json` to extract: `created_at`, `updated`, `status`, phase counts, task counts, `scope_includes`, `scope_excludes`.
    - If no tracks exist, report "No tracks found. Run `/draft:new-track` to create your first track."
+   - Run `scripts/tools/check-scope-conflicts.sh` to surface adjacent
+     tracks sharing scope tags — duplicate effort signals in impact
+     reporting. Schema:
+     [core/shared/template-contract.md](../../core/shared/template-contract.md).
 
 2. **Compute Metrics:**
    - **Delivery Pace:** Average elapsed time from track creation to completion (planning → implementation → review).
@@ -46,3 +50,20 @@ Generate a project-wide impact report measuring Context-Driven Development effec
    - **Recommendations:** Actionable suggestions based on detected friction patterns.
 
 ---
+
+## Report Closing: Next Actions (REQUIRED)
+
+Every impact/telemetry report must end with a `## Next Actions` section listing the smallest set of follow-ups in execution order. Use this exact shape:
+
+```markdown
+## Next Actions
+
+| # | Action | Owner | Blocker? | Skill / Command |
+|---|---|---|---|---|
+| 1 | <imperative one-liner> | <team-lead|TBD> | no | `/draft:<skill> <args>` or `n/a` |
+```
+
+Rules:
+- Impact reports are advisory — `Blocker? = no` is the default; mark `yes` only when a metric breach demands immediate process change.
+- Suggest `/draft:tech-debt` for systemic friction, `/draft:adr` for methodology adjustments, `/draft:tour` for onboarding gaps.
+- Cap at 7 actions.
