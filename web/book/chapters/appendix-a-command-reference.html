@@ -2,7 +2,7 @@
     <h1>Appendix A: Command Reference</h1>
     <p class="chapter-meta"><span class="part-name">Appendix</span></p>
 
-    <p class="chapter-intro">Quick-reference for all 28 Draft commands. Syntax shown is for Claude Code; Copilot uses <code>draft command</code> (no slash), Cursor uses <code>@draft command</code>.</p>
+    <p class="chapter-intro">Quick-reference for all 32 Draft commands. Syntax shown is for Claude Code; Copilot uses <code>draft command</code> (no slash), Cursor uses <code>@draft command</code>.</p>
 
     <div class="figure">
         <div class="figure-content">
@@ -103,17 +103,24 @@
                 <td>18</td>
             </tr>
             <tr>
+                <td><code>/draft:plan</code></td>
+                <td>Canonical parent planning command. Routes planning intent to specialist commands based on context</td>
+                <td><code>new-track</code>, <code>decompose</code>, <code>change</code>, <code>adr</code> &mdash; route directly; <code>&lt;description&gt;</code> &mdash; initial feature description</td>
+                <td><code>/draft:init</code></td>
+                <td>4, 7, 8, 9</td>
+            </tr>
+            <tr>
                 <td><code>/draft:new-track</code></td>
                 <td>Create a feature/fix track with spec and phased plan through collaborative dialogue</td>
                 <td><code>--quick</code> &mdash; streamlined mode with fewer questions; <code>&lt;description&gt;</code> &mdash; initial feature description</td>
-                <td><code>/draft:init</code></td>
+                <td><code>/draft:init</code> (or routed from <code>/draft:plan</code>)</td>
                 <td>4</td>
             </tr>
             <tr>
                 <td><code>/draft:implement</code></td>
                 <td>Execute tasks from plan with TDD workflow and architecture checkpoints</td>
                 <td>Resumes in-progress tasks automatically</td>
-                <td><code>/draft:new-track</code> (requires plan.md)</td>
+                <td><code>/draft:plan</code> (requires plan.md)</td>
                 <td>5</td>
             </tr>
             <tr>
@@ -187,6 +194,13 @@
                 <td>7</td>
             </tr>
             <tr>
+                <td><code>/draft:ops</code></td>
+                <td>Canonical parent operations command. Routes intent to specialist commands based on context</td>
+                <td><code>debug</code>, <code>deploy-checklist</code>, <code>incident-response</code>, <code>standup</code> &mdash; route directly</td>
+                <td><code>/draft:init</code></td>
+                <td>7, 15</td>
+            </tr>
+            <tr>
                 <td><code>/draft:debug</code></td>
                 <td>Structured debugging: reproduce, isolate, diagnose, fix</td>
                 <td><code>track &lt;id&gt;</code>, <code>&lt;JIRA-KEY&gt;</code></td>
@@ -236,11 +250,25 @@
                 <td>&mdash;</td>
             </tr>
             <tr>
+                <td><code>/draft:docs</code></td>
+                <td>Canonical parent documentation command. Routes intent to specialist commands based on context</td>
+                <td><code>documentation</code>, <code>testing-strategy</code>, <code>tech-debt</code>, <code>tour</code> &mdash; route directly</td>
+                <td><code>/draft:init</code></td>
+                <td>0, 14, 17</td>
+            </tr>
+            <tr>
                 <td><code>/draft:documentation</code></td>
                 <td>Technical documentation: readme, runbook, api, onboarding</td>
                 <td><code>readme</code>, <code>runbook &lt;service&gt;</code>, <code>api &lt;module&gt;</code>, <code>onboarding</code></td>
                 <td>init (optional)</td>
                 <td>&mdash;</td>
+            </tr>
+            <tr>
+                <td><code>/draft:integrations</code></td>
+                <td>Canonical parent integrations command. Routes intent to specialist commands based on context</td>
+                <td><code>jira-preview</code>, <code>jira-create</code> &mdash; route directly</td>
+                <td><code>/draft:init</code></td>
+                <td>19</td>
             </tr>
             <tr>
                 <td><code>/draft:jira-preview</code></td>

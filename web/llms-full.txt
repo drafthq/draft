@@ -4,7 +4,7 @@
 
 Draft is a plugin that adds three things to AI coding agents: a knowledge graph engine that maps your repo, spec-driven planning that produces git-tracked specs and phased plans, and a three-stage review pipeline that validates work against the plan. Together, they force AI to execute pre-approved work — grounded in real codebase understanding — instead of guessing.
 
-Draft works with Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Google Gemini. 28 slash commands, 7 specialized agents, 14-dimension bug hunting, ACID-style module audits, knowledge graph with six query modes, 14 deterministic shell helpers. MIT license, no telemetry, no paid tiers.
+Draft works with Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Google Gemini. 32 slash commands, 7 specialized agents, 14-dimension bug hunting, ACID-style module audits, knowledge graph with six query modes, 14 deterministic shell helpers. MIT license, no telemetry, no paid tiers.
 
 ## Installation
 
@@ -20,7 +20,7 @@ Cursor > Settings > Rules, Skills, Subagents > Rules > New > Add from Github:
 ```
 https://github.com/mayurpise/draft.git
 ```
-Then use: `@draft init`, `@draft new-track`, `@draft implement`
+Then use: `@draft init`, `@draft plan`, `@draft implement`
 
 ### GitHub Copilot
 ```
@@ -40,53 +40,57 @@ Clone Draft to `~/.gemini/antigravity/skills/draft` and configure `~/.gemini.md`
 The primary development cycle follows four stages:
 
 1. **`/draft:init`** — 5-phase codebase analysis. Generates architecture.md (source of truth), .ai-context.md (token-optimized AI context), .ai-profile.md (ultra-compact always-on profile), and state tracking files.
-2. **`/draft:new-track`** — Collaborative intake with structured questions, AI guidance, and progressive refinement. Produces spec.md (acceptance criteria) and plan.md (phased execution plan).
+2. **`/draft:plan`** — Collaborative intake with structured questions, AI guidance, and progressive refinement. Produces spec.md (acceptance criteria) and plan.md (phased execution plan). Routes to specialist commands.
 3. **`/draft:implement`** — TDD workflow: RED (write failing test) → GREEN (make it pass) → REFACTOR. Executes plan tasks phase by phase with checkpoints and progress tracking.
 4. **`/draft:review`** — Three-stage review: (1) Automated Validation, (2) Spec Compliance, (3) Code Quality. Integrates reviewer agent and bughunt.
 
 After initial setup, `/draft:init refresh` uses stored file hashes and signal classification to only re-analyze changed files — no full re-scan needed.
 
-## All Commands (28)
+## All Commands (32)
 
-### Primary Workflow
+### Setup & Monorepos
 - `/draft` — Overview, intent mapping, and command reference
 - `/draft:init` — Analyze codebase, create context files and state tracking
+- `/draft:index` — Aggregate monorepo service contexts
+
+### Track Lifecycle
+- `/draft:plan` — Canonical planning parent command
 - `/draft:new-track` — Collaborative spec and plan with AI-guided refinement
 - `/draft:implement` — TDD workflow with checkpoints
 - `/draft:review` — 3-stage review (validation + spec compliance + code quality)
+- `/draft:change` — Handle mid-track requirement changes
 
-### Quality
+### Quality & Diagnostics
+- `/draft:status` — Show progress overview of active tracks and tasks
+- `/draft:revert` — Git-aware rollback of completed work
 - `/draft:deep-review` — Enterprise-grade module lifecycle and ACID audit
 - `/draft:bughunt` — Exhaustive 14-dimension defect discovery with taint tracking
 - `/draft:quick-review` — Lightweight 4-dimension code review
 - `/draft:coverage` — Code coverage report (target 95%+)
 - `/draft:testing-strategy` — Test plan design with coverage targets
 - `/draft:tech-debt` — Technical debt analysis across 6 dimensions
-
-### Architecture & Planning
-- `/draft:decompose` — Module decomposition with dependency mapping
-- `/draft:adr` — Architecture Decision Records
-- `/draft:change` — Handle mid-track requirement changes
 - `/draft:learn` — Discover coding patterns, update guardrails
-
-### Operations
 - `/draft:debug` — Structured debugging: reproduce, isolate, diagnose, fix
-- `/draft:deploy-checklist` — Pre-deployment verification with rollback triggers
-- `/draft:incident-response` — Incident lifecycle: triage, communicate, mitigate, postmortem
-- `/draft:standup` — Git activity standup summary (read-only)
+- `/draft:impact` — ROI analytics tracking friction and timeline metrics
+- `/draft:assist-review` — Summarize intent and highlight structural PR risks for reviewers
 
-### Project Management
-- `/draft:status` — Show progress overview
-- `/draft:revert` — Git-aware rollback
-- `/draft:index` — Aggregate monorepo service contexts
+### Architecture & Technical Docs
+- `/draft:docs` — Canonical technical documentation parent command
+- `/draft:documentation` — Technical docs: readme, runbook, api, onboarding
+- `/draft:tour` — Interactive architecture mentorship and codebase walkthrough
+- `/draft:adr` — Architecture Decision Records
+- `/draft:decompose` — Module decomposition with dependency mapping
+
+### Enterprise & Integrations
+- `/draft:integrations` — Canonical enterprise integrations parent command
 - `/draft:jira-preview` — Generate Jira export for review
 - `/draft:jira-create` — Push issues to Jira via MCP
 
-### Authoring & Onboarding
-- `/draft:documentation` — Technical docs: readme, runbook, api, onboarding
-- `/draft:tour` — Interactive architecture mentorship and codebase walkthrough
-- `/draft:impact` — ROI analytics tracking friction and timeline metrics
-- `/draft:assist-review` — Summarize intent and highlight structural PR risks for reviewers
+### Operations & Incidents
+- `/draft:ops` — Canonical operations and runtime parent command
+- `/draft:deploy-checklist` — Pre-deployment verification with rollback triggers
+- `/draft:incident-response` — Incident lifecycle: triage, communicate, mitigate, postmortem
+- `/draft:standup` — Git activity standup summary (read-only)
 
 ## The 7 Specialized Agents
 

@@ -256,9 +256,9 @@
     </div>
 
     <h2>Starting a Track</h2>
-    <p>Every unit of work in Draft &mdash; a feature, a bug fix, a refactor &mdash; begins with <code>/draft:new-track</code>. This command does not generate code. It starts a <strong>collaborative intake process</strong> between you and the AI, producing two artifacts that govern everything that follows: a specification and a plan.</p>
+    <p>Every unit of work in Draft &mdash; a feature, a bug fix, a refactor &mdash; begins with <code>/draft:plan</code> (which orchestrates planning and routes to the specialist <code>/draft:new-track</code> workflow). This command does not generate code. It starts a <strong>collaborative intake process</strong> between you and the AI, producing two artifacts that govern everything that follows: a specification and a plan.</p>
 
-    <pre class="terminal"><code>$ /draft:new-track Add OAuth2 support for third-party login</code></pre>
+    <pre class="terminal"><code>$ /draft:plan Add OAuth2 support for third-party login</code></pre>
 
     <p>The AI reads your project's <code>product.md</code>, <code>tech-stack.md</code>, <code>.ai-context.md</code>, and <code>workflow.md</code> before asking a single question. It arrives at the conversation already understanding your architecture, your constraints, and your conventions. Then the intake begins.</p>
 
@@ -527,7 +527,7 @@ login via Google and GitHub would reduce onboarding friction.
     <h2>Quick Mode</h2>
     <p>Not every change needs a full intake ceremony. For hotfixes and small, isolated changes scoped to 1&ndash;3 hours, the <code>--quick</code> flag skips the collaborative conversation entirely.</p>
 
-    <pre class="terminal"><code>$ /draft:new-track --quick Fix null pointer in email validation</code></pre>
+    <pre class="terminal"><code>$ /draft:plan --quick Fix null pointer in email validation</code></pre>
 
     <p>Quick mode asks exactly two questions: "What exactly needs to change?" and "How will you know it's done?" It then generates a minimal <code>spec.md</code> and a flat <code>plan.md</code> with a single phase. The metadata records <code>"type": "quick"</code> so the status display adjusts accordingly &mdash; no phase progress, just a flat task list.</p>
 
