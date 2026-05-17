@@ -5,8 +5,8 @@
 # emits an empty diagram stub and exits 2 so consuming skills can degrade gracefully.
 #
 # Usage:
-#   scripts/tools/mermaid-from-graph.sh [--repo DIR] [--out DIR]
-#                                       [--diagram module-deps|proto-map]
+# scripts/tools/mermaid-from-graph.sh [--repo DIR] [--out DIR]
+# [--diagram module-deps|proto-map]
 #
 # Exit codes: 0 OK, 1 invocation error, 2 graph data unavailable.
 set -euo pipefail
@@ -27,10 +27,10 @@ Usage:
                                       [--diagram module-deps|proto-map]
 
 Flags:
-  --repo DIR        Repository root (default: cwd).
-  --out DIR         Graph output dir (default: <repo>/draft/graph).
-  --diagram NAME    module-deps or proto-map (default: both, raw markdown).
-  --help            Show this help.
+  --repo DIR Repository root (default: cwd).
+  --out DIR Graph output dir (default: <repo>/draft/graph).
+  --diagram NAME module-deps or proto-map (default: both, raw markdown).
+  --help Show this help.
 
 Exit 0 with diagram output, exit 2 with empty stub when graph data is missing.
 EOF

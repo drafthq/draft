@@ -1,6 +1,6 @@
 'use strict';
 
-const fs   = require('fs');
+const fs = require('fs');
 const path = require('path');
 const { walkFiles, countLinesFromContent, warn, initTreeSitter, walkNodeEnterLeave } = require('./util');
 
@@ -11,14 +11,14 @@ const { walkFiles, countLinesFromContent, warn, initTreeSitter, walkNodeEnterLea
  * Fallback: regex-based extraction (~90% accurate).
  *
  * Extracts:
- *   functions  — top-level and method definitions
- *   classes    — class definitions with base classes
- *   imports    — import statements for cross-file edge detection
- *   calls      — intra-file function call edges (tree-sitter only)
+ * functions — top-level and method definitions
+ * classes — class definitions with base classes
+ * imports — import statements for cross-file edge detection
+ * calls — intra-file function call edges (tree-sitter only)
  *
- * @param {string}              repo
- * @param {RegExp[]}            excludeRes   pre-compiled exclude patterns
- * @param {Map<string,string[]>|null} allFiles   pre-collected file map, or null to walk
+ * @param {string} repo
+ * @param {RegExp[]} excludeRes pre-compiled exclude patterns
+ * @param {Map<string,string[]>|null} allFiles pre-collected file map, or null to walk
  */
 async function buildPythonIndex(repo, excludeRes = [], allFiles = null) {
   const pyFiles = allFiles
@@ -26,17 +26,17 @@ async function buildPythonIndex(repo, excludeRes = [], allFiles = null) {
     : walkFiles(repo, ['.py'], excludeRes);
 
   const functions = [];
-  const classes   = [];
-  const imports   = [];
-  const calls     = [];
+  const classes = [];
+  const imports = [];
+  const calls = [];
 
   if (pyFiles.length === 0) return { functions, classes, imports, calls };
 
   const tsAvailable = await tryLoadTreeSitter();
 
   for (const f of pyFiles) {
-    const rel    = path.relative(repo, f);
-    const parts  = rel.split(path.sep);
+    const rel = path.relative(repo, f);
+    const parts = rel.split(path.sep);
     const module = parts.length > 1 ? parts[0] : '__root__';
 
     let content;
@@ -93,8 +93,8 @@ function parsePythonTreeSitter(content, filePath, module, totalLines, functions,
     const tree = _parser.parse(content);
     const root = tree.rootNode;
 
-    const funcStack   = []; // stack of enclosing function names
-    const classStack  = []; // stack of enclosing class names
+    const funcStack = []; // stack of enclosing function names
+    const classStack = []; // stack of enclosing class names
 
     walkNodeEnterLeave(root,
       // enter
@@ -102,27 +102,27 @@ function parsePythonTreeSitter(content, filePath, module, totalLines, functions,
         switch (node.type) {
           case 'function_definition': {
             const nameNode = node.childForFieldName('name');
-            const name     = nameNode ? nameNode.text : '__anon__';
-            const cls      = classStack.length > 0 ? classStack[classStack.length - 1] : null;
+            const name = nameNode ? nameNode.text : '__anon__';
+            const cls = classStack.length > 0 ? classStack[classStack.length - 1] : null;
             functions.push({
               name,
               receiver: cls,
-              file:     filePath,
+              file: filePath,
               module,
-              line:     node.startPosition.row + 1,
-              lines:    totalLines,
+              line: node.startPosition.row + 1,
+              lines: totalLines,
             });
             funcStack.push(name);
             break;
           }
 
           case 'class_definition': {
-            const nameNode  = node.childForFieldName('name');
-            const name      = nameNode ? nameNode.text : '__anon__';
+            const nameNode = node.childForFieldName('name');
+            const name = nameNode ? nameNode.text : '__anon__';
             // Extract base classes from argument_list
-            const argsNode  = node.childForFieldName('superclasses') ||
+            const argsNode = node.childForFieldName('superclasses') ||
                               node.children.find(c => c.type === 'argument_list');
-            const bases     = [];
+            const bases = [];
             if (argsNode) {
               for (const child of argsNode.children) {
                 if (child.type === 'identifier' || child.type === 'attribute') {
@@ -176,12 +176,12 @@ function parsePythonTreeSitter(content, filePath, module, totalLines, functions,
             }
             if (callee && callee !== enclosing && callee !== 'self' && callee !== 'super') {
               calls.push({
-                kind:     'py-call',
-                from:     enclosing,
-                to:       callee,
+                kind: 'py-call',
+                from: enclosing,
+                to: callee,
                 fromFile: filePath,
                 module,
-                line:     node.startPosition.row + 1,
+                line: node.startPosition.row + 1,
                 resolved: false,
                 confidence,
               });
@@ -193,7 +193,7 @@ function parsePythonTreeSitter(content, filePath, module, totalLines, functions,
       // leave
       (node) => {
         if (node.type === 'function_definition') funcStack.pop();
-        if (node.type === 'class_definition')    classStack.pop();
+        if (node.type === 'class_definition') classStack.pop();
       }
     );
   } catch (e) {
@@ -220,7 +220,7 @@ function parsePythonRegex(content, filePath, module, totalLines, functions, clas
   };
 
   for (let i = 0; i < lines.length; i++) {
-    const line    = lines[i];
+    const line = lines[i];
     const trimmed = line.trim();
 
     if (trimmed.startsWith('#') || trimmed === '') continue;
@@ -244,11 +244,11 @@ function parsePythonRegex(content, filePath, module, totalLines, functions, clas
       getCurrentClass(currentIndent);
       classStack.push({ name: classMatch[1], indent: currentIndent });
       classes.push({
-        name:   classMatch[1],
-        bases:  classMatch[2] ? classMatch[2].split(',').map(b => b.trim()) : [],
-        file:   filePath,
+        name: classMatch[1],
+        bases: classMatch[2] ? classMatch[2].split(',').map(b => b.trim()) : [],
+        file: filePath,
         module,
-        line:   i + 1,
+        line: i + 1,
       });
       continue;
     }
@@ -256,14 +256,14 @@ function parsePythonRegex(content, filePath, module, totalLines, functions, clas
     const funcMatch = trimmed.match(/^def\s+(\w+)\s*\(/);
     if (funcMatch) {
       const currentClass = getCurrentClass(currentIndent);
-      const isMethod     = currentIndent > 0 && currentClass !== null;
+      const isMethod = currentIndent > 0 && currentClass !== null;
       functions.push({
-        name:     funcMatch[1],
+        name: funcMatch[1],
         receiver: isMethod ? currentClass : null,
-        file:     filePath,
+        file: filePath,
         module,
-        line:     i + 1,
-        lines:    totalLines,
+        line: i + 1,
+        lines: totalLines,
       });
     }
   }

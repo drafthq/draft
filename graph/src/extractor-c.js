@@ -1,12 +1,12 @@
 'use strict';
 
-const fs             = require('fs');
-const path           = require('path');
+const fs = require('fs');
+const path = require('path');
 const { spawnSync } = require('child_process');
 const { walkFiles, countLinesFromContent, warn, initTreeSitter,
         walkNodeEnterLeave, C_CPP_EXTS_LIST, detectUniversalCtags } = require('./util');
 
-const C_EXTS   = new Set(['.c', '.h']);
+const C_EXTS = new Set(['.c', '.h']);
 const CPP_EXTS = new Set(['.cc', '.cpp', '.cxx', '.hpp', '.hxx', '.h++']);
 
 /**
@@ -20,13 +20,13 @@ const CPP_EXTS = new Set(['.cc', '.cpp', '.cxx', '.hpp', '.hxx', '.h++']);
  * Final fallback: skip silently — include graph still provides value.
  *
  * Extracts:
- *   functions  — function definitions (declarations skipped — too noisy in headers)
- *   types      — struct, class (C++), enum definitions
- *   calls      — intra-file function call edges (tree-sitter only)
+ * functions — function definitions (declarations skipped — too noisy in headers)
+ * types — struct, class (C++), enum definitions
+ * calls — intra-file function call edges (tree-sitter only)
  *
- * @param {string}              repo
- * @param {RegExp[]}            excludeRes   pre-compiled exclude patterns
- * @param {Map<string,string[]>|null} allFiles   pre-collected file map, or null to walk
+ * @param {string} repo
+ * @param {RegExp[]} excludeRes pre-compiled exclude patterns
+ * @param {Map<string,string[]>|null} allFiles pre-collected file map, or null to walk
  */
 async function buildCIndex(repo, excludeRes = [], allFiles = null) {
   const cFiles = allFiles
@@ -34,8 +34,8 @@ async function buildCIndex(repo, excludeRes = [], allFiles = null) {
     : walkFiles(repo, C_CPP_EXTS_LIST, excludeRes);
 
   const functions = [];
-  const types     = [];
-  const calls     = [];
+  const types = [];
+  const calls = [];
 
   if (cFiles.length === 0) return { functions, types, calls };
 
@@ -46,22 +46,17 @@ async function buildCIndex(repo, excludeRes = [], allFiles = null) {
   const ctagsBin = detectUniversalCtags();
 
   for (const f of cFiles) {
-    const rel    = path.relative(repo, f);
-    const parts  = rel.split(path.sep);
+    const rel = path.relative(repo, f);
+    const parts = rel.split(path.sep);
     const module = parts.length > 1 ? parts[0] : '__root__';
-    const ext    = path.extname(f).toLowerCase();
+    const ext = path.extname(f).toLowerCase();
 
     let content;
     try { content = fs.readFileSync(f).toString('utf8').replace(/\0/g, ''); }
     catch (_) { continue; }
 
     const totalLines = countLinesFromContent(content);
-    // C++ detection: known C++ extensions, or a .h file containing a real class
-    // declaration. Use a word-boundary check anchored on `class` followed by an
-    // identifier and a class-body opener — avoids false positives from comments,
-    // strings, or identifiers like `class_t` / `subclass`.
-    const isCpp = CPP_EXTS.has(ext) ||
-      (ext === '.h' && /\bclass\s+\w+\s*[:{]/.test(content));
+    const isCpp = CPP_EXTS.has(ext) || (ext === '.h' && content.includes('class '));
 
     if (isCpp && _parsers.cpp) {
       parseCTreeSitter(content, rel, module, totalLines, functions, types, calls, _parsers.cpp, 'cpp');
@@ -130,15 +125,15 @@ function parseCTreeSitter(content, filePath, module, totalLines, functions, type
     const tree = parser.parse(content);
     const root = tree.rootNode;
 
-    const funcStack    = []; // stack of enclosing function names
-    const nsStack      = []; // namespace stack for nested C++ namespaces
+    const funcStack = []; // stack of enclosing function names
+    const nsStack = []; // namespace stack for nested C++ namespaces
 
     walkNodeEnterLeave(root,
       // enter
       (node) => {
         switch (node.type) {
           case 'namespace_definition': {
-            // namespace foo { ... }  — push onto stack to handle nesting
+            // namespace foo { ... } — push onto stack to handle nesting
             const nameNode = node.childForFieldName('name');
             nsStack.push(nameNode ? nameNode.text : null);
             break;
@@ -149,8 +144,8 @@ function parseCTreeSitter(content, filePath, module, totalLines, functions, type
             if (name) {
               functions.push({
                 name, file: filePath, module,
-                line:      node.startPosition.row + 1,
-                lines:     totalLines,
+                line: node.startPosition.row + 1,
+                lines: totalLines,
                 language,
                 namespace: nsStack.length > 0 ? nsStack[nsStack.length - 1] : null,
               });
@@ -163,10 +158,10 @@ function parseCTreeSitter(content, filePath, module, totalLines, functions, type
             const nameNode = node.childForFieldName('name');
             if (nameNode && node.childForFieldName('body')) { // only definitions, not usages
               types.push({
-                name:     nameNode.text,
-                file:     filePath, module,
-                line:     node.startPosition.row + 1,
-                kind:     'struct',
+                name: nameNode.text,
+                file: filePath, module,
+                line: node.startPosition.row + 1,
+                kind: 'struct',
                 language,
               });
             }
@@ -177,10 +172,10 @@ function parseCTreeSitter(content, filePath, module, totalLines, functions, type
             const nameNode = node.childForFieldName('name');
             if (nameNode && node.childForFieldName('body')) {
               types.push({
-                name:     nameNode.text,
-                file:     filePath, module,
-                line:     node.startPosition.row + 1,
-                kind:     'class',
+                name: nameNode.text,
+                file: filePath, module,
+                line: node.startPosition.row + 1,
+                kind: 'class',
                 language,
               });
             }
@@ -191,10 +186,10 @@ function parseCTreeSitter(content, filePath, module, totalLines, functions, type
             const nameNode = node.childForFieldName('name');
             if (nameNode && node.childForFieldName('body')) {
               types.push({
-                name:     nameNode.text,
-                file:     filePath, module,
-                line:     node.startPosition.row + 1,
-                kind:     'enum',
+                name: nameNode.text,
+                file: filePath, module,
+                line: node.startPosition.row + 1,
+                kind: 'enum',
                 language,
               });
             }
@@ -225,7 +220,7 @@ function parseCTreeSitter(content, filePath, module, totalLines, functions, type
               calls.push({
                 kind: 'c-call', from: enclosing, to: callee,
                 fromFile: filePath, module,
-                line:     node.startPosition.row + 1,
+                line: node.startPosition.row + 1,
                 resolved: false,
                 confidence,
               });
@@ -236,7 +231,7 @@ function parseCTreeSitter(content, filePath, module, totalLines, functions, type
       },
       // leave
       (node) => {
-        if (node.type === 'function_definition')  funcStack.pop();
+        if (node.type === 'function_definition') funcStack.pop();
         if (node.type === 'namespace_definition') nsStack.pop();
       }
     );
@@ -317,7 +312,7 @@ function parseCCtags(ctagsBin, filePath, relPath, module, totalLines, functions,
             name: tag.name, file: relPath, module,
             line: tag.line || 1,
             kind: tag.kind === 'class' || tag.kind === 'c' ? 'class'
-                : tag.kind === 'enum'  || tag.kind === 'g' ? 'enum' : 'struct',
+                : tag.kind === 'enum' || tag.kind === 'g' ? 'enum' : 'struct',
             language: tag.language ? tag.language.toLowerCase() : 'c',
           });
         }

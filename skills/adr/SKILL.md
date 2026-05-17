@@ -1,11 +1,11 @@
 ---
 name: adr
-description: "Create and manage Architecture Decision Records. Documents significant technical decisions with context, alternatives, and consequences. Also supports evaluate (assess proposals) and design (system design) modes. Use when the user asks to 'document a decision', 'create an ADR', 'evaluate a proposal', 'design a system', or says 'why did we choose X', 'record this decision'."
+description: Create and manage Architecture Decision Records. Documents significant technical decisions with context, alternatives, and consequences. Also supports evaluate (assess proposals) and design (system design) modes.
 ---
 
 # Architecture Decision Records
 
-Create or manage Architecture Decision Records (ADRs) for this project.
+You are creating or managing Architecture Decision Records (ADRs) for this project.
 
 ## Red Flags - STOP if you're:
 
@@ -52,7 +52,17 @@ Check for arguments:
 ### List Mode
 
 If argument is `list`:
-1. Read all files in `draft/adrs/`
+1. Prefer the deterministic `adr-index.sh` wrapper for the listing — it returns a structured JSON `{adrs:[{id,title,date,status,path,related_tracks}]}` derived from each ADR's frontmatter. Resolve via the canonical tool resolver (see [core/shared/tool-resolver.md](../../core/shared/tool-resolver.md)):
+   ```bash
+   DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
+   [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+   [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+   if [ -x "$DRAFT_TOOLS/adr-index.sh" ]; then
+     bash "$DRAFT_TOOLS/adr-index.sh" --root draft/adrs
+   else
+     ls draft/adrs/ # fallback: enumerate files manually
+   fi
+   ```
 2. Display summary table:
 
 ```
@@ -184,6 +194,26 @@ If in interactive mode (no title provided), ask:
 
 If title provided, proceed directly with the title.
 
+### 2.1 HLD Handoff (when invoked from a track context)
+
+If an active track exists and `draft/tracks/<id>/hld.md` is present:
+
+1. Read HLD §Alternatives Considered table.
+2. If any row is marked `Promote to ADR? yes` and has not been promoted yet (no matching ADR exists), offer:
+   ```
+   Found 1 unpromoted alternative in <track>/hld.md:
+     - {alternative} — rejected because: {reason}
+   Promote to ADR? [Y/n]
+   ```
+3. When promoting:
+   - Pre-fill ADR §Context from HLD §Background and the §High-Level Design / Key Design Decisions row that drove this rejection.
+   - Pre-fill ADR §Decision from the HLD §Key Design Decision that was selected over this alternative.
+   - Pre-fill ADR §Alternatives Considered with the rejected alternative.
+   - Set frontmatter `originating_hld: draft/tracks/<id>/hld.md`.
+4. After ADR creation, edit HLD §Alternatives Considered table: change the `Promote to ADR?` cell to `ADR-<number>` (linking back). Surface the diff to the user for confirmation.
+
+If invoked outside a track context, skip 2.1 and proceed with normal interactive flow.
+
 ## Step 3: Load Project Context
 
 Follow the base procedure in `core/shared/draft-context-loading.md`.
@@ -214,13 +244,13 @@ Verify the target filename `draft/adrs/<number>-<kebab-case-title>.md` does not 
 **MANDATORY: Include YAML frontmatter with git metadata.** Gather git info first:
 
 ```bash
-git branch --show-current                    # LOCAL_BRANCH
-git rev-parse --abbrev-ref @{upstream} 2>/dev/null || echo "none"  # REMOTE/BRANCH
-git rev-parse HEAD                           # FULL_SHA
-git rev-parse --short HEAD                   # SHORT_SHA
-git log -1 --format=%ci HEAD                 # COMMIT_DATE
-git log -1 --format=%s HEAD                  # COMMIT_MESSAGE
-git status --porcelain | head -1 | wc -l     # 0 = clean, >0 = dirty
+git branch --show-current # LOCAL_BRANCH
+git rev-parse --abbrev-ref @{upstream} 2>/dev/null || echo "none" # REMOTE/BRANCH
+git rev-parse HEAD # FULL_SHA
+git rev-parse --short HEAD # SHORT_SHA
+git log -1 --format=%ci HEAD # COMMIT_DATE
+git log -1 --format=%s HEAD # COMMIT_MESSAGE
+git status --porcelain | head -1 | wc -l # 0 = clean, >0 = dirty
 ```
 
 Create `draft/adrs/<number>-<kebab-case-title>.md`:
@@ -241,6 +271,9 @@ git:
   commit_message: "{COMMIT_MESSAGE}"
   dirty: {true|false}
 synced_to_commit: "{FULL_SHA}"
+# Optional — populated when ADR is promoted from a track HLD §Alternatives Considered row.
+originating_hld: "{path/to/draft/tracks/<id>/hld.md or null}"
+originating_track: "{<track_id> or null}"
 ---
 
 # ADR-<number>: <Title>
@@ -294,6 +327,7 @@ synced_to_commit: "{FULL_SHA}"
 
 - [Link to relevant discussion, RFC, or documentation]
 - [Related ADRs: ADR-xxx]
+- [Originating HLD: draft/tracks/<id>/hld.md §Alternatives Considered] (only when promoted from a track)
 ```
 
 ## Step 6: Present for Review

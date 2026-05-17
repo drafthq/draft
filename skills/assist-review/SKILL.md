@@ -1,6 +1,6 @@
 ---
 name: assist-review
-description: "Lower cognitive load for human reviewers by auditing specifically for architectural risks mapped to the original track specification. Use when the user asks to 'help me review this', 'audit for risks', 'review against spec', or says 'eyes on this PR before I merge', 'flag review-blockers'."
+description: Reviewing someone else's PR for handoff/sign-off. Isolates structural changes from trivial edits, flags HLD/LLD drift and guardrail violations, points the reviewer at what to scrutinize. Use when prepping to review another engineer's work — NOT for first-pass self-review (use review / quick-review).
 ---
 
 # Draft Assist Review: Human-in-the-Loop Gateway
@@ -18,6 +18,7 @@ Help human reviewers effectively review an executed track without shifting the e
 
 1. **Context Extraction:**
    - Load the track's `spec.md` and `plan.md`.
+   - Load the track's `hld.md` and `lld.md` if present — extract Key Design Decisions, Alternatives Considered, and (LLD) class invariants and error policies.
    - Re-summarize the **Intent** of what this track was supposed to achieve in exactly two sentences.
 
 2. **Blast Radius Isolation:**
@@ -27,17 +28,21 @@ Help human reviewers effectively review an executed track without shifting the e
 
 3. **Generate the Human Helper Guide:**
    - Instead of a traditional bug hunt, generate an executive summary containing a **Risk Assessment**.
-   - For each structural edit, write: *"I chose to implement `[Specific File/Function]` using the `[Pattern]` because the `architecture.md` mandated it. You should specifically scrutinize lines X through Y because they influence global state."*
+   - For each structural edit, cite the originating decision: *"I chose `[Pattern]` for `[File/Function]` because hld.md §Key Design Decisions / Alternatives Considered selected it over [rejected alternative]. You should specifically scrutinize lines X–Y because they touch [global state / auth boundary / shared schema]."* Fall back to `architecture.md` only when no HLD exists.
+   - Highlight any code that violates an LLD §Classes and Interfaces invariant (thread safety, idempotency, ordering) or contradicts an HLD §Checklist claim (e.g., "code introduces a new shared mutex but HLD declared single-writer").
    - Highlight any code that touches shared state, auth boundaries, data persistence, or concurrency.
 
 4. **Knowledge Base Verification:**
    - Verify if any pattern implemented violates the `draft/guardrails.md` learned anti-patterns.
+   - Verify the diff is consistent with hld.md/lld.md commitments. If the diff makes structural changes not reflected in HLD §Detailed Design or LLD §Classes/Interfaces: flag for the reviewer that HLD/LLD must be amended (`/draft:change`) before merge.
    - If so, specifically direct the human reviewer to veto the change unless an ADR is created via `/draft:adr`.
 
 5. **Output Format:**
    - **Track Intent** (2 sentences)
+   - **HLD/LLD Decision Trace** (per structural edit: which §Key Design Decision or §Alternatives Considered row drove this code; or "no HLD justification — reviewer must request one")
    - **Structural Edits** (table: file, change type, risk level, review guidance)
    - **Trivial Edits** (collapsed list — skim only)
+   - **HLD/LLD Drift** (diff makes claims that HLD/LLD does not document — recommend `/draft:change`)
    - **Guardrail Violations** (if any — with ADR recommendation)
    - **Suggested Review Order** (which files to review first, based on blast radius)
 

@@ -14,10 +14,10 @@ assert_eq() {
     local expected="$2"
     local actual="$3"
     if [[ "$expected" == "$actual" ]]; then
-        echo "  PASS: $description"
+        echo " PASS: $description"
         PASS=$((PASS + 1))
     else
-        echo "  FAIL: $description (Expected: '$expected', Got: '$actual')"
+        echo " FAIL: $description (Expected: '$expected', Got: '$actual')"
         FAIL=$((FAIL + 1))
     fi
 }

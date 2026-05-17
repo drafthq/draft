@@ -1,17 +1,17 @@
 #!/usr/bin/env bash
 #
 # Build integration files from skill sources
-# Generates: GitHub Copilot copilot-instructions.md
+# Generates: GitHub Copilot copilot_instructions.md
 #
 # Note: Cursor integration removed - Cursor now supports .claude-plugin/ structure natively.
 #
 # Skills are the single source of truth for all integrations.
 #
 # Adding a new skill:
-#   1. Create skills/<name>/SKILL.md
-#   2. Add the skill name to SKILL_ORDER array in lib.sh
-#   3. Add display name and trigger to the case statements below
-#   4. Run this script
+# 1. Create skills/<name>/SKILL.md
+# 2. Add the skill name to SKILL_ORDER array in lib.sh
+# 3. Add display name and trigger to the case statements below
+# 4. Run this script
 #
 
 set -euo pipefail
@@ -21,6 +21,7 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 SKILLS_DIR="$ROOT_DIR/skills"
 CORE_DIR="$ROOT_DIR/core"
 COPILOT_OUTPUT="$ROOT_DIR/integrations/copilot/.github/copilot-instructions.md"
+COPILOT_OUTPUT_LEGACY="$ROOT_DIR/integrations/copilot/.github/copilot_instructions.md"
 
 # Source shared library for SKILL_ORDER, CORE_FILES, extract_body
 source "$SCRIPT_DIR/lib.sh"
@@ -32,35 +33,36 @@ source "$SCRIPT_DIR/lib.sh"
 get_skill_header() {
     local skill="$1"
     case "$skill" in
-        draft)             echo "Draft Overview" ;;
-        init)              echo "Init Command" ;;
-        index)             echo "Index Command" ;;
-        new-track)         echo "New Track Command" ;;
-        decompose)         echo "Decompose Command" ;;
-        implement)         echo "Implement Command" ;;
-        coverage)          echo "Coverage Command" ;;
-        deploy-checklist)  echo "Deploy Checklist Command" ;;
-        bughunt)           echo "Bug Hunt Command" ;;
-        review)            echo "Review Command" ;;
-        quick-review)      echo "Quick Review Command" ;;
-        deep-review)       echo "Deep Review Command" ;;
-        testing-strategy)  echo "Testing Strategy Command" ;;
-        learn)             echo "Learn Command" ;;
-        adr)               echo "ADR Command" ;;
-        debug)             echo "Debug Command" ;;
-        standup)           echo "Standup Command" ;;
-        tech-debt)         echo "Tech Debt Command" ;;
+        draft) echo "Draft Overview" ;;
+        init) echo "Init Command" ;;
+        index) echo "Index Command" ;;
+        new-track) echo "New Track Command" ;;
+        decompose) echo "Decompose Command" ;;
+        implement) echo "Implement Command" ;;
+        coverage) echo "Coverage Command" ;;
+        deploy-checklist) echo "Deploy Checklist Command" ;;
+        bughunt) echo "Bug Hunt Command" ;;
+        review) echo "Review Command" ;;
+        quick-review) echo "Quick Review Command" ;;
+        deep-review) echo "Deep Review Command" ;;
+        testing-strategy) echo "Testing Strategy Command" ;;
+        learn) echo "Learn Command" ;;
+        adr) echo "ADR Command" ;;
+        debug) echo "Debug Command" ;;
+        standup) echo "Standup Command" ;;
+        tech-debt) echo "Tech Debt Command" ;;
         incident-response) echo "Incident Response Command" ;;
-        documentation)     echo "Documentation Command" ;;
-        status)            echo "Status Command" ;;
-        revert)            echo "Revert Command" ;;
-        change)            echo "Change Command" ;;
-        jira-preview)      echo "Jira Preview Command" ;;
-        jira-create)       echo "Jira Create Command" ;;
-        tour)              echo "Tour Command" ;;
-        impact)            echo "Impact Command" ;;
-        assist-review)     echo "Assist Review Command" ;;
-        *)                 echo "$(echo "${skill:0:1}" | tr '[:lower:]' '[:upper:]')${skill:1} Command" ;;
+        documentation) echo "Documentation Command" ;;
+        status) echo "Status Command" ;;
+        revert) echo "Revert Command" ;;
+        change) echo "Change Command" ;;
+        jira-preview) echo "Jira Preview Command" ;;
+        jira-create) echo "Jira Create Command" ;;
+        discover) echo "Discover Command" ;;
+        tour) echo "Tour Command" ;;
+        impact) echo "Impact Command" ;;
+        assist-review) echo "Assist Review Command" ;;
+        *) echo "$(echo "${skill:0:1}" | tr '[:lower:]' '[:upper:]')${skill:1} Command" ;;
     esac
 }
 
@@ -71,35 +73,36 @@ get_skill_header() {
 get_copilot_trigger() {
     local skill="$1"
     case "$skill" in
-        draft)             echo "\"help\" or \"draft\"" ;;
-        init)              echo "\"init draft\" or \"draft init [refresh]\"" ;;
-        index)             echo "\"index services\" or \"draft index [--init-missing]\"" ;;
-        new-track)         echo "\"new feature\" or \"draft new-track <description>\"" ;;
-        decompose)         echo "\"break into modules\" or \"draft decompose\"" ;;
-        implement)         echo "\"implement\" or \"draft implement\"" ;;
-        coverage)          echo "\"check coverage\" or \"draft coverage\"" ;;
-        deploy-checklist)  echo "\"deploy checklist\" or \"draft deploy-checklist [track <id>]\"" ;;
-        bughunt)           echo "\"hunt bugs\" or \"draft bughunt [--track <id>]\"" ;;
-        review)            echo "\"review code\" or \"draft review [--track <id>] [--full]\"" ;;
-        quick-review)      echo "\"quick review\" or \"draft quick-review [file|pr <number>]\"" ;;
-        deep-review)       echo "\"deep review\" or \"draft deep-review [module]\"" ;;
-        testing-strategy)  echo "\"test strategy\" or \"draft testing-strategy [track <id>|path]\"" ;;
-        learn)             echo "\"learn patterns\" or \"draft learn [promote|migrate|path]\"" ;;
-        adr)               echo "\"document decision\" or \"draft adr [title]\"" ;;
-        debug)             echo "\"debug bug\" or \"draft debug [description|track <id>]\"" ;;
-        standup)           echo "\"standup\" or \"draft standup [date|week|save]\"" ;;
-        tech-debt)         echo "\"tech debt\" or \"draft tech-debt [path|track <id>]\"" ;;
+        draft) echo "\"help\" or \"draft\"" ;;
+        init) echo "\"init draft\" or \"draft init [refresh]\"" ;;
+        index) echo "\"index services\" or \"draft index [--init-missing]\"" ;;
+        new-track) echo "\"new feature\" or \"draft new-track <description>\"" ;;
+        decompose) echo "\"break into modules\" or \"draft decompose\"" ;;
+        implement) echo "\"implement\" or \"draft implement\"" ;;
+        coverage) echo "\"check coverage\" or \"draft coverage\"" ;;
+        deploy-checklist) echo "\"deploy checklist\" or \"draft deploy-checklist [track <id>]\"" ;;
+        bughunt) echo "\"hunt bugs\" or \"draft bughunt [--track <id>]\"" ;;
+        review) echo "\"review code\" or \"draft review [--track <id>] [--full]\"" ;;
+        quick-review) echo "\"quick review\" or \"draft quick-review [file|pr <number>]\"" ;;
+        deep-review) echo "\"deep review\" or \"draft deep-review [module]\"" ;;
+        testing-strategy) echo "\"test strategy\" or \"draft testing-strategy [track <id>|path]\"" ;;
+        learn) echo "\"learn patterns\" or \"draft learn [promote|migrate|path]\"" ;;
+        adr) echo "\"document decision\" or \"draft adr [title]\"" ;;
+        debug) echo "\"debug bug\" or \"draft debug [description|track <id>]\"" ;;
+        standup) echo "\"standup\" or \"draft standup [date|week|save]\"" ;;
+        tech-debt) echo "\"tech debt\" or \"draft tech-debt [path|track <id>]\"" ;;
         incident-response) echo "\"incident\" or \"draft incident-response [new|update|postmortem]\"" ;;
-        documentation)     echo "\"write docs\" or \"draft documentation [readme|runbook|api|onboarding]\"" ;;
-        status)            echo "\"status\" or \"draft status\"" ;;
-        revert)            echo "\"revert\" or \"draft revert\"" ;;
-        change)            echo "\"handle change\" or \"draft change <description>\"" ;;
-        jira-preview)      echo "\"preview jira\" or \"draft jira-preview [track-id]\"" ;;
-        jira-create)       echo "\"create jira\" or \"draft jira-create [track-id]\"" ;;
-        tour)              echo "\"tour\" or \"draft tour\"" ;;
-        impact)            echo "\"impact\" or \"draft impact\"" ;;
-        assist-review)     echo "\"assist review\" or \"draft assist-review\"" ;;
-        *)                 echo "\"draft $skill\"" ;;
+        documentation) echo "\"write docs\" or \"draft documentation [readme|runbook|api|onboarding]\"" ;;
+        status) echo "\"status\" or \"draft status\"" ;;
+        revert) echo "\"revert\" or \"draft revert\"" ;;
+        change) echo "\"handle change\" or \"draft change <description>\"" ;;
+        jira-preview) echo "\"preview jira\" or \"draft jira-preview [track-id]\"" ;;
+        jira-create) echo "\"create jira\" or \"draft jira-create [track-id]\"" ;;
+        discover) echo "\"discover features\" or \"draft discover [path]\"" ;;
+        tour) echo "\"tour\" or \"draft tour\"" ;;
+        impact) echo "\"impact\" or \"draft impact\"" ;;
+        assist-review) echo "\"assist review\" or \"draft assist-review\"" ;;
+        *) echo "\"draft $skill\"" ;;
     esac
 }
 
@@ -108,18 +111,13 @@ get_copilot_trigger() {
 # ─────────────────────────────────────────────────────────
 
 transform_copilot_syntax() {
-    # Skill names are kebab-case: [a-z][a-z0-9-]*. Reject anything else so
-    # placeholder-laden examples like "/draft:<id>" or addresses like
-    # "foo@draft.com" don't get mangled. Use `#` as the sed delimiter so the
-    # alternations in `(^|...)` don't collide with `|`.
     sed -E \
-        -e 's#/draft:(<[a-z-]+>)#draft \1#g' \
-        -e 's#/draft:([a-z][a-z0-9-]*)#draft \1#g' \
-        -e 's#(^|[^[:alnum:]_.-])@draft([^[:alnum:]_.-])#\1draft\2#g' \
-        -e 's#(^|[^[:alnum:]_.-])@draft$#\1draft#g' \
-        -e 's#`@draft`#`draft`#g' \
-        -e 's#`@draft #`draft #g' \
-        -e 's#@(architect|debugger|planner|rca|reviewer|ops|writer)([^[:alnum:]_-])#@workspace\2#g' \
+        -e 's|/draft:([a-z0-9<>-]+)|draft \1|g' \
+        -e 's|@draft([^a-z0-9_-])|draft\1|g' \
+        -e 's|@draft$|draft|g' \
+        -e 's|`@draft`|`draft`|g' \
+        -e 's|`@draft |`draft |g' \
+        -e 's#@(architect|debugger|planner|rca|reviewer|ops|writer)([^a-z0-9_-])#@workspace\2#g' \
         -e 's#@(architect|debugger|planner|rca|reviewer|ops|writer)$#@workspace#g'
 }
 
@@ -286,7 +284,7 @@ PROACTIVE
 }
 
 # ─────────────────────────────────────────────────────────
-# Build the copilot-instructions.md
+# Build the copilot_instructions.md
 # ─────────────────────────────────────────────────────────
 
 build_copilot() {
@@ -350,8 +348,11 @@ COMMON_HEADER
     echo "| \`draft status\` | Show progress overview |"
     echo "| \`draft revert\` | Git-aware rollback |"
     echo "| \`draft change <description>\` | Handle mid-track requirement changes |"
+    echo "| \`draft upload\` | Upload work for code review |"
+    echo "| \`draft regression\` | Detect regression source commit |"
     echo "| \`draft jira-preview [track-id]\` | Generate jira-export.md for review |"
     echo "| \`draft jira-create [track-id]\` | Create Jira issues from export via MCP |"
+    echo "| \`draft epic-status <epic-id>\` | Qualify a Jira Epic via MCP |"
     echo "| \`draft tour\` | Interactive onboarding tour |"
     echo "| \`draft impact\` | Telemetry and analytics insights |"
     echo "| \`draft assist-review\` | Assist human reviewers with architectural risk audit |"
@@ -387,8 +388,11 @@ Recognize these natural language patterns:
 | "what's the status" | Show status |
 | "undo", "revert" | Run revert |
 | "requirements changed", "scope changed", "update the spec" | Run change |
+| "upload", "submit for review" | Run upload |
+| "find regression", "bisect" | Run regression |
 | "preview jira", "export to jira" | Run jira-preview |
 | "create jira", "push to jira" | Run jira-create |
+| "epic status", "qualify epic" | Run epic-status |
 | "tour", "onboard me" | Run tour |
 | "impact", "analytics" | Run impact |
 | "assist review", "help reviewer" | Run assist-review |
@@ -440,11 +444,11 @@ COMMON_HEADER2
             line1=$(echo "$skill_body" | sed -n '1p')
             line2=$(echo "$skill_body" | sed -n '2p')
             line3=$(echo "$skill_body" | sed -n '3p')
-            if [[ -n "$line1" ]] || [[ ! "$line2" =~ ^#\  ]] || [[ -n "$line3" ]]; then
+            if [[ -n "$line1" ]] || [[ ! "$line2" =~ ^#[[:space:]] ]] || [[ -n "$line3" ]]; then
                 echo "ERROR: Skill '$skill' body format invalid (expected: blank, '# Title', blank). Got:" >&2
-                echo "  Line 1: '${line1}'" >&2
-                echo "  Line 2: '${line2}'" >&2
-                echo "  Line 3: '${line3}'" >&2
+                echo " Line 1: '${line1}'" >&2
+                echo " Line 2: '${line2}'" >&2
+                echo " Line 3: '${line3}'" >&2
                 exit 1
             fi
 
@@ -458,15 +462,17 @@ COMMON_HEADER2
             # Emit body from line 4 onward (skip blank, title, blank)
             echo "$skill_body" | transform_copilot_syntax | tail -n +4
 
-            # Inline progressive-disclosure references (skills/<skill>/references/*.md)
-            # Sorted alphabetically for determinism. Skills with no references/ dir are skipped.
+            # Emit progressive disclosure references
             local refs_dir="$SKILLS_DIR/$skill/references"
             if [[ -d "$refs_dir" ]]; then
                 local ref_file
-                while IFS= read -r -d '' ref_file; do
-                    echo ""
-                    transform_copilot_syntax < "$ref_file"
-                done < <(find "$refs_dir" -maxdepth 1 -type f -name '*.md' -print0 | sort -z)
+                # Use find + sort for deterministic alphabetical order
+                while IFS= read -r ref_file; do
+                    if [[ -f "$ref_file" ]]; then
+                        echo ""
+                        cat "$ref_file" | transform_copilot_syntax
+                    fi
+                done < <(find "$refs_dir" -maxdepth 1 -name "*.md" | sort)
             fi
         else
             echo "" >&2
@@ -530,17 +536,17 @@ verify_output() {
         }
     ' "$output_file")
 
-    echo "  Lines: $line_count"
+    echo " Lines: $line_count"
 
     # Verify completeness sentinel
     if ! tail -5 "$output_file" | grep -q "DRAFT_BUILD_COMPLETE"; then
-        echo "  FAIL: Missing completeness sentinel — output may be truncated" >&2
+        echo " FAIL: Missing completeness sentinel — output may be truncated" >&2
         return 1
     fi
 
     # Verify minimum line count
     if [[ "$line_count" -lt 1000 ]]; then
-        echo "  FAIL: Output too small ($line_count lines, expected >1000) — likely truncated" >&2
+        echo " FAIL: Output too small ($line_count lines, expected >1000) — likely truncated" >&2
         return 1
     fi
 
@@ -551,27 +557,27 @@ verify_output() {
             skill_count=$((skill_count + 1))
         fi
     done
-    echo "  Skills: $skill_count/${#SKILL_ORDER[@]}"
+    echo " Skills: $skill_count/${#SKILL_ORDER[@]}"
 
     # Verify no /draft: references remain
     if [[ "$old_syntax_count" -gt 0 ]]; then
-        echo "  WARNING: Found $old_syntax_count '/draft:' references (should be 0)" >&2
+        echo " WARNING: Found $old_syntax_count '/draft:' references (should be 0)" >&2
         return 1
     else
-        echo "  Syntax check: OK (no /draft: references)"
+        echo " Syntax check: OK (no /draft: references)"
     fi
 
     # Verify no @draft references remain
     if [[ "$at_draft_count" -gt 0 ]]; then
-        echo "  WARNING: Found $at_draft_count '@draft' references (should be 0)" >&2
-        echo "  Offending lines:" >&2
+        echo " WARNING: Found $at_draft_count '@draft' references (should be 0)" >&2
+        echo " Offending lines:" >&2
         grep -n '@draft' "$output_file" | head -5 >&2
         return 1
     else
-        echo "  Syntax check: OK (no @draft references)"
+        echo " Syntax check: OK (no @draft references)"
     fi
 
-    echo "  Agent refs: preserved (not stripped)"
+    echo " Agent refs: preserved (not stripped)"
 
     return 0
 }
@@ -586,6 +592,8 @@ main() {
 
     # Ensure output directory exists
     mkdir -p "$(dirname "$COPILOT_OUTPUT")"
+    # Remove legacy output file name to avoid stale artifacts.
+    rm -f "$COPILOT_OUTPUT_LEGACY"
 
     local start_seconds=$SECONDS
 
@@ -595,7 +603,7 @@ main() {
     copilot_tmp=$(mktemp "${COPILOT_OUTPUT}.XXXXXX")
     trap 'rm -f "$copilot_tmp"' EXIT
     build_copilot > "$copilot_tmp"
-    echo "  Generated: $COPILOT_OUTPUT"
+    echo " Generated: $COPILOT_OUTPUT"
     if verify_output "$copilot_tmp"; then
         mv "$copilot_tmp" "$COPILOT_OUTPUT"
         trap - EXIT

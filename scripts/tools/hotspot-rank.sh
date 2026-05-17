@@ -2,12 +2,12 @@
 # hotspot-rank.sh — emit complexity-ranked files.
 #
 # Strategy, in order:
-#   1. If `graph` binary is available, run `graph --query --mode hotspots`.
-#   2. Else if draft/graph/hotspots.jsonl exists, read and emit it.
-#   3. Else emit [] and exit 2 (graceful fallback — graph not built).
+# 1. If `graph` binary is available, run `graph --query --mode hotspots`.
+# 2. Else if draft/graph/hotspots.jsonl exists, read and emit it.
+# 3. Else emit [] and exit 2 (graceful fallback — graph not built).
 #
 # Usage:
-#   scripts/tools/hotspot-rank.sh [--repo DIR] [--out DIR] [--top N] [--module NAME]
+# scripts/tools/hotspot-rank.sh [--repo DIR] [--out DIR] [--top N] [--module NAME]
 #
 # Exit codes: 0 OK, 1 invocation error, 2 graph data unavailable.
 set -euo pipefail
@@ -28,11 +28,11 @@ Usage:
   scripts/tools/hotspot-rank.sh [--repo DIR] [--out DIR] [--top N] [--module NAME]
 
 Flags:
-  --repo DIR      Repository root (default: cwd).
-  --out DIR       Graph output dir (default: <repo>/draft/graph).
-  --top N         Keep only top N hotspots (default: 0 = all).
-  --module NAME   Filter to a single module.
-  --help          Show this help.
+  --repo DIR Repository root (default: cwd).
+  --out DIR Graph output dir (default: <repo>/draft/graph).
+  --top N Keep only top N hotspots (default: 0 = all).
+  --module NAME Filter to a single module.
+  --help Show this help.
 
 Output: JSON {hotspots:[{id, module, lines, fanIn}], source}.
   source = "graph-query" | "hotspots.jsonl" | "unavailable"

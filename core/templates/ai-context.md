@@ -3,15 +3,6 @@ project: "{PROJECT_NAME}"
 module: "root"
 generated_by: "draft:init"
 generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{COMMIT_MESSAGE}"
-  dirty: false
-synced_to_commit: "{FULL_SHA}"
 ---
 
 # {PROJECT_NAME} Context Map
@@ -44,15 +35,15 @@ synced_to_commit: "{FULL_SHA}"
 
 ```
 {project_root}/
-├── {module1}/              ← {5-10 word description}
-│   ├── {submod1}/          ← {description} ({Ncc} cc, {Nh} h)
-│   │   └── ops/            ← {description} ({N} operations)
-│   ├── {submod2}/          ← {description}
-│   └── {shared}/           ← {description}
-├── {module2}/              ← {description}
-│   ├── {submod}/           ← {description}
-│   └── {submod}/           ← {description}
-└── {module3}/              ← {description}
+├── {module1}/ ← {5-10 word description}
+│ ├── {submod1}/ ← {description} ({Ncc} cc, {Nh} h)
+│ │ └── ops/ ← {description} ({N} operations)
+│ ├── {submod2}/ ← {description}
+│ └── {shared}/ ← {description}
+├── {module2}/ ← {description}
+│ ├── {submod}/ ← {description}
+│ └── {submod}/ ← {description}
+└── {module3}/ ← {description}
 ```
 
 > Include immediate sub-directories for all major modules (not just top-level).
@@ -81,7 +72,7 @@ None ✓
 
 ## GRAPH:MODULE-HOTSPOTS
 
-{module}:  {file}|{lines}L|fanIn:{N}
+{module}: {file}|{lines}L|fanIn:{N}
            {file}|{lines}L|fanIn:{N}
            {file}|{lines}L|fanIn:{N}
 
@@ -124,7 +115,7 @@ Key injection points:
 ```typescript
 // Primary extension interface
 interface {InterfaceName} {
-  {method}({param}: {Type}): {ReturnType};  // {brief description}
+  {method}({param}: {Type}): {ReturnType}; // {brief description}
   {optionalMethod}?({param}: {Type}): {ReturnType};
 }
 

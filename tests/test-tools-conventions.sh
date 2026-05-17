@@ -8,7 +8,7 @@
 # - Script is valid bash (bash -n parses it)
 #
 # Usage:
-#   ./tests/test-tools-conventions.sh
+# ./tests/test-tools-conventions.sh
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

@@ -99,7 +99,7 @@ Each module typically contains some combination of:
 
 ```
 [auth] ──> [database]
-   │            │
+   │ │
    └──> [config] <──┘
             │
       [logging] (shared, no deps)
@@ -130,7 +130,7 @@ When modules form a circular dependency (A → B → A), apply this decision pro
 Before (cycle):
 ```
 [user-service] ──> [notification-service]
-       ↑                    │
+       ↑ │
        └────────────────────┘
 ```
 `user-service` imports `sendNotification` from `notification-service`.
@@ -141,9 +141,9 @@ Analysis: Both modules need user preference data. Extract it.
 After (resolved):
 ```
 [user-preferences] (new - extracted shared concern)
-       ↑         ↑
-       │         │
-[user-service]  [notification-service]
+       ↑ ↑
+       │ │
+[user-service] [notification-service]
        │
        └──> [notification-service]
 ```
@@ -191,11 +191,11 @@ Stories flow through three stages:
 ```
 // Story: [Module/File Name]
 //
-// Input:  [what this module/function receives]
+// Input: [what this module/function receives]
 // Process:
-//   1. [first algorithmic step]
-//   2. [second algorithmic step]
-//   3. [third algorithmic step]
+// 1. [first algorithmic step]
+// 2. [second algorithmic step]
+// 3. [third algorithmic step]
 // Output: [what this module/function produces]
 //
 // Dependencies: [what this module relies on]

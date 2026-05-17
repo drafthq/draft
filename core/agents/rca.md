@@ -96,7 +96,7 @@ Track data transformation through the system:
 ```
 input: { userId: "abc", role: "admin" }
   → after auth middleware (file:line): { userId: "abc", role: "admin", verified: true }
-  → after service layer (file:line): { userId: "abc", role: null }  ← DATA LOST HERE
+  → after service layer (file:line): { userId: "abc", role: null } ← DATA LOST HERE
   → at failure point (file:line): TypeError: cannot read 'role' of null
 ```
 

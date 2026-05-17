@@ -2,11 +2,11 @@
 # cycle-detect.sh — emit dependency cycles from the knowledge graph.
 #
 # Strategy:
-#   1. If `graph` binary is available, run `graph --query --mode cycles`.
-#   2. Else emit {"cycles":[],"source":"unavailable"} and exit 2.
+# 1. If `graph` binary is available, run `graph --query --mode cycles`.
+# 2. Else emit {"cycles":[],"source":"unavailable"} and exit 2.
 #
 # Usage:
-#   scripts/tools/cycle-detect.sh [--repo DIR] [--out DIR]
+# scripts/tools/cycle-detect.sh [--repo DIR] [--out DIR]
 #
 # Exit codes: 0 OK, 1 invocation error, 2 graph data unavailable.
 set -euo pipefail
@@ -25,9 +25,9 @@ Usage:
   scripts/tools/cycle-detect.sh [--repo DIR] [--out DIR]
 
 Flags:
-  --repo DIR   Repository root (default: cwd).
-  --out DIR    Graph output dir (default: <repo>/draft/graph).
-  --help       Show this help.
+  --repo DIR Repository root (default: cwd).
+  --out DIR Graph output dir (default: <repo>/draft/graph).
+  --help Show this help.
 
 Output: JSON from graph --query --mode cycles (adds .source). Fallback on missing
 graph: {"cycles":[],"source":"unavailable"}, exit 2.

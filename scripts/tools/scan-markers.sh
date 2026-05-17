@@ -2,11 +2,11 @@
 # scan-markers.sh — find TODO/FIXME/HACK/XXX/DEPRECATED markers with blame age.
 #
 # Emits a JSON array. Per entry:
-#   {path, line, marker, text, sha, author, introduced, age_days}
+# {path, line, marker, text, sha, author, introduced, age_days}
 #
 # Usage:
-#   scripts/tools/scan-markers.sh [--root DIR] [--markers LIST]
-#                                 [--min-age-days N] [--include-untracked]
+# scripts/tools/scan-markers.sh [--root DIR] [--markers LIST]
+# [--min-age-days N] [--include-untracked]
 #
 # Exit codes: 0 OK (even with zero hits), 1 invocation error, 2 not a git repo
 # (emits [] on stdout so consumers can still parse).
@@ -27,10 +27,10 @@ Usage:
   scripts/tools/scan-markers.sh [--root DIR] [--markers LIST] [--min-age-days N]
 
 Flags:
-  --root DIR            Root directory to scan (default: cwd).
-  --markers LIST        Comma-separated marker list (default: TODO,FIXME,HACK,XXX,DEPRECATED).
-  --min-age-days N      Only emit markers older than N days (default: 0).
-  --help                Show this help.
+  --root DIR Root directory to scan (default: cwd).
+  --markers LIST Comma-separated marker list (default: TODO,FIXME,HACK,XXX,DEPRECATED).
+  --min-age-days N Only emit markers older than N days (default: 0).
+  --help Show this help.
 
 Output: JSON array of {path, line, marker, text, sha, author, introduced, age_days}.
 EOF
@@ -67,9 +67,9 @@ trap 'rm -f "$TMP"' EXIT
 
 # Prefer ripgrep; fall back to git grep.
 if command -v rg >/dev/null 2>&1; then
-    rg -n --no-heading --binary=false -e "\\b($PATTERN_INNER)\\b" >"$TMP" 2>/dev/null || true
+    rg -n --no-heading -w -e "($PATTERN_INNER)" . >"$TMP" 2>/dev/null || true
 else
-    git grep -n -E "\\b($PATTERN_INNER)\\b" -- . >"$TMP" 2>/dev/null || true
+    git grep -n -w -E "$PATTERN_INNER" -- . >"$TMP" 2>/dev/null || true
 fi
 
 NOW_SEC="$(date -u +%s)"
@@ -123,7 +123,7 @@ emit_array() {
         fi
 
         if $first; then first=false; else printf ','; fi
-        printf '\n  {"path":"%s","line":%s,"marker":"%s","text":"%s","sha":%s,"author":"%s","introduced":"%s","age_days":%s}' \
+        printf '\n {"path":"%s","line":%s,"marker":"%s","text":"%s","sha":%s,"author":"%s","introduced":"%s","age_days":%s}' \
             "$(json_escape "$path")" \
             "$linenum" \
             "$marker" \

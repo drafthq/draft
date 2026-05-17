@@ -53,8 +53,11 @@ When `draft/` exists in the project, always consider:
 | `draft status` | Show progress overview |
 | `draft revert` | Git-aware rollback |
 | `draft change <description>` | Handle mid-track requirement changes |
+| `draft upload` | Upload work for code review |
+| `draft regression` | Detect regression source commit |
 | `draft jira-preview [track-id]` | Generate jira-export.md for review |
 | `draft jira-create [track-id]` | Create Jira issues from export via MCP |
+| `draft epic-status <epic-id>` | Qualify a Jira Epic via MCP |
 | `draft tour` | Interactive onboarding tour |
 | `draft impact` | Telemetry and analytics insights |
 | `draft assist-review` | Assist human reviewers with architectural risk audit |
@@ -87,8 +90,11 @@ Recognize these natural language patterns:
 | "what's the status" | Show status |
 | "undo", "revert" | Run revert |
 | "requirements changed", "scope changed", "update the spec" | Run change |
+| "upload", "submit for review" | Run upload |
+| "find regression", "bisect" | Run regression |
 | "preview jira", "export to jira" | Run jira-preview |
 | "create jira", "push to jira" | Run jira-create |
+| "epic status", "qualify epic" | Run epic-status |
 | "tour", "onboard me" | Run tour |
 | "impact", "analytics" | Run impact |
 | "assist review", "help reviewer" | Run assist-review |
@@ -3324,7 +3330,7 @@ Run this checklist before writing architecture.md:
 
 When user says "index services" or "draft index [--init-missing]":
 
-Build a federated knowledge index for a monorepo with multiple services.
+You are building a federated knowledge index for a monorepo with multiple services.
 
 ## Red Flags - STOP if you're:
 
@@ -3342,39 +3348,23 @@ Build a federated knowledge index for a monorepo with multiple services.
 
 **ALL generated files MUST include the standard YAML frontmatter.** This enables refresh tracking, sync verification, and traceability.
 
-### Gathering Git Information
+### Project Metadata File (single source of truth)
 
-Before generating any file, run these commands to gather metadata:
+Before writing any file, update `draft/metadata.json` with current git state. This is the single source of truth for `synced_to_commit` and all `git.*` fields for every project-level artifact. Do NOT embed git fields in per-file frontmatter.
+
+Use the `--project-metadata` flag (preferred):
 
 ```bash
-# Project name (from manifest or directory)
-basename "$(pwd)"
-
-# Git branch
-git branch --show-current
-
-# Git remote tracking branch
-git rev-parse --abbrev-ref --symbolic-full-name @{upstream} 2>/dev/null || echo "none"
-
-# Git commit SHA (full)
-git rev-parse HEAD
-
-# Git commit SHA (short)
-git rev-parse --short HEAD
-
-# Git commit date
-git log -1 --format="%ci"
-
-# Git commit message (first line)
-git log -1 --format="%s"
-
-# Check for uncommitted changes
-git status --porcelain | head -1
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+bash "$DRAFT_TOOLS/git-metadata.sh" --project-metadata \
+    --project "$PROJECT" --generated-by "draft:index"
 ```
 
-### Metadata Template
+### Per-File Metadata Template
 
-Insert this YAML frontmatter block at the **top of every generated file** (`service-index.md`, `dependency-graph.md`, `tech-matrix.md`, `draft-index-bughunt-summary.md`):
+Insert this **stable** YAML frontmatter at the top of every generated file (`service-index.md`, `dependency-graph.md`, `tech-matrix.md`, `draft-index-bughunt-summary.md`):
 
 ```yaml
 ---
@@ -3382,15 +3372,6 @@ project: "{PROJECT_NAME}"
 module: "root"
 generated_by: "draft:index"
 generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH or 'none'}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{FIRST_LINE_OF_COMMIT_MESSAGE}"
-  dirty: {true|false}
-synced_to_commit: "{FULL_SHA}"
 ---
 ```
 
@@ -3576,10 +3557,9 @@ Create `draft/bughunt-summary.md`:
 ### 1A.5: Completion Report
 
 ```
-═══════════════════════════════════════════════════════════
+---
               DRAFT INDEX BUGHUNT COMPLETE
-═══════════════════════════════════════════════════════════
-
+---
 Scanned: N directories
 Completed: X successful
 Skipped: Y (no draft/)
@@ -3587,9 +3567,9 @@ Failed: Z errors
 
 Grand Total Bugs:
   Critical: W
-  High:     X
-  Medium:   Y
-  Low:      Z
+  High: X
+  Medium: Y
+  Low: Z
 
 Summary Report: draft/bughunt-summary.md
 
@@ -3597,7 +3577,7 @@ Directories requiring immediate attention:
   - services/billing/ (1 CRITICAL)
   - services/auth/ (2 HIGH)
 
-═══════════════════════════════════════════════════════════
+---
 ```
 
 **STOP HERE** if bughunt mode. Do not continue to Step 2 (normal indexing flow).
@@ -3730,7 +3710,7 @@ Analyze extracted data to build dependency graph:
 
 Build a dependency map:
 ```
-auth-service: []  # no dependencies on other services
+auth-service: [] # no dependencies on other services
 billing-service: [auth-service]
 api-gateway: [auth-service, billing-service]
 ```
@@ -4089,7 +4069,7 @@ exclude_patterns:
   - "vendor"
   - ".git"
   - "draft"
-  - ".*"  # Hidden directories
+  - ".*" # Hidden directories
 
 # Re-index on these events (for CI integration)
 reindex_triggers:
@@ -4118,7 +4098,7 @@ If a marker pair is absent (legacy file): insert slot at the designated position
 `"Injected GRAPH:{id} slot into architecture.md (slot was absent — legacy file upgraded)"`
 
 **D. Write updated `architecture.md` back to disk.**
-Update frontmatter: `generated_by = "draft:index"`, `generated_at = now`.
+Update frontmatter: `generated_by = "draft:index"`, `generated_at = now`. Also update `draft/metadata.json` via `git-metadata.sh --project-metadata --generated-by "draft:index"` to re-anchor `synced_to_commit`.
 
 **E. Re-run Condensation Subroutine** (condensation.md) to propagate updated hotspot data into `.ai-context.md` GRAPH:HOTSPOTS and recompute tier budget. If `.ai-profile.md` exists, regenerate via Profile Generation Subroutine.
 
@@ -4137,22 +4117,21 @@ rm -f draft/.index-lock
 ```
 
 ```
-═══════════════════════════════════════════════════════════
+---
                     DRAFT INDEX COMPLETE
-═══════════════════════════════════════════════════════════
-
+---
 Scanned: X service directories (depth=1)
 Indexed: Y services with draft/ context
 Skipped: Z uninitialized services
 
 Generated/Updated:
-  ✓ draft/service-index.md      (service registry)
-  ✓ draft/dependency-graph.md   (inter-service topology)
-  ✓ draft/tech-matrix.md        (technology distribution)
-  ✓ draft/product.md            (synthesized product vision)
-  ✓ draft/architecture.md       (system-of-systems view)
-  ✓ draft/tech-stack.md         (org standards)
-  ✓ draft/config.yaml           (index configuration)
+  ✓ draft/service-index.md (service registry)
+  ✓ draft/dependency-graph.md (inter-service topology)
+  ✓ draft/tech-matrix.md (technology distribution)
+  ✓ draft/product.md (synthesized product vision)
+  ✓ draft/architecture.md (system-of-systems view)
+  ✓ draft/tech-stack.md (org standards)
+  ✓ draft/config.yaml (index configuration)
 
 Service manifests updated: Y services
 
@@ -4164,7 +4143,7 @@ Next steps:
 
 For uninitialized services, run:
   draft index init-missing
-═══════════════════════════════════════════════════════════
+---
 ```
 
 ## Operational Notes
@@ -5039,15 +5018,41 @@ Based on track type, suggest relevant follow-ups:
 
 When user says "break into modules" or "draft decompose":
 
-Decompose a project or track into modules with clear responsibilities, dependencies, and implementation order.
+You are decomposing a project or track into modules with clear responsibilities, dependencies, and implementation order.
+
+## MANDATORY GRAPH LOOKUP (read before any analysis)
+
+When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Module identification (Step 3) and dependency mapping (Step 4) **start from the graph**:
+
+1. Load `draft/graph/module-graph.jsonl` for the authoritative module list and inter-module edges.
+2. Load `draft/graph/hotspots.jsonl` to identify candidate modules to split.
+3. Load `draft/graph/modules/<name>.jsonl` on demand for files/symbols inside a candidate module.
+4. Run `graph --query --mode cycles` to enumerate existing cycles before proposing new boundaries.
+
+Filesystem `grep`/`find` for module discovery is only permitted **after** a documented graph miss, using the fallback sentence `Graph returned no match for <X>; falling back to grep.` and recorded in the Graph Usage Report.
 
 ## Red Flags - STOP if you're:
 
+See [shared red flags](../../core/shared/red-flags.md) — applies to all code-touching skills. In particular, the **Ground-Truth Red Flags** are load-bearing for decompose: HLD/LLD are design-mandated artifacts and TBD citations on Modified modules fail review.
+
+**Template contract:** HLD/LLD/Plan emissions conform to
+[core/shared/template-contract.md](../../core/shared/template-contract.md) and
+[core/shared/template-hygiene.md](../../core/shared/template-hygiene.md). The
+`_TBD_<field>_` sentinel convention replaces `Author1` / `xxx@example.com` /
+`[name]` placeholders. After decompose runs, the verification gate chain in
+[core/shared/verification-gates.md](../../core/shared/verification-gates.md)
+must pass clean on the regenerated set. Plan.md must back-link to
+`./discovery.md` Phase 0 (Hotspots row IDs) per
+[core/shared/discovery-schema.md](../../core/shared/discovery-schema.md).
+
+Skill-specific:
 - Defining modules without understanding the codebase
 - Creating modules with circular dependencies
 - Making modules too large (>3 files, excluding test files) or too small (single function)
 - Skipping dependency analysis
 - Not waiting for developer approval at checkpoints
+- Emitting `Citation: TBD` for a module marked `Status: Modified` or `Status: Existing` (see §Step 5 Mandatory Citation Gate below)
+- Leaving HLD §Checklist sections (Performance / Scale / Security / Resiliency / Multi-tenancy / Upgrade / Cost) as raw `-` placeholders instead of structured TBD bullets (see §Step 5a Checklist Scaffolding)
 
 ---
 
@@ -5057,41 +5062,19 @@ Decompose a project or track into modules with clear responsibilities, dependenc
 
 ### Gathering Git Information
 
-Before generating any file, run these commands to gather metadata:
+Use the deterministic `git-metadata.sh` script (preferred) or the manual commands — both documented in [core/shared/git-report-metadata.md](../../core/shared/git-report-metadata.md), which contains the canonical resolver pattern for locating the script in any install layout. Both produce the same field set used in the YAML template below.
 
-```bash
-# Project name (from manifest or directory)
-basename "$(pwd)"
-
-# Git branch
-git branch --show-current
-
-# Git remote tracking branch
-git rev-parse --abbrev-ref --symbolic-full-name @{upstream} 2>/dev/null || echo "none"
-
-# Git commit SHA (full)
-git rev-parse HEAD
-
-# Git commit SHA (short)
-git rev-parse --short HEAD
-
-# Git commit date
-git log -1 --format="%ci"
-
-# Git commit message (first line)
-git log -1 --format="%s"
-
-# Check for uncommitted changes
-git status --porcelain | head -1
-```
-
-For track-scoped decomposition, also derive the human-readable track title used in the `track-architecture.md` H1:
+For track-scoped decomposition, also derive the human-readable track title used in the `hld.md` / `lld.md` H1:
 
 - `{TRACK_TITLE}` — first-level heading text from the active track's `spec.md` (the `# ...` line). If `spec.md` has no H1, fall back to the `{TRACK_ID}`.
 
+Also extract from `spec.md` frontmatter:
+- `classification.criticality`, `classification.data_classification`, `classification.deployment_surface` — copy verbatim into hld.md frontmatter.
+- `approvers.*` — pre-fill the HLD Approvals table (tech_leads, arb_leads, cloudops_leads, qa_leads, pm_leads) and LLD Approvals table (team_leads, tech_leads, qa). If a field is empty in spec.md, leave the table cell empty — do not invent names.
+
 ### Metadata Template
 
-Insert this YAML frontmatter block at the **top of every generated file**:
+Insert this **stable** YAML frontmatter at the top of every generated file. Git state lives in `tracks/<track_id>/metadata.json` — never in per-file frontmatter (WS-8).
 
 ```yaml
 ---
@@ -5100,19 +5083,15 @@ module: "{MODULE_NAME or 'root'}"
 track_id: "{TRACK_ID or null}"
 generated_by: "draft:decompose"
 generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH or 'none'}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{FIRST_LINE_OF_COMMIT_MESSAGE}"
-  dirty: {true|false}
-synced_to_commit: "{FULL_SHA}"
+# Stable frontmatter only (WS-8). Ephemeral fields live in metadata.json
+# and render via <!-- META:<key> --> directives.
+links:
+  spec: "./spec.md"
 ---
 ```
 
 > **Note**: `generated_by` uses `draft:command` format (not `draft command`) for cross-platform compatibility.
+> After writing HLD/LLD, update `tracks/<track_id>/metadata.json` with current git state and `synced_to_commit`.
 
 ---
 
@@ -5123,10 +5102,27 @@ Parse `$ARGUMENTS` for flags first, then strip them before interpreting the rema
 - `--lld` → **LLD mode** — generate Section 6 (Low-Level Design) in addition to HLD. Strip from arguments before scope detection.
 
 Scope detection (on stripped arguments):
-- `project` or no argument with no active track → **Project-wide** decomposition → `draft/.ai-context.md`
-- Track ID or active track exists → **Track-scoped** decomposition → `draft/tracks/<id>/architecture.md`
+- `project` or no argument with no active track → **Project-wide** decomposition → `draft/architecture.md` + `draft/.ai-context.md`
+- Track ID or active track exists → **Track-scoped** decomposition → `draft/tracks/<id>/hld.md` (always) + `draft/tracks/<id>/lld.md` (when triggered)
 
 **LLD auto-trigger:** Even without `--lld`, LLD is generated automatically when any module in Step 3 is marked `Complexity: High`. Tell the developer when this triggers: "One or more modules are High complexity — generating LLD automatically."
+
+**No legacy `track-architecture.md`:** That artifact has been retired. New tracks always use `hld.md` (and `lld.md` when triggered). Existing tracks that have a `track-architecture.md` are not migrated automatically — leave them alone; new tracks get the new format.
+
+### Pre-Generation Sanity Checks (Track-Scoped Only)
+
+Before Step 2, run these checks and prompt the developer when triggered. Do **not** silently proceed.
+
+1. **Spec readiness** — read `draft/tracks/<id>/spec.md` frontmatter and first 20 lines:
+   - If `spec.md` is missing → ERROR: "No spec.md for track `<id>`. Run `draft new-track` first." Halt.
+   - If `spec.md` contains `Status: [ ] Drafting` or `spec-draft.md` still exists → WARN: "Spec for `<id>` is still in draft. HLD generated against a draft spec will need rework. Continue anyway? [y/N]" — default No.
+   - If `classification.criticality` is unset or still placeholder (`{...}`) → WARN: "Classification not set in spec.md frontmatter — HLD Approvals gate (`draft upload`) will not engage correctly for high-criticality tracks. Continue? [y/N]".
+
+2. **Existing artifacts** — check what already exists:
+   - If `hld.md` exists → ASK: "`hld.md` already exists for `<id>`. (1) Overwrite, (2) Skip HLD and only generate LLD, (3) Cancel." Default (3).
+   - If `lld.md` exists and LLD will be regenerated → ASK same 3-way choice.
+
+Only proceed to Step 2 after the developer resolves each prompt.
 
 ## Step 2: Load Context
 
@@ -5169,9 +5165,9 @@ ls -d src/*/ lib/*/ app/*/ packages/*/ 2>/dev/null
 
 **What to ignore:** `node_modules/`, `__pycache__/`, `target/`, `dist/`, `build/`, `.git/`, vendored dependencies. Always respect `.gitignore` and `.claudeignore`.
 
-### Graph-Accelerated Discovery (if `draft/graph/` exists)
+### Graph-Accelerated Discovery (MANDATORY when `draft/graph/` exists)
 
-When graph data is available, use it as the primary source for module discovery instead of manual scanning:
+When graph data is available, the graph is the **primary** (not optional) source for module discovery — manual scanning above is reserved for the graph-miss fallback path:
 
 - **Module boundaries**: Load `draft/graph/module-graph.jsonl` — exact module list with file counts per language (`.cc`, `.h`, `.go`, `.proto`, `.py`)
 - **Dependency edges**: Weighted inter-module dependencies with exact include counts — replaces manual import tracing
@@ -5179,7 +5175,7 @@ When graph data is available, use it as the primary source for module discovery 
 - **Hotspots**: Load `draft/graph/hotspots.jsonl` — high-complexity files that may need further decomposition
 - **Per-module detail**: Load `draft/graph/modules/<name>.jsonl` for file-level graphs within modules of interest
 
-This data is deterministic and exhaustive. Prefer it over heuristic scanning when available. See `core/shared/graph-query.md`.
+This data is deterministic and exhaustive. The manual scanning recipes above only run **after** the graph misses on the concept the user named — and the miss must be reported in the Graph Usage Report footer. See [core/shared/graph-query.md](../../core/shared/graph-query.md) §Concept-to-Files Recipe.
 
 ## Step 3: Module Identification
 
@@ -5207,10 +5203,9 @@ For each module, define:
 **STOP.** Present the module breakdown to the developer.
 
 ```
-═══════════════════════════════════════════════════════════
+---
                    MODULE BREAKDOWN
-═══════════════════════════════════════════════════════════
-
+---
 Scope: [Project / Track: <track-id>]
 
 MODULE 1: [name]
@@ -5223,7 +5218,7 @@ MODULE 1: [name]
 MODULE 2: [name]
   ...
 
-═══════════════════════════════════════════════════════════
+---
 ```
 
 **Wait for developer approval.** Developer may add, remove, rename, or reorganize modules.
@@ -5243,92 +5238,203 @@ After modules are approved:
 **STOP.** Present the dependency diagram and implementation order.
 
 ```
-═══════════════════════════════════════════════════════════
+---
                  DEPENDENCY ANALYSIS
-═══════════════════════════════════════════════════════════
-
+---
 DIAGRAM
-─────────────────────────────────────────────────────────
+---
 [auth] ──> [database]
-   │            │
+   │ │
    └──> [config] <──┘
             │
       [logging] (no deps)
 
 TABLE
-─────────────────────────────────────────────────────────
-Module     | Depends On        | Depended By
+---
+Module | Depends On | Depended By
 ---------- | ----------------- | -----------------
-logging    | -                 | auth, database, config
-config     | logging           | auth, database
-database   | config, logging   | auth
-auth       | database, config  | -
+logging | - | auth, database, config
+config | logging | auth, database
+database | config, logging | auth
+auth | database, config | -
 
 IMPLEMENTATION ORDER
-─────────────────────────────────────────────────────────
+---
 1. logging (leaf - no dependencies)
 2. config (depends on: logging)
 3. database (depends on: config, logging)
 4. auth (depends on: database, config)
 
 Parallel opportunities: config and database can start after logging.
-═══════════════════════════════════════════════════════════
+---
 ```
 
 **Wait for developer approval.**
 
-## Step 5: Generate Architecture Context
+## Step 5: Generate Design Documents
 
 Template selection depends on scope:
 
-- **Project-wide** → `core/templates/architecture.md` (full 25-section reference)
-- **Track-scoped** → `core/templates/track-architecture.md` (HLD-focused, with optional LLD block)
+- **Project-wide** → `core/templates/architecture.md` (full 28-section engineering reference)
+- **Track-scoped** → `core/templates/hld.md` (always) and `core/templates/lld.md` (when triggered)
 
-**Location:**
-- Project-wide: Update `draft/architecture.md` with the module changes, then run the Condensation Subroutine (defined in `core/shared/condensation.md`) to regenerate `draft/.ai-context.md`
-- Track-scoped: `draft/tracks/<id>/architecture.md`
+**Output location:**
+- Project-wide: Update `draft/architecture.md` with the module changes, then run the Condensation Subroutine (defined in `core/shared/condensation.md`) to regenerate `draft/.ai-context.md`.
+- Track-scoped: write to `draft/tracks/<id>/hld.md` and (when triggered) `draft/tracks/<id>/lld.md`.
+
+> ** context:** HLD and LLD are design-mandated review artifacts. HLD is approved by Technical Leads / Architecture Review Board / Cloud Operations / QA / PM Leads before significant implementation; LLD is approved by Team Leads / Technical Leads / QA before code review begins. `draft upload` gates `git upload` for high-criticality tracks on the HLD Approvals table being populated.
 
 ### Step 5a: HLD Generation (Track-Scoped, Always)
 
-For track-scoped decomposition, populate these HLD sections in the track-architecture template — do not leave placeholders:
+Generate `draft/tracks/<id>/hld.md` from `core/templates/hld.md`. Populate every section that has a directive — do not ship placeholders.
 
-1. **§1 Overview** — pull from `spec.md` (Problem Statement, Technical Approach, Non-Functional Requirements). Name integration points from `draft/.ai-context.md`.
-2. **§2 Module Breakdown** — one block per module from Step 3, including status (`New` / `Modified` / `Existing`), responsibility, files, API surface, deps, complexity.
-3. **§3.1 Component Diagram** — Mermaid `flowchart TD` with three subgraphs: modules in scope, existing system modules this track touches, external collaborators (DB, queue, third-party API). Label edges with transport type when non-obvious.
-4. **§3.2 Data Flow** — Mermaid `flowchart LR` tracing the primary data transformation: input → validation → logic → persistence → output. Add a separate read-path diagram if the track has both.
-5. **§3.3 Sequence Diagrams** — one `sequenceDiagram` per acceptance criterion that crosses more than one module. Include at minimum: (a) the happy-path flow, (b) one error/failure path. Annotate gates and invariants with `Note over`.
-6. **§3.4 State Machine** — Mermaid `stateDiagram-v2` only if the track introduces or mutates stateful entities. Omit the section when not applicable — do not emit empty diagrams.
-7. **§4 Dependency Analysis** — from Step 4. ASCII graph + table with a `Cycle?` column.
-8. **§5 Implementation Order** — from Step 4 (topological sort + parallel opportunities).
+**Frontmatter:**
+- Copy git metadata from current repo state.
+- Copy `classification.*` from `spec.md` frontmatter (criticality, data_classification, deployment_surface). The HLD's `links.*` block is statically correct in `core/templates/hld.md` — do not copy it from spec.md.
 
-### Contents (common to both templates)
+**Approvals table:** Pre-fill from `spec.md` `approvers.*` frontmatter. Empty values stay empty — do not invent names.
 
-- Module definitions with all fields from Step 3
-- Dependency diagram from Step 4
-- Dependency table from Step 4
-- Implementation order from Step 4
-- Story placeholder per module (see `core/agents/architect.md` Story Lifecycle for how this gets populated during `draft implement`)
-- Status marker per module (`[ ] Not Started`)
-- Notes section for architecture decisions
+**§Background:** ½–1 page. Pull from `spec.md` §Problem Statement and §Background & Why Now. Tighten for HLD audience (focus on the "why now" and the system context).
+
+**§Requirements:** Do not duplicate `spec.md`. Verify the link references resolve to actual sections in spec.md; if a section is missing, flag it.
+
+**§High Level Design / Architecture:**
+- **`<!-- GRAPH:track-component-diagram -->` slot:** Render Mermaid `flowchart TD` with three subgraphs — `Track` (modules in scope from Step 3), `Existing` (existing modules this track touches per integration edges), `External` (DB, queue, 3P APIs). Label edges with transport (HTTP / RPC / queue / direct call) when non-obvious.
+- **Architecture narrative** (≤300 words). Explain how blackbox requirements map to the architecture. Name the architectural style. Justify from observable evidence.
+
+**§High Level Design / UI Architecture Changes:** Populate only if the track touches UI; otherwise write `N/A — backend-only track.`
+
+**§High Level Design / Key Design Decisions:** 2–5 bullet decisions, each with a one-sentence "Why:" referencing an observable constraint (latency budget, multi-tenant isolation requirement, regulatory compliance), not aesthetics.
+
+**§High Level Design / Alternatives Considered:** Table format. Promote any non-trivial rejected alternative to a standalone ADR via `draft adr` and link both ways.
+
+**§Detailed Design:**
+- **`<!-- GRAPH:track-component-table -->` slot:** Render one row per module from Step 3. Columns: Module, Status (`New`/`Modified`/`Existing`), Files (count + comma list), Public API count, Fan-In, Fan-Out, Complexity (`Low`/`Medium`/`High`), Primary Deps, Citation (`path:line` of entry symbol).
+- **Mandatory Citation Gate:** For every row whose Status is `Modified` or `Existing`, the Citation cell **MUST** resolve to a real `path:line` from a file you Read in this run. `TBD` is only legal for `Status: New` rows, and only when the planned file path is filled (e.g. `Citation: newscribe/server/ops/shuffle_memory_eligibility.h (planned)`). If a Modified-row Citation is unresolved, **halt** — Read the file, locate the entry symbol, and fill the cell before emitting the table. See [graph-query.md](../../core/shared/graph-query.md) §Ground-Truth Discipline rules G1 and G3.
+- **Per-component subsection:** One `#### {Component Name}` block per module. Fill Responsibility, Status, Entry point (resolved `path:line` for Modified/Existing modules), Public API link to LLD, Whitebox requirements addressed (AC IDs from spec.md), Design notes (≤200 words).
+
+**§Dependencies:**
+- **`<!-- GRAPH:track-dependencies -->` slot:** Render rows per cross-module integration edge of kind `call`/`import`/`event`/`shared-schema`. Columns: Dependent Component, Edge Kind, Impact Assessment (Small/Medium/Large — graph fan-in heuristic: 1–2 = Small, 3–5 = Medium, 6+ = Large), Description, Citation. The Citation column is bound by the same Mandatory Citation Gate as the component table.
+
+**§Intellectual Property, §Checklist, §Deployment, §Observability:** These are author-driven sections that the design author completes before the HLD is presented for approval. Decompose's job is to **scaffold structured TBD bullets**, not to invent claims and not to leave bare `-` placeholders.
+
+#### Checklist Scaffolding (mandatory)
+
+For `criticality: standard | high | mission-critical` tracks, replace bare `-` placeholders in HLD §Checklist with structured TBD bullets. This turns blank review-gate sections into a concrete punch-list. Bullets vary by section:
+
+```markdown
+### Performance
+- [ ] **Latency budget (p50/p95/p99):** TBD — fill before HLD review
+- [ ] **Throughput target:** TBD
+- [ ] **Resource budget (CPU / RAM / IO per node):** TBD
+- [ ] **Baseline measurement methodology:** TBD — name benchmark or production dashboard
+
+### Scale
+- [ ] **Per-tenant / per-node limits:** TBD
+- [ ] **Growth assumptions (1y / 3y):** TBD
+- [ ] **Scaling axis (vertical / horizontal / partitioning):** TBD
+
+### Security
+- [ ] **Threat model reference:** TBD — link STRIDE doc or write inline
+- [ ] **Auth / authz changes:** TBD (none / list)
+- [ ] **Data classification touched:** TBD
+- [ ] **Secrets / credentials surface:** TBD (none / list)
+
+### Resiliency
+- [ ] **Failure modes considered:** TBD
+- [ ] **Crash / restart semantics:** TBD
+- [ ] **Backpressure / circuit-breaker:** TBD
+- [ ] **Rollback path:** TBD
+
+### Multi-tenancy
+- [ ] **Tenant isolation invariants preserved:** TBD (or N/A — single-tenant)
+- [ ] **Noisy-neighbor risks:** TBD
+
+### Upgrade
+- [ ] **Forward compatibility (old reading new):** TBD
+- [ ] **Backward compatibility (new reading old):** TBD
+- [ ] **Mixed-version cluster behavior:** TBD
+- [ ] **Migration / backfill required:** TBD
+
+### Flags and Controlled Rollout of Features
+- [ ] **Master flag name (default value):** TBD
+- [ ] **Cluster feature gate (if any):** TBD
+- [ ] **Rollout phases:** TBD
+- [ ] **Kill switch:** TBD
+
+### Cost Implications
+- [ ] **Incremental CPU / RAM / IO / storage:** TBD
+- [ ] **Cloud cost delta (if SaaS):** TBD or N/A
+```
+
+For `criticality: low` quick tracks, the bare `-` placeholder is acceptable — these sections are not gated by `draft upload` for low criticality.
+
+The TBD bullets are **not** claims. They are reviewable gaps. A reviewer can ask "is the latency budget defined yet?" and the author can fill it. Bare `-` placeholders give the reviewer nothing to ask about.
+
+> **TPT/IDF automation deferred** — when MCP integration to Jira ships, decompose will pre-fill the §IP TPT table from existing TPT JIRA issues. Today: section stays empty for the author.
 
 ### Step 5b: LLD Generation (Gated)
 
-**Trigger:** `--lld` flag was passed in Step 1 **OR** any module in §2 has `Complexity: High`.
+**Trigger:** `--lld` flag was passed in Step 1 **OR** any module in Step 3 has `Complexity: High`.
 
-**Skip condition:** None of the above. Leave §6 with the stub: _"LLD not generated. Run `draft decompose --lld` to expand."_
+**Skip condition:** No `--lld` flag and no High-complexity module. Do not create `lld.md`. Note in completion announcement: _"LLD not generated. Run `draft decompose --lld` to expand."_
 
-When triggered, populate §6 of the track-architecture template. Refer to `core/agents/architect.md` for contract-design conventions.
+When triggered, generate `draft/tracks/<id>/lld.md` from `core/templates/lld.md`. Refer to `core/agents/architect.md` for contract-design conventions.
 
-- **§6.1 Per-Module API Contracts** — for every module marked `New` or `Modified`, list every public function/method with: language-appropriate signature, param constraints, return shape, error types. Document preconditions, postconditions, and invariants (thread safety, idempotency, ordering).
-- **§6.2 Data Models & Schemas** — concrete type definitions for every new/modified entity. Fill the field table (type, nullability, default, validation). Include storage location, indexes/keys, and schema-migration path if this is a breaking change.
-- **§6.3 Error Handling & Retry Semantics** — one row per operation with non-trivial error handling. Classify each error (transient / permanent / timeout), specify retry policy, backoff, max attempts, fallback. Call out circuit-breaker thresholds and idempotency keys.
-- **§6.4 Algorithm Pseudocode** — include only for genuinely non-trivial logic. Skip for straightforward CRUD. Declare inputs, outputs, time/space complexity. Enumerate edge cases.
+**Frontmatter:** Copy git metadata + `links.*` (point `hld` link at `./hld.md`).
+
+**Approvals table:** Pre-fill from `spec.md` `approvers.{team_leads, tech_leads, qa}` (flat keys, no `lld_` prefix).
+
+**§Background:** Single sentence linking to HLD §Background. Add component-internal context only if HLD doesn't cover it.
+
+**§Requirements:** Link-only to `spec.md`; list AC IDs covered by this LLD.
+
+**§Low Level Design / Classes and Interfaces:**
+- **`<!-- GRAPH:track-class-table -->` slot:** Render per-module table from graph public-API index. One row per public symbol. Columns: Symbol, Kind (class/iface/func/method), Signature, Visibility, Citation (`path:line`), Concurrency Notes.
+- **Mandatory Citation Gate (LLD):** Same rule as HLD §Detailed Design. For every symbol whose owning module has Status `Modified` or `Existing`, Citation must resolve to a real `path:line` from a file Read in this run. For `Status: New` symbols, Citation may be `<planned path>:<planned line or TBD>` provided the file path is concrete. A bare `TBD` cell is a halt — fix before emitting.
+- **Per-component subsection:** Public API table with full signatures, params, returns, errors, citation. Document Preconditions, Postconditions, Invariants (thread safety, idempotency, ordering).
+
+**§Low Level Design / Data Model:**
+- **`<!-- GRAPH:track-data-models -->` slot:** Render one block per new/modified entity. Pull proto/struct/class declarations and field metadata from the graph data-model index.
+- **Per-model subsection:** Field table (type, nullable, default, validation), Storage, Indexes/Keys, Migration path.
+
+**§Low Level Design / Key Algorithms and Workflows:** Sequence diagram per AC that crosses more than one module — happy path + at least one error path. Annotate gates with `Note over`. For genuinely non-trivial logic: pseudocode with declared inputs, outputs, time/space complexity, edge cases. Skip for straightforward CRUD.
+
+**§Low Level Design / Error Handling & Retry Semantics:** One row per operation with non-trivial error handling. Classify each error, specify retry policy, backoff, max attempts, fallback. Document circuit-breaker thresholds and idempotency keys.
+
+**§Low Level Design / Refactoring of Existing Code:** Populate when the track refactors existing code; otherwise leave empty.
+
+**§Low Level Design / Programming Language Choice and Unit Testing:** Author-driven. Reference `draft testing-strategy` for project-level test strategy; LLD section covers only what is component-specific.
+
+**§Low Level Design / PaaS Choices:** Author-driven. Decompose does not infer Data Store / Workflow Engine / Checkpointing choices.
+
+**§Observability / Metrics + Alerting Thresholds:** Author-driven. `draft deploy-checklist` validates this table is populated before deploy.
+
+### Step 5c: Normalise Whitespace
+
+After writing all generated files, strip trailing whitespace and blank lines at EOF. GitHub rejects commits containing either.
+
+Resolve the script via the canonical tool resolver (see [core/shared/tool-resolver.md](../../core/shared/tool-resolver.md)):
+
+```bash
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+# Fix all generated markdown for this track:
+[ -x "$DRAFT_TOOLS/fix-whitespace.sh" ] && bash "$DRAFT_TOOLS/fix-whitespace.sh" --track <id>
+# Also fix project-level files if architecture.md was touched:
+[ -x "$DRAFT_TOOLS/fix-whitespace.sh" ] && bash "$DRAFT_TOOLS/fix-whitespace.sh" draft/architecture.md draft/.ai-context.md 2>/dev/null || true
+```
+
+Run unconditionally — idempotent if files are already clean.
 
 ### CHECKPOINT (MANDATORY)
 
-**STOP.** Present the generated `track-architecture.md` to the developer. Call out:
-- Which sections were populated vs. omitted (and why — e.g., "no state machine — track is stateless")
-- Whether LLD was generated, and the trigger (`--lld` flag or auto-triggered by High-complexity module X)
+**STOP.** Present the generated `hld.md` (and `lld.md` if generated) to the developer. Call out:
+- Which graph slots were populated vs. unpopulated (and why — e.g., "no proto definitions found, GRAPH:track-data-models slot empty").
+- Whether LLD was generated, and the trigger (`--lld` flag or auto-triggered by High-complexity module X).
+- Author-driven sections that still need manual content: §IP, §Checklist (HLD), §PaaS/§UT (LLD), §Observability metrics/thresholds.
+- Reminder: HLD must be circulated to the approvers in the Approvals table before significant implementation begins; `draft upload` will block `git upload` for high-criticality tracks until the table is signed.
 
 **Wait for developer approval before proceeding to Step 6.**
 
@@ -5339,6 +5445,31 @@ If this is a track-scoped decomposition and a `plan.md` exists:
 1. Review existing phases against the module implementation order
 2. Propose restructuring phases to align with module boundaries
 3. Each module becomes a phase or maps to existing phases
+
+### Bracketed-region rewriting (WS-6)
+
+`core/templates/plan.md` (and tracks generated from it at template_version
+≥ 2.0.0) wraps phase tables in:
+
+```
+<!-- DECOMPOSE:REGENERATE START -->
+... phase tables ...
+<!-- DECOMPOSE:REGENERATE END -->
+```
+
+Decompose **only** rewrites content between these markers. Manual notes the
+author added above or below the markers (overview prose, design notes,
+references, sunset criteria) survive every regenerate. After rewriting:
+
+1. Update plan.md `generated_by:` to `draft:decompose`.
+2. Update plan.md `generated_at:` to the current ISO-8601 timestamp.
+3. Ensure plan.md `generated_at` ≥ sibling hld.md / lld.md `generated_at`
+   (the hygiene validator fails on stale plan).
+4. Run `scripts/tools/check-track-hygiene.sh <track_dir>` and resolve any
+   findings before promoting status past `draft`.
+
+If the plan does not yet have the bracket markers (pre-2.0 track), insert
+them around the phase region during this first decompose run, then rewrite.
 
 ### Plan Merge Rules
 
@@ -5367,7 +5498,7 @@ When restructuring plan.md around modules, follow these rules for existing tasks
 
 ```
 PROPOSED PLAN RESTRUCTURE
-─────────────────────────────────────────────────────────
+---
 Phase 1: [Module A] (Foundation)
   - Task 1.1: [existing or new task]
   - Task 1.2: ...
@@ -5383,24 +5514,47 @@ Phase 2: [Module B] (depends on Module A)
 
 After applying the approved plan changes:
 
-1. **Update `metadata.json`:** Set `phases.total` to match the new number of phases in the restructured plan.
+1. **Update `tracks/<track_id>/metadata.json`:** Set `phases.total` to match the new number of phases. Also update `git.commit`, `git.commit_message`, `git.dirty`, and `synced_to_commit` to current HEAD — this is the single source of truth for the track's git state.
 2. **Update `draft/tracks.md`:** Update the phase count for this track's entry to reflect the new total (e.g., `Phase: 0/4` → `Phase: 0/5` if a phase was added).
 
 ## Completion
 
-Announce:
+**Track-scoped announcement:**
 ```
-Architecture decomposition complete.
+Track decomposition complete.
 
-Created: [path to architecture.md]
+Created: draft/tracks/<id>/hld.md
+        [if LLD generated:] draft/tracks/<id>/lld.md
+        [else:] (LLD not generated — run draft decompose --lld to expand)
+
 Modules: [count]
 Implementation order: [module names in order]
 
+Author-driven sections still empty (fill before HLD review):
+- HLD §Intellectual Property (Inventions, IDFs, TPT)
+- HLD §Checklist (Performance, Scale, Security, Resiliency, Multi-tenancy, Upgrade, Cost)
+- HLD §Deployment, §Observability
+[if LLD generated:]
+- LLD §Programming Language Choice, §PaaS Choices, §Observability metrics/thresholds
+
+Next steps:
+- Fill the author-driven sections in hld.md (and lld.md if present)
+- Circulate hld.md to approvers listed in §Approvals
+- Run draft implement to start building once HLD is approved
+- draft upload will block git upload on HLD Approvals being signed
+  for criticality ∈ {high, mission-critical}
+```
+
+**Project-wide announcement** (when scope = project):
+```
+Project architecture refresh complete.
+
+Updated: draft/architecture.md
+Derived: draft/.ai-context.md
+
 Next steps:
 - Review architecture.md and edit as needed
-- Run draft implement to start building (stories, execution state,
-  and skeleton checkpoints will activate automatically)
-- After implementation is complete, run `draft coverage` to verify test quality
+- For new feature work: draft new-track then draft decompose
 ```
 
 ## Mutation Protocol for architecture.md and .ai-context.md (Project-Wide)
@@ -5411,7 +5565,7 @@ When adding new modules to the project-wide architecture:
 
 1. Update `draft/architecture.md`: append module definitions, update dependency diagram and table
 2. Do NOT remove/modify `[x] Existing` modules
-3. Update YAML frontmatter `git.commit` and `git.message` to current HEAD
+3. Update `draft/metadata.json` with current HEAD (use `git-metadata.sh --project-metadata --generated-by "draft:decompose"` or update `git.commit`, `git.commit_message`, and `synced_to_commit` manually)
 4. Run the Condensation Subroutine (defined in `core/shared/condensation.md`) to regenerate `draft/.ai-context.md`
 
 **Safe write pattern for architecture.md:**
@@ -5421,13 +5575,19 @@ When adding new modules to the project-wide architecture:
 4. On approval: replace `architecture.md` with `architecture.md.new`, run Condensation Subroutine, then delete `architecture.md.backup`
 5. On rejection: delete `architecture.md.new` and rename `architecture.md.backup` back to `architecture.md`
 
-## Updating architecture context
+## Updating design context
 
-When revisiting decomposition (running `draft decompose` on an existing `.ai-context.md` or `architecture.md`):
+**Project-wide rerun** (running `draft decompose` on existing `.ai-context.md` / `architecture.md`):
 1. Read the existing context file
 2. Ask developer what changed (new modules, removed modules, restructured boundaries)
 3. Follow the same checkpoint process for changes
-4. Update the document, preserving completed module statuses and stories
+4. Update `draft/architecture.md`, preserving completed module statuses and stories, then regenerate `.ai-context.md`
+
+**Track-scoped rerun** (running `draft decompose <track>` on existing `hld.md` / `lld.md`):
+1. Read the existing HLD (and LLD if present)
+2. If the track's `spec.md` has materially changed, prefer `draft change` first to amend spec/plan and flag HLD/LLD impact
+3. Otherwise, regenerate the graph-fenced slots only (component diagram, component table, dependencies table, class table, data models). Author-driven sections (§IP, §Checklist, §PaaS, §UT, §Observability) and the §Approvals table are preserved verbatim
+4. If the Approvals table had signatures and the HLD's structural sections changed, surface a warning: "HLD modified after sign-off — re-circulate to approvers."
 
 ---
 
@@ -5463,6 +5623,50 @@ If dependency analysis (Step 4) detects cycles or high coupling:
 When decomposition involves breaking a monolith, choosing module boundaries, or extracting services:
 - Auto-invoke: "This decomposition is a significant architectural decision. Creating ADR to document rationale."
 - Invoke `draft adr "Module boundary decisions for {project}"`
+
+## Mandatory Self-Check (before completion announcement)
+
+Before printing the completion announcement, internally verify and report:
+
+1. **Graph files queried** — which JSONL files were loaded (e.g. `module-graph.jsonl, hotspots.jsonl, modules/scribe.jsonl`).
+2. **Layer 1 files deliberately skipped** — list any `.ai-context.md` sections, `tech-stack.md`, `product.md`, `workflow.md` you skipped as irrelevant to this decomposition. Be explicit; do not silently skip.
+3. **Filesystem grep fallback justification** — for every `grep`/`find` run, state the concept it searched for and quote the graph-miss sentence.
+4. **Citation Gate audit** — scan every Citation column in the generated component table, dependencies table, and LLD class table. Report:
+   - Modified/Existing rows with resolved citations: count
+   - Modified/Existing rows with `TBD` citations: must be **0** (halt and fix if non-zero)
+   - New rows with `(planned)` paths: count
+5. **Files actually Read** — list each source file opened during this run. Cross-reference: every Modified/Existing row in the component table must trace to at least one file in this list.
+6. **HLD Checklist scaffolding** — confirm Performance / Scale / Security / Resiliency / Multi-tenancy / Upgrade / Flags / Cost are populated with structured TBD bullets (for `criticality: standard | high | mission-critical`), not bare `-` placeholders.
+
+If `draft/graph/schema.yaml` does not exist, set `Graph files queried: NONE` and use justification `graph data unavailable`. Decompose must still propose modules from `.ai-context.md` / source files in that case **and must still Read those files** to satisfy the Citation Gate.
+
+## Graph Usage Report (append to output)
+
+Emit the canonical footer from [core/shared/graph-usage-report.md](../../core/shared/graph-usage-report.md) §Canonical footer. The lint hook `scripts/tools/check-graph-usage-report.sh` validates the section on save.
+## Skill Telemetry
+
+As the last step after the completion announcement, emit a metrics record. Best-effort — never block.
+
+**Payload fields:**
+```json
+{
+  "skill": "decompose",
+  "scope": "track|project",
+  "track_id": "<track_id or null>",
+  "modules_count": <N>,
+  "lld_generated": true|false,
+  "high_complexity_modules": <N>
+}
+```
+
+**Emit call:**
+```bash
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+[ -x "$DRAFT_TOOLS/emit-skill-metrics.sh" ] && bash "$DRAFT_TOOLS/emit-skill-metrics.sh" \
+  '{"skill":"decompose","scope":"<scope>","track_id":"<id_or_null>","modules_count":<N>,"lld_generated":<bool>,"high_complexity_modules":<N>}'
+```
 
 ---
 
@@ -6136,7 +6340,7 @@ If implementing a bug track and `draft/tracks/<id>/rca.md` exists:
 
 When user says "check coverage" or "draft coverage":
 
-Compute and report code coverage for the active track or a specific module. This complements the TDD workflow — TDD is the process (write test, implement, refactor), coverage is the measurement (how much code do those tests exercise).
+You are computing and reporting code coverage for the active track or a specific module. This complements the TDD workflow — TDD is the process (write test, implement, refactor), coverage is the measurement (how much code do those tests exercise).
 
 ## Red Flags - STOP if you're:
 
@@ -6161,7 +6365,17 @@ If no active track and no argument provided:
 
 ## Step 2: Detect Coverage Tool
 
-Auto-detect from tech stack:
+**Preferred:** use the deterministic `detect-test-framework.sh` wrapper — it emits JSON `{languages:[{language,framework,runner_command,test_globs,config_file}]}`. Resolve via the canonical tool resolver (see [core/shared/tool-resolver.md](../../core/shared/tool-resolver.md)):
+
+```bash
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+[ -x "$DRAFT_TOOLS/detect-test-framework.sh" ] && \
+  bash "$DRAFT_TOOLS/detect-test-framework.sh" --root .
+```
+
+If the script is unavailable or returns `framework: unknown`, fall back to the heuristic table below:
 
 | Language | Coverage Tools |
 |----------|---------------|
@@ -6173,7 +6387,7 @@ Auto-detect from tech stack:
 | Java/Kotlin | `jacoco`, `gradle jacocoTestReport` |
 | Ruby | `simplecov` |
 
-**Detection order:**
+**Detection order (fallback path):**
 1. Check `tech-stack.md` for explicit testing section
 2. Check config files (`jest.config.*`, `vitest.config.*`, `pytest.ini`, `setup.cfg`, `pyproject.toml`, `.nycrc`)
 3. Check `package.json` scripts for coverage commands
@@ -6191,6 +6405,15 @@ Build the coverage command with the appropriate scope/filter flags.
 
 ## Step 4: Run Coverage
 
+**Preferred:** invoke the normalized `run-coverage.sh` dispatcher — it dispatches to the language-specific runner and emits a normalized JSON `{language,tool,total:{lines,branches},per_file:[{path,lines,branches,uncovered_lines}]}`. This avoids per-language ad-hoc parsing in Step 5.
+
+```bash
+# DRAFT_TOOLS resolved in Step 2 above
+[ -x "$DRAFT_TOOLS/run-coverage.sh" ] && \
+  bash "$DRAFT_TOOLS/run-coverage.sh" --root .
+```
+
+If the script is unavailable or returns `tool: unsupported`:
 1. Execute the coverage command. Request machine-readable output when possible: `--json` for Jest, `--cov-report=json` for pytest, `-coverprofile` for Go, `--coverage-output-format json` for dotnet.
 2. Capture full output
 3. If command fails:
@@ -6203,29 +6426,29 @@ Build the coverage command with the appropriate scope/filter flags.
 Parse coverage output and present in a standardized format:
 
 ```
-═══════════════════════════════════════════════════════════
+---
                      COVERAGE REPORT
-═══════════════════════════════════════════════════════════
+---
 Track: [track-id]
 Module: [module name, if applicable]
 Target: [from workflow.md, default 95%]
 
 SUMMARY
-─────────────────────────────────────────────────────────
-Overall: 87.3% (target: 95%)  ← BELOW TARGET
+---
+Overall: 87.3% (target: 95%) ← BELOW TARGET
 
 PER-FILE BREAKDOWN
-─────────────────────────────────────────────────────────
-src/auth/middleware.ts    96.2%  PASS
-src/auth/jwt.ts           72.1%  FAIL
-src/auth/types.ts        100.0%  PASS
+---
+src/auth/middleware.ts 96.2% PASS
+src/auth/jwt.ts 72.1% FAIL
+src/auth/types.ts 100.0% PASS
 
 UNCOVERED LINES
-─────────────────────────────────────────────────────────
-src/auth/jwt.ts:45-52    Error handler for malformed token
-src/auth/jwt.ts:78       Defensive null check (unreachable via public API)
+---
+src/auth/jwt.ts:45-52 Error handler for malformed token
+src/auth/jwt.ts:78 Defensive null check (unreachable via public API)
 
-═══════════════════════════════════════════════════════════
+---
 ```
 
 ## Step 6: Branch/Condition Coverage (Optional)
@@ -6300,10 +6523,10 @@ After measuring line coverage (and branch coverage if applicable), prompt the en
 |----------|------|-----------|
 | Java | PIT | https://pitest.org/ |
 | JavaScript/TypeScript | Stryker | https://stryker-mutator.io/ |
-| Python | mutmut | https://github.com/boxed/mutmut |
-| Rust | cargo-mutants | https://github.com/sourcefrog/cargo-mutants |
+| Python | mutmut | (Mutation testing tool) |
+| Rust | cargo-mutants | (Mutation testing tool) |
 | C# | Stryker.NET | https://stryker-mutator.io/ |
-| Go | go-mutesting | https://github.com/zimmski/go-mutesting |
+| Go | go-mutesting | (Mutation testing tool) |
 
 **Reference:** Google's mutation testing program is used by 6,000+ engineers and processes approximately 30% of all code diffs, validating that mutation testing scales to large codebases.
 
@@ -6336,7 +6559,7 @@ Instead of applying a single global coverage target, support differentiated targ
 ```yaml
 # Example workflow.md configuration
 coverage_targets:
-  high_risk: 95    # auth, payments, crypto, data persistence
+  high_risk: 95 # auth, payments, crypto, data persistence
   business_logic: 85
   infrastructure: 70
   generated: exclude
@@ -6364,11 +6587,11 @@ coverage_targets:
 In the coverage report, show per-module targets alongside actual coverage:
 ```
 PER-FILE BREAKDOWN (module-level targets)
-─────────────────────────────────────────────────────────
-src/auth/middleware.ts    96.2%  [high_risk: 95%]    PASS
-src/auth/jwt.ts           72.1%  [high_risk: 95%]    FAIL
-src/utils/logger.ts       75.0%  [infrastructure: 70%]  PASS
-src/generated/api.ts       —     [generated: excluded]
+---
+src/auth/middleware.ts 96.2% [high_risk: 95%] PASS
+src/auth/jwt.ts 72.1% [high_risk: 95%] FAIL
+src/utils/logger.ts 75.0% [infrastructure: 70%] PASS
+src/generated/api.ts — [generated: excluded]
 ```
 
 ## Step 8: Developer Review
@@ -6453,10 +6676,23 @@ When coverage is run again on the same track/module:
 
 When user says "deploy checklist" or "draft deploy-checklist [track <id>]":
 
-Generate a pre-deployment verification checklist customized to this project's technology stack.
+You are generating a pre-deployment verification checklist customized to this project's technology stack.
+
+## MANDATORY GRAPH LOOKUP (read before Phase 1)
+
+When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Use the graph to validate module boundaries before the deploy:
+
+1. For each file in the deploy diff, run `graph --query --file <path> --mode impact` to enumerate the modules affected — flag any module **not** declared in `hld.md` §Detailed Design as a deployment-scope miss.
+2. Run `graph --query --mode cycles` and `--mode modules` to ensure no fresh cycles were introduced after HLD sign-off.
+3. Load `draft/graph/hotspots.jsonl` — any hotspot in the diff escalates the Resiliency row of Phase 0.
+
+Filesystem `grep` is reserved for source-text scans (migration file names, flag-key strings). Module/impact discovery goes through the graph.
 
 ## Red Flags — STOP if you're:
 
+See [shared red flags](../../core/shared/red-flags.md) — applies to all code-touching skills.
+
+Skill-specific:
 - Deploying without a rollback plan
 - Skipping database migration verification
 - Deploying on Friday without explicit team approval
@@ -6474,8 +6710,8 @@ Generate a pre-deployment verification checklist customized to this project's te
 Before starting, capture the current git state:
 
 ```bash
-git branch --show-current    # Current branch name
-git rev-parse --short HEAD   # Current commit hash
+git branch --show-current # Current branch name
+git rev-parse --short HEAD # Current commit hash
 ```
 
 Store this for the checklist header. The checklist is scoped to this specific branch/commit.
@@ -6491,6 +6727,32 @@ If `draft/` doesn't exist, this skill can still run standalone — generate a ge
 ### 2. Load Draft Context (if available)
 
 Read and follow the base procedure in `core/shared/draft-context-loading.md`.
+
+### 3. Run validator gate chain (WS-9)
+
+Canonical chain documented in
+[core/shared/verification-gates.md](../../core/shared/verification-gates.md).
+A single non-zero exit aborts the checklist and the output groups defects
+by validator.
+
+```bash
+TRACK_DIR="$1" # absolute path to track-under-deploy, or .
+
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+
+"$DRAFT_TOOLS/check-track-hygiene.sh" "$TRACK_DIR" || rc=$?
+"$DRAFT_TOOLS/verify-citations.sh" "$TRACK_DIR" || rc=$?
+"$DRAFT_TOOLS/verify-doc-anchors.sh" "$TRACK_DIR" || rc=$?
+"$DRAFT_TOOLS/check-graph-usage-report.sh" "$TRACK_DIR" || rc=$?
+"$DRAFT_TOOLS/check-scope-conflicts.sh" "$TRACK_DIR/.." || rc=$?
+"$DRAFT_TOOLS/diff-templates-vs-tracks.sh" "$TRACK_DIR" || rc=$?
+```
+
+After the chain runs, write the result into `metadata.json:pre_deploy_status`
+(`passing` / `failing` / `bypassed`). The downstream checklist sections must
+not be considered "ready to deploy" if `pre_deploy_status != passing`.
 
 ## Step 1: Parse Arguments
 
@@ -6509,12 +6771,37 @@ If a track is active: read `draft/tracks/<id>/spec.md` and `plan.md` for change 
    - CI/CD pipeline details
    - Feature flag system
    - Monitoring/alerting stack
-2. Read `draft/workflow.md` — Deployment conventions and verification gates
+2. Read `draft/workflow.md` — Deployment conventions, toolchain (git)
 3. Read `draft/.ai-context.md` — Service topology, dependencies
+4. **If track-scoped:** Read `draft/tracks/<id>/hld.md` and `lld.md` if present — these are the source of truth for HLD §Checklist (Performance, Scale, Security, Resiliency, Multi-tenancy, Upgrade, Cost, Flags), §Deployment, §Observability, and LLD §Alerting Thresholds. The deploy checklist validates they are populated.
 
 ## Step 3: Generate Checklist
 
-Generate a three-phase checklist customized to the project's tech stack. Adapt items based on what the project actually uses — omit irrelevant items (e.g., skip database items if there is no database) and add project-specific items discovered in context.
+Generate a four-phase checklist customized to the project's tech stack. Adapt items based on what the project actually uses — omit irrelevant items (e.g., skip database items if there is no database) and add project-specific items discovered in context.
+
+### Phase 0: HLD/LLD Gate (track-scoped only, when hld.md exists)
+
+> ** blocker:** the HLD's §Checklist sections were the design-time commitment. If they are still empty at deploy time, the design was never validated against operational reality. This phase enforces that.
+
+For `criticality ∈ {high, mission-critical}` (read from `hld.md` frontmatter `classification.criticality`), every row below MUST be checked before Phase 1 begins. For `standard` criticality, missing rows produce warnings but do not block. For `low`, this phase is informational.
+
+- [ ] **HLD §Performance** populated — QPS and p95 latency stated
+- [ ] **HLD §Scale** populated — horizontal scaling story documented; bottlenecks named
+- [ ] **HLD §Security** populated — credentials, RBAC, encryption answered
+- [ ] **HLD §Resiliency** populated — failure modes and graceful degradation described
+- [ ] **HLD §Multi-tenancy** populated — isolation, predictable performance, migration covered
+- [ ] **HLD §Upgrade** populated — backward compat, dependent service order, blast radius
+- [ ] **HLD §Flags and Controlled Rollout** populated — flag names, kill switches
+- [ ] **HLD §Cost Implications** populated — Cloud cost calculation included for SaaS deployments
+
+- [ ] **HLD §Deployment** populated — DP/CP platform call answered (on-prem / SaaS / Cloud Console / IBM cloud)
+- [ ] **HLD §Observability** populated — key metrics named with thresholds
+- [ ] **HLD §Approvals table** signed by Technical Leads and Architecture Review Board (and Cloud Operations if SaaS, QA if on-prem) — Date column populated
+- [ ] **LLD §Alerting Thresholds** table populated (when `lld.md` exists) — every metric has Threshold, Severity, Action
+
+If any blocker row is empty for high/mission-critical: STOP. Do not generate Phases 1–3, **do not run Step 5 (Save Output)**, and do not create the `deploy-checklist.md` file. Tell the developer: "HLD/LLD §[section] is empty for a [criticality] track. Fill it in `hld.md` / `lld.md` before deploy. Run `draft decompose` to refresh structural sections; author-driven sections must be filled manually."
+
+If a partial file is needed for tracking, write it with `status: BLOCKED` in the frontmatter and `_latest` symlinks must NOT be updated — `draft upload` Step 2.5 detects `status: BLOCKED` and refuses to treat the file as a passing checklist.
 
 ### Phase 1: Pre-Deploy
 
@@ -6611,12 +6898,25 @@ TIMESTAMP=$(date +%Y-%m-%dT%H%M)
 ln -sf deploy-checklist-${TIMESTAMP}.md draft/deploy-checklist-latest.md
 ```
 
+## Mandatory Self-Check (before saving the checklist)
+
+Before saving the checklist file, internally verify and report:
+
+1. **Graph files queried** — JSONL files loaded plus any live `graph --query` invocations (`impact`, `cycles`, `modules`).
+2. **Layer 1 files deliberately skipped** — list any context sections skipped.
+3. **Filesystem grep fallback justification** — for every `grep`/`find` run, name the concept it searched for.
+
+If `draft/graph/schema.yaml` does not exist, set `Graph files queried: NONE` and use justification `graph data unavailable`.
+
+## Graph Usage Report (append to checklist)
+
+Emit the canonical footer from [core/shared/graph-usage-report.md](../../core/shared/graph-usage-report.md) §Canonical footer. The lint hook `scripts/tools/check-graph-usage-report.sh` validates the section on save.
 ## Cross-Skill Dispatch
 
-- **Invoked manually before deployment.**
+- **Auto-invoked by:** `draft upload` (pre-upload verification)
 - **References:** `core/agents/ops.md` for production-safety mindset
 - **Jira sync:** If ticket linked, attach checklist and post comment via `core/shared/jira-sync.md`
-- **MCP:** GitHub MCP / `gh` CLI for PR details, Jira MCP for ticket context
+- **MCP:** GitHub MCP for change details, Jira MCP for ticket context
 
 ## Error Handling
 
@@ -7698,10 +7998,23 @@ After writing all test files, validate them using the project's native toolchain
 
 When user says "review code" or "draft review [--track <id>] [--full]":
 
-Conduct a code review using Draft's Context-Driven Development methodology.
+You are conducting a code review using Draft's Context-Driven Development methodology.
+
+## MANDATORY GRAPH LOOKUP (read before any review stage)
+
+When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Stage 1 (Automated Validation) **starts from the graph**:
+
+1. Run blast-radius assessment from `draft/graph/hotspots.jsonl` and `draft/graph/module-graph.jsonl` (see Stage 1).
+2. For each changed file with non-trivial diff size, run `graph --query --file <path> --mode impact` to obtain the affected module set deterministically.
+3. For each public symbol modified, run `graph --query --symbol <name> --mode callers` to enumerate downstream callers before judging breaking-change severity.
+
+Filesystem `grep` is reserved for source-text scans (string literals, log messages, regex matches in code) — not for discovering modules, files, or callers when the graph can answer.
 
 ## Red Flags - STOP if you're:
 
+See [shared red flags](../../core/shared/red-flags.md) — applies to all code-touching skills.
+
+Skill-specific:
 - Reviewing without reading the track's spec.md and plan.md first
 - Reporting findings without reading the actual code
 - Skipping spec compliance stage and jumping to code quality
@@ -7807,6 +8120,11 @@ Once track is resolved:
    - Load `draft/tracks/<id>/spec.md`
    - Extract: Summary, Requirements, Acceptance Criteria, Non-Goals
    - Store for Stage 1 compliance checks
+
+2.5. **Read hld.md and lld.md (when present):**
+   - `draft/tracks/<id>/hld.md` — extract §High-Level Design / Architecture, §Detailed Design (per-component subsections), §Dependencies, §Checklist (Performance/Scale/Security/Resiliency/Multi-tenancy/Upgrade/Cost), §Approvals
+   - `draft/tracks/<id>/lld.md` — extract §Classes and Interfaces (signatures, invariants), §Data Model (schemas, migrations), §Error Handling, §Observability metrics
+   - Store for HLD/LLD compliance pass (Stage 1.5 below)
 
 3. **Read plan.md:**
    - Load `draft/tracks/<id>/plan.md`
@@ -7925,26 +8243,42 @@ Apply a three-stage review process (merging static validation and semantic revie
 
 **Goal:** Detect structural, security, and performance issues using fast, objective searches across the diff.
 
+Load plugin guardrails before scanning: `core/guardrails/review-checks.md` (RC-###), `core/guardrails/security.md` (SEC-##), and the relevant `core/guardrails/language-standards.md` section for the detected stack. `draft/guardrails.md` project rules take precedence on any conflict.
+
+**Hard red line violations (SEC-01…SEC-10) are always Critical and block review approval.** If the violation has a `// SECURITY-OVERRIDE: <ticket> <justification>` annotation, downgrade to Important and record the ticket in the report.
+
+**Read-before-report gate (Ground-Truth Discipline G1):** Static checks (grep, scanner output) identify *candidate* findings. Every candidate that survives to the final review report must be backed by an actual Read of the cited file in this session. A grep hit on `dangerouslySetInnerHTML` is a candidate; only after opening the file and checking surrounding context (sanitiser? test/mock file? feature flag?) does it become a reported finding. Filing findings directly from grep output is the dominant false-positive source in review skills — do not do it.
+
 For the files changed in the diff, perform static checks using `grep` or similar tools:
-1. **Architecture Conformance:** Search for pattern violations documented in `draft/.ai-context.md`. (e.g. `import * from 'database'` in a React component).
-2. **Dead Code:** Check for newly exported functions/classes in the diff that have 0 references across the codebase.
-3. **Dependency Cycles:** Trace the import chains for new imports to ensure no circular dependencies (e.g., A → B → C → A) are introduced.
-4. **Graph Boundary Check** (if `draft/graph/module-graph.jsonl` exists):
+
+- **Blast Radius Assessment** (if `draft/graph/hotspots.jsonl` or `draft/graph/module-graph.jsonl` exists):
+   - List all changed files from the diff
+   - For each changed file, check if it appears in `hotspots.jsonl` — if yes, record its `fanIn` value
+   - Classify: files with fanIn in the top 20% of the hotspots list = **HIGH IMPACT**; top 21–50% = **MEDIUM**; below 50% or not in list = **STANDARD**
+   - For any file in a HIGH or MEDIUM module, check `module-graph.jsonl` for its reverse-edge count (how many modules import this module)
+   - Include a `Blast Radius` line in the Stage 1 report summary: `Blast Radius: HIGH | MEDIUM | STANDARD — <N> changed files affect high-fanIn modules: [file list]`
+   - If any changed file is HIGH IMPACT: escalate Stage 3 thoroughness (check all callers of changed functions) and note this in the report header
+- **Architecture Conformance:** Search for pattern violations documented in `draft/.ai-context.md`. (e.g. `import * from 'database'` in a React component).
+- **Dead Code:** Check for newly exported functions/classes in the diff that have 0 references across the codebase.
+- **Dependency Cycles:** Trace the import chains for new imports to ensure no circular dependencies (e.g., A → B → C → A) are introduced.
+- **Graph Boundary Check** (if `draft/graph/module-graph.jsonl` exists) `[RC-013]`:
    - For each changed file, identify its module from the graph
    - Check if any new cross-module includes were added in the diff
    - Verify they follow the established dependency direction from `module-graph.jsonl` edges
    - Flag reverse-direction dependencies (module A now depends on module B, but only B→A existed before) as "Potential architecture violation — new dependency direction"
    - Check if changes introduce files in modules listed in graph cycles — flag as higher risk
-4. **Security Scan (OWASP):** Scan the diff for:
-   - Hardcoded secrets and API keys
-   - SQL injection risks (string concatenation in queries)
-   - XSS vulnerabilities (`innerHTML` or raw DOM insertion)
-5. **Performance Anti-patterns:** Scan the diff for:
+- **Security Scan** `[RC-001, RC-002, RC-003, RC-011]`:
+   - Hardcoded secrets and API keys `[RC-001]`
+   - SQL injection risks (string concatenation in queries) `[RC-002]`
+   - XSS vulnerabilities (`innerHTML` or raw DOM insertion) `[RC-011]`
+   - Missing input validation at new entry points `[RC-003]`
+- **Dependency Manifest Check** `[RC-014]`: If diff modifies `package.json`, `requirements.txt`, `go.mod`, `Cargo.toml`, `pom.xml`, or `build.gradle`, run the project's configured dependency vulnerability scanner (from `draft/tech-stack.md`) or recommend `npm audit` / `pip-audit` / `cargo audit` as appropriate. Include results in Stage 1 findings.
+- **Performance Anti-patterns:** Scan the diff for:
    - N+1 database queries (loops containing queries)
    - Blocking synchronous I/O within async functions
    - Unbounded queries lacking pagination
 
-6. **Context-Specific Checks:** Identify the primary domain of changed files and apply domain-specific checks:
+- **Context-Specific Checks:** Identify the primary domain of changed files and apply domain-specific checks:
 
    - **Crypto/Security changes** (files matching `auth`, `crypto`, `security`, `token`, `password`, `hash`, `encrypt`):
      - [ ] Timing-safe comparisons used (no `==` for secret comparison)
@@ -7956,11 +8290,11 @@ For the files changed in the diff, perform static checks using `grep` or similar
      - [ ] Index coverage for new queries
      - [ ] Constraint preservation (foreign keys, unique constraints)
      - [ ] Zero-downtime migration safety (no table locks on large tables)
-   - **API Endpoint changes** (files matching `controller`, `handler`, `route`, `endpoint`, `resolver`):
-     - [ ] Backward compatibility of public signatures (no breaking param changes)
-     - [ ] Input validation present for all new parameters
+   - **API Endpoint changes** (files matching `controller`, `handler`, `route`, `endpoint`, `resolver`) `[RC-005, RC-012]`:
+     - [ ] Backward compatibility of public signatures (no breaking param changes) `[RC-012]`
+     - [ ] Input validation present for all new parameters `[RC-003]`
      - [ ] Rate limiting configured for new endpoints
-     - [ ] Authentication/authorization checks in place
+     - [ ] Authentication/authorization checks in place `[RC-005]`
    - **Configuration changes** (files matching `config`, `env`, `settings`):
      - [ ] No secrets exposed in plaintext
      - [ ] Validation at startup for required config values
@@ -7970,14 +8304,14 @@ For the files changed in the diff, perform static checks using `grep` or similar
      - [ ] Accessibility present (ARIA attributes, keyboard navigation)
      - [ ] Performance impact considered (bundle size, render cycles)
 
-7. **Breaking Change Detection:** Check for public API changes in the diff:
-   - [ ] Exported function/method signatures unchanged (no added required params, no changed return types)
-   - [ ] No removed or renamed exported symbols
-   - [ ] Error types and error codes unchanged
-   - [ ] Serialization format preserved (JSON field names, protobuf field numbers)
-   - Flag as **CRITICAL** if breaking change found with no deprecation period or version bump
+- **Breaking Change Detection** `[RC-012]`: Check for public API changes in the diff:
+    - [ ] Exported function/method signatures unchanged (no added required params, no changed return types)
+    - [ ] No removed or renamed exported symbols
+    - [ ] Error types and error codes unchanged
+    - [ ] Serialization format preserved (JSON field names, protobuf field numbers)
+    - Flag as **CRITICAL** if breaking change found with no deprecation period or version bump
 
-8. **Threat Model (STRIDE):** For new endpoints or data mutations, check:
+- **Threat Model (STRIDE):** For new endpoints or data mutations, check:
    - **S**poofing: Can the caller's identity be faked? (authentication check)
    - **T**ampering: Can request data be modified in transit? (integrity check)
    - **R**epudiation: Are actions logged for audit? (logging check)
@@ -8001,7 +8335,7 @@ After completing Stage 1, recommend appropriate static analysis tools based on t
 | Go | gosec, staticcheck |
 | Rust | `cargo clippy`, `cargo audit` |
 | C/C++ | Clang Static Analyzer, cppcheck |
-| Multi-language | Semgrep (https://semgrep.dev/), CodeQL (https://codeql.github.com/) |
+| Multi-language | Semgrep (https://semgrep.dev/), CodeQL (semantic code analysis) |
 
 References: Meta Infer for CI integration patterns, Google Error Prone for compile-time analysis.
 
@@ -8035,6 +8369,42 @@ For each criterion in `spec.md`:
 - **PASS WITH NOTES:** All requirements met but minor gaps in acceptance criteria verification → Proceed to Stage 3 with notes
 - **FAIL:** ANY requirement missing OR ANY acceptance criterion not met → List gaps, report, and stop (no Stage 3)
 
+### Stage 2.5: HLD/LLD Compliance (Track-Level Only, when hld.md exists)
+
+**Skip if no `hld.md`** — fall through to Stage 3.
+
+#### 2.5.1: HLD §Approvals signed
+
+- [ ] All required approver rows have a Date populated (per `draft upload` Step 3.1 logic)
+- [ ] If HLD was modified after the latest signed Date → flag as Critical "HLD modified after sign-off — re-circulate"
+
+#### 2.5.2: HLD §Detailed Design coverage
+
+For every component subsection in HLD §Detailed Design:
+- [ ] Files listed in the component diff actually exist at the cited `path:line`
+- [ ] Each component's `Whitebox requirements addressed` list is non-empty
+
+#### 2.5.3: HLD §Checklist populated
+
+For `criticality ∈ {high, mission-critical}` (frontmatter):
+- [ ] §Performance, §Scale, §Security, §Resiliency, §Multi-tenancy, §Upgrade, §Cost are populated (not still "<Describe...>" placeholders)
+
+#### 2.5.4: Code-vs-HLD drift
+
+- [ ] Diff introduces no new modules absent from HLD §Detailed Design
+- [ ] Diff introduces no new cross-module dependencies absent from HLD §Dependencies
+- [ ] Diff respects HLD §Key Design Decisions (e.g., decision says "single-writer" → no new shared-write paths in code)
+
+#### 2.5.5: LLD compliance (when lld.md exists)
+
+- [ ] Public API additions in diff are reflected in LLD §Classes and Interfaces
+- [ ] Schema/data-model changes in diff are reflected in LLD §Data Model with migration path
+- [ ] Diff respects LLD invariants (thread safety, idempotency, ordering)
+
+**Verdict:**
+- PASS → Stage 3
+- FAIL → list HLD/LLD gaps with severity Critical (drift) or Important (incomplete sections), then Stage 3
+
 ### Stage 3: Code Quality
 
 **Run for both track-level (if Stage 2 passes) and project-level reviews**
@@ -8066,22 +8436,24 @@ Analyze semantic code quality across four dimensions:
 
 For each flagged function, report: file path, function name, estimated complexity, and recommended action (split, extract, simplify).
 
-#### Adversarial Pass (When Zero Findings)
+#### Adversarial Pass (mandatory when Stage 3 yields zero findings)
 
-If Stage 3 produces zero findings across all four dimensions, do NOT accept "clean" without one more look. Ask these 7 questions explicitly:
+If Stage 3 produces zero findings across all four dimensions, do NOT accept "clean" without this gate. This pass is **mandatory**, not optional — a "zero findings" verdict that did not complete it is incomplete and must be flagged in the report.
 
-1. **Error paths** — Is every error/exception handled? Are any failure modes silently swallowed?
-2. **Edge cases** — Are there boundary conditions (empty input, max values, concurrent access) not covered by tests?
-3. **Implicit assumptions** — Does code assume inputs are always valid, services always up, or state always consistent?
-4. **Future brittleness** — Is anything hardcoded that will break on scale or config change?
-5. **Missing coverage** — Is there behavior that should be tested but isn't?
-6. **Guardrails** — Do any changes violate learned anti-patterns from `guardrails.md`?
-7. **Invariants** — Do any changes violate critical invariants documented in `.ai-context.md`?
+Answer each of the 7 questions explicitly with `file:line` evidence (not "looks fine"):
 
-If still zero after this pass, document it explicitly in the review report:
-> "Adversarial pass completed. Zero findings confirmed: [one sentence per question explaining why each is clean]"
+1. **Error paths** — Is every error/exception handled? Are any failure modes silently swallowed? Quote the handler or note its absence.
+2. **Edge cases** — Are there boundary conditions (empty input, max values, concurrent access) not covered by tests? Cite tests or note coverage gap.
+3. **Implicit assumptions** — Does code assume inputs are always valid, services always up, or state always consistent? Quote the assumption site.
+4. **Future brittleness** — Is anything hardcoded that will break on scale or config change? Cite the constant or flag.
+5. **Missing coverage** — Is there behavior that should be tested but isn't? Name the behavior and the missing test.
+6. **Guardrails** — Do any changes violate learned anti-patterns from `guardrails.md`? Cite the rule.
+7. **Invariants** — Do any changes violate critical invariants documented in `.ai-context.md`? Cite the invariant.
 
-This prevents lazy LGTM verdicts. It only adds work when a reviewer claims "nothing to find."
+Document the pass in the review report:
+> "Adversarial pass: 7/7 answered with evidence. [one line per question with `file:line` or 'N/A — <reason>']."
+
+A review verdict of "clean / LGTM" without this filled-in block is non-conforming and must not be emitted. Skipping the pass is a [Ground-Truth Red Flag](../../core/shared/red-flags.md) G4 violation (claim about absence-of-issues from incomplete examination).
 
 ### Issue Classification
 
@@ -8099,10 +8471,12 @@ Classify all findings by severity:
 
 **Issue format:**
 ```markdown
-- [ ] [File:line] Description of issue
+- [ ] [File:line] Description of issue `[RC-### or CQ-### or SEC-## if applicable]`
   - **Impact:** [what breaks/degrades]
   - **Suggested fix:** [how to address]
 ```
+
+Cite the most specific guardrail rule ID that applies. If no numbered rule covers the finding, omit the citation — the finding is still valid.
 
 ---
 
@@ -8171,10 +8545,12 @@ ln -sf review-report-<timestamp>.md draft/tracks/<id>/review-report-latest.md
 
 **Status:** PASS / FAIL
 
+- **Blast Radius:** HIGH | MEDIUM | STANDARD — [list hotspot files if HIGH/MEDIUM]
 - **Architecture Conformance:** PASS/FAIL
 - **Dead Code:** N found
 - **Dependency Cycles:** PASS/FAIL
 - **Security Scan:** N issues found
+- **Dependency Vulnerabilities:** N Critical / N High (or "Clean" if scanner found none)
 - **Performance:** N anti-patterns detected
 
 [If FAIL: List critical structural issues and stop here]
@@ -8243,7 +8619,7 @@ ln -sf review-report-<timestamp>.md draft/tracks/<id>/review-report-latest.md
 ## Recommendations
 
 [If incomplete tasks found]
-⚠️  **Warning:** This track has N incomplete tasks. Consider completing all tasks before marking track as done.
+⚠️ **Warning:** This track has N incomplete tasks. Consider completing all tasks before marking track as done.
 
 [If no critical issues]
 ✅ **No blocking issues found.** This track is ready to merge.
@@ -8364,14 +8740,63 @@ Next: Fix gaps and run draft review again.
 
 ## Error Handling
 
-| Condition | Message |
-|-----------|---------|
-| No `draft/` directory | "Draft not initialized. Run `draft init`." |
-| No tracks in `draft/tracks.md` | "No tracks found. Run `draft new-track`." |
-| Track not found | Show closest matches by edit distance, suggest `draft status` |
-| Multiple track matches | Display numbered list, prompt selection |
-| Invalid git range | Show git error, suggest verifying with `git log` |
-| No commit SHAs in plan.md | Suggest manual range or `draft review project` |
+### Missing Draft Directory
+
+```
+Error: Draft not initialized.
+Run draft init to set up Context-Driven Development.
+```
+
+### No Tracks Found
+
+```
+Error: No tracks found in draft/tracks.md
+Run draft new-track to create your first track.
+```
+
+### Track Not Found
+
+```
+Error: Track 'xyz' not found.
+
+Did you mean:
+1. add-review-command
+2. enterprise-readiness
+
+Use exact track ID or run draft status to see all tracks.
+```
+
+### Ambiguous Match
+
+```
+Multiple tracks match 'review':
+1. add-review-command - Add draft review Command [~]
+2. review-architecture-md - Review architecture.md [x]
+
+Select track (1-2):
+```
+
+### Invalid Git Range
+
+```
+Error: Invalid commit range 'main...feature'
+Git error: fatal: ambiguous argument 'feature': unknown revision
+
+Verify the range exists:
+  git log main...feature
+```
+
+### Missing Commits in Plan
+
+```
+⚠️ Warning: No commit SHAs found in plan.md
+
+Cannot determine commit range for review.
+
+Options:
+1. Manually specify range: draft review track <id> commits <range>
+2. Review uncommitted changes: draft review project
+```
 
 ---
 
@@ -8438,6 +8863,24 @@ draft review track my-feature with-bughunt
 
 ---
 
+## Report Closing: Next Actions (REQUIRED)
+
+Every review report must end with a `## Next Actions` section listing the smallest set of follow-ups in execution order. Use this exact shape:
+
+```markdown
+## Next Actions
+
+| # | Action | Owner | Blocker? | Skill / Command |
+|---|---|---|---|---|
+| 1 | <imperative one-liner> | <author\|reviewer\|TBD> | yes/no | `draft <skill> <args>` or `n/a` |
+```
+
+Rules:
+- Critical findings produce blocker rows (`Blocker? = yes`); proceeding to merge is forbidden until cleared.
+- Each action is imperative ("Add CSRF token to /api/transfer"), not a restatement of the finding.
+- Suggest the Draft follow-up when one applies (`draft debug`, `draft regression`, `draft tech-debt`, `draft bughunt`, `draft adr`). Otherwise put `n/a`.
+- Cap at 7 actions; if more remain, add a final row pointing at the full report.
+
 ## Cross-Skill Dispatch
 
 ### Auto-Invoke at Completion
@@ -8470,16 +8913,69 @@ If Jira ticket linked, sync via `core/shared/jira-sync.md`:
 - Attach `review-report-latest.md` to ticket
 - Post comment: "[draft] review-complete: {PASS/FAIL}. {n} findings: {critical} critical, {suggestions} suggestions."
 
+## Mandatory Self-Check (before final verdict)
+
+Before printing the final verdict, internally verify and report:
+
+1. **Graph files queried** — which JSONL files were loaded (e.g. `module-graph.jsonl, hotspots.jsonl, call-index.jsonl`) plus any live `graph --query` invocations (impact, callers, cycles).
+2. **Layer 1 files deliberately skipped** — list any context sections skipped as irrelevant to the diff under review.
+3. **Filesystem grep fallback justification** — for every `grep`/`find` run, state the concept it searched for. Source-text scans (string literals, regex matches in code) are exempt — they are not symbol/file discovery.
+
+If `draft/graph/schema.yaml` does not exist, set `Graph files queried: NONE` and use justification `graph data unavailable`.
+
+## Graph Usage Report (append to review report)
+
+Emit the canonical footer from [core/shared/graph-usage-report.md](../../core/shared/graph-usage-report.md) §Canonical footer. The lint hook `scripts/tools/check-graph-usage-report.sh` validates the section on save.
+## Skill Telemetry
+
+As the last step after saving the review report, emit a metrics record. Best-effort — never block.
+
+**Payload fields:**
+```json
+{
+  "skill": "review",
+  "track_id": "<track_id or null>",
+  "stage_reached": "stage1|stage2|stage3",
+  "verdict": "PASS|PASS_WITH_NOTES|NEEDS_CHANGES|FAIL",
+  "critical_count": <N>,
+  "important_count": <N>,
+  "blast_radius": "HIGH|MEDIUM|STANDARD",
+  "graph_queries": <N>,
+  "fallback_grep_count": <N>
+}
+```
+
+**Emit call:**
+```bash
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+[ -x "$DRAFT_TOOLS/emit-skill-metrics.sh" ] && bash "$DRAFT_TOOLS/emit-skill-metrics.sh" \
+  '{"skill":"review","track_id":"<id_or_null>","stage_reached":"<stage>","verdict":"<v>","critical_count":<N>,"important_count":<N>,"blast_radius":"<br>","graph_queries":<N>,"fallback_grep_count":<N>}'
+```
+
 ---
 
 ## Quick Review Command
 
 When user says "quick review" or "draft quick-review [file|pr <number>]":
 
-Perform a lightweight, ad-hoc code review. This is the fast alternative to `draft review` — no track context needed, focused on a specific PR, diff, or file set.
+You are performing a lightweight, ad-hoc code review. This is the fast alternative to `draft review` — no track context needed, focused on a specific PR, diff, or file set.
+
+## MANDATORY GRAPH LOOKUP (read before dimension review)
+
+When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Quick-review keeps the graph load light:
+
+1. Always check `draft/graph/hotspots.jsonl` for every changed file (Step 2 blast-radius pre-check below).
+2. If a finding spans more than one file, run `graph --query --symbol <name> --mode callers` to enumerate the call sites before claiming "no other usages".
+
+Filesystem `grep` is reserved for source-text scans (literal strings, regex patterns). Symbol and caller discovery go through the graph.
 
 ## Red Flags — STOP if you're:
 
+See [shared red flags](../../core/shared/red-flags.md) — applies to all code-touching skills.
+
+Skill-specific:
 - Reviewing without reading the code first
 - Providing generic feedback not grounded in the actual code
 - Missing security implications in authentication/authorization code
@@ -8497,8 +8993,8 @@ Perform a lightweight, ad-hoc code review. This is the fast alternative to `draf
 Before starting, capture the current git state:
 
 ```bash
-git branch --show-current    # Current branch name
-git rev-parse --short HEAD   # Current commit hash
+git branch --show-current # Current branch name
+git rev-parse --short HEAD # Current commit hash
 ```
 
 Store this for the review report header. The review is scoped to this specific branch/commit.
@@ -8509,7 +9005,7 @@ Store this for the review report header. The review is scoped to this specific b
 ls draft/ 2>/dev/null
 ```
 
-If `draft/` exists, read and follow `core/shared/draft-context-loading.md`. This enriches review with project patterns, guardrails, and accepted patterns from `tech-stack.md`.
+If `draft/` exists, read and follow `core/shared/draft-context-loading.md`. This enriches review with project patterns, guardrails, and accepted patterns from `tech-stack.md`. Layer 0.5 of that procedure includes loading the relevant `core/guardrails/language-standards.md` section for the project stack — apply those standards in Dimension 4 (Maintainability) and Dimension 3 (Correctness) for language-specific patterns.
 
 If no draft context, proceed with generic review — still valuable.
 
@@ -8518,25 +9014,42 @@ If no draft context, proceed with generic review — still valuable.
 Check for arguments:
 - `draft quick-review` — Review staged changes (`git diff --cached`) or current branch diff
 - `draft quick-review <file>` — Review specific file(s)
-- `draft quick-review <PR-URL>` — Review a pull request (via GitHub MCP / `gh` CLI)
+- `draft quick-review <PR-URL>` — Review a pull request (via GitHub/GitHub MCP)
 - `draft quick-review <commit-range>` — Review specific commits
 
 Determine the diff to review:
-1. If PR URL: fetch via GitHub MCP or `gh pr diff <num>`
+1. If PR URL: fetch via GitHub MCP (`get_change_detail`, `get_change_diff`) or GitHub
 2. If file path: read the file(s)
 3. If commit range: `git diff <range>`
 4. Default: `git diff HEAD~1..HEAD` (last commit)
 
-## Step 2: Four-Dimension Review
+## Step 2: Blast Radius Pre-check (if `draft/graph/hotspots.jsonl` exists)
+
+Before the four-dimension review, check if any files in scope appear in `draft/graph/hotspots.jsonl`. If any file has a `fanIn` in the top 20% of the list, add this warning at the top of the review report:
+
+```
+⚠ HIGH IMPACT: {file} is a high-fanIn hotspot (fanIn={N}). Changes here propagate to many callers — review with extra care.
+```
+
+If no hotspot data exists or no file matches, skip silently.
+
+## Step 3: Four-Dimension Review
 
 Review the code across four dimensions. For each finding, cite the specific `file:line`.
 
 ### Dimension 1: Security
 
-- Authentication/authorization gaps
-- Input validation and sanitization
-- SQL injection, XSS, CSRF vulnerabilities
-- Secrets or credentials in code
+Load `core/guardrails/security.md` before this dimension. Apply the **5-step security reasoning chain** (identify goal → check hard red lines SEC-01…SEC-10 → assess blast radius → trace generative paths → classify). Any hard red line violation is automatically **Critical**.
+
+If a violation has a `// SECURITY-OVERRIDE: <ticket> <justification>` annotation, downgrade to **Important** and include the ticket in the finding.
+
+- Authentication/authorization gaps `[RC-005, SEC-10]`
+- Input validation and sanitization `[RC-003]`
+- SQL injection, XSS, CSRF vulnerabilities `[RC-002, RC-011, SEC-03]`
+- Secrets or credentials in code `[RC-001, SEC-01]`
+- Disabled TLS or certificate verification `[SEC-04]`
+- Shell injection or unsafe subprocess calls `[SEC-06]`
+- PII or credentials in log output `[RC-006, SEC-05]`
 - OWASP Top 10 patterns
 - Insecure deserialization
 
@@ -8567,7 +9080,7 @@ Review the code across four dimensions. For each finding, cite the specific `fil
 - Test coverage for new logic
 - Consistency with project patterns (from tech-stack.md if available)
 
-## Step 3: Classify Findings
+## Step 4: Classify Findings
 
 Classify each finding:
 
@@ -8577,7 +9090,7 @@ Classify each finding:
 | Important | Should fix | Performance issues, logic bugs, error handling gaps |
 | Suggestion | Nice to have | Style improvements, refactoring opportunities, documentation |
 
-## Step 4: Generate Review Report
+## Step 5: Generate Review Report
 
 Present findings organized by severity:
 
@@ -8611,7 +9124,9 @@ Present findings organized by severity:
 [2-3 positive observations about the code — good patterns, clean logic, thorough error handling]
 ```
 
-If track-scoped, save to `draft/tracks/<id>/quick-review-<timestamp>.md`.
+**If track-scoped, save to `draft/tracks/<id>/quick-review-<timestamp>.md`.**
+
+Also check `core/guardrails/dependency-triage.md` if the diff modifies a dependency manifest file.
 
 **MANDATORY: Include YAML frontmatter with git metadata when saving.** Follow `core/shared/git-report-metadata.md`.
 
@@ -8626,6 +9141,19 @@ Include the report header table immediately after frontmatter:
 | **Synced To** | `{FULL_SHA}` |
 ```
 
+## Mandatory Self-Check (before review report)
+
+Before printing the review report, internally verify and report:
+
+1. **Graph files queried** — JSONL files loaded plus any live `graph --query` invocations.
+2. **Layer 1 files deliberately skipped** — list any context sections skipped.
+3. **Filesystem grep fallback justification** — for every `grep`/`find` run, state the concept it searched for.
+
+If `draft/graph/schema.yaml` does not exist, set `Graph files queried: NONE` and use justification `graph data unavailable`.
+
+## Graph Usage Report (append to review report)
+
+Emit the canonical footer from [core/shared/graph-usage-report.md](../../core/shared/graph-usage-report.md) §Canonical footer. The lint hook `scripts/tools/check-graph-usage-report.sh` validates the section on save.
 ## Cross-Skill Dispatch
 
 - **Offered by:** `draft implement` at phase boundaries as lightweight alternative to full review
@@ -8639,7 +9167,7 @@ Include the report header table immediately after frontmatter:
 ## Error Handling
 
 **If no diff/file found:** "No changes to review. Specify a file, PR URL, or commit range."
-**If MCP unavailable for PR:** Fall back to local git diff. "GitHub MCP and `gh` CLI unavailable. Reviewing local diff instead."
+**If MCP unavailable for PR:** Fall back to local git diff. "GitHub/GitHub MCP unavailable. Reviewing local diff instead."
 **If no draft context:** Proceed with generic review patterns. Note: "Review enriched when draft context is available (run `draft init`)."
 
 ---
@@ -8650,8 +9178,22 @@ When user says "deep review" or "draft deep-review [module]":
 
 Perform an exhaustive end-to-end lifecycle review of a service, component, or module. Ensure ACID compliance and production-grade enterprise quality. Unlike standard review commands, this operates strictly at the module level.
 
+## MANDATORY GRAPH LOOKUP (read before Phase 1)
+
+When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Deep-review uses the graph to **narrow review scope** — a key 30–50% scope reduction:
+
+1. Load `draft/graph/modules/<module>.jsonl` for the authoritative file list of the audited module — do not enumerate via `find`.
+2. Run `graph --query --file <each-changed-file> --mode impact` per file in the diff (or per file in the module if no diff) to obtain the affected module set deterministically.
+3. Run `graph --query --mode cycles` and flag any cycle that includes the audited module as Architecture Resilience finding.
+4. Cross-check `draft/graph/hotspots.jsonl` to identify high-fanIn files inside the module — these get deeper inspection.
+
+Filesystem `grep` is reserved for source-text scans (API contract strings, secret patterns, log message audits). Module enumeration and caller tracing go through the graph.
+
 ## Red Flags - STOP if you're:
 
+See [shared red flags](../../core/shared/red-flags.md) — applies to all code-touching skills.
+
+Skill-specific:
 - Acting without reading the Draft context (`draft/.ai-context.md`, `draft/tech-stack.md`, `draft/product.md`)
 - Modifying production code. This command is for auditing and reporting only. Fixes should be handled in a separate implementation track.
 - Reviewing a module that was already reviewed recently, unless explicitly requested.
@@ -8694,6 +9236,7 @@ If `.ai-context.md` is missing, check for `draft/architecture.md` as a fallback 
 
 ### Phase 1: Context & Structural Analysis
 - Load Draft context following the procedure in `core/shared/draft-context-loading.md`. Use loaded context to understand intended boundaries and critical invariants.
+- **Load track HLD/LLD if any track owns this module.** Scan `draft/tracks/*/hld.md` for §Detailed Design components matching the module path. When found, extract claims from §High-Level Design / Key Design Decisions, §Checklist (Performance/Scale/Security/Resiliency/Multi-tenancy/Upgrade/Cost), §Observability, §Deployment, and any LLD §Classes and Interfaces invariants and §Error Handling policies. These claims become the design contract this audit measures against (HLD claims vs code reality).
 - **Load Learned Anti-Patterns** — If `draft/guardrails.md` exists, read the `## Learned Anti-Patterns` section before analysis begins. During the audit, when an issue matches a learned anti-pattern, prefix the finding with `[KNOWN-ANTI-PATTERN: {pattern name}]`. This separates newly discovered issues from documented recurring patterns and allows the report to recommend systemic remediation rather than isolated fixes.
 - Map the module's full dependency graph (imports, injected services, external calls)
 - Trace the complete lifecycle: initialization → processing → persistence → cleanup
@@ -8702,10 +9245,17 @@ If `.ai-context.md` is missing, check for `draft/architecture.md` as a fallback 
 - **API Contract Drift Detection:** Compare the module's actual code interfaces against documented contracts (OpenAPI/Swagger specs, Protobuf/gRPC definitions, GraphQL schema files, TypeScript type exports). Flag drift: endpoints that exist in code but not in the spec (or vice versa). Flag type mismatches between spec and implementation. Reference: Amazon, Google large-scale changes.
 
 ### Phase 2: ACID Compliance Audit
-- **Atomicity:** Verify all multi-step operations are wrapped in transactions. Partial failure must not leave corrupt state. Check for missing rollback paths.
-- **Consistency:** Validate all invariants, constraints, and business rules are enforced before and after every state transition. Check schema validation, data type enforcement, and boundary conditions.
-- **Isolation:** Check for race conditions, shared mutable state, concurrent access without locking/synchronization. Verify transaction isolation levels where databases are involved.
-- **Durability:** Confirm committed data survives crashes. Check for fire-and-forget patterns, missing flush/sync calls, and inadequate error handling around persistence.
+
+> Rule references: `[CQ-006, CQ-007, CQ-008]` error/exception context, `[SEC-03]` SQL parameterization, `[RC-004, RC-005]` data integrity & concurrency. Cite the rule ID in each finding.
+
+Every ACID finding ("missing rollback", "fire-and-forget write", "race condition", "no isolation guarantee") must cite the closest applicable rule range (e.g., `[RC-004..RC-005]` for data integrity, `[CQ-006..CQ-008]` for error context, `[SEC-03]` for SQL safety).
+
+**Evidence requirement (Ground-Truth Discipline G1, G4):** Every ACID finding ("missing rollback", "fire-and-forget write", "race condition", "no isolation guarantee") must cite `file:line` AND include a quoted code snippet showing the issue. A finding that says "no transactions found in module X" without quoting the code site is a graph-metadata claim, not an audit result — discard it. "Verify" and "Check" below mean *Read the candidate sites*, not "scan for keywords."
+
+- **Atomicity:** Verify all multi-step operations are wrapped in transactions. Partial failure must not leave corrupt state. Check for missing rollback paths. `[RC-004]`
+- **Consistency:** Validate all invariants, constraints, and business rules are enforced before and after every state transition. Check schema validation, data type enforcement, and boundary conditions. `[CQ-006, RC-003]`
+- **Isolation:** Check for race conditions, shared mutable state, concurrent access without locking/synchronization. Verify transaction isolation levels where databases are involved. `[RC-005]`
+- **Durability:** Confirm committed data survives crashes. Check for fire-and-forget patterns, missing flush/sync calls, and inadequate error handling around persistence. `[CQ-007, CQ-008]`
 - **Event Sourcing:** Are events immutable? Is event replay idempotent? Is the event store append-only?
 - **CQRS:** Are read/write models eventually consistent? Is consistency lag acceptable for the use case?
 - **Saga Pattern:** Are compensating transactions defined for each step? What happens on partial saga failure?
@@ -8715,16 +9265,20 @@ If `.ai-context.md` is missing, check for `draft/architecture.md` as a fallback 
 
 **Applicability note:** Skip categories that are not applicable to the module type (e.g., circuit breakers and backpressure are backend-specific; skip for frontend/CLI modules).
 
-- **Resilience:** Graceful degradation, circuit breakers, timeout handling, backpressure
-- **Observability:** Logging coverage (not excessive), structured log fields, correlation IDs, metric emission points
+> Rule references: `[RC-008, RC-009, RC-010]` observability & logging, `[SEC-04, SEC-06]` network/process boundaries, `[SEC-05]` secrets, `[RC-015]` config validation, `[CQ-006..CQ-008]` error context. Cite the rule ID in each finding.
+
+Every finding in this phase must cite the relevant rule range (e.g., `[RC-008..RC-010]` for observability, `[SEC-04, SEC-06]` for network/process boundaries, `[RC-015]` for configuration).
+
+- **Resilience:** Graceful degradation, circuit breakers, timeout handling, backpressure `[RC-005]`
+- **Observability:** Logging coverage (not excessive), structured log fields, correlation IDs, metric emission points `[RC-008, RC-009, RC-010]`
   - **Structured logging:** Are logs structured (JSON/key-value) vs free-form strings?
   - **Log level correctness:** Are ERROR/WARN/INFO/DEBUG used appropriately? Are expected conditions logged at DEBUG, not ERROR?
-  - **PII leakage:** Do logs or error messages expose personally identifiable information, tokens, or credentials?
+  - **PII leakage:** Do logs or error messages expose personally identifiable information, tokens, or credentials? `[SEC-05, RC-010]`
   - **Tracing spans:** Are spans created at service boundaries? Do spans include relevant attributes (user_id, request_id)?
   - **Metric cardinality:** Are metric labels bounded? Unbounded labels (e.g., user_id as label) cause metric explosion.
   - **Alerting coverage:** Are critical failure modes covered by alerts? Are there runbooks linked to alerts?
   - Reference: Netflix Full Cycle Developers, Google SRE.
-- **Configuration:** Hardcoded values that should be configurable, missing environment variable validation
+- **Configuration:** Hardcoded values that should be configurable, missing environment variable validation `[RC-015, SEC-05]`
 - **State Lifecycle:** Memory accumulation, zombie processes, dropped messages
 - **SLO/SLA Alignment:**
   - Does the module's observed/expected error rate match defined SLOs?
@@ -8740,6 +9294,26 @@ If `.ai-context.md` is missing, check for `draft/architecture.md` as a fallback 
   - **N+1 at schema level:** Relationships that require multiple queries instead of joins.
   - Reference: Google large-scale changes.
 
+### Phase 3.5: HLD/LLD Claims vs Code Reality (when HLD found in Phase 1)
+
+> Rule references: `[RC-012]` API/contract drift, `[SEC-01..SEC-10]` for §Security claims, `[RC-005, RC-013]` for §Resiliency/§Architecture claims. Cite the rule ID alongside `[HLD-DRIFT: §<section>]`.
+
+Cite the most specific rule range applicable to the drift (e.g., `[RC-012]` for API changes, `[SEC-01..SEC-10]` for security claims).
+
+For each HLD claim extracted in Phase 1, validate it against code:
+
+- **HLD §Performance** claims (e.g., "p95 < 200ms", "QPS = 10k") — search for benchmarks, load tests, or APM dashboard evidence. If absent, surface as Important: "HLD claims X but no measurement evidence in code/CI."
+- **HLD §Scale** claims (horizontal scaling, vertical scaling, bottlenecks named) — verify deployment config (replicas, autoscaler), connection pools, queue capacities support the claim.
+- **HLD §Security** claims (RBAC, encryption, credential protection) — verify the cited middleware/guard exists and is invoked on the documented surface.
+- **HLD §Resiliency** claims (graceful degradation, circuit breakers, timeouts) — verify cited code paths implement the claim.
+- **HLD §Multi-tenancy** claims (tenant isolation, predictable performance, migration path) — verify query partitioning, RBAC scope, migration tooling.
+- **HLD §Upgrade** claims (backward compat, dependent service order) — verify schema migration policy, API version handling.
+- **HLD §Cost** claims — flag if codebase introduces new cloud resources not reflected in HLD.
+- **LLD §Classes/Interfaces invariants** (thread safety, idempotency, ordering) — search for violations: shared state without locks, non-idempotent retry paths, ordering assumptions broken by concurrency.
+- **LLD §Error Handling policy** — verify retry/backoff/circuit-breaker thresholds in code match the LLD table.
+
+Surface gaps as findings with prefix `[HLD-DRIFT: §<section>]` (Important if the gap is documentation-vs-implementation drift; Critical if the code violates a stated invariant or security claim).
+
 ### Phase 4: Identify Actionable Fixes (Spec Generation)
 Instead of mutating the source code, translate all findings into clear, actionable requirements that a developer (or agent) can implement via Test-Driven Development.
 
@@ -8747,7 +9321,11 @@ Instead of mutating the source code, translate all findings into clear, actionab
 
 **Applicability note:** Skip categories not applicable to the module type (e.g., network partitions are irrelevant for purely local CLI tools).
 
-- **Dependency failure scenarios:** What happens when each external dependency (database, cache, message queue, external API) is unavailable? Are there timeouts, fallbacks, circuit breakers?
+> Rule references: `[RC-005]` concurrency & retries, `[SEC-04]` network boundaries, `[CQ-008]` timeouts/cleanup, `[RC-015]` capacity/config bounds. Cite the rule ID in each finding.
+
+Cite relevant rule ranges for resilience findings (e.g., `[RC-005]` for retries, `[CQ-008]` for timeouts).
+
+- **Dependency failure scenarios:** What happens when each external dependency (database, cache, message queue, external API) is unavailable? Are there timeouts, fallbacks, circuit breakers? `[RC-005, CQ-008]`
 - **Timeout analysis:** Are all external calls bounded by timeouts? Are timeout values appropriate (not too long, not too short)?
 - **Disk/resource exhaustion:** What happens when disk fills, memory is exhausted, file descriptors run out?
 - **Clock skew:** Does the module make assumptions about clock synchronization? Are distributed timestamps handled correctly?
@@ -8814,7 +9392,7 @@ reviewer: "{model name from runtime}"
 
 Format findings as actionable tasks:
 ```markdown
-### [Critical/Important/Minor] Issue Name
+### [Critical/Important/Minor] Issue Name `[RC-### or CQ-### or SEC-## if applicable]`
 **File:** path/to/file:line
 **Description:** What's wrong conceptually (e.g., Transaction lacks rollback on Exception XYZ).
 **Proposed Fix Specification:**
@@ -8822,6 +9400,10 @@ Format findings as actionable tasks:
 - Explicitly call `db.rollback()`.
 - Emit structured log with correlation ID.
 ```
+
+Cite the most specific rule ID from `core/guardrails/review-checks.md` (RC-###), `core/guardrails/security.md` (SEC-##), or `core/guardrails/code-quality.md` (CQ-###) that governs the finding. If no numbered rule applies, omit — the finding stands.
+
+**For Phase 3 (Security):** Load `core/guardrails/security.md` and apply the 5-step security reasoning chain. Hard red line violations (SEC-01…SEC-10) are always Critical. Run `core/guardrails/dependency-triage.md` procedure for any dependency manifest files in the module's scope `[RC-014]`.
 
 **Constraints:**
 - Do not refactor code yourself.
@@ -8837,6 +9419,23 @@ Skip pattern learning if the analysis found zero findings.
 After generating the report, execute the pattern learning phase from `core/shared/pattern-learning.md` to update `draft/guardrails.md` with patterns discovered during this module audit. Module-level reviews often reveal architecture and concurrency conventions that are valuable for future analysis.
 
 ---
+
+## Report Closing: Next Actions (REQUIRED)
+
+Every deep-review report must end with a `## Next Actions` section listing the smallest set of follow-ups in execution order. Use this exact shape:
+
+```markdown
+## Next Actions
+
+| # | Action | Owner | Blocker? | Skill / Command |
+|---|---|---|---|---|
+| 1 | <imperative one-liner> | <author\|on-call\|TBD> | yes/no | `draft <skill> <args>` or `n/a` |
+```
+
+Rules:
+- Production-blocking findings (`[SEC-*]`, ACID violations, unbounded resource use) produce blocker rows.
+- Suggest `draft adr` for structural changes, `draft new-track` for multi-week remediation, `draft incident-response` for hot issues, `draft tech-debt` for systemic items.
+- Cap at 10 actions; group related fixes under one row.
 
 ## Cross-Skill Dispatch
 
@@ -8856,13 +9455,151 @@ After deep-review audit completion:
   → draft documentation runbook — Generate operational runbook for this module"
 ```
 
+## Mandatory Self-Check (before final report)
+
+Before printing the final report, internally verify and report:
+
+1. **Graph files queried** — JSONL files loaded plus any live `graph --query` invocations (especially `impact` per file in scope).
+2. **Layer 1 files deliberately skipped** — list any context sections skipped.
+3. **Filesystem grep fallback justification** — for every `grep`/`find` run, name the concept it searched for. Source-text scans for API contract strings, secrets, or log audits are exempt.
+
+If `draft/graph/schema.yaml` does not exist, set `Graph files queried: NONE` and use justification `graph data unavailable`.
+
+## Graph Usage Report (append to report)
+
+Emit the canonical footer from [core/shared/graph-usage-report.md](../../core/shared/graph-usage-report.md) §Canonical footer. The lint hook `scripts/tools/check-graph-usage-report.sh` validates the section on save.
+## Skill Telemetry
+
+As the last step after saving the deep-review report, emit a metrics record. Best-effort — never block.
+
+**Payload fields:**
+```json
+{
+  "skill": "deep-review",
+  "module": "<module path or name>",
+  "phases_completed": <N>,
+  "critical_count": <N>,
+  "important_count": <N>,
+  "sec_violations": <N>,
+  "acid_violations": <N>,
+  "graph_queries": <N>,
+  "fallback_grep_count": <N>
+}
+```
+
+**Emit call:**
+```bash
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+[ -x "$DRAFT_TOOLS/emit-skill-metrics.sh" ] && bash "$DRAFT_TOOLS/emit-skill-metrics.sh" \
+  '{"skill":"deep-review","module":"<module>","phases_completed":<N>,"critical_count":<N>,"important_count":<N>,"sec_violations":<N>,"acid_violations":<N>,"graph_queries":<N>,"fallback_grep_count":<N>}'
+```
+
+---
+
+## Discover Command
+
+When user says "discover features" or "draft discover [path]":
+
+> Mandatory first step for any new Draft track. Builds the `discovery.md`
+> artifact that subsequent `spec.md` / `hld.md` / `lld.md` cite as their
+> grounding source. Without it, downstream artifacts are not eligible for
+> `ready-for-review` promotion.
+
+## Contract
+
+- Schema: [core/shared/discovery-schema.md](../../core/shared/discovery-schema.md)
+- Template: [core/templates/discovery.md](../../core/templates/discovery.md)
+- Hygiene rules: [core/shared/template-hygiene.md](../../core/shared/template-hygiene.md)
+- Citation verifier: `scripts/tools/verify-citations.sh`
+
+## Inputs
+
+1. The track ID (from `metadata.json:id`).
+2. The pinned commit (`metadata.json:synced_to_commit` — set by
+   `draft:new-track` Step 0a).
+3. The problem statement the user provided.
+
+## When `draft/graph/schema.yaml` exists
+
+Follow the graph-first lookup contract in
+[core/shared/graph-query.md](../../core/shared/graph-query.md)
+§Mandatory Lookup Contract. The discovery hotspots **must** start from the
+graph; filesystem `grep` is permitted only after a documented graph miss.
+
+## Procedure
+
+1. **Read the problem statement.** Extract candidate nouns (component
+   names, file extensions, flag names, behaviors).
+2. **Query the graph** with each candidate. Capture modules and entry
+   symbols. If the graph has no schema, fall back to `grep` and document
+   the miss per `graph-query.md` rules.
+3. **Read 3–10 files** at the entry points found. Quote the exact
+   `path:line-range` you read.
+4. **Fill the Hotspots table** with at least N rows (default 3; configurable
+   via `metadata.json:hygiene_budget.discovery_min_hotspots`).
+5. **Fill the Mode selection table** with every flag, env var, build
+   option, or cluster-feature gate the reading surfaced.
+6. **Write Open Questions**: each is a load-bearing unknown. Examples:
+   "Does dependency X expose a public API for behavior Y?", "Is constraint
+   Z still active given upstream change W?". Surface, do not hide.
+7. **Write References**: flat list of files and named functions.
+8. **Save** `discovery.md` under the track directory; emit the `generated_at`
+   timestamp; do NOT touch `metadata.json:status` (still `draft`).
+
+## Output gate
+
+The skill output is rejected if any of:
+
+- `discovery.md` has zero Hotspot rows AND no `_NONE_FOUND_` justification.
+- Any `path:line` citation in Hotspots fails `verify-citations.sh`.
+- Open Questions list is empty AND no `_NONE_FOUND_ — <reason>` line.
+- Any forbidden sentinel from `template-hygiene.md` appears in the output.
+
+## Re-spiking
+
+If a later phase reveals the original spike missed material facts:
+
+1. Rename the existing file to `discovery-<isodate>.md`.
+2. Run `draft:discover` again to produce a fresh `discovery.md`.
+3. Bump `metadata.json:synced_to_commit` if the re-spike was driven by an
+   upstream change.
+
+## Red Flags — STOP if you're:
+
+See [shared red flags](../../core/shared/red-flags.md).
+
+Skill-specific:
+
+- Writing hotspot rows without `path:line` citations.
+- Inventing function names not present in the code at `synced_to_commit`.
+- Filling the Open Questions section with non-blocking commentary instead
+  of load-bearing unknowns.
+- Re-running discovery silently on top of an existing `discovery.md`
+  without archiving the previous file.
+
+## Graph Usage Report
+
+End every invocation with the standard footer from
+[core/shared/graph-query.md](../../core/shared/graph-query.md)
+§Graph Usage Report:
+
+```
+## Graph Usage Report
+- Graph files queried: <list>
+- Modules / files identified via graph: <list>
+- Grep fallbacks: <count, with justification per item>
+- Justification when NONE: <if graph was not consulted>
+```
+
 ---
 
 ## Testing Strategy Command
 
 When user says "test strategy" or "draft testing-strategy [track <id>|path]":
 
-Design a testing strategy and test plan for this project or track.
+You are designing a testing strategy and test plan for this project or track.
 
 ## Red Flags — STOP if you're:
 
@@ -8883,8 +9620,8 @@ Design a testing strategy and test plan for this project or track.
 Before starting, capture the current git state:
 
 ```bash
-git branch --show-current    # Current branch name
-git rev-parse --short HEAD   # Current commit hash
+git branch --show-current # Current branch name
+git rev-parse --short HEAD # Current commit hash
 ```
 
 Store this for the report header. The strategy is scoped to this specific branch/commit.
@@ -8944,11 +9681,11 @@ Tailor to the project architecture:
 
 ```
         ┌─────────┐
-        │  E2E    │  Few, critical paths only
+        │ E2E │ Few, critical paths only
         ├─────────┤
-        │ Integr. │  Service boundaries, DB, APIs
+        │ Integr. │ Service boundaries, DB, APIs
         ├─────────┤
-        │  Unit   │  Business logic, utilities
+        │ Unit │ Business logic, utilities
         └─────────┘
 ```
 
@@ -9059,8 +9796,21 @@ When user says "learn patterns" or "draft learn [promote|migrate|path]":
 
 Scan the codebase to discover recurring coding patterns and update `draft/guardrails.md` with learned conventions and anti-patterns. This improves future quality command accuracy by reducing false positives and catching known-bad patterns.
 
+## MANDATORY GRAPH LOOKUP (read before pattern scanning)
+
+When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Use the graph to:
+
+1. Enumerate source files per module from `draft/graph/modules/<name>.jsonl` (preferred over `find`).
+2. Prioritize hotspots from `draft/graph/hotspots.jsonl` — patterns in high-fanIn files are more impactful when learned.
+3. For TS/Python/Go/C/C++, use `*-index.jsonl` to identify class/function definitions rather than re-discovering them via regex.
+
+Filesystem `find` for source discovery (Step 2.1) is permitted **as a complement** to the graph for languages not covered by indexes (e.g. Ruby, Java without ctags). Record the rationale in the Graph Usage Report.
+
 ## Red Flags - STOP if you're:
 
+See [shared red flags](../../core/shared/red-flags.md) — applies to all code-touching skills.
+
+Skill-specific:
 - Writing to guardrails.md without reading the codebase first
 - Learning a pattern from fewer than 3 occurrences
 - Auto-promoting patterns to Hard Guardrails (requires human approval)
@@ -9103,6 +9853,14 @@ If it exists, read it and internalize:
 - Current Hard Guardrails (checked items)
 - Current Learned Conventions (existing entries)
 - Current Learned Anti-Patterns (existing entries)
+
+**Then verify core guardrails integrity (backfill if missing):**
+
+Check if `draft/guardrails.md` contains the C++/Systems Hard Guardrails from `core/guardrails.md`. Detection: look for the marker heading `### C++/Systems — Object Lifecycle & Memory Safety`.
+
+- **If missing AND project contains C++ code:** The file predates `core/guardrails.md`. Backfill by inserting the full C++/Systems Hard Guardrails sections from `core/templates/guardrails.md` (G1.x–G7.x, all pre-checked `[x]`) into the `## Hard Guardrails` section, after any existing general guardrails. Preserve all existing entries. Announce: "Backfilled C++/Systems Hard Guardrails (G1.x–G7.x) from core/guardrails.md into draft/guardrails.md."
+- **If missing AND project has no C++ code:** Skip — these guardrails only apply to C++ projects.
+- **If present:** No action — core guardrails already integrated.
 
 ### 1.2: Check for Legacy Guardrails (migration path)
 
@@ -9305,6 +10063,8 @@ Follow the threshold from `core/shared/pattern-learning.md`:
 | Found >5x, all consistent, cross-verified | `high` | Learn + flag as promotion candidate |
 | Found >5x but inconsistent | — | Do NOT learn (investigate inconsistency) |
 
+**Consistency-claim ground-truth gate (Ground-Truth Discipline G1, G4):** "Consistent" and "cross-verified" require you to have **Read** at least 3 of the instances in this session (5 if claiming `high`). A grep match count is not consistency proof — variant call sites can use the same identifier with different semantics. List the file:line of each Read instance in the learned-pattern record under §Evidence. A `medium` or `high` entry whose Evidence list shows only grep counts is a Red Flag and must be downgraded or discarded.
+
 ### Distinguishing Conventions from Anti-Patterns
 
 - **Convention:** Pattern is consistently applied AND does not cause bugs, security issues, or violations of documented invariants
@@ -9373,7 +10133,7 @@ Follow the write procedure in `core/shared/pattern-learning.md`:
 1. Read current `draft/guardrails.md`
 2. For each new pattern: check for duplicates, then append
 3. For existing patterns: update evidence count, confidence, `last_verified`
-4. Update YAML frontmatter `synced_to_commit`
+4. Update `draft/metadata.json` with current git state (use `git-metadata.sh --project-metadata --generated-by "draft:learn"` or update `git.commit`, `git.commit_message`, and `synced_to_commit` manually) — `guardrails.md` frontmatter carries only stable fields per WS-8
 
 **Cap enforcement:** Maintain a maximum of 50 learned entries per section. If at capacity, replace the oldest `medium` confidence entry that has not been re-verified in 90+ days (per `core/shared/pattern-learning.md`).
 
@@ -9398,15 +10158,15 @@ Follow the write procedure in `core/shared/pattern-learning.md`:
 ### [Anti-Pattern Name]
 - **Category:** security | reliability | performance | correctness | concurrency
 - **Severity:** critical | high | medium
-- **graph_severity:** critical | high | medium | low | unresolved  (fanIn-derived from Step 2.7; "unresolved" if no graph data)
-- **high_fanin_files:** `path/file.go` (fanIn:12), `path/other.go` (fanIn:7)  (omit line if none meet fanIn ≥ 5)
+- **graph_severity:** critical | high | medium | low | unresolved (fanIn-derived from Step 2.7; "unresolved" if no graph data)
+- **high_fanin_files:** `path/file.go` (fanIn:12), `path/other.go` (fanIn:7) (omit line if none meet fanIn ≥ 5)
 - **Evidence:** Found in N files — `path/file1.ext:line`, `path/file2.ext:line`
 - **Discovered at:** YYYY-MM-DD (when Draft first observed this pattern)
 - **Established at:** YYYY-MM-DD (when the pattern entered the codebase, via git blame)
 - **Last verified:** YYYY-MM-DD
 - **Last active:** YYYY-MM-DD (when source files containing this pattern were last modified)
-- **recently_active:** true | false  (true if any evidence file modified within 90 days)
-- **stale:** true | false  (true if all evidence files unmodified for 12+ months)
+- **recently_active:** true | false (true if any evidence file modified within 90 days)
+- **stale:** true | false (true if all evidence files unmodified for 12+ months)
 - **Discovered by:** draft:learn on YYYY-MM-DD
 - **Description:** [What the pattern is and why it's problematic]
 - **Suggested fix:** [Brief description of the correct approach]
@@ -9449,9 +10209,9 @@ Scanned: N source files across M directories
 Duration: ~Xs
 
 Results:
-  New conventions learned:     N  [list names]
-  New anti-patterns learned:   N  [list names]
-  Existing patterns updated:   N  [list names]
+  New conventions learned: N [list names]
+  New anti-patterns learned: N [list names]
+  Existing patterns updated: N [list names]
   Skipped (insufficient data): N
   Skipped (already documented): N
 
@@ -9492,13 +10252,27 @@ This creates a **continuous improvement loop**:
 | Remove entries on re-scan | Update evidence/dates, never delete |
 | Learn from test/mock code | Focus on production source code |
 
+## Mandatory Self-Check (before completion summary)
+
+Before printing the completion summary, internally verify and report:
+
+1. **Graph files queried** — JSONL files loaded plus any live `graph --query` invocations.
+2. **Layer 1 files deliberately skipped** — list any context sections skipped.
+3. **Filesystem find/grep fallback justification** — for every `find`/`grep` run for source discovery, state which languages or extensions were not covered by the graph indexes (e.g. Ruby without ctags).
+
+If `draft/graph/schema.yaml` does not exist, set `Graph files queried: NONE` and use justification `graph data unavailable`.
+
+## Graph Usage Report (append to completion summary)
+
+Emit the canonical footer from [core/shared/graph-usage-report.md](../../core/shared/graph-usage-report.md) §Canonical footer. The lint hook `scripts/tools/check-graph-usage-report.sh` validates the section on save.
+
 ---
 
 ## ADR Command
 
 When user says "document decision" or "draft adr [title]":
 
-Create or manage Architecture Decision Records (ADRs) for this project.
+You are creating or managing Architecture Decision Records (ADRs) for this project.
 
 ## Red Flags - STOP if you're:
 
@@ -9545,7 +10319,17 @@ Check for arguments:
 ### List Mode
 
 If argument is `list`:
-1. Read all files in `draft/adrs/`
+1. Prefer the deterministic `adr-index.sh` wrapper for the listing — it returns a structured JSON `{adrs:[{id,title,date,status,path,related_tracks}]}` derived from each ADR's frontmatter. Resolve via the canonical tool resolver (see [core/shared/tool-resolver.md](../../core/shared/tool-resolver.md)):
+   ```bash
+   DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
+   [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+   [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+   if [ -x "$DRAFT_TOOLS/adr-index.sh" ]; then
+     bash "$DRAFT_TOOLS/adr-index.sh" --root draft/adrs
+   else
+     ls draft/adrs/ # fallback: enumerate files manually
+   fi
+   ```
 2. Display summary table:
 
 ```
@@ -9677,6 +10461,26 @@ If in interactive mode (no title provided), ask:
 
 If title provided, proceed directly with the title.
 
+### 2.1 HLD Handoff (when invoked from a track context)
+
+If an active track exists and `draft/tracks/<id>/hld.md` is present:
+
+1. Read HLD §Alternatives Considered table.
+2. If any row is marked `Promote to ADR? yes` and has not been promoted yet (no matching ADR exists), offer:
+   ```
+   Found 1 unpromoted alternative in <track>/hld.md:
+     - {alternative} — rejected because: {reason}
+   Promote to ADR? [Y/n]
+   ```
+3. When promoting:
+   - Pre-fill ADR §Context from HLD §Background and the §High-Level Design / Key Design Decisions row that drove this rejection.
+   - Pre-fill ADR §Decision from the HLD §Key Design Decision that was selected over this alternative.
+   - Pre-fill ADR §Alternatives Considered with the rejected alternative.
+   - Set frontmatter `originating_hld: draft/tracks/<id>/hld.md`.
+4. After ADR creation, edit HLD §Alternatives Considered table: change the `Promote to ADR?` cell to `ADR-<number>` (linking back). Surface the diff to the user for confirmation.
+
+If invoked outside a track context, skip 2.1 and proceed with normal interactive flow.
+
 ## Step 3: Load Project Context
 
 Follow the base procedure in `core/shared/draft-context-loading.md`.
@@ -9707,13 +10511,13 @@ Verify the target filename `draft/adrs/<number>-<kebab-case-title>.md` does not 
 **MANDATORY: Include YAML frontmatter with git metadata.** Gather git info first:
 
 ```bash
-git branch --show-current                    # LOCAL_BRANCH
-git rev-parse --abbrev-ref @{upstream} 2>/dev/null || echo "none"  # REMOTE/BRANCH
-git rev-parse HEAD                           # FULL_SHA
-git rev-parse --short HEAD                   # SHORT_SHA
-git log -1 --format=%ci HEAD                 # COMMIT_DATE
-git log -1 --format=%s HEAD                  # COMMIT_MESSAGE
-git status --porcelain | head -1 | wc -l     # 0 = clean, >0 = dirty
+git branch --show-current # LOCAL_BRANCH
+git rev-parse --abbrev-ref @{upstream} 2>/dev/null || echo "none" # REMOTE/BRANCH
+git rev-parse HEAD # FULL_SHA
+git rev-parse --short HEAD # SHORT_SHA
+git log -1 --format=%ci HEAD # COMMIT_DATE
+git log -1 --format=%s HEAD # COMMIT_MESSAGE
+git status --porcelain | head -1 | wc -l # 0 = clean, >0 = dirty
 ```
 
 Create `draft/adrs/<number>-<kebab-case-title>.md`:
@@ -9734,6 +10538,9 @@ git:
   commit_message: "{COMMIT_MESSAGE}"
   dirty: {true|false}
 synced_to_commit: "{FULL_SHA}"
+# Optional — populated when ADR is promoted from a track HLD §Alternatives Considered row.
+originating_hld: "{path/to/draft/tracks/<id>/hld.md or null}"
+originating_track: "{<track_id> or null}"
 ---
 
 # ADR-<number>: <Title>
@@ -9787,6 +10594,7 @@ synced_to_commit: "{FULL_SHA}"
 
 - [Link to relevant discussion, RFC, or documentation]
 - [Related ADRs: ADR-xxx]
+- [Originating HLD: draft/tracks/<id>/hld.md §Alternatives Considered] (only when promoted from a track)
 ```
 
 ## Step 6: Present for Review
@@ -9838,10 +10646,24 @@ Proposed → Accepted → [Deprecated | Superseded by ADR-xxx]
 
 When user says "debug bug" or "draft debug [description|track <id>]":
 
-Conduct a structured debugging session following systematic investigation methodology.
+You are conducting a structured debugging session following systematic investigation methodology.
+
+## MANDATORY GRAPH LOOKUP (read before Isolate/Diagnose)
+
+When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. During Steps 3–4 (Isolate, Diagnose):
+
+1. Locate the suspect file's module via `draft/graph/module-graph.jsonl` before tracing data flow.
+2. Use `graph --query --symbol <fn> --mode callers` to enumerate call sites of suspect functions — not `grep`.
+3. Use `graph --query --file <path> --mode impact` to size the blast radius before proposing a fix.
+4. Cross-check `draft/graph/hotspots.jsonl` to know whether the file is high-fanIn (any fix needs extra caution).
+
+Filesystem `grep` is reserved for source-text scans (literal error strings, stack-trace symbols when the graph misses). Use the fallback sentence on graph miss.
 
 ## Red Flags — STOP if you're:
 
+See [shared red flags](../../core/shared/red-flags.md) — applies to all code-touching skills.
+
+Skill-specific:
 - Making code changes before reproducing the bug
 - Guessing at the cause instead of tracing data/control flow
 - Trying multiple fixes simultaneously ("shotgun debugging")
@@ -9859,8 +10681,8 @@ Conduct a structured debugging session following systematic investigation method
 Before starting, capture the current git state:
 
 ```bash
-git branch --show-current    # Current branch name
-git rev-parse --short HEAD   # Current commit hash
+git branch --show-current # Current branch name
+git rev-parse --short HEAD # Current commit hash
 ```
 
 Store this for the debug report header. The session is scoped to this specific branch/commit.
@@ -9881,7 +10703,7 @@ Key context for debugging:
 - `.ai-context.md` — Module boundaries, data flows, invariants (crucial for tracing)
 - `tech-stack.md` — Language-specific debugging tools and techniques
 - `guardrails.md` — Known anti-patterns that may be causing the issue
-- `draft/graph/` (if available) — Load `module-graph.jsonl` for dependency context, `hotspots.jsonl` for complexity awareness. Use graph callers query to find all files that include a suspect file, and impact query to understand blast radius of potential fixes. See `core/shared/graph-query.md`.
+- `draft/graph/` (MANDATORY when present) — Load `module-graph.jsonl` for dependency context, `hotspots.jsonl` for complexity awareness, and `modules/<module>.jsonl` for the suspect module. Use `graph --query --symbol <fn> --mode callers` to find all callers, and `--mode impact` to size blast radius before any fix. See [core/shared/graph-query.md](../../core/shared/graph-query.md).
 
 ## Step 1: Parse Arguments
 
@@ -9907,8 +10729,8 @@ If a Jira ticket is provided:
 3. **Capture evidence** — Error messages, stack traces, log output (verbatim, not summarized)
 4. **Classify reproducibility:**
    - Always reproducible — proceed to Step 3
-   - Intermittent — document frequency, conditions, patterns (time, load, data-dependent)
-   - Cannot reproduce — gather more context, check environment differences
+   - Intermittent — document frequency, conditions, patterns (time, load, data-dependent); proceed to Step 3 with the failure mode tagged `intermittent` in the hypothesis log
+   - Cannot reproduce — **halt diagnostic claims.** Do not proceed to Step 4 (Diagnose) until reproduction is established or the user explicitly opts into hypothesis work without reproduction. Hypotheses formed without reproduction routinely converge on confidently-wrong root causes. If the user opts in: every hypothesis must be tagged `unreproduced` and the final report must mark the root cause as `unconfirmed pending repro`.
 
 Reference `core/agents/debugger.md` Phase 1 for detailed investigation techniques.
 
@@ -9929,16 +10751,18 @@ Reference `core/agents/debugger.md` Phase 2 for language-specific debugging tech
 
 **Goal:** Confirm root cause with evidence.
 
-1. **Form hypothesis** — "The bug is caused by [X] at `file:line` because [evidence]"
+**Ground-truth gate (per hypothesis):** Before forming hypothesis N, **open and Read** the file at the `file:line` you are about to cite. Quote the relevant lines in the hypothesis log. A hypothesis written from graph metadata or recollection is a [Ground-Truth Red Flag](../../core/shared/red-flags.md) G4 violation — it produces hypothesis loops on assumptions rather than evidence.
+
+1. **Form hypothesis** — "The bug is caused by [X] at `file:line` because [evidence quoted from Read]"
 2. **Predict outcome** — "If this hypothesis is correct, then [Y] should be observable"
 3. **Test minimally** — Smallest possible test to prove or disprove
 4. **Record result** — Document in hypothesis log:
 
-| # | Hypothesis | Test | Prediction | Actual | Result |
-|---|-----------|------|-----------|--------|--------|
-| 1 | [description] | [test] | [expected] | [actual] | Confirmed/Rejected |
+| # | Hypothesis (cite + quote) | Test | Prediction | Actual | Result |
+|---|--------------------------|------|-----------|--------|--------|
+| 1 | [description with `path:line` and quoted line] | [test] | [expected] | [actual] | Confirmed/Rejected |
 
-**If hypothesis fails:** Return to Step 3 with updated understanding. After 3 failed cycles, escalate (see Error Handling).
+**If hypothesis fails:** Return to Step 3 with updated understanding. After 3 failed cycles, escalate (see Error Handling). Do not increase confidence on a rejected hypothesis just because alternatives are running out — that's how anchoring bias produces wrong root causes.
 
 Reference `core/agents/debugger.md` Phase 3 and `core/agents/rca.md` for 5 Whys analysis.
 
@@ -9987,13 +10811,26 @@ TIMESTAMP=$(date +%Y-%m-%dT%H%M)
 ln -sf debug-report-${TIMESTAMP}.md draft/debug-report-latest.md
 ```
 
+## Mandatory Self-Check (before debug report)
+
+Before printing the debug report, internally verify and report:
+
+1. **Graph files queried** — JSONL files loaded plus any live `graph --query` invocations.
+2. **Layer 1 files deliberately skipped** — list any context sections skipped.
+3. **Filesystem grep fallback justification** — for every `grep`/`find` run, name the concept it searched for.
+
+If `draft/graph/schema.yaml` does not exist, set `Graph files queried: NONE` and use justification `graph data unavailable`.
+
+## Graph Usage Report (append to debug report)
+
+Emit the canonical footer from [core/shared/graph-usage-report.md](../../core/shared/graph-usage-report.md) §Canonical footer. The lint hook `scripts/tools/check-graph-usage-report.sh` validates the section on save.
 ## Cross-Skill Dispatch
 
 - **Auto-invoked by:** `draft new-track` (bug tracks — Offer tier), `draft implement` (blocked tasks — Offer tier)
 - **Invokes:** RCA agent (`core/agents/rca.md`) for 5 Whys and blast radius analysis
 - **Feeds into:** `draft new-track` spec.md (reproduction and root cause sections via Detect+Auto-Feed)
 - **Suggests at completion:**
-  - "Run `git bisect` to find the exact commit that introduced this bug"
+  - "Run `draft regression` to find the exact commit that introduced this bug"
   - "Run `draft new-track` to create a bug fix track from these findings"
 - **Jira sync:** If ticket linked, attach debug report and post summary via `core/shared/jira-sync.md`
 
@@ -10010,7 +10847,7 @@ ln -sf debug-report-${TIMESTAMP}.md draft/debug-report-latest.md
 
 When user says "standup" or "draft standup [date|week|save]":
 
-Generate a standup summary from recent development activity. This is a **read-only** skill — it makes no changes to the codebase or track files.
+You are generating a standup summary from recent development activity. This is a **read-only** skill — it makes no changes to the codebase or track files.
 
 ## Red Flags — STOP if you're:
 
@@ -10030,8 +10867,8 @@ Generate a standup summary from recent development activity. This is a **read-on
 Before starting, capture the current git state:
 
 ```bash
-git branch --show-current    # Current branch name
-git rev-parse --short HEAD   # Current commit hash
+git branch --show-current # Current branch name
+git rev-parse --short HEAD # Current commit hash
 ```
 
 Store this for context. The standup reflects activity up to this specific commit.
@@ -10056,14 +10893,23 @@ Check for arguments:
 
 ### Source 1: Git History
 
+**Preferred:** invoke `parse-git-log.sh` — it parses conventional commits into structured JSONL `{sha,type,scope,track_id,subject,author,timestamp,files_changed}`, eliminating ambiguity in `type(track-id): subject` parsing. Resolve via the canonical tool resolver (see [core/shared/tool-resolver.md](../../core/shared/tool-resolver.md)):
+
 ```bash
-# Last 24 hours by default (adjust with args)
-git log --oneline --since="24 hours ago" --author="$(git config user.name)"
-git log --since="24 hours ago" --author="$(git config user.name)" --format="%h %s" --no-merges
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+if [ -x "$DRAFT_TOOLS/parse-git-log.sh" ]; then
+  bash "$DRAFT_TOOLS/parse-git-log.sh" --since "24 hours ago" --author "$(git config user.name)"
+else
+  # Fallback: raw git log
+  git log --oneline --since="24 hours ago" --author="$(git config user.name)"
+  git log --since="24 hours ago" --author="$(git config user.name)" --format="%h %s" --no-merges
+fi
 ```
 
 Parse commit messages for:
-- Track IDs (from `type(track-id): description` convention)
+- Track IDs (from `type(track-id): description` convention — already extracted as `track_id` in JSONL)
 - Task completions
 - Bug fixes
 - Feature additions
@@ -10074,6 +10920,10 @@ Read `draft/tracks.md` for active tracks:
 - Current status and phase
 - Tasks completed since last standup
 - Blockers (tasks marked `[!]`)
+- Scope (`metadata.json:scope_includes` / `scope_excludes`) — mention when
+  two active tracks share a scope tag; surfaced by
+  `scripts/tools/check-scope-conflicts.sh`. Schema:
+  [core/shared/template-contract.md](../../core/shared/template-contract.md).
 
 For each active track, read `plan.md` to determine:
 - Tasks completed (count `[x]` with recent commit SHAs)
@@ -10087,12 +10937,26 @@ If Jira MCP is available:
 - Check for new comments or assignments
 - Pull sprint board status
 
-### Source 4: GitHub PR Activity (if MCP / `gh` CLI available)
+### Source 4: GitHub Activity (if MCP available)
 
-If GitHub MCP or the `gh` CLI is available:
-- Query open PRs authored by user (`gh pr list --author @me`)
-- Check for new review comments received (`gh pr view <num> --comments`)
-- Query recently merged PRs (`gh pr list --state merged --author @me`)
+If GitHub MCP is available:
+- Query open reviews authored by user
+- Check for new review comments received
+- Query recently merged changes
+
+### Source 5: Skill Metrics (if `~/.draft/metrics.jsonl` exists)
+
+```bash
+tail -50 ~/.draft/metrics.jsonl 2>/dev/null
+```
+
+If the file exists and has records in the standup period, enrich the standup with skill activity:
+- **implement** records: count tasks completed, note TDD pass/fail rate
+- **review** records: note reviews run and their verdicts
+- **bughunt** records: note bug hunts run and critical counts
+- Include a brief "AI-Assisted Activity" line in the standup: `AI tools used: implement (N tasks), review (N times), bughunt (N hunts)`
+
+If the file does not exist or has no records in the period, skip silently — this source is always optional.
 
 ## Step 3: Generate Standup
 
@@ -10107,7 +10971,7 @@ Format using the standard Yesterday/Today/Blockers structure:
 ### Completed
 - [{track-id}] {task description} ({commit SHA})
 - [{track-id}] {task description} ({commit SHA})
-- Reviewed: {PR number} (if applicable)
+- Reviewed: {GitHub change ID / PR} (if applicable)
 
 ### Planned
 - [{track-id}] Next task: {description} (from plan.md)
@@ -10151,14 +11015,14 @@ Include the report header table immediately after frontmatter:
 
 - **References:** `core/agents/ops.md` for operational context awareness
 - **Reads from:** `draft status` data (tracks.md, plan.md, metadata.json)
-- **MCP integrations:** Jira MCP (ticket status), GitHub MCP / `gh` CLI (PR activity)
+- **MCP integrations:** Jira MCP (ticket status), GitHub MCP (review activity)
 - **No downstream dispatch** — this is a terminal, read-only skill
 
 ## Error Handling
 
 **If no git history:** "No git commits found for {period}. Is this the right repository?"
 **If no draft context:** Generate standup from git history only. Note: "Richer standups available after `draft init`."
-**If no MCP available:** Skip Jira/PR sections, generate from local data only.
+**If no MCP available:** Skip Jira/GitHub sections, generate from local data only.
 
 ---
 
@@ -10166,10 +11030,24 @@ Include the report header table immediately after frontmatter:
 
 When user says "tech debt" or "draft tech-debt [path|track <id>]":
 
-Conduct a technical debt analysis to catalog, prioritize, and plan remediation of debt across the codebase.
+You are conducting a technical debt analysis to catalog, prioritize, and plan remediation of debt across the codebase.
+
+## MANDATORY GRAPH LOOKUP (read before debt scan)
+
+When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Tech-debt prioritization is fundamentally driven by graph data:
+
+1. Load `draft/graph/hotspots.jsonl` — **rank candidates by `fanIn × complexity`** to surface high-leverage debt first.
+2. Load `draft/graph/module-graph.jsonl` — flag debt in modules involved in cycles as higher priority.
+3. Run `graph --query --mode cycles` to enumerate dependency cycles — every cycle is a candidate architecture-debt entry.
+4. For each catalogued finding, run `graph --query --file <path> --mode impact` so the remediation plan includes blast-radius.
+
+Filesystem `grep` (e.g. `scan-markers.sh`) is still primary for TODO/FIXME marker discovery — markers are source-text, not graph-derived. The graph governs **prioritization**, the marker scan governs **discovery**.
 
 ## Red Flags — STOP if you're:
 
+See [shared red flags](../../core/shared/red-flags.md) — applies to all code-touching skills.
+
+Skill-specific:
 - Flagging intentional design choices as debt (check tech-stack.md accepted patterns first)
 - Cataloging debt without understanding the business context
 - Setting priorities without considering team capacity
@@ -10187,8 +11065,8 @@ Conduct a technical debt analysis to catalog, prioritize, and plan remediation o
 Before starting, capture the current git state:
 
 ```bash
-git branch --show-current    # Current branch name
-git rev-parse --short HEAD   # Current commit hash
+git branch --show-current # Current branch name
+git rev-parse --short HEAD # Current commit hash
 ```
 
 Store this for the report header. All findings are relative to this specific branch/commit.
@@ -10222,13 +11100,27 @@ Read and follow the base procedure in `core/shared/draft-context-loading.md`.
 
 ## Step 3: Scan for Debt
 
-Scan the codebase systematically across all six categories. For each finding, record: location (file:line), description, evidence, and category.
+Scan the codebase systematically across all seven categories. For each finding, record: location (file:line OR track id for Process Debt), description, evidence, and category.
 
 ### Category 1: Code Debt
 
+For TODO/FIXME/HACK/XXX/DEPRECATED markers, prefer the deterministic `scan-markers.sh` wrapper — it emits JSON `[{path,line,marker,text,sha,author,introduced,age_days}]` with blame ages already computed. Resolve via the canonical tool resolver (see [core/shared/tool-resolver.md](../../core/shared/tool-resolver.md)):
+
+```bash
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+[ -x "$DRAFT_TOOLS/scan-markers.sh" ] && bash "$DRAFT_TOOLS/scan-markers.sh" --root .
+# Fallback when script unavailable: grep -rn 'TODO\|FIXME\|HACK\|XXX\|DEPRECATED' .
+```
+
+Use the JSON output to prioritise: markers with `age_days > 180` are stale and should be promoted to tracked tech debt.
+
+**Marker context gate (Ground-Truth Discipline G1):** `scan-markers.sh` produces *candidates*, not findings. Before promoting a TODO/FIXME/HACK/XXX/DEPRECATED marker to your debt catalog, **Read** the surrounding 10–20 lines at that `file:line`. Many markers are justified (intentional deferrals with ownership) or already addressed (the marker rotted, the work shipped). A debt entry whose Evidence is "marker exists" without a Read is a Ground-Truth Red Flag — produce false positives and reviewer churn.
+
 - Complex functions (cyclomatic complexity >10, deep nesting >4 levels)
 - Duplicated code blocks (>20 lines similar across multiple locations)
-- TODO/FIXME/HACK/XXX comments (especially old ones — check git blame age)
+- TODO/FIXME/HACK/XXX comments (especially old ones — check git blame age via `scan-markers.sh` above)
 - Dead code (unreachable branches, unused exports, commented-out blocks)
 - Inconsistent naming patterns within the same module
 - Long functions (>100 lines without clear separation of concerns)
@@ -10288,6 +11180,34 @@ Scan the codebase systematically across all six categories. For each finding, re
 - Missing or outdated Dockerfiles / container configs
 - Inconsistent environment parity (dev/staging/prod divergence)
 - Missing rate limiting or resource guards on public endpoints
+
+### Category 7: Process Debt ( HLD/LLD compliance)
+
+Scan `draft/tracks/*/` for design-process gaps. For each track:
+
+- Read `spec.md` frontmatter `classification.criticality`. Default to `standard` if absent.
+- Check for `hld.md`:
+  - Missing for `criticality ∈ {standard, high, mission-critical}` → flag as Process Debt
+  - Severity: `critical` for mission-critical, `high` for high, `medium` for standard
+  - Remediation: "Run `draft decompose <track>` to generate hld.md"
+- Check `hld.md` Approvals table:
+  - Required rows unsigned (per `draft upload` Step 3.1 logic) and the track has merged commits → flag
+  - Severity: `high` if criticality ∈ {high, mission-critical}, `medium` otherwise
+  - Remediation: "Re-circulate hld.md to listed approvers; update Date column on sign-off"
+- Check for `lld.md`:
+  - Any module in HLD §Detailed Design has `Complexity: High` AND `lld.md` is missing → flag
+  - Severity: `medium`
+  - Remediation: "Run `draft decompose <track> --lld`"
+- Check HLD §Checklist completeness:
+  - For criticality ≥ standard: any §Checklist sub-section still showing the placeholder text "<Describe..." or empty bullets → flag as Process Debt
+  - Severity: `high` for high/mission-critical, `medium` for standard
+  - Remediation: "Author must populate hld.md §Checklist before draft deploy-checklist will pass"
+- Check HLD/LLD freshness:
+  - If `synced_to_commit` is older than the latest merged commit touching files in HLD §Detailed Design → flag as drift
+  - Severity: `medium`
+  - Remediation: "Run `draft decompose <track>` to refresh graph slots; review structural sections; re-circulate if signed"
+
+Process Debt findings carry the same Impact/Effort/Risk scoring as other categories. They surface in the remediation plan alongside code/architecture debt.
 
 ## Step 4: Prioritize
 
@@ -10376,6 +11296,36 @@ Report structure:
 4. **Remediation Plan** — Three tiers with effort estimates
 5. **Recommendations** — Strategic advice on debt management practices
 
+## Report Closing: Next Actions (REQUIRED)
+
+Every tech-debt report must end with a `## Next Actions` section listing the smallest set of follow-ups in execution order. Use this exact shape:
+
+```markdown
+## Next Actions
+
+| # | Action | Owner | Blocker? | Skill / Command |
+|---|---|---|---|---|
+| 1 | <imperative one-liner> | <team\|TBD> | yes/no | `draft <skill> <args>` or `n/a` |
+```
+
+Rules:
+- Tech-debt rarely "blocks" merge; mark `Blocker? = yes` only for items that will cause an outage on next deploy.
+- Suggest `draft new-track` for items >1 day of work, `draft adr` for design re-decisions, `draft implement` for surgical cleanups.
+- Cap at 10 actions; full backlog stays in the report body.
+
+## Mandatory Self-Check (before debt report)
+
+Before printing the final debt report, internally verify and report:
+
+1. **Graph files queried** — JSONL files loaded plus any live `graph --query` invocations (especially `cycles` and `impact`).
+2. **Layer 1 files deliberately skipped** — list any context sections skipped as irrelevant to the categories scanned.
+3. **Filesystem grep fallback justification** — for every `grep`/`find` run beyond `scan-markers.sh`, name the concept it searched for.
+
+If `draft/graph/schema.yaml` does not exist, set `Graph files queried: NONE` and use justification `graph data unavailable`.
+
+## Graph Usage Report (append to debt report)
+
+Emit the canonical footer from [core/shared/graph-usage-report.md](../../core/shared/graph-usage-report.md) §Canonical footer. The lint hook `scripts/tools/check-graph-usage-report.sh` validates the section on save.
 ## Cross-Skill Dispatch
 
 - **Offered by:** `draft new-track` (refactor tracks — scope the debt before planning)
@@ -10398,7 +11348,7 @@ Report structure:
 
 When user says "incident" or "draft incident-response [new|update|postmortem]":
 
-Manage an incident through its full lifecycle using structured incident management practices.
+You are managing an incident through its full lifecycle using structured incident management practices.
 
 ## Red Flags — STOP if you're:
 
@@ -10470,7 +11420,7 @@ Next update: {time — SEV1: 15min, SEV2: 30min, SEV3: 1hr}
 - Extract URLs and log paths from ticket
 - Use `curl`/`wget` to fetch dashboards or error pages mentioned
 - Use `ssh` to access remote log paths if mentioned
-- If GitHub MCP / `gh` CLI available: check recent deployments and merged PRs (`gh pr list --state merged --search "merged:>2024-01-01"`)
+- If GitHub MCP available: check recent deployments (`last 24h`)
 - Record all evidence in incident timeline
 
 ### Step 5: Mitigate
@@ -10533,7 +11483,7 @@ Save to: `draft/incidents/incident-<timestamp>.md` or `draft/tracks/<id>/inciden
 - Read incident file for timeline and evidence
 - `git log` for related commits during incident window
 - If Jira MCP: pull ticket history and transitions
-- If GitHub MCP / `gh` CLI: pull PRs submitted during/after incident
+- If GitHub MCP: pull changes submitted during/after incident
 
 ### Step 3: Root Cause Analysis
 
@@ -10551,6 +11501,14 @@ Reference `core/agents/rca.md` methodology:
 3. **Detection Lag:** When was the bug introduced vs when was it detected?
 
 4. **SLO Impact:** Which SLOs were affected and by how much?
+
+5. **HLD Claims vs Reality ():** If the affected service has a `hld.md` (search `draft/tracks/*/hld.md` for §Detailed Design components matching the failing module), compare incident behavior against HLD claims:
+   - Did §Resiliency claims (graceful degradation, circuit breakers, timeout handling) actually hold during the incident?
+   - Did §Multi-tenancy claims (tenant isolation, predictable performance) hold? Did one tenant impact another?
+   - Did §Upgrade claims (backward compat, dependent service order) hold? Did an upgrade trigger this?
+   - Did §Scale claims hold under the load that triggered the incident?
+   - Did §Observability claims hold — were the listed key metrics sufficient for detection?
+   - Cite the specific HLD §section using section text (`draft/tracks/<id>/hld.md §Resiliency`) for each gap — avoid markdown anchor slugs since renderers (GitHub, mkdocs, Hugo) generate different slugs for nested headings. These citations feed the §Action Items as "amend HLD §X — claim was {claim} but reality showed {reality}."
 
 ### Step 4: Generate Postmortem
 
@@ -10594,12 +11552,20 @@ Or track-scoped: `draft/tracks/<id>/postmortem.md`
 ## What Went Wrong
 - {things that made the incident worse}
 
+## Design Claims vs Reality
+{populated when an HLD was available — list each HLD claim that did not hold, citing the specific §section}
+
+| HLD Section | Claim | Reality During Incident | Recommended HLD Amendment |
+|-------------|-------|-------------------------|---------------------------|
+| §Resiliency | {what was claimed} | {what actually happened} | {how to update HLD} |
+
 ## Action Items
 | # | Action | Owner | Deadline | Status |
 |---|--------|-------|----------|--------|
 | 1 | {detection improvement} | {name} | {date} | [ ] |
 | 2 | {process improvement} | {name} | {date} | [ ] |
 | 3 | {code improvement} | {name} | {date} | [ ] |
+| 4 | Amend `draft/tracks/<id>/hld.md` §{section} (if claim drift identified) | {design owner} | {date} | [ ] |
 ```
 
 ### Step 5: Jira Sync
@@ -10613,7 +11579,7 @@ Follow `core/shared/jira-sync.md`:
 ## Cross-Skill Dispatch
 
 - **Triggered by:** `draft new-track` when incident keywords detected in description
-- **Postmortem feeds into:** `git bisect` (find the breaking commit), `draft learn` (update guardrails)
+- **Postmortem feeds into:** `draft regression` (find the breaking commit), `draft learn` (update guardrails)
 - **Can create:** Bug track via `draft new-track` for the fix
 
 ## Error Handling
@@ -10627,7 +11593,7 @@ Follow `core/shared/jira-sync.md`:
 
 When user says "write docs" or "draft documentation [readme|runbook|api|onboarding]":
 
-Generate or update technical documentation for this project using structured writing principles.
+You are generating or updating technical documentation for this project using structured writing principles.
 
 ## Red Flags — STOP if you're:
 
@@ -10673,7 +11639,7 @@ If `draft/` doesn't exist, this skill works standalone — generate docs from co
 - Read `draft/architecture.md` or `draft/.ai-context.md` — Service topology, dependencies
 - Read `draft/workflow.md` — Deployment conventions
 - Read `draft/tech-stack.md` — Infrastructure details
-- If GitHub MCP / `gh` CLI available: check recent merged PRs touching deployment configs
+- If GitHub MCP available: check recent deployment changes
 - If Jira MCP available: check recent incident tickets for the service
 
 ### API Mode
@@ -10805,7 +11771,7 @@ Present generated doc to user for review before final save.
 
 ## Cross-Skill Dispatch
 
-- **Suggested by:** `draft init` (after context generation), `draft implement` (track completion with new APIs), `draft decompose` (module API docs)
+- **Suggested by:** `draft init` (after context generation), `draft implement` (track completion with new APIs), `draft upload` (pre-upload for new APIs), `draft decompose` (module API docs)
 - **Jira sync:** If ticket linked, attach doc and post comment via `core/shared/jira-sync.md`
 
 ## Error Handling
@@ -10840,6 +11806,11 @@ Display a comprehensive overview of project progress.
    - `draft/tracks/<id>/metadata.json` for stats. If `metadata.json` is malformed or unreadable, display `(metadata unavailable)` for that track's statistics instead of failing.
    - `draft/tracks/<id>/plan.md` for task status
    - `draft/tracks/<id>/architecture.md` for module status (if exists)
+   - `metadata.json:scope_includes` / `scope_excludes` for the track's
+     scope footprint. Surface these in the status output so reviewers can
+     spot overlap at a glance. Conflicts are detected by
+     `scripts/tools/check-scope-conflicts.sh` (see
+     [core/shared/template-contract.md](../../core/shared/template-contract.md)).
 3. Check for project-wide `draft/.ai-context.md` (or legacy `draft/architecture.md`) for module status
 4. **Detect orphaned tracks:**
    - Scan `draft/tracks/` for all directories
@@ -10848,6 +11819,26 @@ Display a comprehensive overview of project progress.
    - If directory has metadata.json but NOT in tracks.md → orphaned track
    - Collect list of orphaned track IDs for warning section
 
+### Optional: report rollup & freshness signals
+
+If `parse-reports.sh` and `freshness-check.sh` are available, gather structured signals to enrich the status output (severity counts per track, stale `draft/` docs). Resolve via the canonical tool resolver (see [core/shared/tool-resolver.md](../../core/shared/tool-resolver.md)):
+
+```bash
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+
+# Per-track report severity rollup (bughunt, review, tech-debt, etc.):
+[ -x "$DRAFT_TOOLS/parse-reports.sh" ] && \
+  bash "$DRAFT_TOOLS/parse-reports.sh" --root draft/
+
+# Stale draft/ docs (sha256 drift since last index):
+[ -x "$DRAFT_TOOLS/freshness-check.sh" ] && [ -f draft/.state/freshness.json ] && \
+  bash "$DRAFT_TOOLS/freshness-check.sh" --state draft/.state/freshness.json
+```
+
+Surface non-zero severity counts inline with each track. Surface stale-doc warnings in a "STALE DOCS" section after BLOCKED ITEMS. Both signals are best-effort — skip silently if scripts or state are absent.
+
 ## Output Format
 
 Check each track's `metadata.json` `type` field to determine display format.
@@ -10855,28 +11846,27 @@ Check each track's `metadata.json` `type` field to determine display format.
 ### Standard (multi-phase) tracks
 
 ```
-═══════════════════════════════════════════════════════════
+---
                       DRAFT STATUS
-═══════════════════════════════════════════════════════════
-
+---
 PROJECT: [from product.md title]
 
 ACTIVE TRACKS
-─────────────────────────────────────────────────────────
+---
 [track-id-1] Feature Name
   Status: [~] In Progress
-  Phase:  2/3 (Phase 2: [Phase Name])
-  Tasks:  5/12 complete
+  Phase: 2/3 (Phase 2: [Phase Name])
+  Tasks: 5/12 complete
   ├─ [x] Task 1.1: Description
   ├─ [x] Task 1.2: Description
-  ├─ [~] Task 2.1: Description  ← CURRENT
+  ├─ [~] Task 2.1: Description ← CURRENT
   ├─ [ ] Task 2.2: Description
   └─ [!] Task 2.3: Blocked - [reason]
 
 [track-id-2] Another Feature
   Status: [ ] Not Started
-  Phase:  0/2
-  Tasks:  0/6 complete
+  Phase: 0/2
+  Tasks: 0/6 complete
 
 ```
 
@@ -10887,11 +11877,11 @@ Quick-mode tracks use flat task numbering (`Task 1:`, `Task 2:`) without phases.
 ```
 [track-id-3] Quick Feature
   Status: [~] In Progress
-  Type:   quick
-  Tasks:  2/5 complete
+  Type: quick
+  Tasks: 2/5 complete
   ├─ [x] Task 1: Description
   ├─ [x] Task 2: Description
-  ├─ [~] Task 3: Description  ← CURRENT
+  ├─ [~] Task 3: Description ← CURRENT
   ├─ [ ] Task 4: Description
   └─ [ ] Task 5: Description
 ```
@@ -10902,17 +11892,17 @@ Do **not** show `Phase: X/Y` for quick-mode tracks — they have no phases.
 
 ```
 MODULES (if architecture.md exists)
-─────────────────────────────────────────────────────────
-Module A         [x] Complete  (Coverage: 96.2%)
-Module B         [~] In Progress - 3/5 tasks
-Module C         [ ] Not Started
+---
+Module A [x] Complete (Coverage: 96.2%)
+Module B [~] In Progress - 3/5 tasks
+Module C [ ] Not Started
 
 BLOCKED ITEMS
-─────────────────────────────────────────────────────────
+---
 - [track-id-1] Task 2.3: [blocked reason]
 
 ORPHANED TRACKS
-─────────────────────────────────────────────────────────
+---
 ⚠ The following tracks have metadata.json but are missing from tracks.md:
 - draft/tracks/orphan-track-id/
 
@@ -10921,16 +11911,16 @@ Recovery options:
 2. Remove orphaned track directory if no longer needed
 
 RECENTLY COMPLETED
-─────────────────────────────────────────────────────────
+---
 - [track-id-3] - Completed [date]
 
 QUICK STATS
-─────────────────────────────────────────────────────────
-Active Tracks:    2
-Total Tasks:      18
-Completed:        5 (28%)
-Blocked:          1
-═══════════════════════════════════════════════════════════
+---
+Active Tracks: 2
+Total Tasks: 18
+Completed: 5 (28%)
+Blocked: 1
+---
 ```
 
 ## Module Reporting
@@ -10951,10 +11941,9 @@ When `.ai-context.md` or `architecture.md` exists for a track (track-level or pr
 ## If No Tracks
 
 ```
-═══════════════════════════════════════════════════════════
+---
                       DRAFT STATUS
-═══════════════════════════════════════════════════════════
-
+---
 PROJECT: [from product.md title]
 
 No active tracks.
@@ -10962,7 +11951,7 @@ No active tracks.
 Get started:
   draft new-track "Your feature description"
 
-═══════════════════════════════════════════════════════════
+---
 ```
 
 ## If Not Initialized
@@ -11157,7 +12146,7 @@ Draft state NOT updated (pending revert completion).
 
 When user says "handle change" or "draft change <description>":
 
-Handle a mid-track requirement change using Draft's Context-Driven Development methodology.
+You are handling a mid-track requirement change using Draft's Context-Driven Development methodology.
 
 ## Red Flags - STOP if you're:
 
@@ -11204,12 +12193,16 @@ If no change description provided:
 1. Read `draft/tracks/<id>/spec.md` — extract requirements and acceptance criteria
 2. Read `draft/tracks/<id>/plan.md` — extract all tasks with their current status (`[ ]`, `[~]`, `[x]`, `[!]`)
 3. Read `draft/tracks/<id>/metadata.json` — for track type and status
+4. Read `draft/tracks/<id>/hld.md` if present — extract Architecture, Detailed Design components, Dependencies, Checklist sections, and Approvals table (signed/unsigned)
+5. Read `draft/tracks/<id>/lld.md` if present — extract Classes/Interfaces, Data Model, Algorithms, Error Handling sections
 
 ---
 
-## Step 3: Analyze Spec Impact
+## Step 3: Analyze Spec / HLD / LLD Impact
 
-Analyze the change description against the loaded spec.
+Analyze the change description against the loaded spec, HLD, and LLD.
+
+**Code-grounded impact (Ground-Truth Discipline G1, G2, G4):** Classification ("Modified", "Unaffected", etc.) must be informed by the current code, not just the prior spec text. For each requirement / AC you're about to mark **Unaffected**, confirm the code path it depends on still behaves as the spec claims — Read the cited file or a representative file in the affected module before stamping Unaffected. Specs and implementations drift; "spec text unchanged" ≠ "behavior unchanged."
 
 For each requirement and acceptance criterion, classify the effect:
 
@@ -11227,6 +12220,31 @@ Spec impact:
 - AC #5 "Export limited to 1000 rows" → Removed (no row limit)
 - NEW: AC #6 "Export progress indicator for large datasets"
 ```
+
+**HLD impact** (only when `hld.md` exists):
+- §Architecture / Component Diagram — does the change introduce new modules or alter integration edges?
+- §Detailed Design — does any per-component subsection need updating, or are new components introduced?
+- §Dependencies — new/removed dependent components?
+- §Checklist (Performance, Scale, Security, Resiliency, Multi-tenancy, Upgrade, Cost) — do any answers need re-evaluation?
+- §IP / TPT — does the change introduce new third-party technology or invention disclosure?
+- §Deployment — does the deployment surface change?
+
+**LLD impact** (only when `lld.md` exists):
+- §Classes and Interfaces — signatures added/modified/removed?
+- §Data Model — schema changes? New fields? Migration required?
+- §Key Algorithms and Workflows — algorithm changes? New sequence diagrams needed?
+- §Error Handling — new error classes or retry policy changes?
+- §Observability — new metrics or alert thresholds?
+
+**Re-approval flag:** If the HLD Approvals table has any signed rows (Date column populated) AND the change touches HLD structural sections (Architecture, Detailed Design, Dependencies, Checklist, IP, Deployment), surface this warning prominently:
+
+```
+⚠️ HLD modified after sign-off — Approvals table requires re-circulation.
+    Signed rows: [list which roles signed and when]
+    Changed sections: [list of HLD sections impacted]
+```
+
+Same logic applies to LLD Approvals when LLD §Classes/Interfaces, §Data Model, or §Key Algorithms change.
 
 ---
 
@@ -11255,7 +12273,7 @@ Display a clear summary before proposing any file changes:
 
 ```
 Change: [change description]
-Track:  <track_id> — <track_name>
+Track: <track_id> — <track_name>
 
 Spec impact:
   - [classification] [requirement/AC]
@@ -11272,7 +12290,7 @@ Completed tasks that may need rework:
 
 Pending tasks with proposed changes:
   Before: - [ ] [original task text]
-  After:  - [ ] [proposed new task text]
+  After: - [ ] [proposed new task text]
 ```
 
 ---
@@ -11288,6 +12306,14 @@ Show the diff as before/after for each modified section. Do not rewrite unchange
 ### Proposed plan.md changes
 
 Show each task that would be modified as before/after. Do not rewrite the full plan.
+
+### Proposed hld.md changes (when HLD exists and is impacted)
+
+Show before/after for each impacted HLD section. Preserve §Approvals table verbatim — do not modify Approvals as part of the spec amendment; re-circulation is the author's manual step. Surface a "Sections changed" list at the top of the diff so reviewers can see scope at a glance.
+
+### Proposed lld.md changes (when LLD exists and is impacted)
+
+Show before/after for each impacted LLD section. Preserve §Approvals verbatim. Flag schema changes (Data Model) for migration consideration.
 
 ---
 
@@ -11305,7 +12331,7 @@ Apply these changes to spec.md and plan.md? [yes / no / edit]
 
 ## Step 8: Apply Changes and Log
 
-1. Apply the agreed amendments to `spec.md` and `plan.md`
+1. Apply the agreed amendments to `spec.md`, `plan.md`, and (when impacted) `hld.md` / `lld.md`. Preserve §Approvals tables in HLD/LLD verbatim — re-approval is a manual author step, not an automated edit.
 
 2. Update `draft/tracks/<id>/metadata.json`:
    - Set `updated` to current ISO timestamp
@@ -11329,10 +12355,18 @@ Changes applied: <track_id>
 Updated:
 - draft/tracks/<id>/spec.md
 - draft/tracks/<id>/plan.md
+[when HLD impacted:]
+- draft/tracks/<id>/hld.md
+[when LLD impacted:]
+- draft/tracks/<id>/lld.md
 
 [If completed tasks flagged:]
-⚠️  Review N completed task(s) — they may not align with the updated spec.
+⚠️ Review N completed task(s) — they may not align with the updated spec.
     Re-run draft implement to address rework, or draft review to assess.
+
+[If HLD/LLD modified after sign-off:]
+⚠️ HLD/LLD modified after sign-off — re-circulate to approvers listed in §Approvals.
+    draft upload will block git upload for high-criticality tracks until re-signed.
 
 Next: draft implement to continue, or draft review to assess current state.
 ```
@@ -11466,8 +12500,8 @@ synced_to_commit: "{FULL_SHA}"
 
 1. **Capture git context first:**
    ```bash
-   git branch --show-current    # Current branch name
-   git rev-parse --short HEAD   # Current commit hash
+   git branch --show-current # Current branch name
+   git rev-parse --short HEAD # Current commit hash
    ```
 2. Find active track from `draft/tracks.md` (look for `[~] In Progress` or first `[ ]` track)
 3. If track ID provided as argument, use that instead
@@ -11507,10 +12541,10 @@ Count tasks per phase and assign points to the **story**:
 
 | Task Count | Story Points |
 |------------|--------------|
-| 1-2 tasks  | 1 point      |
-| 3-4 tasks  | 2 points     |
-| 5-6 tasks  | 3 points     |
-| 7+ tasks   | 5 points     |
+| 1-2 tasks | 1 point |
+| 3-4 tasks | 2 points |
+| 5-6 tasks | 3 points |
+| 7+ tasks | 5 points |
 
 ## Step 3: Extract Quality Findings (if reports exist)
 
@@ -11884,8 +12918,8 @@ Create Jira epic, stories, and sub-tasks from `jira-export-latest.md` using MCP-
 
 1. **Capture git context first:**
    ```bash
-   git branch --show-current    # Current branch name
-   git rev-parse --short HEAD   # Current commit hash
+   git branch --show-current # Current branch name
+   git rev-parse --short HEAD # Current commit hash
    ```
 2. Find active track from `draft/tracks.md` (look for `[~] In Progress` or first `[ ]` track)
 3. If track ID provided as argument, use that instead
@@ -12023,7 +13057,7 @@ MCP call: create_issue
 - labels: ["draft"]
 ```
 - Capture sub-task key (e.g., PROJ-125)
-- Report: "  - Sub-task: PROJ-125 - Task 1.1"
+- Report: " - Sub-task: PROJ-125 - Task 1.1"
 
 ### 5d. Create Bug Issues (from Bug Hunt Report)
 
@@ -12203,7 +13237,16 @@ Provide an interactive codebase walk-through based on existing architecture and 
 3. **Module Introduction:** Instead of listing all modules, introduce the "Entry Point" module first.
 4. **Active Challenge:** After explaining a module's responsibility, challenge the developer: "Based on our *Context-Driven Development* rules, how do you think we handle data persistence here?" Wait for their answer before revealing the architecture strategy.
 5. **Traceability:** Highlight `draft/.state/facts.json` showing how module constraints have evolved.
-6. **Completion:** Guide the developer to create their first test track using `draft new-track` so they understand the artifact loop.
+6. **Track Lifecycle Walk:** Show the full feature lifecycle and who owns each gate:
+   - `draft new-track` → `spec.md` (requirements + classification + approvers) + `plan.md` (phases/tasks)
+   - `draft decompose` → `hld.md` (always, with graph-derived diagrams) + `lld.md` (when --lld or High-complexity module)
+   - **Approvers (HLD):** Technical Leads, Architecture Review Board, Cloud Operations (SaaS), QA Leads (on-prem), PM Leads
+   - **Approvers (LLD):** Team Leads, Technical Leads, Quality Assurance
+   - `draft implement` → TDD loop reading lld.md/hld.md for stub generation
+   - `draft upload` → blocks `git upload` for high/mission-critical tracks until HLD §Approvals signed
+   - `draft deploy-checklist` → blocks deploy until HLD §Checklist + LLD §Alerting Thresholds populated
+   - Walk a real example track from `draft/tracks/` if any exist; otherwise sketch a hypothetical low-criticality flow.
+7. **Completion:** Guide the developer to create their first test track using `draft new-track` so they understand the artifact loop end-to-end.
 
 ---
 
@@ -12226,8 +13269,12 @@ Generate a project-wide impact report measuring Context-Driven Development effec
 
 1. **Load Track State:**
    - Read all `draft/tracks.md` entries.
-   - For each track, read `metadata.json` to extract: `created_at`, `updated`, `status`, phase counts, task counts.
+   - For each track, read `metadata.json` to extract: `created_at`, `updated`, `status`, phase counts, task counts, `scope_includes`, `scope_excludes`.
    - If no tracks exist, report "No tracks found. Run `draft new-track` to create your first track."
+   - Run `scripts/tools/check-scope-conflicts.sh` to surface adjacent
+     tracks sharing scope tags — duplicate effort signals in impact
+     reporting. Schema:
+     [core/shared/template-contract.md](../../core/shared/template-contract.md).
 
 2. **Compute Metrics:**
    - **Delivery Pace:** Average elapsed time from track creation to completion (planning → implementation → review).
@@ -12255,6 +13302,23 @@ Generate a project-wide impact report measuring Context-Driven Development effec
 
 ---
 
+## Report Closing: Next Actions (REQUIRED)
+
+Every impact/telemetry report must end with a `## Next Actions` section listing the smallest set of follow-ups in execution order. Use this exact shape:
+
+```markdown
+## Next Actions
+
+| # | Action | Owner | Blocker? | Skill / Command |
+|---|---|---|---|---|
+| 1 | <imperative one-liner> | <team-lead|TBD> | no | `draft <skill> <args>` or `n/a` |
+```
+
+Rules:
+- Impact reports are advisory — `Blocker? = no` is the default; mark `yes` only when a metric breach demands immediate process change.
+- Suggest `draft tech-debt` for systemic friction, `draft adr` for methodology adjustments, `draft tour` for onboarding gaps.
+- Cap at 7 actions.
+
 ---
 
 ## Assist Review Command
@@ -12274,6 +13338,7 @@ Help human reviewers effectively review an executed track without shifting the e
 
 1. **Context Extraction:**
    - Load the track's `spec.md` and `plan.md`.
+   - Load the track's `hld.md` and `lld.md` if present — extract Key Design Decisions, Alternatives Considered, and (LLD) class invariants and error policies.
    - Re-summarize the **Intent** of what this track was supposed to achieve in exactly two sentences.
 
 2. **Blast Radius Isolation:**
@@ -12283,17 +13348,21 @@ Help human reviewers effectively review an executed track without shifting the e
 
 3. **Generate the Human Helper Guide:**
    - Instead of a traditional bug hunt, generate an executive summary containing a **Risk Assessment**.
-   - For each structural edit, write: *"I chose to implement `[Specific File/Function]` using the `[Pattern]` because the `architecture.md` mandated it. You should specifically scrutinize lines X through Y because they influence global state."*
+   - For each structural edit, cite the originating decision: *"I chose `[Pattern]` for `[File/Function]` because hld.md §Key Design Decisions / Alternatives Considered selected it over [rejected alternative]. You should specifically scrutinize lines X–Y because they touch [global state / auth boundary / shared schema]."* Fall back to `architecture.md` only when no HLD exists.
+   - Highlight any code that violates an LLD §Classes and Interfaces invariant (thread safety, idempotency, ordering) or contradicts an HLD §Checklist claim (e.g., "code introduces a new shared mutex but HLD declared single-writer").
    - Highlight any code that touches shared state, auth boundaries, data persistence, or concurrency.
 
 4. **Knowledge Base Verification:**
    - Verify if any pattern implemented violates the `draft/guardrails.md` learned anti-patterns.
+   - Verify the diff is consistent with hld.md/lld.md commitments. If the diff makes structural changes not reflected in HLD §Detailed Design or LLD §Classes/Interfaces: flag for the reviewer that HLD/LLD must be amended (`draft change`) before merge.
    - If so, specifically direct the human reviewer to veto the change unless an ADR is created via `draft adr`.
 
 5. **Output Format:**
    - **Track Intent** (2 sentences)
+   - **HLD/LLD Decision Trace** (per structural edit: which §Key Design Decision or §Alternatives Considered row drove this code; or "no HLD justification — reviewer must request one")
    - **Structural Edits** (table: file, change type, risk level, review guidance)
    - **Trivial Edits** (collapsed list — skim only)
+   - **HLD/LLD Drift** (diff makes claims that HLD/LLD does not document — recommend `draft change`)
    - **Guardrail Violations** (if any — with ADR recommendation)
    - **Suggested Review Order** (which files to review first, based on blast radius)
 
@@ -12512,17 +13581,17 @@ Draft solves this through **Context-Driven Development**: structured documents t
 ### The Constraint Hierarchy
 
 ```
-product.md          →  "Build a task manager for developers"
+product.md → "Build a task manager for developers"
   ↓
-tech-stack.md       →  "Use React, TypeScript, Tailwind"
+tech-stack.md → "Use React, TypeScript, Tailwind"
   ↓
-architecture.md     →  "Express API → Service layer → Prisma ORM → PostgreSQL"
-  ↓                     (.ai-context.md condensed for AI consumption)
-  ↓                     (.ai-profile.md ultra-compact 20-50 line always-on profile)
-  ↓                     (.state/facts.json atomic fact registry with knowledge graph)
-spec.md             →  "Add drag-and-drop reordering"
+architecture.md → "Express API → Service layer → Prisma ORM → PostgreSQL"
+  ↓ (.ai-context.md condensed for AI consumption)
+  ↓ (.ai-profile.md ultra-compact 20-50 line always-on profile)
+  ↓ (.state/facts.json atomic fact registry with knowledge graph)
+spec.md → "Add drag-and-drop reordering"
   ↓
-plan.md             →  "Phase 1: sortable list, Phase 2: persistence"
+plan.md → "Phase 1: sortable list, Phase 2: persistence"
 ```
 
 Each layer narrows the solution space. By the time AI writes code, most decisions are already made.
@@ -12532,10 +13601,10 @@ Each layer narrows the solution space. By the time AI writes code, most decision
 Draft uses a layered context system inspired by memory tiering — see `core/shared/draft-context-loading.md` for the authoritative specification.
 
 ```
-Layer 0:   .ai-profile.md (20-50 lines)    — Always loaded. Minimum project context.
-Layer 1:   .ai-context.md (200-400 lines)  — Base context: boundaries, invariants, flows.
-Layer 1.5: draft/graph/*.jsonl             — Structural graph (when available).
-Layer 2:   draft/.state/facts.json         — Fact-level precision (queried by relevance).
+Layer 0: .ai-profile.md (20-50 lines) — Always loaded. Minimum project context.
+Layer 1: .ai-context.md (200-400 lines) — Base context: boundaries, invariants, flows.
+Layer 1.5: draft/graph/*.jsonl — Structural graph (when available).
+Layer 2: draft/.state/facts.json — Fact-level precision (queried by relevance).
 ```
 
 `architecture.md` is the source-of-truth document these layers are condensed from, not a layer itself. Simple tasks only need Layer 0. Implementation tasks load Layer 0+1 plus relevant graph/facts. Deep reviews access all layers. Relevance-scored loading keeps tokens bounded.
@@ -12556,7 +13625,7 @@ graph TD
     G -->|Fail| E
     H -->|No| E
     H -->|Yes| I["Track Complete"]
-    I -->|"git push + PR"| U["GitHub PR"]
+    I -->|"Upload for review"| U["draft upload"]
 
     J["draft status"] -.->|"Check anytime"| E
     K["draft revert"] -.->|"Undo if needed"| E
@@ -12759,12 +13828,12 @@ A **track** is a high-level unit of work (feature, bug fix, refactor). Each trac
 Two layouts are supported; both are valid:
 
 ```
-# Single-track project (default)           # Multi-track project
-draft/                                      draft/tracks/<track-id>/
-├── spec.md                                 ├── spec.md
-├── plan.md                                 ├── plan.md
-├── metadata.json                           ├── metadata.json
-└── jira-export.md (optional)               └── jira-export.md (optional)
+# Single-track project (default) # Multi-track project
+draft/ draft/tracks/<track-id>/
+├── spec.md ├── spec.md
+├── plan.md ├── plan.md
+├── metadata.json ├── metadata.json
+└── jira-export.md (optional) └── jira-export.md (optional)
 ```
 
 `draft new-track` selects the multi-track layout when a second track is created (existing `draft/spec.md` and `draft/plan.md` are migrated into `draft/tracks/<original-track-id>/`). Commands referring to "the active track" resolve to whichever layout is in use.
@@ -13252,12 +14321,12 @@ Generates unified report at `draft/tracks/<id>/review-report.md` or `draft/revie
 #### Examples
 
 ```bash
-draft review                              # auto-detect active track
-draft review track add-user-auth          # review specific track
-draft review project                      # review uncommitted changes
-draft review files "src/**/*.ts"          # review specific files
-draft review commits main...HEAD          # review commit range
-draft review track my-feature full        # comprehensive review with bughunt
+draft review # auto-detect active track
+draft review track add-user-auth # review specific track
+draft review project # review uncommitted changes
+draft review files "src/**/*.ts" # review specific files
+draft review commits main...HEAD # review commit range
+draft review track my-feature full # comprehensive review with bughunt
 ```
 
 ---
@@ -13288,10 +14357,10 @@ Quality commands (`draft bughunt`, `draft deep-review`, `draft review`) also upd
 #### Examples
 
 ```bash
-draft learn                           # full codebase pattern scan
-draft learn src/api/                  # scan specific directory
-draft learn promote                   # review promotion candidates
-draft learn migrate                   # migrate from workflow.md
+draft learn # full codebase pattern scan
+draft learn src/api/ # scan specific directory
+draft learn promote # review promotion candidates
+draft learn migrate # migrate from workflow.md
 ```
 
 ---
@@ -13435,11 +14504,11 @@ draft decompose
      │ → Architecture mode AUTO-ENABLED
      │
 draft implement
-     │  ├── Story → CHECKPOINT
-     │  ├── Execution State → CHECKPOINT
-     │  ├── Skeletons → CHECKPOINT
-     │  ├── TDD (red/green/refactor)
-     │  └── ~200-line chunk review → CHECKPOINT
+     │ ├── Story → CHECKPOINT
+     │ ├── Execution State → CHECKPOINT
+     │ ├── Skeletons → CHECKPOINT
+     │ ├── TDD (red/green/refactor)
+     │ └── ~200-line chunk review → CHECKPOINT
      │
 draft coverage → coverage report → CHECKPOINT
 ```
@@ -13494,6 +14563,9 @@ Natural language patterns that map to Draft commands:
 | "requirements changed", "scope changed", "update the spec" | Handle mid-track requirement change |
 | "preview jira", "export to jira" | Preview Jira issues |
 | "create jira issues" | Create Jira issues via MCP |
+| "upload for review", "open a PR", "submit code" | Upload for review |
+| "find regression", "when did this break", "bisect" | Regression detection |
+| "qualify epic", "epic qualification" | Epic status and qualification |
 | "the plan" | Read active track's plan.md |
 | "the spec" | Read active track's spec.md |
 
@@ -13975,12 +15047,22 @@ Shared procedure for gathering git metadata and generating YAML frontmatter in D
 
 Referenced by: All skills that generate Draft reports — including `draft bughunt`, `draft deep-review`, `draft review`, `draft quick-review`, `draft tech-debt`, `draft deploy-checklist`, `draft incident-response`, `draft debug`, `draft standup`, `draft testing-strategy`
 
+> **Two-tier metadata pattern:**
+> - **Project-level artifacts** (`draft/architecture.md`, `.ai-context.md`, `.ai-profile.md`, `product.md`, `workflow.md`, etc.): git state lives in `draft/metadata.json` only. Per-file frontmatter carries only `project`, `module`, `generated_by`, `generated_at`. Skills read `synced_to_commit` from `draft/metadata.json`.
+> - **Session/report artifacts** (`draft/bughunt-report-*.md`, `draft/review-*.md`, etc.): embed full git frontmatter using the template below — these are point-in-time snapshots, not refreshable docs.
+> - **Track artifacts** (`tracks/<id>/spec.md`, `hld.md`, etc.): git state lives in `tracks/<id>/metadata.json`. Per-file frontmatter carries only stable fields.
+>
+> This doc covers session/report artifacts. For project-level artifacts see `core/templates/draft-metadata.json`.
+
 ## Preferred: Deterministic Script
 
-Use `scripts/tools/git-metadata.sh` when it is available on the host:
+Use `git-metadata.sh` from the plugin install, resolved via the canonical tool resolver (see [tool-resolver.md](tool-resolver.md)):
 
 ```bash
-scripts/tools/git-metadata.sh --yaml \
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+bash "$DRAFT_TOOLS/git-metadata.sh" --yaml \
     --project "$PROJECT" --module "$MODULE" \
     --track-id "$TRACK_ID" --generated-by "draft:bughunt"
 ```
@@ -13994,13 +15076,13 @@ The manual commands below remain the specification and a fallback for environmen
 Gather git info before writing the report:
 
 ```bash
-git branch --show-current                    # LOCAL_BRANCH
-git rev-parse --abbrev-ref @{upstream} 2>/dev/null || echo "none"  # REMOTE/BRANCH
-git rev-parse HEAD                           # FULL_SHA
-git rev-parse --short HEAD                   # SHORT_SHA
-git log -1 --format=%ci HEAD                 # COMMIT_DATE
-git log -1 --format=%s HEAD                  # COMMIT_MESSAGE
-[ -n "$(git status --porcelain)" ] && echo "true" || echo "false"  # dirty check
+git branch --show-current # LOCAL_BRANCH
+git rev-parse --abbrev-ref @{upstream} 2>/dev/null || echo "none" # REMOTE/BRANCH
+git rev-parse HEAD # FULL_SHA
+git rev-parse --short HEAD # SHORT_SHA
+git log -1 --format=%ci HEAD # COMMIT_DATE
+git log -1 --format=%s HEAD # COMMIT_MESSAGE
+[ -n "$(git status --porcelain)" ] && echo "true" || echo "false" # dirty check
 ```
 
 ## YAML Frontmatter Template
@@ -14032,7 +15114,7 @@ synced_to_commit: "{FULL_SHA}"
 - `module` — Use `"root"` for project-level reports; use the module name/path for module-level reports
 - `track_id` — Set to the track ID if scoped to a track; `null` otherwise
 - `generated_by` — The Draft command that produced this report (e.g., `"draft:bughunt"`, `"draft:deep-review"`, `"draft:review"`)
-- `synced_to_commit` — Use the full SHA; or pull from `draft/.ai-context.md` frontmatter if available
+- `synced_to_commit` — Use the full SHA of HEAD at report time; or read from `draft/metadata.json:synced_to_commit` if available
 
 ## Report Header Table
 
@@ -14058,8 +15140,8 @@ TIMESTAMP=$(date +%Y-%m-%dT%H%M)
 # Write report to timestamped file
 # Example: draft/bughunt-report-2026-03-15T1430.md
 
-# Refresh the "-latest.md" symlink deterministically:
-scripts/tools/manage-symlinks.sh draft/ bughunt
+# Refresh the "-latest.md" symlink deterministically (resolver as above):
+[ -x "$DRAFT_TOOLS/manage-symlinks.sh" ] && bash "$DRAFT_TOOLS/manage-symlinks.sh" draft/ bughunt
 # (Fallback when the script is unavailable:)
 # ln -sf <report-filename> <report-dir>/<report-type>-latest.md
 ```
@@ -14144,11 +15226,9 @@ Before adding a new entry to `draft/guardrails.md`:
 
 ## Step 4: Write to guardrails.md
 
-### 4.0: Update File Metadata
+### 4.0: Update Project Metadata
 
-Before writing entries, update the YAML frontmatter in `draft/guardrails.md`:
-- Set `synced_to_commit` to the current HEAD commit SHA
-- Update `git.commit`, `git.commit_short`, `git.commit_date`, `git.commit_message` fields
+Before writing entries, update `draft/metadata.json` with the current git state — this is the single source of truth for `synced_to_commit` and all `git.*` fields for project-level artifacts including `guardrails.md`. Use `git-metadata.sh --project-metadata --generated-by "draft:learn"` or update `git.commit`, `git.commit_short`, `git.commit_date`, `git.commit_message`, and `synced_to_commit` manually. Do NOT write these fields to `guardrails.md` frontmatter (WS-8).
 
 ### Convention Entry Format
 
@@ -14175,8 +15255,8 @@ Append under `## Learned Anti-Patterns`:
 ### [Anti-Pattern Name]
 - **Category:** security | reliability | performance | correctness | concurrency
 - **Severity:** critical | high | medium
-- **graph_severity:** critical | high | medium | low | unresolved  (derived from fanIn of evidence files; "unresolved" if no graph data available)
-- **high_fanin_files:** `path/file.go` (fanIn:12), `path/other.go` (fanIn:7)  (omit line if none meet fanIn ≥ 5)
+- **graph_severity:** critical | high | medium | low | unresolved (derived from fanIn of evidence files; "unresolved" if no graph data available)
+- **high_fanin_files:** `path/file.go` (fanIn:12), `path/other.go` (fanIn:7) (omit line if none meet fanIn ≥ 5)
 - **Evidence:** Found in N files — `path/file1.ext:line`, `path/file2.ext:line`
 - **Discovered at:** YYYY-MM-DD (when Draft first observed this pattern)
 - **Established at:** YYYY-MM-DD (when the pattern entered the codebase, via git blame)
@@ -14221,7 +15301,7 @@ After updating guardrails.md, append a brief learning summary to the end of the 
 - **Never remove** existing entries — only update evidence/confidence/dates
 - **Cap at 50 learned entries** per section — if at capacity, replace the oldest `medium` confidence entry that hasn't been re-verified in 90+ days
 - **Human-curated always wins** — Hard Guardrails and `tech-stack.md ## Accepted Patterns` take precedence over learned patterns if there's a conflict
-- **Preserve file metadata** — update `synced_to_commit` in the YAML frontmatter when modifying guardrails.md
+- **Preserve project metadata** — update `draft/metadata.json:synced_to_commit` when modifying `guardrails.md`; do NOT write `synced_to_commit` to `guardrails.md` frontmatter (WS-8)
 
 </core-file>
 
@@ -14265,13 +15345,13 @@ Compute tier from `draft/graph/schema.yaml` after graph build:
   F = stats.go_functions + stats.py_functions
   P = stats.proto_rpcs
 
-| Tier | Label  | Condition                              | Budget        |
+| Tier | Label | Condition | Budget |
 |------|--------|----------------------------------------|---------------|
-| 1    | micro  | M≤5 AND F≤50 AND P≤10                 | 100–180 lines |
-| 2    | small  | M≤15 AND F≤300 AND P≤30               | 180–280 lines |
-| 3    | medium | M≤40 AND F≤1000 AND P≤100             | 280–400 lines |
-| 4    | large  | M≤100 AND F≤5000 AND P≤500            | 400–600 lines |
-| 5    | XL     | M>100 OR F>5000 OR P>500              | 600–900 lines |
+| 1 | micro | M≤5 AND F≤50 AND P≤10 | 100–180 lines |
+| 2 | small | M≤15 AND F≤300 AND P≤30 | 180–280 lines |
+| 3 | medium | M≤40 AND F≤1000 AND P≤100 | 280–400 lines |
+| 4 | large | M≤100 AND F≤5000 AND P≤500 | 400–600 lines |
+| 5 | XL | M>100 OR F>5000 OR P>500 | 600–900 lines |
 
 If `schema.yaml` does not exist: default to tier 2 (180–280 lines).
 
@@ -14286,7 +15366,9 @@ Read the full contents of `draft/architecture.md`. Extract the YAML frontmatter 
 
 #### Step 2: Write YAML Frontmatter
 
-Start `draft/.ai-context.md` with an updated YAML frontmatter block. Copy all `git.*` and `synced_to_commit` fields from `architecture.md`. Set:
+Start `draft/.ai-context.md` with a stable frontmatter block. Git state is centralized in `draft/metadata.json` — do NOT copy `git.*` or `synced_to_commit` from `architecture.md` into this file. Set:
+- `project`: from `architecture.md` frontmatter
+- `module`: from `architecture.md` frontmatter (usually `root`)
 - `generated_by`: the calling command (e.g., `draft:init`, `draft:implement`)
 - `generated_at`: current ISO 8601 timestamp
 
@@ -14338,7 +15420,7 @@ If `draft/graph/schema.yaml` exists, generate these three sections from graph JS
 **GRAPH:MODULE-HOTSPOTS** (tier ≥ 3 only):
 - Read `draft/graph/hotspots.jsonl`, group records by `module` field
 - For each module: take top 3 files by score (lines + fanIn×50), format as indented lines under the module name
-- Format: `{module}:  {file}|{lines}L|fanIn:{N}` with subsequent files indented to align
+- Format: `{module}: {file}|{lines}L|fanIn:{N}` with subsequent files indented to align
 - Order modules by their highest-scoring file, descending
 - Omit modules with no hotspot entries; omit entire section for tier 1–2 (covered by global GRAPH:HOTSPOTS)
 
@@ -14402,6 +15484,19 @@ Before writing `draft/.ai-context.md`, verify:
 #### Step 7: Write Output
 
 Write the completed content to `draft/.ai-context.md`.
+
+#### Step 8: Normalise Whitespace
+
+After writing both output files, strip trailing whitespace and blank lines at EOF to prevent GitHub upload failures. Resolve the script via the canonical tool resolver (see [tool-resolver.md](tool-resolver.md)):
+
+```bash
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+[ -x "$DRAFT_TOOLS/fix-whitespace.sh" ] && bash "$DRAFT_TOOLS/fix-whitespace.sh" draft/architecture.md draft/.ai-context.md draft/.ai-profile.md 2>/dev/null || true
+```
+
+This is idempotent — run it unconditionally.
 
 ### Example Transformation
 
@@ -14586,7 +15681,7 @@ If track type is "bugfix" OR current context is debug/RCA:
 
 Standard procedure for syncing Draft artifacts to Jira tickets via MCP. All skills that produce markdown artifacts follow this protocol to keep Jira updated.
 
-Referenced by: `draft init`, `draft new-track`, `draft implement`, `draft review`, `draft quick-review`, `draft bughunt`, `draft debug`, `draft incident-response`, `draft tech-debt`, `draft deploy-checklist`, `draft documentation`
+Referenced by: `draft init`, `draft new-track`, `draft implement`, `draft review`, `draft quick-review`, `draft upload`, `draft bughunt`, `draft debug`, `draft incident-response`, `draft tech-debt`, `draft deploy-checklist`, `draft documentation`
 
 ## Prerequisites
 
@@ -14696,6 +15791,7 @@ Attachment: rca.md
 | `draft review` completes | `review-report-latest.md` | Attach + comment: "Review {PASS/FAIL}. {n} findings" |
 | `draft implement` completes | `plan.md` (updated) | Comment: "Implementation complete. {n} tasks done" |
 | `draft bughunt` completes | `bughunt-report-latest.md` | Attach + comment: "Bughunt found {n} issues" |
+| `draft upload` completes | — | Comment: "Code uploaded for review. {URL}" |
 | `draft deploy-checklist` completes | `deploy-checklist.md` | Attach + comment: "Deploy checklist generated" |
 | `draft incident-response` completes | `incident-*.md` | Attach + comment: "Incident report updated" |
 
@@ -14764,17 +15860,109 @@ If MCP operation fails:
 
 Shared procedure for querying the knowledge graph from any skill. The graph provides precise, deterministic structural data about the codebase — module boundaries, dependency edges, hotspots, proto API surface, and symbol indexes.
 
-Referenced by: `draft init`, `draft implement`, `draft bughunt`, `draft review`, `draft debug`, `draft decompose`, `draft index`
+This is the **single source of truth** for graph lookup procedure. Consumer skills MUST reference this file rather than inlining their own lookup logic.
+
+Referenced by: `draft init`, `draft implement`, `draft bughunt`, `draft review`, `draft deep-review`, `draft quick-review`, `draft debug`, `draft decompose`, `draft new-track`, `draft tech-debt`, `draft deploy-checklist`, `draft learn`, `draft index`
+
+## Mandatory Lookup Contract
+
+Any code-touching skill that needs to discover files, modules, symbols, callers, or blast-radius **MUST** follow this lookup order whenever `draft/graph/schema.yaml` exists:
+
+1. **Graph artifacts first** — `module-graph.jsonl`, `hotspots.jsonl`, `modules/<name>.jsonl`, `proto-index.jsonl`, `{go,python,ts,c,call}-index.jsonl`.
+2. **Generated context second** — `draft/.ai-context.md`, relevant `draft/architecture.md` slices, track-level `hld.md`/`lld.md`.
+3. **Source file reads third** — narrow via tiers 1–2, then **Read** the candidate files. Reading is **not optional**: see §Ground-Truth Discipline below.
+4. **Filesystem `grep`/`find`/`rg` last** — only after an explicit graph miss.
+
+**If a lower tier is used before a higher tier, that is a Red Flag** ([red-flags.md](red-flags.md)). The skill must report it in its Graph Usage Report footer (see below) with justification.
+
+**Required fallback sentence format** (verbatim) before any filesystem search after a graph miss:
+
+> `Graph returned no match for <X>; falling back to grep.`
+
+If `draft/graph/schema.yaml` is **absent**, the graph contract is satisfied — proceed directly to tier 2/3/4 as needed and record `Graph files queried: NONE — graph data unavailable` in the report footer.
+
+## Ground-Truth Discipline (mandatory)
+
+The graph is the **index**, not the **territory**. Graph hits identify candidates; **Read** validates them. Skills that ship claims about code behavior, scope coverage, hotspot status, or risk **without opening the cited files** routinely produce confidently-wrong output (e.g. citations marked `TBD` for files that were "found via graph but never opened"; scope statements that exclude the actual code path the problem statement names).
+
+The following rules apply to every code-touching skill output. They are non-negotiable for `criticality: standard | high | mission-critical` work; `criticality: low` (quick) tracks may skip rule **G3** only.
+
+**G1. Read before you cite.** Any `file:line`, `func()`, or `symbol` reference written into a deliverable (spec / hld / lld / plan / review / audit / debug report) must come from a file the skill has actually opened in this run. The graph tells you *which* file; Read confirms the line is what you claim it is.
+
+**G2. Read before you scope.** A track / phase / audit / review may not declare a code path **in-scope** or **out-of-scope** without at least one Read on a representative file in that path. The graph's module list is a candidate set — it does not establish that the candidate contains the cost the problem names.
+
+**G3. No `TBD` citations on `Modified` or `Existing` modules.** When a deliverable's Component / Class / Symbol table marks a module `Status: Modified` or `Status: Existing`, every Citation cell must resolve to a real `path:line` from a file read in this run. `TBD` is reserved for `Status: New` modules whose source files have not been authored yet, and even then the planned file path must be filled (`Citation: path/to/new_file.h (planned)`).
+
+**G4. No claim about code behavior from graph metadata alone.** Statements of the form "*X writes to disk*", "*Y blocks on Z*", "*this is the hotspot*", "*this is the only path*" must be backed by a Read. Graph fan-in / fan-out / complexity scores are necessary signal, not sufficient evidence. If you have only graph data, write *"graph signal suggests X; not yet validated against source"* rather than asserting X.
+
+**G5. Scope-vs-problem coverage check before promote.** Before promoting `spec-draft.md` → `spec.md`, before generating `hld.md` / `lld.md`, and before declaring a review / audit complete: enumerate the cost / behavior / risk terms in the problem statement, and confirm that the in-scope file set (per G2) covers each. If any term is not covered, surface the gap before commit — do not silently ship a scope that excludes the named cost.
+
+### Self-check (run before emitting the Graph Usage Report)
+
+Append the answers to your scratch notes; the skill output need not include them unless asked.
+
+1. Did I open every file whose `path:line` appears in this output? (yes / list misses)
+2. Are any `Modified` / `Existing` modules carrying `Citation: TBD`? (no / list)
+3. Did I declare anything in-scope or out-of-scope? If yes, did I Read at least one file in that path? (yes / list)
+4. Did I make a claim about what code does (writes / blocks / loops / fails) based only on graph metadata? (no / list)
+5. Does the in-scope set cover every cost term in the problem statement? (yes / list gaps)
+
+A single "no" / "list" answer is a halt — fix and re-check before output.
+
+## Concept-to-Files Recipe
+
+Use this recipe whenever the user names a concept, feature, or domain term ("in-memory shuffle", "auth flow", "ingest pipeline") and you need to locate the implementing files. **Run it before any filesystem search.**
+
+1. **Concept → modules** — `grep` the concept token against `draft/graph/module-graph.jsonl` (`name`, `description` fields) and `draft/.ai-context.md` (module headings). Record the candidate module list.
+2. **Modules → files/symbols** — for each candidate module, load `draft/graph/modules/<name>.jsonl`. Enumerate `file`, `*-func`, `*-class`, `ctags-sym` records. This is the authoritative file list for the module.
+3. **Modules → risk ranking** — cross-reference `draft/graph/hotspots.jsonl`. High-fanIn files in the candidate modules are the most likely entry points for impact.
+4. **Modules → public API** — for API-shaped concepts, consult `draft/graph/proto-index.jsonl` to find RPCs/services whose names or descriptions match.
+5. **Graph miss → grep fallback** — only if steps 1–4 return nothing relevant, emit the fallback sentence and use `grep`/`find`. Narrow the search by file extension and exclude `node_modules`, `vendor`, `dist`, `build`, `.git`.
+
+## Graph Usage Report (Mandatory Footer)
+
+Every code-touching skill output MUST end with this footer block. The lint check `scripts/tools/check-graph-usage-report.sh` rejects outputs missing the section.
+
+```md
+## Graph Usage Report
+
+- Graph files queried: <comma-separated list, e.g. `module-graph.jsonl, hotspots.jsonl, modules/scribe.jsonl` — or `NONE` with justification below>
+- Modules identified via graph: <comma-separated module names, or `none`>
+- Files identified via graph: <integer count>
+- Filesystem grep fallbacks: <list of `<pattern>` searches with one-line justification each, or `none`>
+- Justification (only when `Graph files queried: NONE`): <required — `graph data unavailable` | `non-code task` | `<explicit reason>`>
+```
+
+**Gate:** `Graph files queried: NONE` without a populated justification line is a hard failure.
+
+## Telemetry Fields (graph adherence)
+
+Skills that emit telemetry via [emit-skill-metrics.sh](../../scripts/tools/emit-skill-metrics.sh) MUST include these fields in the JSON payload so contract adherence and token-floor trends can be monitored:
+
+| Field | Type | Description |
+|---|---|---|
+| `graph_queries` | int | Number of graph artifacts loaded plus live `graph --query` invocations during the run |
+| `fallback_grep_count` | int | Number of `grep`/`find` fallbacks invoked after an explicit graph miss |
+
+These fields are appended to `~/.draft/metrics.jsonl` along with the existing skill fields (`skill`, `track_id`, etc.) — no new state file is needed. Run `tail -100 ~/.draft/metrics.jsonl | jq -s 'group_by(.skill) | map({skill: .[0].skill, runs: length, avg_graph_queries: ([.[].graph_queries] | add / length), avg_grep_fallbacks: ([.[].fallback_grep_count] | add / length)})'` to monitor adherence per skill.
+
+
 
 ## Tooling Wrappers
 
-For common query modes, prefer the deterministic wrappers under `scripts/tools/`:
+For common query modes, prefer the deterministic wrappers that ship with the plugin. Resolve their location via the canonical tool resolver (see [tool-resolver.md](tool-resolver.md)) before invoking:
+
+```bash
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+```
 
 | Wrapper | Graph mode | Behavior on missing graph |
 |---|---|---|
-| `scripts/tools/hotspot-rank.sh [--top N] [--module NAME]` | `--mode hotspots` | Emits `{hotspots:[],source:"unavailable"}` and exits 2 |
-| `scripts/tools/cycle-detect.sh` | `--mode cycles` | Emits `{cycles:[],source:"unavailable"}` and exits 2 |
-| `scripts/tools/mermaid-from-graph.sh [--diagram module-deps\|proto-map]` | `--mode mermaid` | Emits an empty mermaid block and exits 2 |
+| `bash "$DRAFT_TOOLS/hotspot-rank.sh" [--top N] [--module NAME]` | `--mode hotspots` | Emits `{hotspots:[],source:"unavailable"}` and exits 2 |
+| `bash "$DRAFT_TOOLS/cycle-detect.sh"` | `--mode cycles` | Emits `{cycles:[],source:"unavailable"}` and exits 2 |
+| `bash "$DRAFT_TOOLS/mermaid-from-graph.sh" [--diagram module-deps\|proto-map]` | `--mode mermaid` | Emits an empty mermaid block and exits 2 |
 
 Use the raw `graph` CLI directly for the lower-level modes documented below.
 
@@ -14810,25 +15998,25 @@ When `draft/graph/` exists, it contains:
 
 All records in `modules/<name>.jsonl` have a `kind` field. Defined kinds:
 
-| kind           | Fields | Description |
+| kind | Fields | Description |
 |----------------|--------|-------------|
-| `module`       | `name, sizeKB, files` | Module metadata header (first record) |
-| `file`         | `id, lines, module, sizeKB` | C++ source file node |
-| `include`      | `source, target` | Intra-module C++ include edge |
+| `module` | `name, sizeKB, files` | Module metadata header (first record) |
+| `file` | `id, lines, module, sizeKB` | C++ source file node |
+| `include` | `source, target` | Intra-module C++ include edge |
 | `cross-include`| `source, target` | Cross-module C++ include edge |
-| `go-func`      | `name, receiver, qualified, file, module, package, line, lines` | Go function/method (`receiver=null` for top-level) |
-| `go-type`      | `name, file, module, package, line, kind` | Go type (kind: struct/interface/alias/type) |
-| `go-call`      | `from, to, fromFile, module, line, resolved: false, confidence` | Go intra-file call edge (tree-sitter only). `confidence: direct` for bare identifier callees, `inferred` for selector calls (`obj.Foo`) where the receiver is collapsed away. |
-| `py-func`      | `name, receiver, file, module, line, lines` | Python function/method (receiver=null for top-level) |
-| `py-class`     | `name, bases[], file, module, line` | Python class definition |
-| `py-call`      | `from, to, fromFile, module, line, resolved: false, confidence` | Python intra-file call edge (tree-sitter only). `confidence: direct` for bare identifier callees, `inferred` for attribute calls (`obj.foo`). |
-| `ts-func`      | `name, file, module, line, lines, exported, class, async` | TypeScript/JS function, method, or arrow function |
-| `ts-class`     | `name, file, module, line, lines, exported, kind` | TS/JS class/interface/type (kind: class/interface/type) |
-| `ts-call`      | `from, to, fromFile, module, line, resolved: false, confidence` | TS/JS intra-file call edge (tree-sitter only). `confidence: direct` for bare identifier callees, `inferred` for member calls (`obj.foo`). |
-| `c-func`       | `name, file, module, line, lines, language, namespace` | C/C++ function definition |
-| `c-type`       | `name, file, module, line, kind, language` | C/C++ struct/class/enum definition |
-| `c-call`       | `from, to, fromFile, module, line, resolved: false, confidence` | C/C++ intra-file call edge (tree-sitter only). `confidence: direct` for bare identifier or qualified (`Foo::bar`) callees, `inferred` for field calls (`obj.foo` / `ptr->foo`). |
-| `ctags-sym`    | `name, file, module, line, ctagsKind, language` | Symbol from universal-ctags (Java, Rust, Ruby, etc.) |
+| `go-func` | `name, receiver, qualified, file, module, package, line, lines` | Go function/method (`receiver=null` for top-level) |
+| `go-type` | `name, file, module, package, line, kind` | Go type (kind: struct/interface/alias/type) |
+| `go-call` | `from, to, fromFile, module, line, resolved: false, confidence` | Go intra-file call edge (tree-sitter only). `confidence: direct` for bare identifier callees, `inferred` for selector calls (`obj.Foo`) where the receiver is collapsed away. |
+| `py-func` | `name, receiver, file, module, line, lines` | Python function/method (receiver=null for top-level) |
+| `py-class` | `name, bases[], file, module, line` | Python class definition |
+| `py-call` | `from, to, fromFile, module, line, resolved: false, confidence` | Python intra-file call edge (tree-sitter only). `confidence: direct` for bare identifier callees, `inferred` for attribute calls (`obj.foo`). |
+| `ts-func` | `name, file, module, line, lines, exported, class, async` | TypeScript/JS function, method, or arrow function |
+| `ts-class` | `name, file, module, line, lines, exported, kind` | TS/JS class/interface/type (kind: class/interface/type) |
+| `ts-call` | `from, to, fromFile, module, line, resolved: false, confidence` | TS/JS intra-file call edge (tree-sitter only). `confidence: direct` for bare identifier callees, `inferred` for member calls (`obj.foo`). |
+| `c-func` | `name, file, module, line, lines, language, namespace` | C/C++ function definition |
+| `c-type` | `name, file, module, line, kind, language` | C/C++ struct/class/enum definition |
+| `c-call` | `from, to, fromFile, module, line, resolved: false, confidence` | C/C++ intra-file call edge (tree-sitter only). `confidence: direct` for bare identifier or qualified (`Foo::bar`) callees, `inferred` for field calls (`obj.foo` / `ptr->foo`). |
+| `ctags-sym` | `name, file, module, line, ctagsKind, language` | Symbol from universal-ctags (Java, Rust, Ruby, etc.) |
 
 **Call edge notes**: All `*-call` records have `resolved: false` — callee names are syntactic (as written in source), with no type resolution. The same logical call may appear multiple times if the same function calls the target repeatedly. Call edges are **intra-file only** — cross-file resolution requires type information not available in tree-sitter.
 
@@ -15015,17 +16203,17 @@ Uses `hashes.json` to detect which modules changed (content-based SHA-256, not m
 ## Architecture
 
 ```
-Phase 1 (Map)    N parallel reader agents  bounded scope per agent (4 modules each)
-                 each agent reads          source files in its assigned modules
-                 each agent outputs        (A) IR JSON array  — structured metadata for tables/diagrams
+Phase 1 (Map) N parallel reader agents bounded scope per agent (4 modules each)
+                 each agent reads source files in its assigned modules
+                 each agent outputs (A) IR JSON array — structured metadata for tables/diagrams
                                            (B) Markdown deep-dives — per-module prose (§7 sections)
 
-Phase 2 (Reduce) 1 synthesis agent         receives all IRs + all reader deep-dives
+Phase 2 (Reduce) 1 synthesis agent receives all IRs + all reader deep-dives
                  assembles architecture.md by composing reader prose (§7) + deriving cross-cutting
                                            sections from IR; targeted source reads for §6, §14, §15, §18
-                 context budget:           ~20K tokens (reader prose replaces need to re-read source)
+                 context budget: ~20K tokens (reader prose replaces need to re-read source)
 
-Phase 3 (Finalize) 2 parallel agents       .ai-context.md + .ai-profile.md
+Phase 3 (Finalize) 2 parallel agents .ai-context.md + .ai-profile.md
                                            state files (facts.json, freshness.json, etc.)
 ```
 
@@ -15067,7 +16255,7 @@ Each reader agent outputs a JSON array of objects matching this schema — one o
   ],
 
   "dependencies_out": ["<ModuleA>", "<ModuleB>"],
-  "dependencies_in":  ["<CallerA>", "<CallerB>"],
+  "dependencies_in": ["<CallerA>", "<CallerB>"],
 
   "invariants": [
     "<rule that must always hold>",
@@ -15343,13 +16531,13 @@ Every section heading MUST match the template numbering exactly.
 
 ## Tier-Adaptive Agent Counts
 
-| Tier | Label  | Reader Agents                  |
+| Tier | Label | Reader Agents |
 |------|--------|--------------------------------|
-| 1    | micro  | 1 (all modules)                |
-| 2    | small  | 1–2                            |
-| 3    | medium | ceil(M/6)                      |
-| 4    | large  | ceil(M/4)                      |
-| 5    | XL     | ceil(M/4)                      |
+| 1 | micro | 1 (all modules) |
+| 2 | small | 1–2 |
+| 3 | medium | ceil(M/6) |
+| 4 | large | ceil(M/4) |
+| 5 | XL | ceil(M/4) |
 
 For tier 1–2, skip parallelism — one reader agent handles all modules sequentially.
 
@@ -15374,11 +16562,11 @@ Rule 4: Use tier table above for modules-per-agent target
 
 Example grouping heuristic (adapt to actual fan-in data from graph):
 ```
-reader_A: [highest fan-in module alone]       — never share high-fan-in with others
+reader_A: [highest fan-in module alone] — never share high-fan-in with others
 reader_B: [coupled pair: module_X + module_Y] — modules that call each other
-reader_C: [data layer modules]                — shared persistence/cache modules together
-reader_D: [consumer/feature modules]          — modules that call many others
-reader_E: [infra/bootstrap modules]           — low fan-in, foundational
+reader_C: [data layer modules] — shared persistence/cache modules together
+reader_D: [consumer/feature modules] — modules that call many others
+reader_E: [infra/bootstrap modules] — low fan-in, foundational
 ```
 
 ---
@@ -15415,7 +16603,7 @@ This is the blast-radius advantage over single-agent: a reader failure is a part
 
 ```
 Phase 1 readers (parallel, ceil(M/4) agents):
-  Per agent:     4 modules × ~4K source tokens = ~16K input
+  Per agent: 4 modules × ~4K source tokens = ~16K input
                  IR output: ~2K tokens/agent
                  Deep-dive output: ~8K tokens/agent (4 modules × ~2K prose each)
                  Total per agent: ~26K
@@ -15423,10 +16611,10 @@ Phase 1 readers (parallel, ceil(M/4) agents):
   Total Phase 1: ceil(M/4) agents × 26K (parallel — wall clock = slowest reader)
 
 Phase 2 synthesis:
-  Input:         N modules × ~450 IR tokens + N modules × ~2K prose tokens + 4K instructions
+  Input: N modules × ~450 IR tokens + N modules × ~2K prose tokens + 4K instructions
                  ≈ 20K context at XL tier (vs 60K+ for raw source re-reads)
-  Output:        §7 paste (from readers) + cross-cutting sections ≈ 30K output tokens
-  Total:         ~50K tokens
+  Output: §7 paste (from readers) + cross-cutting sections ≈ 30K output tokens
+  Total: ~50K tokens
 
 Phase 3 finalizers (parallel, 2 agents):
   ~20K tokens total
@@ -15443,6 +16631,1854 @@ Depth vs single-agent: equivalent (readers read the same source; synthesis compo
 
 ---
 
+## core/shared/context-verify.md
+
+<core-file path="core/shared/context-verify.md">
+
+---
+shared: context-verify
+applies_to: all skills that load Draft project context
+---
+
+# Verify Draft Context (Shared Subroutine)
+
+Single-source `Verify Draft Context` subroutine. Replaces the duplicated 3–4 line blocks that appeared in roughly 18 skills (`bughunt`, `review`, `quick-review`, `learn`, `tech-debt`, `deploy-checklist`, `debug`, `documentation`, `testing-strategy`, `coverage`, `regression`, `incident-response`, `change`, `revert`, `tour`, `assist-review`, `adr`, `epic-status`).
+
+Referenced by: every skill that starts with a `Verify Draft Context` step.
+
+## Procedure
+
+1. **Probe the draft directory:**
+
+   ```bash
+   ls draft/ 2>/dev/null
+   ```
+
+2. **Branch on result:**
+
+   | Result | Action |
+   |---|---|
+   | Directory exists | Proceed to step 3. |
+   | Directory missing AND skill requires context (`draft learn`, `draft deep-review`, `draft tech-debt`, `draft implement`) | **STOP** — print `No Draft context found. Run draft init first.` and exit. |
+   | Directory missing AND skill is context-optional (`draft debug`, `draft quick-review`, `draft bughunt`, `draft deploy-checklist`, `draft documentation`, `draft testing-strategy`) | Proceed with reduced-context mode; record `draft_context: absent` in the report header. |
+
+3. **Load context** by following [draft-context-loading.md](draft-context-loading.md). Honor the **selective guardrail matrix** in that file's Layer 0.5 — do not load all guardrails just because they are available.
+
+## Usage in SKILL.md
+
+Replace the existing 3–4 line `Verify Draft Context` block with a single reference:
+
+```md
+### Verify Draft Context
+
+See [core/shared/context-verify.md](../../core/shared/context-verify.md). This skill is <required | optional> with respect to `draft/`.
+```
+
+This keeps each skill explicit about whether draft context is required, while centralizing the probe-and-branch logic.
+
+## Why This Exists
+
+Duplicating the same `ls draft/ 2>/dev/null` snippet across 18 skills costs ~250 tokens per duplicate after frontmatter and surrounding prose — roughly **4.5K tokens of floor context across the catalog**. Factoring removes the duplication without changing semantics.
+
+</core-file>
+
+---
+
+## core/shared/discovery-schema.md
+
+<core-file path="core/shared/discovery-schema.md">
+
+# Discovery Artifact Schema
+
+> Schema for the `discovery.md` artifact produced by `draft:discover` (Phase 0
+> of `draft:new-track`). The artifact captures the AI's pre-spec code-spike
+> findings as a first-class output.
+
+## Why this is first-class
+
+Pre-2.0, code-spike findings were buried in "Conversation Log" sections of
+`spec.md` or scattered across context-references rows. Reviewers could not
+tell whether the AI had actually read the code or had inferred structure
+from titles. `discovery.md` makes the spike output auditable, machine-
+verifiable (via citation verifiers), and load-bearing for downstream specs.
+
+## Required sections (each carries `<!-- REQUIRED -->`)
+
+1. **Hotspots** — code locations the spec must address.
+2. **Mode selection** — flags / feature gates / env switches governing the
+   current code path.
+3. **Open Questions** — load-bearing unknowns that must close before spec
+   freeze.
+4. **References** — flat list of files and functions touched in the spike.
+
+## Hotspots table — required columns
+
+| Column | Notes |
+|---|---|
+| Step | Short label for the operation observed |
+| Location | `path/to/file.ext:LINE` (verifier-resolvable) |
+| Behavior | What the spec must explain or improve (1 line) |
+
+Minimum row count: 3 (configurable via `metadata.json:hygiene_budget.discovery_min_hotspots`).
+If the spike genuinely found nothing, the row count may be 0 but the
+**Open Questions** section must contain a `_NONE_FOUND_ — <one-line
+justification>` line. The validator rejects an empty discovery without
+that justification.
+
+## Mode selection table — required columns
+
+| Column | Notes |
+|---|---|
+| Switch | flag, gate, env var, or build option |
+| Location | `path/to/file.ext:LINE` |
+| Notes | what behavior the switch toggles |
+
+## Open Questions
+
+Each question begins with `Q<N>:` and is a single line. Each MUST close
+into one of:
+
+- a decision merged into `spec.md` (preferred),
+- an explicit deferral with a follow-up track ID, or
+- a `_NONE_FOUND_` annotation explaining why the question is moot.
+
+A `discovery.md` whose Open Questions list is left dangling fails the
+hygiene validator.
+
+## References
+
+A flat bullet list of files and functions:
+
+- `path/to/file.ext` — `Function` / `Class::Method` — one-line role
+- `path/to/other.ext` — `Function2` — …
+
+Functions named here are exempt from citation drift unless they also
+appear with line numbers elsewhere.
+
+## Renaming / archiving
+
+Discovery is created once per track at spec time. Subsequent
+`draft:decompose` runs DO NOT regenerate `discovery.md` — its job is to
+capture the moment in time when the spec was written, anchored to
+`metadata.json:synced_to_commit`. Re-running discovery is a deliberate
+re-spike; the previous file should be renamed `discovery-<isodate>.md`
+and the new one inherits the slot.
+
+</core-file>
+
+---
+
+## core/shared/graph-usage-report.md
+
+<core-file path="core/shared/graph-usage-report.md">
+
+# Graph Usage Report Footer
+
+Every code-touching skill that consults `draft/graph/` MUST emit this footer
+as the closing section of its output. The lint hook
+`scripts/tools/check-graph-usage-report.sh` validates the footer's presence
+and column shape on save.
+
+The footer documents what the skill **looked at** in the graph before
+acting — making after-the-fact review of graph-vs-grep discipline possible.
+
+## Canonical footer (markdown to emit)
+
+```md
+## Graph Usage Report
+
+- Graph files queried: <list, or `NONE` with justification>
+- Modules identified via graph: <list>
+- Files identified via graph: <count>
+- Filesystem grep fallbacks: <list with justification, or `none`>
+- Justification (only when Graph files queried = NONE): <required>
+```
+
+## Where each skill appends
+
+Skills append the footer to their primary output artifact. Convention:
+
+- `draft new-track` — completion announcement
+- `draft decompose` — terminal output
+- `draft implement` — session summary
+- `draft review`, `quick-review`, `deep-review` — review report (before Verdict)
+- `draft bughunt` — bug report
+- `draft debug` — debug report
+- `draft learn` — completion summary
+- `draft tech-debt` — debt report
+- `draft deploy-checklist` — checklist
+- `draft discover` — discovery.md trailer
+
+When the skill's output is a long-form artifact, the footer goes at the
+bottom of the artifact (after the Verdict line is rendered for reviews;
+before the closing for sessions). When the skill's output is the terminal
+announcement only, the footer goes at the end of the announcement.
+
+## Rule on `NONE`
+
+If `draft/graph/schema.yaml` does not exist OR the skill genuinely consulted
+no graph files, set `Graph files queried: NONE` and provide a one-line
+justification (e.g. "graph data unavailable", "non-code-touching command").
+The lint hook fails when `NONE` appears without an adjacent justification.
+
+## See also
+
+- [graph-query.md](graph-query.md) — §Mandatory Lookup Contract
+- [red-flags.md](red-flags.md) — universal red flags including the GUR-omission rule
+
+</core-file>
+
+---
+
+## core/shared/red-flags.md
+
+<core-file path="core/shared/red-flags.md">
+
+---
+shared: red-flags
+applies_to: all code-touching skills
+---
+
+# Shared Red Flags
+
+Cross-skill red flags that any code-touching skill must enforce. Skills include their own skill-specific red flags **in addition to** the universal block below. The graph-first red flags are non-negotiable — they protect correctness against premature `grep`/`find` fallbacks that miss structural truth.
+
+Referenced by: `draft decompose`, `draft implement`, `draft review`, `draft deep-review`, `draft quick-review`, `draft bughunt`, `draft debug`, `draft learn`, `draft tech-debt`, `draft deploy-checklist`, `draft new-track`.
+
+## Universal Red Flags (STOP if any apply)
+
+- **Ran `grep`/`find`/`rg` for symbol or file discovery before consulting the graph** (when `draft/graph/schema.yaml` exists).
+- **Read more than 50 lines of source before consulting `draft/graph/hotspots.jsonl`** to know whether the file is a hotspot.
+- **Omitted the Graph Usage Report footer** from the final output (see [graph-query.md](graph-query.md) §Mandatory Lookup Contract).
+- **Used a `grep` fallback without an explicit graph-miss statement** in the form: `Graph returned no match for <X>; falling back to grep.`
+- **Loaded full Layer 0.5 guardrails when the command type does not require them** (see selective-loading matrix in [draft-context-loading.md](draft-context-loading.md) §Layer 0.5).
+- **Marked a task complete without verification evidence** (test run, build output, lint output — pasted, not summarized).
+- **Made up file paths or line numbers** instead of reading the file (`file_path:line_number` references must resolve).
+
+## Ground-Truth Red Flags (STOP if any apply)
+
+These enforce [graph-query.md](graph-query.md) §Ground-Truth Discipline. Graph identifies candidates; Read confirms them. Shipping unread claims is the dominant correctness failure mode observed in Draft output.
+
+- **Wrote a `path:line` / `func()` / `symbol` reference into a deliverable without opening the file in this run.** Graph hit ≠ Read. (G1)
+- **Declared something in-scope or out-of-scope without Reading at least one file in that path.** Module names from `module-graph.jsonl` are a candidate set, not proof that the candidate contains the named cost. (G2)
+- **Shipped `Citation: TBD` / `Path: TBD` / `Symbol: TBD` on a row whose Status is `Modified` or `Existing`.** TBD is reserved for `Status: New` rows with a planned path filled in. (G3)
+- **Claimed code behavior (writes / blocks / loops / fails / is the only path) from graph metadata alone.** Fan-in / fan-out / complexity scores are necessary signal, not sufficient evidence. (G4)
+- **Promoted a spec / generated an HLD or LLD / closed a review without checking that the in-scope file set covers every cost term in the problem statement.** Silent scope narrowing that excludes the named cost is the highest-impact failure class. (G5)
+- **Treated a graph query result as the terminal answer.** Graph is the index; the source files are the territory. Every claim that survives to a deliverable needs at least one Read behind it.
+
+When in doubt, prefer "not yet validated against source" over an unbacked assertion. A flagged uncertainty is reviewable; a confident wrong claim is not.
+
+## Graph-First Lookup Order (non-negotiable)
+
+1. **Graph artifacts first** — `draft/graph/module-graph.jsonl`, `draft/graph/hotspots.jsonl`, `draft/graph/modules/<name>.jsonl`, `draft/graph/proto-index.jsonl`, `draft/graph/{go,python,ts,c,call}-index.jsonl`.
+2. **Generated context second** — `draft/.ai-context.md`, relevant `draft/architecture.md` slices, track-level `hld.md`/`lld.md`.
+3. **Source file reads third** — only narrowed targets identified via graph or generated context.
+4. **Filesystem `grep`/`find` last** — only after a graph miss, with the explicit fallback sentence above.
+
+Using a lower tier before a higher tier is a **Red Flag** and must be reported in the skill's Graph Usage Report (justification required).
+
+## How to Extend
+
+Skill-specific red flags live in the skill's `SKILL.md` under `## Red Flags - STOP if you're:`. Skills should not duplicate the universal block above — instead they reference this file:
+
+```markdown
+## Red Flags - STOP if you're:
+
+See [shared red flags](../../core/shared/red-flags.md) — applies to all code-touching skills.
+
+Skill-specific:
+- <skill-specific red flag>
+- <skill-specific red flag>
+```
+
+This keeps boilerplate centralized while leaving room for skill-specific guardrails.
+
+</core-file>
+
+---
+
+## core/shared/template-contract.md
+
+<core-file path="core/shared/template-contract.md">
+
+# Template Contract
+
+> Narrative + field index for `core/templates/*`. Every generator skill imports
+> this block so the schema lives in one place. Source of truth: this file and
+> `core/templates/CHANGELOG.md`.
+
+## Contract summary
+
+1. **Templates are the schema.** Skills, validators, and renderers consume
+   `core/templates/*` as the canonical shape of every artifact. Schema changes
+   that land only in skill prompts or validators (without touching templates)
+   are forbidden.
+
+2. **Placeholders are parseable.** Every authorable field uses one of:
+   - `_TBD_<field>_` — value missing, must be filled before status promotion.
+   - `_PLACEHOLDER_<kind>_` — illustrative example for authors (e.g.
+     `_PLACEHOLDER_module_name_`); not blocking.
+   - `_NONE_FOUND_` — explicit "I looked and there's nothing here" (e.g. used
+     in `discovery.md` open-questions when truly empty); requires a one-line
+     justification adjacent to it.
+
+   Silent placeholders such as `Author1`, `xxx@example.com`, `xxx@example.com`,
+   `[name]`, pre-checked `Status: [x] Complete`, or empty cells in approval
+   tables are **forbidden**. Hygiene validator (WS-1) fails on any match.
+
+3. **Required vs optional is explicit.**
+   - `<!-- REQUIRED -->` next to a field, header, or table column: the
+     hygiene validator counts this as blocking for `ready-for-review`.
+   - `<!-- OPTIONAL -->` next to a field: never blocking; may carry sentinels.
+   - Fields with neither marker default to optional but may be tightened
+     later — prefer explicit markers.
+
+4. **Two-tier metadata pattern — git state never in per-file frontmatter.**
+
+   **Project level** (`draft/metadata.json`):
+   - Single file that owns `git.*`, `synced_to_commit`, and `schema_version`
+     for all 15 project-level artifacts (`architecture.md`, `.ai-context.md`,
+     `.ai-profile.md`, `product.md`, `workflow.md`, etc.).
+   - Written once by `draft:init` / `draft:init refresh` / `draft:index`.
+   - All skills that need the project sync anchor read it here — never from
+     per-file frontmatter.
+   - Template: `core/templates/draft-metadata.json`.
+
+   **Track level** (`tracks/<id>/metadata.json`):
+   - Per-track file that owns `git.*`, `synced_to_commit`, `classification.*`,
+     `status`, `scope_includes`, `scope_excludes`, `template_version`, and
+     track progress fields.
+   - Markdown track docs reference ephemeral fields via `<!-- META:<key> -->`
+     directives, resolved by `scripts/tools/render-track.sh` at view time.
+   - This makes re-sync a single-file edit and prevents drift across
+     `spec.md` / `hld.md` / `lld.md` / `plan.md`.
+   - Template: `core/templates/metadata.json`.
+
+5. **Stable frontmatter only.** Per-file YAML frontmatter carries `project`,
+   `module`, `track_id`, `generated_by`, `generated_at`, `links`, and nothing
+   else. Never emit `git.*` or `synced_to_commit` into per-file frontmatter.
+
+6. **Phase regeneration is bracketed.** `plan.md` wraps phase tables in
+   `<!-- DECOMPOSE:REGENERATE START -->` / `<!-- DECOMPOSE:REGENERATE END -->`.
+   `draft:decompose` rewrites only between markers. Manual notes outside the
+   markers survive every regenerate.
+
+7. **Example citations in templates are lint-clean by construction.** Any
+   illustrative `path:line` or `§X.Y` snippet shown in a template is wrapped
+   in `<!-- VERIFIER:IGNORE START -->` / `<!-- VERIFIER:IGNORE END -->`.
+   `scripts/tools/verify-citations.sh` and `verify-doc-anchors.sh` skip these
+   regions.
+
+## Field index (canonical names)
+
+These names appear identically across every template and validator.
+
+### Frontmatter (markdown, stable)
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `project` | string | yes | Project / repo name |
+| `module` | string | yes | Module slug or `root` |
+| `track_id` | string | yes | Kebab-case track identifier |
+| `generated_by` | string | yes | Skill that last wrote the file (`draft:new-track`, `draft:decompose`, …) |
+| `generated_at` | ISO-8601 | yes | Timestamp of the last regenerate |
+| `links` | map | yes (hld/lld) | Cross-doc relative paths |
+
+### `metadata.json` (canonical, ephemeral)
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `id` | string | yes | Same as `track_id` |
+| `title` | string | yes | Human-readable |
+| `type` | enum | yes | `feature` / `bugfix` / `refactor` |
+| `status` | enum | yes | `draft` / `ready-for-review` / `in_progress` / `completed` / `archived` |
+| `template_version` | semver | yes (2.0+) | Schema version this track conforms to |
+| `git.branch` | string | yes | Source branch |
+| `git.remote` | string | optional | Upstream tracking |
+| `git.commit` | string | yes | Full SHA |
+| `git.commit_short` | string | optional | Render convenience |
+| `git.commit_date` | ISO-8601 | optional | |
+| `git.commit_message` | string | optional | |
+| `git.dirty` | bool | yes | Working tree dirty at sync |
+| `synced_to_commit` | string | yes | Anchors citation verifiers |
+| `classification.criticality` | enum | yes | `low` / `standard` / `high` / `mission-critical` |
+| `classification.data_classification` | enum | yes | `public` / `internal` / `confidential` / `regulated` |
+| `classification.deployment_surface` | enum | yes | `on-prem` / `SaaS` / `hybrid-cloud` / `IBM-cloud` / `mixed` |
+| `scope_includes` | array<string> | yes | Canonical problem-area tags |
+| `scope_excludes` | array<string> | optional | Tags explicitly out of scope |
+| `pre_deploy_status` | enum | optional | `unrun` / `passing` / `failing` / `bypassed` — written by deploy-checklist |
+| `phases.total`, `phases.completed` | int | yes | |
+| `tasks.total`, `tasks.completed` | int | yes | |
+| `impact.*` | various | optional | Written by `draft:implement` |
+
+### `draft/metadata.json` (project-level, ephemeral)
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `project` | string | yes | Repo / product name |
+| `schema_version` | semver | yes | `draft-metadata.json` schema version |
+| `generated_by` | string | yes | Skill that last wrote this file |
+| `generated_at` | ISO-8601 | yes | Timestamp of last write |
+| `git.branch` | string | yes | Branch at last sync |
+| `git.remote` | string | optional | Upstream tracking ref |
+| `git.commit` | string | yes | Full SHA at last sync |
+| `git.commit_short` | string | optional | Render convenience |
+| `git.commit_date` | ISO-8601 | optional | |
+| `git.commit_message` | string | optional | |
+| `git.dirty` | bool | yes | Working tree dirty at sync |
+| `git.base_branch` | string | optional | Default: `main` |
+| `git.commits_ahead_base` | int | optional | |
+| `git.commits_behind_base` | int | optional | |
+| `synced_to_commit` | string | yes | Anchor for all project-level citation verifiers and staleness checks |
+
+**Backward compatibility:** If `draft/metadata.json` is absent (pre-migration installs), fall back to reading `synced_to_commit` from `draft/architecture.md` YAML frontmatter. Write `draft/metadata.json` on the next `init` or `init refresh` to complete migration.
+
+### Per-table required columns (WS-7)
+
+**HLD component table:** `concurrency_model`, `aggregate_resource_cap`,
+`parallel_flag_interaction`.
+**HLD alternatives table:** `promote_to_adr` (boolean).
+**HLD flags/rollout:** `flag_name`, `cluster_feature_gate`, `kill_switch_test_id`,
+`runbook_link`.
+**LLD class table:** adds `lock_acquired`, `reentrant`.
+**LLD error table:** adds `fault_injection_site`.
+**LLD eligibility/cap table:** `derived_from`.
+**Spec eligibility table:** `derived_from`.
+**Spec risk table:** `mitigation_test_id`.
+**Spec acceptance criteria:** `test_id`.
+**Plan phase rows:** `entry_gate_command`, `exit_gate_command`, `owner`.
+
+## When to extend the contract
+
+- Adding a field: edit the relevant template, add an entry above, bump
+  `template_version` MINOR, append to `core/templates/CHANGELOG.md`.
+- Removing a field: bump MAJOR, ship a migration in
+  `scripts/tools/migrate-track-frontmatter.sh`, document in CHANGELOG.
+- Renaming a field: treat as remove+add; never silently rename.
+
+</core-file>
+
+---
+
+## core/shared/template-hygiene.md
+
+<core-file path="core/shared/template-hygiene.md">
+
+# Template Hygiene Rules
+
+> Imported by every generator skill. Defines the hygiene contract enforced by
+> `scripts/tools/check-track-hygiene.sh` and surfaced by `draft:deploy-checklist`.
+
+## Forbidden patterns
+
+These strings must never appear in a generated artifact:
+
+| Pattern | Replace with |
+|---|---|
+| `Author1`, `Author2`, `Author3` | author from `git config user.name` |
+| `xxx@example.com`, `xxx@example.com`, `xxx@example.org` | author email from `git config user.email` |
+| `[name]` placeholder cell | `_TBD_<role>_` sentinel |
+| Pre-checked `Status: [x] Complete` (when work is not done) | `Status: [ ] _TBD_status_` |
+| Empty cell in an approval-bearing table | `_TBD_approver_<role>_` |
+
+## Sentinel placeholders
+
+- `_TBD_<field>_` — value missing, must be filled before `ready-for-review`.
+- `_PLACEHOLDER_<kind>_` — illustrative example for authors; not blocking.
+- `_NONE_FOUND_` — explicit "looked, nothing here"; requires adjacent justification.
+
+## Required vs optional markers
+
+Every authorable field in a template carries a marker the validator can read:
+
+- `<!-- REQUIRED -->` — counts as blocking for `ready-for-review` if it
+  contains a `_TBD_` sentinel.
+- `<!-- OPTIONAL -->` — never blocking; may carry a sentinel indefinitely.
+
+When neither marker is present, the validator defaults to OPTIONAL but logs
+a warning. New fields should always carry an explicit marker.
+
+## Status transitions
+
+| Status (in `metadata.json`) | Allowed `_TBD_` count (per doc) |
+|---|---|
+| `draft` | unlimited |
+| `ready-for-review` | ≤ 3 OPTIONAL, **0 REQUIRED** |
+| `in_progress` | inherits from `ready-for-review` |
+| `completed` | 0 of any |
+| `archived` | not checked |
+
+`metadata.json:status` is the single source of truth. Markdown `Status:` rows
+must be rendered from it, never authored independently. The hygiene validator
+fails on disagreement.
+
+## Author resolution
+
+The hygiene validator runs `git config user.name` and `git config user.email`
+in the track's working tree. If either is unset, validation fails — the user
+must configure git identity before generating tracks.
+
+## Approver placeholders
+
+Empty cells in any approval table render as `_TBD_approver_<role>_`. The role
+slug is lower-snake-case from the column header (e.g. `Technical Leads` →
+`tech_leads`). The validator forbids empty cells in any table whose first
+header is `Role`.
+
+## TBD budget gate
+
+The validator counts every occurrence of `_TBD_` per document. The default
+caps (configurable via `metadata.json:hygiene_budget`):
+
+- `draft`: no cap
+- `ready-for-review`: per-doc ≤ 3 OPTIONAL, **0 REQUIRED**
+
+If the cap is exceeded, the validator emits one line per offending sentinel
+with a file:line citation.
+
+</core-file>
+
+---
+
+## core/shared/tool-resolver.md
+
+<core-file path="core/shared/tool-resolver.md">
+
+---
+title: Draft Tool Resolver Pattern
+purpose: Canonical bash snippet for resolving scripts/tools/*.sh paths across install layouts (Cursor plugin, Claude plugin, dev repo).
+audience: skill authors and core/shared/*.md docs
+---
+
+# Tool resolver pattern
+
+Draft ships `scripts/tools/*.sh` inside the plugin archive. At runtime, skills run inside a target project — `scripts/tools/` is **not** on a relative path from `$PWD`. Use this resolver to find the tools deterministically.
+
+## The snippet
+
+Paste this verbatim before invoking any `scripts/tools/*.sh` script:
+
+```bash
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+```
+
+Resolution order:
+
+1. `$DRAFT_PLUGIN_ROOT/scripts/tools/` — explicit override (set by install.sh or CI).
+2. `$HOME/.claude/plugins/draft/scripts/tools/` — Claude Code default install.
+3. `$HOME/.cursor/plugins/local/draft/scripts/tools/` — Cursor default install.
+4. `$PWD/scripts/tools/` — developer running from the draft repo itself.
+
+## Invocation forms
+
+**Required tool** (the skill cannot complete its work without it; fail loudly):
+
+```bash
+bash "$DRAFT_TOOLS/git-metadata.sh" --yaml --project "$PROJECT"
+```
+
+**Soft tool** (best-effort; skip silently if missing — telemetry, optional polish):
+
+```bash
+[ -x "$DRAFT_TOOLS/emit-skill-metrics.sh" ] && \
+  bash "$DRAFT_TOOLS/emit-skill-metrics.sh" '<payload>'
+```
+
+**Soft tool with explicit fallback prose**:
+
+```bash
+if [ -x "$DRAFT_TOOLS/fix-whitespace.sh" ]; then
+  bash "$DRAFT_TOOLS/fix-whitespace.sh" --draft
+fi
+# If absent, the model performs the same normalization manually.
+```
+
+## Why not a simpler form
+
+- **A bare `scripts/tools/<name>` path** breaks the moment the skill runs inside a project other than the draft repo (the common case). 3k+ engineers hit this.
+- **A wrapper script on PATH** would require an installer step we don't have on Cursor/Claude Code.
+- **A single env var pointing at the tool file** would multiply env vars per tool.
+
+The three-line resolver is the smallest correct form. Tested by `tests/test-skill-script-invocation.sh`.
+
+</core-file>
+
+---
+
+## core/shared/verification-gates.md
+
+<core-file path="core/shared/verification-gates.md">
+
+# Verification Gates
+
+> Shared block defining the validator chain every track passes through
+> before promoting status. Imported by `skills/deploy-checklist`,
+> `skills/implement`, `skills/decompose`, and any other skill that gates on
+> artifact correctness.
+
+## The chain
+
+Run in this order. Single non-zero exit aborts the chain.
+
+| Step | Tool | What it checks |
+|------|------|----------------|
+| 1 | `scripts/tools/check-track-hygiene.sh` | status parity, author resolution, approver placeholders, TBD budget vs `metadata.json:status`, plan staleness vs HLD/LLD |
+| 2 | `scripts/tools/verify-citations.sh` | every `path:line` resolves against `metadata.json:synced_to_commit` (±tolerance) |
+| 3 | `scripts/tools/verify-doc-anchors.sh` | `§X.Y` references and `<doc>.md#anchor` links resolve |
+| 4 | `scripts/tools/check-graph-usage-report.sh` | Graph Usage Report footer present and well-formed |
+| 5 | `scripts/tools/check-scope-conflicts.sh` | no overlap with adjacent tracks under same scope tags |
+| 6 | `scripts/tools/diff-templates-vs-tracks.sh` | no drift between track and current template schema |
+
+## Output convention
+
+Each tool emits:
+
+- exit code 0/1 (clean / violations)
+- text mode by default; `--json` for machine-readable
+- one line per violation: `[<kind>] <track>/<file>:<line> — <detail>`
+
+## Result persistence
+
+After the chain runs, persist the outcome to `metadata.json:pre_deploy_status`:
+
+- `unrun` — chain has never executed against this track
+- `passing` — last run exited 0
+- `failing` — last run exited 1; details in CI log
+- `bypassed` — explicit override; requires `bypass_reason` in metadata
+
+`draft:deploy-checklist` reads this field and refuses to deploy a track
+whose `pre_deploy_status != passing`.
+
+## When to invoke
+
+- `draft:deploy-checklist` — mandatory before any production deploy.
+- `draft:implement` — at the end of each phase before flipping
+  `phases.completed`.
+- `draft:decompose` — after rewriting `plan.md`, to catch plan-staleness
+  immediately.
+- CI hook — gate every merge that touches `tracks/**`.
+
+</core-file>
+
+---
+
+## core/guardrails.md
+
+<core-file path="core/guardrails.md">
+
+# C++ Hard Guardrails — Systems Programming
+
+> **See also:** [`core/guardrails/README.md`](guardrails/README.md) for the full rule reference (SEC/CQ/DN/RC IDs) and precedence. This file contains the C++-specific `G1.x..G7.x` rules and is loaded for C/C++ projects only. For non-C++ language standards, see [`core/guardrails/language-standards.md`](guardrails/language-standards.md).
+
+Mandatory guardrails for C++ systems code at . All Draft quality commands (`draft bughunt`, `draft review`, `draft deep-review`, `draft quick-review`, `draft implement`, `draft debug`, `draft assist-review`) **must** enforce these rules. Violations are always flagged — no exceptions.
+
+These guardrails are pre-seeded into every project's `draft/guardrails.md` by `draft init` and loaded at runtime via `core/shared/draft-context-loading.md`.
+
+**Source:** C++ Pitfalls and General Guidelines (internal).
+
+---
+
+## G1 — Object Lifecycle & Memory Safety
+
+### G1.1: No temporary strings in Printf-style trace APIs
+
+Passing `.c_str()` of a temporary (e.g., `proto.ShortDebugString().c_str()`) to `Printf`-style APIs that store format arguments by reference creates a dangling pointer. The temporary is destroyed at the end of the statement; the stored pointer becomes invalid.
+
+- **Wrong:** `mem_tracer_->Printf("Bug: %s", my_proto->ShortDebugString().c_str());`
+- **Fix:** Use `Print(StringPrintf(...))` when arguments include short-lived `.c_str()` pointers.
+
+### G1.2: No dangling references after object destruction
+
+Never hold references or raw pointers to members of an object that may be destroyed before the reference is used. This includes captured `this`, member pointers stored in callbacks, and iterator references across async boundaries.
+
+### G1.3: No capture-all-by-reference in async lambdas
+
+Capturing local variables by reference (`[&]`) in a lambda that may execute asynchronously (e.g., as a `done_cb` of another op) creates use-after-free when the enclosing scope exits before the callback fires.
+
+- **Fix:** Capture by value, use `shared_ptr`, or explicitly list captures.
+
+### G1.4: Every async functor must be wrapped with callback_muter
+
+A functor that accesses op members and may fire after the op is destroyed must be wrapped with `callback_muter_->Wrap()`. Omitting this causes use-after-free.
+
+### G1.5: Never wrap op's own done_cb in ClosureRunner when extracting result via raw pointer
+
+When extracting a result from an op using its raw pointer inside the op's own done callback, that callback must NOT be wrapped in a ClosureRunner. The ClosureRunner may destroy the op before the raw-pointer access, causing use-after-free.
+
+```cpp
+// CORRECT — no ClosureRunner on op_done_cb
+auto op = SomeOp::CreatePtr();
+op_done_cb = [raw_op = op.get()] { error = raw_op->error(); };
+op->Start(op_done_cb);
+```
+
+### G1.6: ClosureRunner and CallbackMuter must be wrapped in correct order
+
+The correct order is: `callback_muter_->Wrap()` first, then `cr_->Wrap()`. Reversing the order breaks cleanup semantics.
+
+### G1.7: Every async functor must be wrapped with cr_
+
+Omitting `cr_->Wrap()` on a functor can cause: (a) the op finishing in the wrong ClosureRunner triggering CHECK failures, or (b) stack overflow when control flow becomes too deep.
+
+### G1.8: No op member access after potential op destruction in loops
+
+If `DoWork(ii)` may destroy the op on the last iteration, the loop's subsequent access to op members (e.g., `count_`, `disk_id_set_`) is use-after-free.
+
+- **Wrong:** `for (int ii = 0; ii < count_; ++ii) DoWork(ii);` — if last iteration destroys op, `count_` access is UB.
+- **Fix:** Copy loop bounds to a local variable before the loop, or restructure to avoid self-destruction mid-loop.
+
+### G1.9: No code execution after Finish()
+
+After calling `Finish()`, the op may be destroyed. Any code executing after `Finish()` on the same path accesses a potentially destroyed object.
+
+- **Always** `return` immediately after `Finish()`.
+- In conditional blocks: add `return` even if the method appears to end after the block — guards against future code additions.
+
+### G1.10: No unintended deep copies via auto
+
+Using `auto` with map subscript returns a copy, not a reference:
+
+- **Wrong:** `auto my_proto = map_[key];` — deep-copies the value.
+- **Fix:** `auto& my_proto = map_[key];` or `const auto& my_proto = map_.at(key);`
+
+### G1.11: std::move discipline
+
+- **Always move** objects expensive to copy (large strings, protocol buffers) when the source is no longer needed.
+- **Never use** an object after it has been moved — this may trigger SEGV or undefined behavior.
+
+### G1.12: No shared_ptr binding to non-trivial objects in callbacks
+
+Binding `shared_ptr` to objects that hold EventDriver/ThreadPool references in callbacks creates circular references. The destructor runs inside the pool's own thread, causing deadlock or undefined behavior.
+
+- **Fix:** Bind raw pointers in the lambda and wrap with `callback_muter_` of the bound object.
+
+---
+
+## G2 — Concurrency & Locking
+
+### G2.1: No mutable operations under shared (read) locks
+
+Calling mutable methods while holding a shared/read lock violates lock semantics and causes data races.
+
+- **Wrong:** `ScopedSpinLocker ssl(&sl_, false /* is_exclusive */); lru_cache_->Lookup(...);` (if Lookup mutates internal state)
+- **Fix:** Use exclusive lock for any operation that modifies state.
+
+### G2.2: Always release spinlock before invoking callbacks
+
+A callback may synchronously re-acquire the same spinlock, causing deadlock.
+
+- Release the lock explicitly before invoking any callback or `Finish()`.
+- Use `ScopedSpinLocker::RegisterReleaseOrDestructionCallback()` when appropriate.
+- **Corollary:** Always release spinlocks synchronizing owner-object state before calling `Finish()`, because `Finish()` may invoke a `done_cb` that creates another op acquiring the same lock — all synchronously.
+
+### G2.3: No object destruction under spinlock protection
+
+Destroying expensive objects (large protocol buffers, complex data structures) while holding a spinlock causes contention.
+
+- **Wrong:** `auto sl = sl_.GetScopedLocker(); lru_cache_.Insert(xx, yy);` — evicted objects destroyed before lock release.
+- **Fix:** Capture evicted objects, release lock, then let them destruct.
+
+### G2.4: Never sacrifice correctness for lock "optimization"
+
+Performing operations on shared member variables without locking to "optimize" around G2.3 is far more dangerous than the contention it avoids. Always choose correctness over performance when unsure of side-effects.
+
+### G2.5: No synchronous waits in async code paths
+
+Mixing `Trigger::Wait()` or other blocking synchronous primitives in otherwise asynchronous (e.g., networking) code can cause deadlock when all threads enter the wait state.
+
+---
+
+## G3 — Control Flow & Error Handling
+
+### G3.1: Always return after Finish() in conditional blocks
+
+If `Finish()` is called inside an `if`/`else` or any conditional block, always add `return` — even if the method appears to end after the block. This protects against someone adding code after the block without noticing the `Finish()` call.
+
+### G3.2: CHECKs are for internal consistency only
+
+- CHECKs assert internal invariants where forward progress is impossible if violated (e.g., corrupt data structure).
+- External systems can always provide bad data — these must NOT be CHECKs. Use error handling and propagation.
+- Non-null pointer assertions must be CHECKs (not DCHECKs) — a FATAL is easier to debug than a SIGSEGV.
+
+### G3.3: DCHECKs must not contain side-effecting expressions
+
+`DCHECK(some_map.erase("key"))` — the erase does not execute in release builds. Never put actual logic inside DCHECK.
+
+- **Fix:** Execute the operation separately, then DCHECK the result.
+
+### G3.4: DCHECK vs CHECK vs LOG(DFATAL) selection
+
+| Scenario | Use |
+|----------|-----|
+| Internal consistency, forward progress impossible | `CHECK` |
+| Expensive consistency check, debug-only | `DCHECK` |
+| Fail in debug, log-and-continue in release | `LOG(DFATAL)` |
+| External input validation | Error handling (never CHECK) |
+
+---
+
+## G4 — Format & API Correctness
+
+### G4.1: Printf format strings must match argument types
+
+Format specifier / argument type mismatches (e.g., `%s` for `int`, `%d` for `const char*`) cause undefined behavior. Verify every `Printf`-style call matches specifiers to argument types.
+
+### G4.2: MemTracer Print vs Printf selection
+
+| Situation | API | Reason |
+|-----------|-----|--------|
+| Format string with non-pointer args | `Printf` | Lazy construction — string built only when tracer is rendered |
+| Argument includes `.c_str()` of a stack variable | `Print(StringPrintf(...))` | Avoids dangling pointer — string is materialized immediately |
+| Long literal string | `Printf` with format | Avoids N copies of the string across tracer objects |
+| Dynamic string variable | `Print(str)` | Avoids `Printf(str.c_str())` dangling-pointer trap |
+
+### G4.3: Use Maybe-prefixed MemTracer variants when op may be finished
+
+- Use `MaybePrint`/`MaybePrintf` when the code path may execute after `Finish()` (e.g., `ReleaseLock` called from destructor as fail-safe).
+- Do NOT use Maybe variants when the code is not expected to run post-Finish — it suppresses the DCHECK that catches unexpected execution.
+
+### G4.4: String + integer does not concatenate
+
+`"foo: " + integer` performs pointer arithmetic, not string concatenation. GCC does not warn. Use `StringPrintf` or `absl::StrCat`.
+
+### G4.5: boost::optional<bool> tests presence, not value
+
+`if (xx)` where `xx` is `boost::optional<bool>` tests whether `xx` is *set*, not whether the contained value is `true`. Use `if (xx && *xx)` or `if (xx.value_or(false))` to test the value.
+
+---
+
+## G5 — GFlags & Runtime Configuration
+
+### G5.1: Snapshot gflag values at op start
+
+A gflag may be flipped between two reads in the same op. Code like `if (FLAGS_xxx) DoStuff(); ... if (FLAGS_xxx) CHECK(StuffDone)` breaks if the flag changes between the two reads.
+
+- **Fix:** Read the flag once into a local variable at op start and use the local throughout.
+
+---
+
+## G6 — Performance
+
+### G6.1: Avoid ByteSize() on proto objects in hot paths
+
+`ByteSize()` is expensive on protocol buffer objects. Cache the result if needed multiple times, or avoid calling it in tight loops.
+
+### G6.2: Prefer repeated fields over map fields in proto for serialization-sensitive paths
+
+Proto `map` fields are costlier than `repeated` fields for serialization and deserialization.
+
+### G6.3: No inline execution in SpawnWorkersAndJoin done_cb
+
+When using `ClosureUtil::SpawnWorkersAndJoin`, do not wrap the `done_cb` with `true /* can_execute_inline */`. This causes hard-to-debug correctness issues. Only use inline execution in performance-critical code where correctness has been verified.
+
+---
+
+## G7 — Op Refresh
+
+### G7.1: Op refresh method selection
+
+| Method | Behavior | Risk |
+|--------|----------|------|
+| Timestamp refresh | Updates timestamp, op stays alive | None |
+| Finish-and-reissue | Marks finished, gets new op id | May break GC correctness |
+
+- Use `MaybeRefreshOperationId` for self-refresh.
+- Use `AddOpIdRefreshListener` on child ops for parent notification.
+- In snap_tree, snap_fs, and below: never use finish-and-reissue.
+
+---
+
+## Enforcement
+
+All Draft commands must:
+
+1. **Load** this file (via `core/guardrails.md` inlined at runtime) alongside the project's `draft/guardrails.md`.
+2. **Flag** any violation of these guardrails in C++ code as a finding with the guardrail ID (e.g., `G1.3`, `G2.2`).
+3. **Classify** violations using standard severity:
+   - **Critical:** Use-after-free, data race, deadlock (G1.x, G2.1–G2.5)
+   - **High:** Incorrect CHECK/DCHECK usage, missing return after Finish (G3.x)
+   - **Medium:** Performance pitfalls, API misuse (G4.x, G5.x, G6.x)
+4. **Never suppress** these guardrails. They are not subject to learned-convention overrides.
+5. **Cross-reference** with `draft/guardrails.md` project-level entries for additional context.
+
+</core-file>
+
+---
+
+## core/guardrails/code-quality.md
+
+<core-file path="core/guardrails/code-quality.md">
+
+# Code Quality Guardrails
+
+Numbered rules for code authoring, structure, and developer experience. Applied by all Draft generation and implementation commands. Loaded alongside `draft/guardrails.md` (project-level); project rules take precedence on conflict.
+
+**Referenced by:** `draft implement`, `draft review`, `draft bughunt`, `draft deep-review`, `draft quick-review`
+
+**Last updated:** 2026-05-16 
+**Rule count:** 12
+
+---
+
+## Rules
+
+### CQ-001: Follow the project's established style — never impose new conventions
+
+- **Rationale:** Consistency with existing code reduces cognitive load and merge friction. Style divergence is noise in reviews.
+- **Example:** If the project uses `snake_case` for functions, do not generate `camelCase`. Read existing files before generating.
+- **Source:** Clean Code (Martin); `draft/tech-stack.md ## Accepted Patterns`
+
+### CQ-002: One responsibility per function
+
+- **Rationale:** Multi-purpose functions are hard to test, debug, and review independently. Long functions hide logic branches.
+- **Example:** Extract validation, transformation, and persistence into separate functions rather than a single `processRequest()`.
+- **Source:** Clean Code (Martin); SOLID — Single Responsibility Principle
+
+### CQ-003: Prefer descriptive names over comments
+
+- **Rationale:** Comments rot when code changes. Self-documenting names are always current and reduce maintenance burden.
+- **Example:** Name a function `calculate_retry_backoff_ms` not `calc` with a comment explaining what it does.
+- **Source:** The Pragmatic Programmer (Hunt, Thomas); Clean Code (Martin)
+
+### CQ-004: Separate business logic from infrastructure
+
+- **Rationale:** Mixing domain logic with HTTP handlers, database calls, or queue consumers makes both untestable and non-portable.
+- **Example:** Domain functions accept plain types and return results. Handlers do transport parsing and response formatting. Never `SELECT` inside a route handler.
+- **Source:** Clean Architecture (Martin); 12-Factor App — Backing Services
+
+### CQ-005: Return early for preconditions — reduce nesting
+
+- **Rationale:** Deeply nested code hides the happy path and increases cognitive load. Each nesting level doubles the mental stack.
+- **Example:** Use guard clauses (`if err != nil { return err }`) at function entry rather than wrapping the entire body in conditionals.
+- **Source:** Clean Code (Martin); The Pragmatic Programmer
+
+### CQ-006: Include context in error messages
+
+- **Rationale:** "Error occurred" is not actionable. Operators and developers need to know what failed, with what input, and why.
+- **Example:** `fmt.Errorf("user %s not found in org %s: %w", userID, orgID, err)` — not `errors.New("not found")`.
+- **Source:** Release It! (Nygard); Google SRE — on-call ergonomics
+
+### CQ-007: Document the why, not the what
+
+- **Rationale:** Code shows what happens. Comments should explain non-obvious trade-offs, constraints, and intent that future maintainers cannot infer from code alone.
+- **Example:** `// Using retry=3: upstream API has ~2% transient failure rate (measured Q1 2026)` — not `// retry 3 times`.
+- **Source:** The Pragmatic Programmer; Working Effectively with Legacy Code (Feathers)
+
+### CQ-008: Update documentation alongside code in the same commit
+
+- **Rationale:** Stale docs are worse than no docs — they actively mislead. Documentation drift compounds over time.
+- **Example:** If changing an API endpoint signature, update the README, OpenAPI spec, and inline docstrings in the same commit.
+- **Source:** The Pragmatic Programmer — Orthogonality; DRY principle
+
+### CQ-009: Never expose internal stack traces in API responses
+
+- **Rationale:** Stack traces leak implementation details — file paths, library versions, internal module names — that aid attackers.
+- **Example:** Return `{"error": "internal_error", "message": "Request could not be processed"}` — not the raw exception with stack frames.
+- **Source:** OWASP Top 10 — Security Misconfiguration; Clean Architecture
+
+### CQ-010: Codebase analysis findings must be quantified
+
+- **Rationale:** "The code has some tech debt" is not actionable. Numbers enable prioritization and progress tracking.
+- **Example:** Report "23 functions exceed cyclomatic complexity 10" — not "high complexity detected."
+- **Source:** `core/knowledge-base.md` — Anti-Patterns: Cargo Cult
+
+### CQ-011: Remove imports and variables orphaned by your own changes
+
+- **Rationale:** Dead imports and unused variables introduced by a change are noise and may cause compilation errors or linter failures.
+- **Example:** If a refactor removes the only call to `parseToken()`, also remove the import of the token library in the same diff.
+- **Source:** Clean Code (Martin) — Dead Code
+
+### CQ-012: Changelogs and release notes must classify entries by type
+
+- **Rationale:** Consumers need to quickly locate breaking changes, new features, and security fixes without reading every line.
+- **Example:** Group entries under `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security` (Keep a Changelog format).
+- **Source:** Keep a Changelog standard; Semantic Versioning
+
+</core-file>
+
+---
+
+## core/guardrails/dependency-triage.md
+
+<core-file path="core/guardrails/dependency-triage.md">
+
+# Dependency Vulnerability Triage
+
+Procedure for checking dependency manifests for known vulnerabilities during code review and bug hunting. Applied whenever a change modifies a dependency manifest file (`RC-014`).
+
+**Referenced by:** `draft review` Stage 1, `draft bughunt`, `draft deep-review` Phase 3
+
+**Last updated:** 2026-05-16
+
+---
+
+## Trigger Condition
+
+Run this procedure when a diff or module scan includes changes to any of:
+
+| File | Ecosystem |
+|------|-----------|
+| `package.json`, `package-lock.json`, `yarn.lock`, `pnpm-lock.yaml` | Node.js / JavaScript |
+| `requirements.txt`, `pyproject.toml`, `Pipfile`, `Pipfile.lock`, `poetry.lock` | Python |
+| `go.mod`, `go.sum` | Go |
+| `Cargo.toml`, `Cargo.lock` | Rust |
+| `pom.xml`, `build.gradle`, `build.gradle.kts`, `gradle.properties` | JVM (Java, Kotlin, Scala) |
+| `Gemfile`, `Gemfile.lock` | Ruby |
+| `*.csproj`, `packages.config` | .NET |
+
+Also run during `draft deep-review` Phase 3 as a general dependency health check, regardless of whether manifest files changed.
+
+---
+
+## Step 1: Check for Configured Scanner
+
+Read `draft/tech-stack.md` for a `## Security Tooling` or `## Dependency Scanning` section. If a scanner is configured (e.g., Trivy, Snyk, Dependabot), use that. Otherwise, use the ecosystem-default tools below.
+
+---
+
+## Step 2: Run Vulnerability Scan
+
+Execute the appropriate scanner for the detected ecosystem. Use the results as-is — do not modify dependency files as part of review.
+
+| Ecosystem | Command |
+|-----------|---------|
+| Node.js | `npm audit --json` or `yarn audit --json` |
+| Python | `pip-audit --format=json` or `safety check --json` |
+| Go | `govulncheck ./...` or `nancy` (pipe `go list -m -json all \| nancy`) |
+| Rust | `cargo audit --json` |
+| JVM | `./gradlew dependencyCheckAnalyze` or `mvn dependency-check:check` |
+| Ruby | `bundle audit check --update` |
+| .NET | `dotnet list package --vulnerable` |
+| Multi-ecosystem | `trivy fs --scanners vuln .` (if Trivy is installed) |
+
+If the scanner is not installed, note: "Dependency scanner not available — recommend running `<command>` in CI."
+
+---
+
+## Step 3: Classify Findings by CVSS Score
+
+| CVSS Range | Severity in Report |
+|------------|-------------------|
+| 9.0 – 10.0 | **Critical** — blocks review approval |
+| 7.0 – 8.9 | **High** — should fix before merge |
+| 4.0 – 6.9 | **Medium** — fix within the next sprint |
+| 0.1 – 3.9 | **Low** — note for backlog |
+
+For each finding, report: package name, installed version, fixed version, CVE ID(s), CVSS score, and a one-line description of the vulnerability.
+
+---
+
+## Step 4: Assess Exploitability in Context
+
+Not every CVE applies to a project's actual usage. Before escalating a finding:
+
+1. Check if the vulnerable code path is actually reachable in the project (e.g., a CVE in an XML parser that the project doesn't use in a way that hits the vulnerable path).
+2. Check if the project's `draft/tech-stack.md` documents an accepted exception for the package (some transitive deps cannot be upgraded immediately).
+3. Check if the CVE is in a `devDependency` / test-only package that never ships to production.
+
+Findings that are not reachable, are in dev-only deps, or have a documented exception in `tech-stack.md` → downgrade by one severity level and note the reason.
+
+---
+
+## Step 5: Report Format
+
+Include a **Dependency Vulnerabilities** subsection in the review or bug report:
+
+```markdown
+## Dependency Vulnerabilities [RC-014]
+
+Scanner: <tool used or "not available">
+Scan date: <ISO date>
+
+| Package | Installed | Fixed In | CVE | CVSS | Severity | Notes |
+|---------|-----------|----------|-----|------|----------|-------|
+| lodash | 4.17.4 | 4.17.21 | CVE-2021-23337 | 7.2 | High | Prototype pollution |
+| ... | | | | | | |
+
+Critical: N High: N Medium: N Low: N
+
+Recommendation: <upgrade command or note if scanner unavailable>
+```
+
+If no vulnerabilities are found, write: "No known vulnerabilities found in direct or transitive dependencies as of <date>."
+
+</core-file>
+
+---
+
+## core/guardrails/design-norms.md
+
+<core-file path="core/guardrails/design-norms.md">
+
+# Design Norms Guardrails
+
+Numbered rules governing HLD and LLD artifact depth, content split, diagram placement, traceability, and secrets handling. Applied by `draft decompose`, `draft review`, and `draft implement` when interacting with design artifacts.
+
+**Referenced by:** `draft decompose`, `draft implement`, `draft review`, `draft deep-review`, `draft change`
+
+**Last updated:** 2026-05-16 
+**Rule count:** 10
+
+---
+
+## Rules
+
+### DN-001: HLD describes shape; LLD describes construction
+
+- **HLD** answers *what*: system boundaries, major components, data movement at narrative level, UI architecture, technology choices, dependencies, rollout intent, observability goals. No database DDL, no full API schemas, no class-level interfaces.
+- **LLD** answers *how*: modules, contracts, schemas, migrations, algorithms, error handling, configuration keys, test strategy, operational thresholds.
+- **Rationale:** Conflating depth in HLD bloats it for approvers who need architecture decisions, not implementation details.
+- **Source:** Clean Architecture (Martin); Designing Data-Intensive Applications (Kleppmann)
+
+### DN-002: HLD API surface is boundary-only
+
+- In HLD §Detailed Design, document boundary operations (REST paths, gRPC service/method names, event names) with one-line shape summaries only. Full request/response schemas, exhaustive error catalogs, and field-level constraints belong in LLD.
+- **Rationale:** Full schemas in HLD duplicate LLD and create two sources of truth that diverge.
+- **Source:** Building Microservices (Newman) — API boundary contracts
+
+### DN-003: Diagram placement by audience
+
+- **HLD §Architecture:** `flowchart`/container views showing system shape. No workflow sequence diagrams here.
+- **HLD §Detailed Design:** Mermaid sequence diagrams for critical cross-team happy paths only.
+- **LLD:** Sequences for non-trivial flows including material error branches, idempotency, and ordering. Split diagrams beyond ~12 steps.
+- **Rationale:** Architects reviewing HLD need structure diagrams. Implementers need sequence detail. Mixing both in HLD forces architects to read implementation noise.
+- **Source:** C4 Model (Brown) — level-appropriate diagrams
+
+### DN-004: Traceability from acceptance criteria to design
+
+- Link the track's `spec.md` acceptance criteria scorecard in design artifacts; do not paste the full spec body. Reference stable requirement IDs or AC labels in architecture summaries and component tables so reviewers can trace coverage.
+- **Rationale:** Without traceability, approvers cannot verify the design satisfies the spec without re-reading both documents in full.
+- **Source:** `draft/tracks/<id>/spec.md` — AC-linkage convention
+
+### DN-005: No secrets, PII, or live endpoints in design documents
+
+- Use placeholders (`<REDACTED>`, synthetic IDs, `<service-host>`). Diagrams and data model examples follow the same rule. Describe integration by system role and configuration key name — never production URLs, credentials, or real customer identifiers.
+- **Rationale:** Design docs are shared broadly (approvers, reviewers, docs systems). Secrets in docs are effectively leaked.
+- **Source:** OWASP — Sensitive Data Exposure; `core/guardrails/security.md` SEC-01
+
+### DN-006: LLD requires an approved HLD anchor
+
+- Before drafting LLD, verify an approved HLD exists for the same track. If none exists or approval is unclear, stop and list gaps and assumptions, or proceed only after explicit developer confirmation of a narrowed scope.
+- If LLD would contradict the HLD, call out the conflict explicitly — do not hide it or silently pick one.
+- **Rationale:** LLD written without an approved HLD optimizes implementation details before architecture decisions are settled — causing rework.
+- **Source:** `draft/tracks/<id>/hld.md` §Approvals gate
+
+### DN-007: HLD ↔ LLD mapping required
+
+- LLD must include a traceability table mapping each HLD component or section to the LLD section(s) covering it.
+- **Rationale:** Without explicit mapping, reviewers cannot verify LLD coverage of the HLD or detect scope gaps.
+- **Source:** `core/templates/lld.md` — traceability section
+
+### DN-008: LLD cites authoritative contract artifacts, not duplicates them
+
+- In LLD, cite repo paths to OpenAPI/protobuf/GraphQL/schema files as source of truth for interface contracts. Avoid pasting entire specs; a minimal excerpt is acceptable only when the file is not in the repo.
+- **Rationale:** Inlined specs diverge from the implementation faster than referenced ones.
+- **Source:** DRY — The Pragmatic Programmer
+
+### DN-009: Concurrency and ordering must be explicit in LLD
+
+- LLD §Data Model states invariants (keys, state machines, consistency levels). Add §Concurrency and Ordering where relevant: locks, idempotency keys, event delivery semantics and ordering guarantees.
+- **Rationale:** Concurrency bugs are the hardest to reproduce and the most expensive to fix in production. Documenting them forces explicit reasoning.
+- **Source:** Designing Data-Intensive Applications (Kleppmann) — consistency and consensus
+
+### DN-010: Observability detail belongs in LLD, intent belongs in HLD
+
+- **HLD:** What must be observed for the feature — SRE-facing goals, key metric categories, alert intent.
+- **LLD:** Concrete metric names, label dimensions, exemplar queries, thresholds where known.
+- **Rationale:** Approvers need to know *that* the design is observable; implementers need to know *how* to instrument it. These are different audiences at different review stages.
+- **Source:** Google SRE Book — SLO definition; `draft/tracks/<id>/hld.md` §Checklist / §Observability
+
+</core-file>
+
+---
+
+## core/guardrails/language-standards.md
+
+<core-file path="core/guardrails/language-standards.md">
+
+# Language Standards
+
+Per-language code quality and style standards for Draft quality commands. Loaded selectively based on the detected language stack.
+
+**Loading:** `core/shared/draft-context-loading.md` Layer 0.5 specifies which commands load this file. The reviewing command identifies the project language from `draft/tech-stack.md` and applies only the relevant section(s).
+
+**Precedence:** For C/C++ code, `core/guardrails.md` (G1–G8) is the authoritative ruleset — this file's C++ section only supplements it with additional standards not covered by G1–G8. `draft/guardrails.md` project-level rules always take precedence over everything here.
+
+**Last updated:** 2026-05-16
+
+---
+
+## Detecting the Project Stack
+
+Read `draft/tech-stack.md` `## Languages` and `## Primary Language` to identify the stack. Apply:
+- The matching section(s) below
+- `core/guardrails/secure-patterns.md` for the same language (when in security mode)
+- `core/guardrails.md` for C/C++ (always, if C/C++ detected)
+
+---
+
+## C / C++
+
+**Authoritative:** `core/guardrails.md` G1–G8 (object lifecycle, ownership, async safety, type safety, const, test hooks, class design, STL). Apply all of those first.
+
+**Additional standards:**
+
+### Naming
+- Classes/structs: `PascalCase`
+- Functions and methods: `PascalCase` (matching G2 style conventions for the codebase)
+- Local variables and parameters: `snake_case` or `camelCase` — match the file's existing convention
+- Constants and macros: `kCamelCase` for constants; `SCREAMING_SNAKE_CASE` for macros (prefer `constexpr` over macros for values)
+- Member variables: `snake_case_` with trailing underscore (match existing file style)
+
+### Code Quality
+- No `using namespace std;` in header files — pollutes includer's namespace
+- No `#define` for magic numbers — use `constexpr` or `enum class`
+- Prefer `static_assert` over runtime assertions for compile-time verifiable invariants
+- Destructors that release resources must be declared virtual in base classes with virtual functions
+- Prefer `std::string_view` over `const std::string&` for read-only string parameters (avoids unnecessary copies)
+
+### Error Handling
+- Return error codes or status objects consistently — do not mix exception-based and code-based error handling within the same module
+- Log error context before returning an error: function name, relevant IDs, received vs expected values
+- Constructor failures: prefer factory functions that return `StatusOr<T>` over throwing constructors
+
+---
+
+## Python
+
+### Naming
+- Modules and packages: `snake_case`
+- Classes: `PascalCase`
+- Functions, methods, variables: `snake_case`
+- Constants: `SCREAMING_SNAKE_CASE`
+- Private members: `_single_leading_underscore` (convention); `__double` only for name mangling
+
+### Code Quality
+- Prefer `pathlib.Path` over `os.path` string manipulation for file paths
+- Use `dataclasses`, `NamedTuple`, or `TypedDict` for structured data — avoid bare dicts for complex schemas
+- `f-strings` for formatting in Python 3.6+; no `.format()` or `%` formatting in new code unless the context requires it (logging — see below)
+- Avoid mutable default arguments: `def foo(items=[])` → `def foo(items=None): items = items or []`
+- Prefer explicit exception types over bare `except:` or `except Exception:` — catch what you can handle
+- Use type annotations (`typing` module or built-in generics in 3.10+) for all public function signatures
+
+### Error Handling
+- Raise specific exception subclasses with a message that includes context (what was expected, what was received)
+- Use `contextlib.suppress` only for truly ignorable errors — never suppress `Exception`, `BaseException`, or `OSError` broadly
+- Log exceptions with `logger.exception(msg)` (captures traceback) rather than `logger.error(msg)` in exception handlers
+
+### Imports
+- Standard library → third-party → local, separated by blank lines (isort convention)
+- No wildcard imports: `from module import *` — always import specific names
+- No circular imports — restructure to use dependency injection or move shared code to a shared module
+
+---
+
+## Go
+
+### Naming
+- Packages: lowercase, single word, no underscores
+- Exported identifiers: `PascalCase`
+- Unexported identifiers: `camelCase`
+- Acronyms: treat as words — `userID` not `userId`; `parseURL` not `parseUrl`; `HttpServer` only if the whole name is an acronym
+- Interface names: single-method interfaces use the verb + `-er` suffix: `Reader`, `Writer`, `Closer`
+
+### Code Quality
+- Return errors as the last return value; name it `err` in call sites
+- Errors are values: construct with `fmt.Errorf("op %s: %w", name, err)` to wrap context
+- No panic in library code — only in `main` or clearly documented `Must*` functions
+- Use `context.Context` as the first argument of all functions that do I/O, make network calls, or may block
+- Prefer table-driven tests with `t.Run` sub-tests over duplicated test functions
+- Use `defer` for cleanup (files, locks, connections) immediately after the resource is acquired — not at the end of a long function
+
+### Error Handling
+- Always check and propagate errors — no `_ = err` except when semantically correct (e.g., `defer f.Close()` when the write has already succeeded)
+- Add context to errors: `fmt.Errorf("loading config from %s: %w", path, err)` — not just re-wrapping
+- Distinguish recoverable from terminal errors: use sentinel errors (`var ErrNotFound = errors.New(...)`) for expected conditions that callers handle
+
+---
+
+## TypeScript
+
+### Naming
+- Types, interfaces, classes, enums: `PascalCase`
+- Variables, functions, methods: `camelCase`
+- Constants: `SCREAMING_SNAKE_CASE` for module-level constants; `camelCase` for local
+- Files: `kebab-case.ts` for modules; `PascalCase.tsx` for React components (match project convention)
+
+### Code Quality
+- Use `unknown` instead of `any` for untyped external data — force narrowing before use
+- Prefer `readonly` for arrays and object properties that should not be mutated
+- Use `interface` for object shapes that may be extended; `type` for unions, intersections, mapped types
+- Prefer strict null checking — no `!` (non-null assertion) unless you have a comment explaining why it is safe
+- Use `satisfies` operator (TS 4.9+) to validate literal objects against a type without widening
+- Never use `// @ts-ignore` — use `// @ts-expect-error: <reason>` with a specific reason, or fix the type
+
+### Error Handling
+- Use discriminated union result types for expected failure paths: `{ ok: true; value: T } | { ok: false; error: string }` — not throwing for control flow
+- Do not swallow errors in `catch` blocks — at minimum log with context before continuing
+- `async/await` over `.then().catch()` chains for readability; always `await` or explicitly handle the returned promise
+
+---
+
+## JavaScript (Non-TypeScript)
+
+All TypeScript naming and error handling standards apply. Additionally:
+
+- Document expected types with JSDoc `@param {string}`, `@returns {Promise<User>}` on all public functions
+- Use `===` for all equality — never `==`
+- No `var` — use `const` by default, `let` only when reassignment is needed
+- Use optional chaining `?.` and nullish coalescing `??` over manual null guards
+
+---
+
+## Ruby
+
+### Naming
+- Classes, modules: `PascalCase`
+- Methods, variables: `snake_case`
+- Constants: `SCREAMING_SNAKE_CASE`
+- Predicates (return boolean): end with `?`: `valid?`, `empty?`
+- Dangerous methods (mutate receiver or raise): end with `!`: `save!`, `update!`
+
+### Code Quality
+- Prefer `frozen_string_literal: true` at the top of every file
+- Use `Kernel#pp` only in development — never in production code
+- Prefer `map`, `select`, `reject`, `reduce` over imperative loops for collections
+- Use `Struct` or `Data.define` (Ruby 3.2+) for value objects instead of hash literals with known keys
+- Avoid `rescue Exception` — rescue specific error classes
+
+### Error Handling
+- Raise with a descriptive message: `raise ArgumentError, "expected positive integer, got #{value.inspect}"`
+- Use `rescue => e; log_error(e); raise` when catching and re-raising — never silently swallow
+- In Rails: use `rescue_from` in controllers to handle expected error types centrally
+
+---
+
+## Rust
+
+### Naming
+- Structs, enums, traits: `PascalCase`
+- Functions, methods, variables, modules: `snake_case`
+- Constants and statics: `SCREAMING_SNAKE_CASE`
+- Type parameters: single capital letters (`T`, `E`) or short `PascalCase` names
+
+### Code Quality
+- Use `Result<T, E>` for fallible operations; `Option<T>` for optional values — never `unwrap()` or `expect()` in library code (acceptable in tests and `main`)
+- Prefer `?` operator for early error return over explicit `match`/`if let` for errors
+- Use `thiserror` for library error types; `anyhow` for application-level error aggregation
+- Follow ownership conventions: pass `&T` for read-only, `&mut T` for mutation, `T` to transfer ownership
+- Clippy clean: all new code must pass `clippy::all` or document exceptions with `#[allow(clippy::rule_name)] // reason`
+
+### Error Handling
+- Error types must implement `std::error::Error` — use `thiserror::Error` derive
+- Add context at each call site: `.context("reading config file")`, `.with_context(|| format!("processing record {id}"))`
+- Never `panic!` in library code — convert to `Result`
+
+---
+
+## Shell / Bash
+
+### Style
+- Script header: `#!/usr/bin/env bash` and `set -euo pipefail` on the second line — no exceptions
+- Function names: `snake_case`
+- Variable names: local variables `snake_case`; exported/global variables `SCREAMING_SNAKE_CASE`
+- Constants: `readonly CONSTANT_NAME="value"`
+
+### Code Quality
+- Always quote variable expansions: `"$var"` — unquoted variables are a common source of bugs
+- Use `[[ ]]` for conditionals over `[ ]` — safer, more predictable
+- Use `$(command)` for command substitution over backticks
+- Check exit codes of critical commands: `if ! cmd; then ... fi` or `cmd || die "msg"`
+- No `which` to find executables — use `command -v` instead
+- `set -e` alone is not enough — always pair with `set -u` (unset variables as errors) and `set -o pipefail`
+
+### Error Handling
+- Define a `die()` function: `die() { echo "ERROR: $*" >&2; exit 1; }` and use it for all fatal errors
+- Print errors to stderr (`>&2`), normal output to stdout
+- Trap `ERR` and `EXIT` for cleanup: `trap cleanup EXIT`
+
+</core-file>
+
+---
+
+## core/guardrails/README.md
+
+<core-file path="core/guardrails/README.md">
+
+# core/guardrails — Rules Reference
+
+This directory contains the authoritative ruleset that Draft skills cite. Skills reference rules by ID (e.g. `[SEC-03]`, `[CQ-007]`, `[RC-012]`, `[DN-004]`); reviewers and auditors trace those IDs back here.
+
+## Vocabulary
+
+We use one word — **rule** — throughout the system. Avoid the synonyms below in skill prose:
+
+| Use | Avoid |
+|---|---|
+| **rule** (with an ID) | guideline, principle, standard, check, norm, guardrail-item |
+| **guardrail file** (this directory) | rulebook, policy file, standards doc |
+| **guardrail breadcrumb** (`// guardrail: SEC-03 — reason`) | rule tag, policy comment, audit hint |
+
+"Guardrail" by itself refers to a *file* in this directory (e.g. `core/guardrails/security.md`); individual items inside are always **rules** with IDs.
+
+## Files & ID Prefixes
+
+| File | Prefix | Scope |
+|---|---|---|
+| `security.md` | `SEC-01..SEC-10` | Hard security red lines (never cross these) |
+| `code-quality.md` | `CQ-001..CQ-012` | Error handling, naming, error context, cleanup |
+| `design-norms.md` | `DN-001..DN-010` | Module boundaries, coupling, API shape |
+| `review-checks.md` | `RC-001..RC-015` | What reviewers verify per PR/track |
+| `secure-patterns.md` | (cross-cites SEC) | Language-specific implementations of SEC rules |
+| `dependency-triage.md` | `RC-014` (cross-cite) | Third-party dependency risk handling |
+| `language-standards.md` | (no IDs) | Per-language style and idioms |
+
+## Precedence (when rules conflict)
+
+Apply in this order, highest first:
+
+1. **Project-local guardrails** — `draft/guardrails.md` in the consuming repo. Project overrides ship-level defaults.
+2. **`SEC-*`** — security red lines. These trump everything else; safety beats convenience and even correctness style.
+3. **`RC-*`** — review checks. Anything a reviewer must verify before a PR merges.
+4. **`CQ-*`** — code quality. Applied during implementation; reviewers re-verify under `RC-*`.
+5. **`DN-*`** — design norms. Architectural guidance; only block a change if a clear `DN-*` rule is violated, not on stylistic preference.
+
+If a `SEC-*` rule conflicts with a `DN-*` or `CQ-*` rule, `SEC-*` wins. If two `SEC-*` rules conflict (rare), prefer the one that's more restrictive (deny vs allow).
+
+## How to cite a rule
+
+In skill prose: `[SEC-03]`, `[CQ-006, CQ-007]`, `[RC-012]`.
+
+In generated code (left by `implement` skill): `// guardrail: SEC-03 — parameterized query, no string interp`.
+
+In reports (left by `review`/`bughunt`/`deep-review`): include the rule ID in the finding header, e.g. `**Critical [SEC-04]:** Plaintext credentials in process env`.
+
+## Adding a new rule
+
+1. Choose the right file (security → `security.md`, etc.).
+2. Allocate the next ID in sequence — do not reuse retired IDs.
+3. Add a one-line statement of the rule, then a short rationale and a fix example.
+4. Update any skill that should reference it (`grep -rn "RC-014" skills/` for examples).
+5. Run `make test` — `test-cross-references.sh` and frontmatter checks must still pass.
+
+</core-file>
+
+---
+
+## core/guardrails/review-checks.md
+
+<core-file path="core/guardrails/review-checks.md">
+
+# Review Checks Guardrails
+
+Numbered cross-cutting checks that every Draft review command must apply regardless of language, scope, or track type. These are the non-negotiable baseline. Language-specific and project-specific guardrails (`core/guardrails/language-standards.md`, `draft/guardrails.md`) are additive on top of this baseline.
+
+**Referenced by:** `draft review`, `draft quick-review`, `draft bughunt`, `draft deep-review`, `draft assist-review`
+
+**Security red lines** (RC-SEC-01…RC-SEC-10) are a subset of these checks and are treated as absolute — see `core/guardrails/security.md` for the full enforcement mechanism.
+
+**Last updated:** 2026-05-16 
+**Rule count:** 15
+
+---
+
+## Rules
+
+### RC-001: No hardcoded secrets or credentials
+
+- Source code must never contain passwords, API keys, tokens, private keys, or connection strings with credentials inline.
+- **Detection:** Grep for common patterns: `password =`, `api_key =`, `secret =`, `-----BEGIN`, `token =` with non-variable RHS; entropy analysis on string literals.
+- **Fix:** Use environment variables, secrets manager references, or config injection. Key name in code; value from environment.
+- **Severity if violated:** Critical — blocks review approval.
+- **Override:** `// SECURITY-OVERRIDE: <ticket> <justification>` annotation required if intentional (e.g., test fixture with non-real value clearly named `FAKE_KEY_FOR_TESTING`).
+- **Source:** `core/guardrails/security.md` SEC-01; OWASP Top 10 A07
+
+### RC-002: Parameterized queries for all database interactions
+
+- String concatenation or interpolation in SQL, NoSQL, or search queries is never acceptable regardless of perceived input safety.
+- **Detection:** Search for query string construction using `+`, f-strings, `%s %` (non-parameterized), template literals containing `SELECT`/`INSERT`/`UPDATE`/`DELETE`.
+- **Fix:** Use the ORM's parameterized API, prepared statements, or the framework's query builder.
+- **Severity if violated:** Critical.
+- **Source:** `core/guardrails/security.md` SEC-03; OWASP Top 10 A03 — Injection
+
+### RC-003: Validate and sanitize inputs at system boundaries
+
+- All external input (HTTP requests, CLI args, message queue payloads, file contents, webhook bodies, environment variables consumed at runtime) must be validated and rejected before reaching business logic.
+- **Detection:** Trace data flow from entry points to first use; check for schema validation, type coercion, and bounds checking.
+- **Fix:** Add schema validation (JSON Schema, Pydantic, Joi, etc.) at the handler layer. Reject unknown fields by default.
+- **Severity if violated:** High — blocking for new endpoints/handlers.
+- **Source:** `core/guardrails/security.md` SEC-03; OWASP ASVS V5
+
+### RC-004: TLS required for all external communication
+
+- HTTP clients must not disable certificate verification. `verify=False`, `InsecureSkipVerify: true`, `rejectUnauthorized: false` in non-test code is a hard block.
+- **Detection:** Search for the above patterns in changed files.
+- **Severity if violated:** Critical.
+- **Source:** `core/guardrails/security.md` SEC-04; OWASP Top 10 A02
+
+### RC-005: Authentication and authorization checks close to resource access
+
+- Access control checks must occur in the handler or service method, not only in middleware. Internal routes, background jobs, and direct service calls bypass middleware.
+- **Detection:** Review new handlers and service methods for presence of auth check or explicit `// auth: not required because <reason>` annotation.
+- **Severity if violated:** Critical for new endpoints; High for existing code paths.
+- **Source:** `core/guardrails/security.md` SEC-10; OWASP Top 10 A01 — Broken Access Control
+
+### RC-006: No PII or credentials in logs
+
+- Logs must not contain passwords, tokens, API keys, full credit card numbers, SSNs, or other sensitive personal data. User IDs (non-guessable) are acceptable; email addresses, names, and health data are not.
+- **Detection:** Search for log calls containing `password`, `token`, `secret`, `email`, `ssn`, `dob` as field names or in format strings.
+- **Fix:** Apply a sanitize/redact step before logging. Log opaque identifiers (user_id, request_id) not raw personal data.
+- **Severity if violated:** High.
+- **Source:** `core/guardrails/security.md` SEC-05; GDPR / CCPA; OWASP Logging Cheat Sheet
+
+### RC-007: Structured logging — no print or raw console statements in production code
+
+- Production code must use the project's structured logging library. `print()`, `console.log()`, `fmt.Println()` in production paths produce unstructured, unparseable output.
+- **Detection:** Grep for `print(`, `console.log(`, `console.error(`, `fmt.Print` in non-test files.
+- **Exception:** Test files and one-shot scripts are exempt.
+- **Severity if violated:** Medium.
+- **Source:** `draft/tech-stack.md` — project logging library; Google SRE — observability
+
+### RC-008: Handle errors explicitly — never swallow exceptions
+
+- Catch-all error handlers that log and return success, empty catch blocks, and ignored error return values are blocking findings.
+- **Detection:** Search for bare `catch {}`, `except: pass`, `_ = someFunc()` on error-returning calls, `err != nil` checks that only log without returning/propagating.
+- **Fix:** Catch specific exceptions; log once at the handling point with context (CQ-006); return an actionable error upstream.
+- **Severity if violated:** High — silent failures compound into data corruption.
+- **Source:** `core/guardrails/code-quality.md` CQ-006; Release It! (Nygard) — stability patterns
+
+### RC-009: Tests for new functionality — happy path and at least one failure path
+
+- Every new function, handler, or module must have at minimum one passing test and one failure/edge-case test. Unhappy paths catch the bugs that matter most in production.
+- **Detection:** Check for presence of test file changes alongside source changes. Flag if source-only diff adds exported behavior with zero test additions.
+- **Exception:** Pure refactors with no behavior change (verify via diff) are exempt if existing tests still pass.
+- **Severity if violated:** High for new public interfaces; Medium for internal helpers.
+- **Source:** Growing Object-Oriented Software, Guided by Tests (Freeman, Pryce); `draft/workflow.md` — TDD preference
+
+### RC-010: No dead code, commented-out blocks, or stale TODOs in submitted changes
+
+- Unused functions, commented-out code blocks, and TODO/FIXME/HACK comments introduced by the current change must not be submitted.
+- **Detection:** Grep the diff for `# TODO`, `// TODO`, `/* TODO`, `//commented`, `#commented`, large blocks of `//`-prefixed code.
+- **Exception:** TODOs with a linked issue ID (`// TODO(#1234): ...`) are acceptable if the issue is open.
+- **Severity if violated:** Low — non-blocking but must be listed.
+- **Source:** `core/guardrails/code-quality.md` CQ-011; Clean Code (Martin)
+
+### RC-011: Escape user content before rendering in UI
+
+- User-controlled data must not be inserted into the DOM via `innerHTML`, `dangerouslySetInnerHTML`, `v-html`, or equivalent without sanitization.
+- **Detection:** Search diff for those patterns with non-static content.
+- **Fix:** Use framework's safe rendering (React JSX text nodes, Angular binding). If raw HTML is required, sanitize with a vetted library (DOMPurify).
+- **Severity if violated:** Critical for user-facing content.
+- **Source:** `core/guardrails/security.md` SEC-08-adjacent; OWASP Top 10 A03 — XSS
+
+### RC-012: No breaking changes to public interfaces without a deprecation period
+
+- Exported function signatures, API response shapes, error codes, and serialization formats (protobuf field numbers, JSON field names) must not change in a backward-incompatible way without a versioning or deprecation strategy.
+- **Detection:** Compare exported symbol signatures and API contracts in the diff against the previous version.
+- **Fix:** Add a new overloaded version, bump the API version, or run a deprecation period with the old interface forwarding to the new one.
+- **Severity if violated:** Critical if consumed by other services; High for internal interfaces.
+- **Source:** Building Microservices (Newman) — API versioning; `core/guardrails/design-norms.md` DN-002
+
+### RC-013: Architecture boundary violations must be flagged
+
+- New cross-module imports must follow the established dependency direction from `draft/graph/module-graph.jsonl` (when present) or `draft/.ai-context.md` §Component Map. Reverse-direction dependencies and direct imports across non-adjacent layers are blocking.
+- **Detection:** For each new import in the diff, verify it does not invert an existing dependency edge.
+- **Severity if violated:** High — architecture violations are cheap to fix when caught at review, expensive after they proliferate.
+- **Source:** Clean Architecture (Martin) — Dependency Rule; `draft/.ai-context.md` §Cross-Module Integration Points
+
+### RC-014: Dependency manifest changes trigger vulnerability check
+
+- When a pull request modifies `package.json`, `requirements.txt`, `go.mod`, `Cargo.toml`, `pom.xml`, or `build.gradle`, a dependency vulnerability check must be run or recommended.
+- **Detection:** Check diff for changes to the above files.
+- **Action:** Run `npm audit`, `pip-audit`, `go list -m -json all | nancy`, `cargo audit`, or the project's configured scanner from `draft/tech-stack.md`. Include results in the review report.
+- **Severity:** Based on CVSS score of findings (Critical ≥9.0, High ≥7.0).
+- **Source:** `core/guardrails/security.md` — dependency triage; OWASP Top 10 A06 — Vulnerable Components
+
+### RC-015: Observability coverage for new code paths
+
+- New API endpoints, background jobs, event handlers, and scheduled tasks must include: at minimum one structured log at entry/exit and one metric emission point (or a comment explaining why observability is not applicable).
+- **Detection:** Check new handler/service additions in diff for log statements and metric increments.
+- **Severity if violated:** Medium.
+- **Source:** Google SRE Book — SLOs; Netflix Full Cycle Developers — observability
+
+</core-file>
+
+---
+
+## core/guardrails/secure-patterns.md
+
+<core-file path="core/guardrails/secure-patterns.md">
+
+# Secure Coding Patterns
+
+Language-specific secure coding patterns applied by `draft implement`, `draft review`, and `draft bughunt` when working with security-sensitive code paths. Loaded alongside `core/guardrails/security.md`.
+
+Each section covers the most common failure modes for the language. These are supplementary to the Hard Red Lines in `security.md` — the red lines apply to all languages; these patterns provide language-specific guidance on *how* to satisfy them.
+
+`draft/guardrails.md` project rules take precedence. `core/guardrails.md` C++ rules take precedence for C++ code.
+
+**Last updated:** 2026-05-16
+
+---
+
+## Python
+
+### Credential Handling
+- Source secrets from `os.environ` or a secrets manager SDK; never inline. Use `os.environ["KEY"]` not `os.getenv("KEY", "default-secret")` for required secrets.
+- Compare password/token with `hmac.compare_digest()` — not `==`. Timing attacks exploit `==` short-circuit evaluation.
+- Hash passwords with `bcrypt`, `argon2-cffi`, or `hashlib.scrypt`. Never `hashlib.md5` or `hashlib.sha1` for passwords.
+
+### SQL / Database
+- Use the ORM's parameterized API (`cursor.execute("SELECT * FROM t WHERE id = %s", (uid,))`) — never f-strings or `.format()` in query strings.
+- Prefer ORM query builders (`User.objects.filter(id=uid)`) over raw SQL unless raw is required for performance with a documented justification.
+
+### Subprocess
+- Pass arguments as a list: `subprocess.run(["ls", "-la", path])` — never `subprocess.run(f"ls -la {path}", shell=True)`.
+- Validate `path` against an allowlist of acceptable values before any subprocess call that includes it.
+
+### Serialization
+- Never `pickle.load()` or `pickle.loads()` on untrusted data. Use JSON or a schema-validated format.
+- Validate JSON payloads with a schema (e.g., `pydantic`, `jsonschema`) before accessing fields.
+
+### Logging
+- Use `%s` placeholders: `logger.info("user %s logged in", user_id)` — not f-strings (prevents accidental eager evaluation of sensitive objects).
+- Apply a sanitize step before logging objects: strip `password`, `token`, `secret`, `key` fields.
+
+---
+
+## Go
+
+### Credential Handling
+- Source secrets from environment variables (`os.Getenv`) or a secrets manager. Never hard-code default values that could be production-like.
+- Use `subtle.ConstantTimeCompare()` for HMAC or token comparison.
+- Use `bcrypt` (`golang.org/x/crypto/bcrypt`) for password hashing.
+
+### SQL / Database
+- Use `db.QueryContext(ctx, "SELECT ... WHERE id = ?", id)` with placeholders — never `fmt.Sprintf` in query strings.
+- Prefer the project's ORM or query builder if one is established in `draft/tech-stack.md`.
+
+### Subprocess / Exec
+- Use `exec.Command("cmd", arg1, arg2)` — not `exec.Command("sh", "-c", userInput)`.
+- Validate all file paths with `filepath.Clean` and check the result stays within the expected directory.
+
+### HTTP Clients
+- Always set `Timeout` on `http.Client{}`. An infinite timeout enables slow-loris DoS.
+- Do not set `InsecureSkipVerify: true` in `tls.Config` outside of test helpers explicitly tagged `// test-only`.
+
+### Logging
+- Use structured logging (e.g., `slog`, `zap`, `zerolog`). No `fmt.Println` in production code paths.
+- Redact sensitive fields before passing to logger: use a custom `Stringer` or explicit field masking.
+
+---
+
+## TypeScript / JavaScript
+
+### Credential Handling
+- Source secrets from `process.env.VAR_NAME`. Never commit `.env` files with real values. Use `.env.example` for documentation.
+- Use `crypto.timingSafeEqual()` for comparing secrets.
+- Hash passwords with `bcrypt` or `argon2`. Never `crypto.createHash('md5')` for passwords.
+
+### SQL / Database
+- Use parameterized queries: `db.query("SELECT * FROM users WHERE id = $1", [userId])` — never template literals in query strings.
+- Use the ORM's safe query API (Prisma, TypeORM, Sequelize) — flag raw query usage for review.
+
+### Output Rendering
+- Never set `element.innerHTML = userInput` or use `dangerouslySetInnerHTML` with unsanitized data.
+- Use `textContent` for text, DOMPurify for HTML that must accept markup.
+- In React: JSX text nodes auto-escape; `{userInput}` is safe. `dangerouslySetInnerHTML` is always a flag.
+
+### Subprocess
+- Use `child_process.execFile(cmd, [arg1, arg2])` — not `exec(userInput)` or `exec(`cmd ${userInput}`)`.
+
+### Fetch / HTTP
+- Never disable TLS in `https.request` options. `rejectUnauthorized: false` in non-test code is SEC-04 violation.
+- Set explicit timeouts on all outbound HTTP calls using `AbortController` or library timeout option.
+
+### Logging
+- Use the project's structured logger. No `console.log` / `console.error` in production modules.
+- Never log `req.body`, `req.headers.authorization`, or any object that may contain credentials directly.
+
+---
+
+## C / C++ (Supplement to `core/guardrails.md`)
+
+The authoritative C++ rules are in `core/guardrails.md` (G1–G8). These are supplementary security-specific patterns.
+
+### Memory Safety
+- Validate all buffer sizes before `memcpy`, `strcpy`, `sprintf` — prefer `memcpy_s`, `strncpy`, `snprintf` with explicit size bounds.
+- Treat all data from sockets, files, or IPC as untrusted. Validate length fields before using them as loop bounds or allocation sizes.
+
+### String Handling
+- Never use `sprintf(buf, format, userInput)` where `format` is user-controlled — format string injection.
+- Use `snprintf` with the buffer size always. Check the return value for truncation.
+
+### Integer Safety
+- Check for integer overflow before arithmetic used as array index or allocation size.
+- Prefer `size_t` for sizes and counts; be explicit about signed/unsigned boundary crossings.
+
+### Subprocess / System Calls
+- Never `system(userInput)` or `popen(userInput, "r")`. Use `execve` with explicit argument arrays.
+- Sanitize or reject strings containing `;`, `|`, `&`, `$`, `` ` `` before any shell-adjacent API.
+
+---
+
+## Ruby
+
+### Credential Handling
+- Source secrets from `ENV['KEY']`. Use `Rails.application.credentials` or `dotenv` for local dev. Never commit secrets.
+- Use `ActiveSupport::SecurityUtils.secure_compare` for constant-time token comparison.
+- Hash passwords with `bcrypt` (`has_secure_password`). Never MD5 or SHA1 for auth.
+
+### SQL
+- Use ActiveRecord query methods: `User.where(id: uid)` — never string interpolation in `where` clauses: `where("id = #{uid}")`.
+- Use `sanitize_sql` when raw SQL is unavoidable.
+
+### ERB / Output
+- Use `<%= h(user_input) %>` or rely on Rails' automatic HTML escaping. Never `<%= raw(user_input) %>` without sanitization.
+- Use `sanitize(html, tags: [...])` (ActionView) when rich text input must be accepted.
+
+---
+
+## Shell / Bash
+
+### Variable Quoting
+- Always double-quote variable expansions: `"$VAR"` not `$VAR` — unquoted variables undergo word-splitting and glob expansion.
+- Never use `eval "$USER_INPUT"` — use `case`, `[[ ]]`, or named dispatch tables instead.
+
+### Command Injection
+- Validate input against a strict allowlist before using in any command: `[[ "$input" =~ ^[a-zA-Z0-9_-]+$ ]]`.
+- Prefer passing data through files or environment variables rather than command arguments when handling untrusted content.
+
+### Privilege
+- Minimize use of `sudo`; document each use with a comment explaining why it is necessary.
+- Avoid `chmod 777`; use the minimum permissions required.
+
+### Secrets
+- Never echo secrets to stdout or log files. Redirect sensitive command output to `/dev/null` when the value is not needed.
+- Use `read -s` for interactive secret input. Source secrets from files with restricted permissions (`chmod 600`).
+
+</core-file>
+
+---
+
+## core/guardrails/security.md
+
+<core-file path="core/guardrails/security.md">
+
+# Security Guardrails
+
+Hard security constraints and reasoning chain for all Draft quality and generation commands. Structured in two parts: **Hard Red Lines** (absolute — no exceptions without an override annotation) and the **Security Reasoning Chain** (5-step process applied to every review).
+
+**Referenced by:** `core/guardrails/review-checks.md` (RC-001, RC-002, RC-003, RC-004, RC-005, RC-006, RC-011), `draft review`, `draft quick-review`, `draft bughunt`, `draft deep-review`, `draft implement`
+
+**Last updated:** 2026-05-16
+
+---
+
+## Part 1: Hard Red Lines (SEC-01…SEC-10)
+
+These are **absolute**. A violation is always **Critical** severity. The reviewer must not silently pass code that violates a red line.
+
+**Override mechanism:** If a violation is intentional and justified (e.g., a test fixture using an obviously fake key, a local-only dev tool, a legacy path with a filed migration ticket), the developer must add an annotation on the same line or the line above:
+
+```
+// SECURITY-OVERRIDE: <ticket-id> <one-line justification>
+```
+
+An unannotated violation that cannot be resolved immediately blocks review approval. An annotated override is logged as an **Important** finding (not Critical) with the ticket referenced in the review report.
+
+| ID | Hard Red Line | Detection Signal |
+|----|--------------|-----------------|
+| SEC-01 | No hardcoded secrets, passwords, API keys, or private keys in source code | `password =`, `api_key =`, `secret =`, `-----BEGIN`, `token =` with non-variable RHS; high-entropy string literals |
+| SEC-02 | No `eval`, `exec`, `pickle.load`, `__import__`, `subprocess` with unsanitized user input | Presence of these calls with variables derived from external input |
+| SEC-03 | No raw string interpolation in database queries (SQL, NoSQL, search) | Query string construction using `+`, f-strings, `%s` (non-parameterized), template literals inside query builders |
+| SEC-04 | No disabled TLS/certificate verification | `verify=False`, `InsecureSkipVerify: true`, `rejectUnauthorized: false`, `ssl._create_unverified_context` in non-test code |
+| SEC-05 | No secrets or credentials in log output | Log calls containing `password`, `token`, `secret`, `apikey`, `private_key` as field names or in format strings with actual values |
+| SEC-06 | No `shell=True` (or equivalent) with user-controlled input | `subprocess.run(..., shell=True)`, `os.system(user_input)`, backtick execution with external data |
+| SEC-07 | No MD5 or SHA-1 for security operations (password hashing, HMAC, signatures) | `hashlib.md5`, `hashlib.sha1`, `MD5Digest`, `SHA1` in auth/crypto paths. Acceptable in non-security checksums with explicit comment. |
+| SEC-08 | No wildcard CORS in production endpoints | `Access-Control-Allow-Origin: *` on authenticated endpoints; `cors({ origin: '*' })` without environment gate |
+| SEC-09 | No internal stack traces, file paths, or version strings in external API responses | Raw exception objects serialized to HTTP responses; `traceback.format_exc()` in response bodies |
+| SEC-10 | No bypassed authentication or authorization checks | New handlers/endpoints without auth middleware invocation and no `// auth: N/A because <reason>` annotation |
+
+---
+
+## Part 2: Security Reasoning Chain
+
+Apply this 5-step chain when reviewing any change that touches authentication, authorization, external input handling, SQL/NoSQL queries, subprocess calls, file I/O, cryptography, serialization, or configuration.
+
+### Step 1: Identify the Security Goal
+
+State what the code is trying to protect:
+- Confidentiality (data only accessible to authorized parties)?
+- Integrity (data cannot be tampered with)?
+- Availability (service cannot be denied or degraded by abuse)?
+- Non-repudiation (actions are auditable)?
+
+If the security goal is unclear from context, treat the risk as **High** by default.
+
+### Step 2: Check Hard Red Lines
+
+Run through SEC-01…SEC-10 for every changed file in scope. Flag any violation before continuing to Step 3. Hard red line violations are reported first in the security section, separate from other findings.
+
+### Step 3: Assess Blast Radius
+
+For each finding or suspected vulnerability, state:
+- **Who is affected?** (single user, all users of a tenant, all tenants, external parties)
+- **What is exploitable?** (read-only data exposure, data modification, code execution, denial of service)
+- **How likely is exploitation?** (actively exploited pattern, PoC available, theoretical)
+
+Use blast radius to set severity: `Critical` = full system or multi-tenant impact; `High` = single tenant; `Medium` = limited data exposure; `Low` = theoretical or very limited.
+
+### Step 4: Trace Generative Paths
+
+For code that handles external data, trace from source to sink across these paths:
+
+| Path | What to verify |
+|------|---------------|
+| **Input validation** | All entry points validate type, length, format, and reject unknown fields |
+| **Database queries** | Parameterized or ORM-abstracted; no string interpolation |
+| **Credential handling** | Sourced from environment/secrets manager; not logged; not compared with `==` (use constant-time) |
+| **Network calls** | TLS enforced; certificates verified; timeouts set |
+| **File operations** | Paths sanitized; no path traversal (`../`); permissions checked |
+| **Authentication** | Token/session validated; expiry enforced; revocation checked |
+| **Output rendering** | User content escaped before HTML/JS rendering |
+| **Cryptography** | Algorithms meet minimum key length; IVs are random; no reuse |
+| **Logging** | Sensitive fields redacted before write |
+| **Subprocess execution** | No shell injection; arguments passed as list, not string |
+
+### Step 5: Classify and Report
+
+For each security finding, report:
+
+```
+[SEC finding] <title> [SEC-## or RC-###]
+File: path/to/file:line
+Blast radius: <single user / tenant / all tenants / full system>
+Likelihood: <High / Medium / Low>
+Severity: <Critical / High / Medium / Low>
+Description: <what is wrong and why it is exploitable>
+Fix: <concrete remediation>
+Override annotation required: <Yes / No>
+```
+
+---
+
+## Part 3: Security Context from Project Files
+
+When applying security analysis, also check these project-specific sources:
+
+- `draft/.ai-context.md` §Security Architecture — intended auth model, trust boundaries, data classification
+- `draft/tech-stack.md` — project's auth library, ORM, secrets manager (use these; do not introduce alternatives)
+- `draft/guardrails.md` §Hard Guardrails — any project-specific security rules added by the team
+
+Project-level security rules in `draft/guardrails.md` always take precedence over this file.
+
+</core-file>
+
+---
+
 ## core/templates/guardrails.md
 
 <core-file path="core/templates/guardrails.md">
@@ -15452,15 +18488,6 @@ project: "{PROJECT_NAME}"
 module: "root"
 generated_by: "draft:init"
 generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{COMMIT_MESSAGE}"
-  dirty: false
-synced_to_commit: "{FULL_SHA}"
 ---
 
 # Guardrails
@@ -15508,7 +18535,51 @@ Run `draft learn` to scan the codebase and update learned patterns. Quality comm
 - [ ] No skipped tests without documented reason
 - [ ] Coverage must not decrease
 
+### C++/Systems — Object Lifecycle & Memory Safety
+<!-- From core/guardrails.md — C++ Hard Guardrails. Pre-checked for all C++ projects. -->
+- [x] G1.1: No temporary `.c_str()` in Printf-style trace APIs (dangling pointer)
+- [x] G1.2: No dangling references/pointers after object destruction
+- [x] G1.3: No capture-all-by-reference `[&]` in async lambdas
+- [x] G1.4: Every async functor must be wrapped with `callback_muter_`
+- [x] G1.5: Never wrap op's own `done_cb` in ClosureRunner when extracting result via raw pointer
+- [x] G1.6: ClosureRunner/CallbackMuter must be wrapped in correct order (`callback_muter_` first, then `cr_`)
+- [x] G1.7: Every async functor must be wrapped with `cr_`
+- [x] G1.8: No op member access after potential op destruction in loops
+- [x] G1.9: Always return immediately after `Finish()` — no code execution post-Finish
+- [x] G1.10: No unintended deep copies via `auto` (use `auto&` or `const auto&` for map lookups)
+- [x] G1.11: std::move discipline — always move expensive objects; never use after move
+- [x] G1.12: No `shared_ptr` binding to non-trivial objects (EventDriver holders) in callbacks
+
+### C++/Systems — Concurrency & Locking
+- [x] G2.1: No mutable operations under shared/read locks
+- [x] G2.2: Always release spinlock before invoking callbacks or `Finish()`
+- [x] G2.3: No expensive object destruction under spinlock protection
+- [x] G2.4: Never sacrifice locking correctness for performance optimization
+- [x] G2.5: No synchronous waits (`Trigger::Wait`) in async code paths
+
+### C++/Systems — Control Flow & Error Handling
+- [x] G3.1: Always `return` after `Finish()` in conditional blocks
+- [x] G3.2: CHECKs for internal consistency only — never for external input validation
+- [x] G3.3: No side-effecting expressions inside DCHECK
+- [x] G3.4: CHECK/DCHECK/LOG(DFATAL) selection per severity matrix
+
+### C++/Systems — Format & API Correctness
+- [x] G4.1: Printf format specifiers must match argument types
+- [x] G4.2: MemTracer Print vs Printf selection (lazy construction vs immediate materialization)
+- [x] G4.3: Use Maybe-prefixed MemTracer variants only when op may be finished
+- [x] G4.4: No string + integer (pointer arithmetic, not concatenation) — use `StringPrintf`
+- [x] G4.5: `boost::optional<bool>` tests presence, not value — use `*xx` or `.value_or()`
+
+### C++/Systems — GFlags & Runtime Configuration
+- [x] G5.1: Snapshot gflag values at op start — never depend on flag stability mid-op
+
+### C++/Systems — Performance
+- [x] G6.1: Avoid `ByteSize()` on proto objects in hot paths
+- [x] G6.2: Prefer repeated fields over map fields in proto for serialization-sensitive paths
+- [x] G6.3: No inline execution in `SpawnWorkersAndJoin` `done_cb`
+
 > Check the guardrails that apply to this project. Unchecked items are not enforced. Quality commands flag violations of checked guardrails only.
+> **C++/Systems guardrails** are pre-checked and enforced by default. See `core/guardrails.md` for full descriptions and fix guidance. Uncheck only if the project does not contain C++ code.
 
 ---
 
@@ -15526,6 +18597,21 @@ Run `draft learn` to scan the codebase and update learned patterns. Quality comm
 
 <!-- Auto-discovered patterns verified as problematic. Quality commands always flag these. -->
 <!-- Each entry is added by draft learn or by quality commands during post-analysis. -->
+<!-- Entry format:
+### [Anti-Pattern Name]
+- **Category:** security | reliability | performance | correctness | concurrency
+- **Severity:** critical | high | medium
+- **graph_severity:** critical | high | medium | low | unresolved (fanIn-derived; "unresolved" if no graph data)
+- **high_fanin_files:** `path/file.go` (fanIn:12) (omit if none meet fanIn ≥ 5)
+- **Evidence:** Found in N files — `path/file.ext:line`
+- **Discovered at:** YYYY-MM-DD
+- **Established at:** YYYY-MM-DD
+- **Last verified:** YYYY-MM-DD
+- **Last active:** YYYY-MM-DD
+- **Discovered by:** draft:[command] on YYYY-MM-DD
+- **Description:** [What the pattern is and why it's problematic]
+- **Suggested fix:** [Brief description of the correct approach]
+-->
 
 <!-- No learned anti-patterns yet. Run draft learn or a quality command to discover patterns. -->
 
@@ -15554,15 +18640,6 @@ project: "{PROJECT_NAME}"
 module: "{MODULE_NAME or 'root'}"
 generated_by: "draft:new-track"
 generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{COMMIT_MESSAGE}"
-  dirty: false
-synced_to_commit: "{FULL_SHA}"
 ---
 
 # Intake Questions
@@ -15975,15 +19052,6 @@ project: "{PROJECT_NAME}"
 module: "root"
 generated_by: "draft:init"
 generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{COMMIT_MESSAGE}"
-  dirty: false
-synced_to_commit: "{FULL_SHA}"
 ---
 
 # {PROJECT_NAME} Context Map
@@ -16016,15 +19084,15 @@ synced_to_commit: "{FULL_SHA}"
 
 ```
 {project_root}/
-├── {module1}/              ← {5-10 word description}
-│   ├── {submod1}/          ← {description} ({Ncc} cc, {Nh} h)
-│   │   └── ops/            ← {description} ({N} operations)
-│   ├── {submod2}/          ← {description}
-│   └── {shared}/           ← {description}
-├── {module2}/              ← {description}
-│   ├── {submod}/           ← {description}
-│   └── {submod}/           ← {description}
-└── {module3}/              ← {description}
+├── {module1}/ ← {5-10 word description}
+│ ├── {submod1}/ ← {description} ({Ncc} cc, {Nh} h)
+│ │ └── ops/ ← {description} ({N} operations)
+│ ├── {submod2}/ ← {description}
+│ └── {shared}/ ← {description}
+├── {module2}/ ← {description}
+│ ├── {submod}/ ← {description}
+│ └── {submod}/ ← {description}
+└── {module3}/ ← {description}
 ```
 
 > Include immediate sub-directories for all major modules (not just top-level).
@@ -16053,7 +19121,7 @@ None ✓
 
 ## GRAPH:MODULE-HOTSPOTS
 
-{module}:  {file}|{lines}L|fanIn:{N}
+{module}: {file}|{lines}L|fanIn:{N}
            {file}|{lines}L|fanIn:{N}
            {file}|{lines}L|fanIn:{N}
 
@@ -16096,7 +19164,7 @@ Key injection points:
 ```typescript
 // Primary extension interface
 interface {InterfaceName} {
-  {method}({param}: {Type}): {ReturnType};  // {brief description}
+  {method}({param}: {Type}): {ReturnType}; // {brief description}
   {optionalMethod}?({param}: {Type}): {ReturnType};
 }
 
@@ -16236,6 +19304,80 @@ interface {ServiceName} {
 
 ---
 
+## core/templates/ai-context-export.md
+
+<core-file path="core/templates/ai-context-export.md">
+
+# AI Context Export Template
+
+Template for the four cross-tool AI context files generated by `draft init` Step 8. All four files contain identical content — a thin index that points AI agents to the project's Draft context without duplicating it.
+
+**Generated files:**
+- `AGENTS.md` (root — used by Codex, OpenAI agents, and general agent frameworks)
+- `CLAUDE.md` (root — used by Claude Code)
+- `GEMINI.md` (root — used by Gemini CLI)
+- `.github/copilot-instructions.md` (used by GitHub Copilot)
+
+**Update policy:** Regenerated by `draft init refresh` if they exist. Never modified by other skills.
+
+---
+
+## Template Content
+
+Use this template verbatim for all four files. Replace `{PROJECT_NAME}` with the project name from `draft/.ai-profile.md` `## Project` section. Replace `{AI_PROFILE_SUMMARY}` with the first 5–10 lines of `draft/.ai-profile.md` (the compact identity block, not the full file — just enough to orient a cold-start agent).
+
+```markdown
+# {PROJECT_NAME} — AI Agent Context
+
+> This file is generated by Draft. Edit `draft/.ai-profile.md` or `draft/.ai-context.md` to change AI context.
+> Do not edit this file directly.
+
+## Quick Identity
+
+{AI_PROFILE_SUMMARY}
+
+## Full Context
+
+For deep project understanding, read `draft/.ai-context.md` (200–400 lines, self-contained).
+For the compact always-loaded profile, read `draft/.ai-profile.md` (20–50 lines).
+
+## Key Conventions
+
+See `draft/guardrails.md` for project guardrails and learned anti-patterns.
+See `draft/workflow.md` for TDD, commit, and review preferences.
+See `draft/tech-stack.md` for accepted libraries, frameworks, and tooling.
+
+## Active Work
+
+See `draft/tracks.md` for active tracks and their status.
+```
+
+---
+
+## Sourcing Rules
+
+When generating these files from `draft init` Step 8:
+
+1. Read `draft/.ai-profile.md` fully
+2. Extract the project name from the `## Project` or `# ` heading
+3. Extract the first compact block (typically: project name, type, primary language, brief purpose) — maximum 10 lines, no headers, no diagrams
+4. Fill the template: replace `{PROJECT_NAME}` and `{AI_PROFILE_SUMMARY}`
+5. Write identical content to all four files
+6. Create `.github/` directory if it doesn't exist
+
+## File Paths
+
+```
+AGENTS.md ← root
+CLAUDE.md ← root
+GEMINI.md ← root
+.github/copilot-instructions.md ← .github/ subdirectory
+```
+
+</core-file>
+
+---
+
 ## core/templates/ai-profile.md
 
 <core-file path="core/templates/ai-profile.md">
@@ -16245,18 +19387,15 @@ project: "{PROJECT_NAME}"
 module: "{MODULE_NAME or 'root'}"
 generated_by: "draft:{COMMAND_NAME}"
 generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH or 'none'}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{COMMIT_MESSAGE}"
-  dirty: {true|false}
-synced_to_commit: "{FULL_SHA}"
 ---
 
 # {PROJECT_NAME} Profile
+
+## Project
+- Name: {PROJECT_NAME}
+- One-liner: {ONE_LINE_PRODUCT_DESCRIPTION}
+- Primary users: {USER_TYPES}
+- Repository layout: {monorepo|polyrepo|single-service}
 
 ## Stack
 - Language: {LANGUAGE}
@@ -16294,24 +19433,9 @@ project: "{PROJECT_NAME}"
 module: "root"
 generated_by: "draft:init"
 generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{COMMIT_MESSAGE}"
-  dirty: false
-synced_to_commit: "{FULL_SHA}"
 
 # Classification — drives which sections are Required vs skippable.
 # Do not leave placeholders. If unknown, ask during draft:init interview.
-classification:
-  project_type: "{library | cli | service | batch | monolith | distributed | plugin}"
-  criticality: "{low | standard | high | mission-critical}"
-  data_classification: "{public | internal | confidential | regulated}"
-  compliance: ["{SOC2 | HIPAA | PCI-DSS | GDPR | FedRAMP | ISO27001 | none}"]
-  change_policy: "{codeowner-review | two-reviewer | architecture-board}"
 
 # Ownership — enterprise accountability. Populate from CODEOWNERS / docs / interview.
 ownership:
@@ -16489,19 +19613,19 @@ One paragraph, plain prose, no bullets. State what the system IS, what it DOES, 
 Compact block optimized for agent context loading. Every field populated or explicit "N/A".
 
 ```
-Module              : {PROJECT_NAME}
-Root Path           : ./
-Language            : {e.g., Go 1.21, Python 3.12, TypeScript 5.3}
-Build               : {exact command, e.g., `bazel build //path:target`, `npm run build`}
-Test                : {exact command, e.g., `pytest -q`, `go test ./...`}
-Entry Point         : {file:line → symbol}
-Config System       : {gflags / .env + YAML / Viper / Spring / environment / N/A}
-Extension Point     : {interface + registration site — or N/A}
-API Definition      : {path to .proto / OpenAPI / GraphQL — or N/A}
-Key Config Prefix   : {MODULE_* env / module.* YAML / --module-* CLI — or N/A}
-CODEOWNERS          : {path — or "none"}
-Security Contact    : {from ownership block}
-On-Call             : {from ownership block — or "none"}
+Module : {PROJECT_NAME}
+Root Path : ./
+Language : {e.g., Go 1.21, Python 3.12, TypeScript 5.3}
+Build : {exact command, e.g., `bazel build //path:target`, `npm run build`}
+Test : {exact command, e.g., `pytest -q`, `go test ./...`}
+Entry Point : {file:line → symbol}
+Config System : {gflags / .env + YAML / Viper / Spring / environment / N/A}
+Extension Point : {interface + registration site — or N/A}
+API Definition : {path to .proto / OpenAPI / GraphQL — or N/A}
+Key Config Prefix : {MODULE_* env / module.* YAML / --module-* CLI — or N/A}
+CODEOWNERS : {path — or "none"}
+Security Contact : {from ownership block}
+On-Call : {from ownership block — or "none"}
 ```
 
 **Before Making Changes, Always:**
@@ -17631,15 +20755,6 @@ project: "{PROJECT_NAME}"
 module: "root"
 generated_by: "draft:init"
 generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{COMMIT_MESSAGE}"
-  dirty: false
-synced_to_commit: "{FULL_SHA}"
 ---
 
 # Jira Configuration & Story Template
@@ -17650,13 +20765,13 @@ Place this section in `draft/jira.md` in your project to configure Jira integrat
 
 ```yaml
 # Jira Project Configuration
-project_key: PROJ           # Jira project key (required)
-board_id: 123               # Board ID for sprint assignment (optional)
-epic_link_field: customfield_10014  # Custom field ID for epic link (varies by instance)
-story_points_field: customfield_10028  # Custom field ID for story points (optional)
-default_issue_type: Story   # Default issue type for tasks
-default_priority: Medium    # Default priority level
-labels:                     # Labels to apply to all created issues
+project_key: PROJ # Jira project key (required)
+board_id: 123 # Board ID for sprint assignment (optional)
+epic_link_field: customfield_10014 # Custom field ID for epic link (varies by instance)
+story_points_field: customfield_10028 # Custom field ID for story points (optional)
+default_issue_type: Story # Default issue type for tasks
+default_priority: Medium # Default priority level
+labels: # Labels to apply to all created issues
   - draft
 ```
 
@@ -17768,15 +20883,6 @@ project: "{PROJECT_NAME}"
 module: "root"
 generated_by: "draft:init"
 generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{COMMIT_MESSAGE}"
-  dirty: false
-synced_to_commit: "{FULL_SHA}"
 ---
 
 # Product: [Product Name]
@@ -17896,15 +21002,6 @@ project: "{PROJECT_NAME}"
 module: "root"
 generated_by: "draft:init"
 generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{COMMIT_MESSAGE}"
-  dirty: false
-synced_to_commit: "{FULL_SHA}"
 ---
 
 # Tech Stack
@@ -18280,35 +21377,58 @@ module: "root"
 track_id: "{TRACK_ID}"
 generated_by: "draft:new-track"
 generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{COMMIT_MESSAGE}"
-  dirty: false
-synced_to_commit: "{FULL_SHA}"
+# Stable frontmatter only (WS-8). All ephemeral fields — git pinning, status,
+# classification, scope_includes/excludes, synced_to_commit — live in
+# metadata.json and surface via <!-- META:<key> --> directives below.
+
+# Classification — mirrors metadata.json:classification (WS-8).
+classification:
+  criticality: "" # tier1 | tier2 | tier3
+  data_classification: "" # public | internal | confidential | restricted
+  deployment_surface: "" # cloud | on-prem | mobile | desktop | hybrid
+
+# Approvers — pre-fill into hld.md / lld.md Approvals tables on `draft decompose`.
+# Manual entry today; will be auto-populated by the organizational MCP server when available.
+# Use comma-separated names or @-handles. Leave empty strings until MCP integration ships.
+approvers:
+  tech_leads: "" # HLD: Technical Leads
+  arb_leads: "" # HLD: Architecture Review Board Leads
+  cloudops_leads: "" # HLD: Cloud Operations (SaaS-deployed services)
+  qa_leads: "" # HLD: Quality Assurance (on-prem services)
+  pm_leads: "" # HLD: Product Management Leads
+  team_leads: "" # LLD: Team Leads
+  qa: "" # LLD: Quality Assurance
 ---
 
 # Specification: [Title]
 
 | Field | Value |
 |-------|-------|
-| **Branch** | `{LOCAL_BRANCH}` → `{REMOTE/BRANCH}` |
-| **Commit** | `{SHORT_SHA}` — {COMMIT_MESSAGE} |
+| **Branch** | <!-- META:git.branch --> → <!-- META:git.remote --> |
+| **Commit** | <!-- META:git.commit_short --> — <!-- META:git.commit_message --> |
 | **Generated** | {ISO_TIMESTAMP} |
-| **Synced To** | `{FULL_SHA}` |
+| **Synced To** | <!-- META:synced_to_commit --> |
+| **Classification** | <!-- META:classification.criticality --> / <!-- META:classification.data_classification --> / <!-- META:classification.deployment_surface --> |
 
 **Track ID:** {TRACK_ID}
-**Status:** [ ] Drafting
+**Status:** <!-- META:status --> <!-- REQUIRED -->
 
-> This is a working draft. Content will evolve through conversation.
+> This is a working draft. Content will evolve through conversation. Status
+> is rendered from `metadata.json:status`; never edit it inline.
 
 ## Context References
 - **Product:** `draft/product.md` — [pending]
 - **Tech Stack:** `draft/tech-stack.md` — [pending]
 - **Architecture:** `draft/.ai-context.md` — [pending]
+- **Discovery (Phase 0 spike):** `./discovery.md` — code-spike output (file-level
+  hotspots, mode-selection flags, open questions). Generated by `draft:discover`.
+
+> **Citations.** Use `path/to/file.ext:LINE` (or `LINE-RANGE`) for code references.
+> `scripts/tools/verify-citations.sh` resolves these against `synced_to_commit`.
+> Prefer the source-side anchor `// DRAFT-CITE: <id>` over raw line numbers when
+> the call site is likely to move during refactors — verifiers prefer the anchor.
+> Wrap illustrative-only citations in `<!-- VERIFIER:IGNORE START -->` /
+> `<!-- VERIFIER:IGNORE END -->` so they don't fail the verifier.
 
 ## Problem Statement
 [To be developed through intake conversation]
@@ -18324,13 +21444,30 @@ synced_to_commit: "{FULL_SHA}"
 [To be developed through intake conversation]
 
 ## Acceptance Criteria
-[To be developed through intake conversation]
+
+> **Required columns (WS-7):** each AC carries a `test_id` linking it to a
+> concrete test case so reviewers can audit coverage at a glance.
+
+| AC | Description | test_id | <!-- REQUIRED -->
+|----|-------------|---------|
+| AC-1 | _TBD_ac_1_description_ | _TBD_ac_1_test_id_ |
+| AC-2 | _TBD_ac_2_description_ | _TBD_ac_2_test_id_ |
 
 ## Non-Goals
 [To be developed through intake conversation]
 
 ## Technical Approach
 [To be developed through intake conversation]
+
+## Eligibility / Cap Policy <!-- OPTIONAL -->
+
+> Only populate when the track introduces eligibility gates or caps. Every
+> cap value carries `derived_from` tying the number to a source (flag,
+> threshold, vendor limit, benchmark). Pure invention is rejected by review.
+
+| Gate | v1 default | derived_from | Rationale | <!-- REQUIRED if section present -->
+|------|------------|--------------|-----------|
+| _TBD_gate_1_ | _TBD_gate_1_default_ | _TBD_gate_1_derived_from_ | _TBD_gate_1_rationale_ |
 
 ## Success Metrics
 <!-- Remove metrics that don't apply -->
@@ -18345,12 +21482,12 @@ synced_to_commit: "{FULL_SHA}"
 ## Stakeholders & Approvals
 <!-- Add roles relevant to your organization -->
 
-| Role | Name | Approval Required | Status |
+| Role | Name | Approval Required | Status | <!-- REQUIRED -->
 |------|------|-------------------|--------|
-| Product Owner | [name] | Spec sign-off | [ ] |
-| Tech Lead | [name] | Architecture review | [ ] |
-| Security | [name] | Security review (if applicable) | [ ] |
-| QA | [name] | Test plan review | [ ] |
+| Product Owner | _TBD_approver_product_owner_ | Spec sign-off | [ ] |
+| Tech Lead | _TBD_approver_tech_lead_ | Architecture review | [ ] |
+| Security | _TBD_approver_security_ | Security review (if applicable) | [ ] |
+| QA | _TBD_approver_qa_ | Test plan review | [ ] |
 
 ### Approval Gates
 - [ ] Spec approved by Product Owner
@@ -18361,11 +21498,13 @@ synced_to_commit: "{FULL_SHA}"
 ## Risk Assessment
 <!-- Score: Probability (1-5) x Impact (1-5). Risks scoring >=9 require mitigation plans. -->
 
-| Risk | Probability | Impact | Score | Mitigation |
-|------|-------------|--------|-------|------------|
-| [e.g., Third-party API instability] | 3 | 4 | 12 | [e.g., Circuit breaker + fallback cache] |
-| [e.g., Data migration failure] | 2 | 5 | 10 | [e.g., Dry-run migration + rollback script] |
-| [e.g., Scope creep] | 3 | 3 | 9 | [e.g., Strict non-goals enforcement] |
+> **Required columns (WS-7):** `mitigation_test_id` links each risk to the
+> test row that demonstrates the mitigation works.
+
+| Risk | Probability | Impact | Score | Mitigation | mitigation_test_id | <!-- REQUIRED -->
+|------|-------------|--------|-------|------------|--------------------|
+| _TBD_risk_1_ | _TBD_risk_1_prob_ | _TBD_risk_1_impact_ | _TBD_risk_1_score_ | _TBD_risk_1_mitigation_ | _TBD_risk_1_test_id_ |
+| _TBD_risk_2_ | _TBD_risk_2_prob_ | _TBD_risk_2_impact_ | _TBD_risk_2_score_ | _TBD_risk_2_mitigation_ | _TBD_risk_2_test_id_ |
 
 ## Deployment Strategy
 <!-- Define rollout approach for production delivery -->
@@ -18412,29 +21551,34 @@ module: "root"
 track_id: "{TRACK_ID}"
 generated_by: "draft:new-track"
 generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{COMMIT_MESSAGE}"
-  dirty: false
-synced_to_commit: "{FULL_SHA}"
+# Stable frontmatter only (WS-8). Ephemeral fields live in metadata.json
+# and render via <!-- META:<key> --> directives.
 ---
 
 # Plan: {TITLE}
 
+<!-- DECOMPOSE:REGENERATE START -->
+<!-- Phase tables below are rewritten by draft:decompose. Manual notes outside
+     these markers survive every regenerate. -->
+<!-- DECOMPOSE:REGENERATE END -->
+
 | Field | Value |
 |-------|-------|
-| **Branch** | `{LOCAL_BRANCH}` → `{REMOTE/BRANCH}` |
-| **Commit** | `{SHORT_SHA}` — {COMMIT_MESSAGE} |
+| **Branch** | <!-- META:git.branch --> → <!-- META:git.remote --> |
+| **Commit** | <!-- META:git.commit_short --> — <!-- META:git.commit_message --> |
 | **Generated** | {ISO_TIMESTAMP} |
-| **Synced To** | `{FULL_SHA}` |
+| **Synced To** | <!-- META:synced_to_commit --> |
 
 **Track ID:** {TRACK_ID}
 **Spec:** ./spec.md
-**Status:** [ ] Planning
+**Status:** <!-- META:status --> <!-- REQUIRED -->
+
+## Scope <!-- OPTIONAL -->
+
+- **Includes:** <!-- META:scope_includes -->
+- **Excludes:** <!-- META:scope_excludes -->
+
+---
 
 ## Overview
 
@@ -18442,10 +21586,28 @@ synced_to_commit: "{FULL_SHA}"
 
 ---
 
+<!-- DECOMPOSE:REGENERATE START -->
+
+## Phase 0: Discovery (completed)
+
+**Goal:** Spike — read current code, enumerate hotspots and open questions.
+**Verification:** [`./discovery.md`](./discovery.md) exists, hotspots cited,
+open questions resolved or deferred.
+
+| Entry gate | Exit gate | Owner |
+|---|---|---|
+| `draft:new-track` initiated | `discovery.md` validator clean (`scripts/tools/verify-citations.sh`, hygiene) | _TBD_owner_phase_0_ |
+
+---
+
 ## Phase 1: Foundation
 
 **Goal:** {What this phase establishes}
 **Verification:** {How to confirm phase is complete}
+
+| Entry gate | Exit gate | Owner | <!-- REQUIRED -->
+|---|---|---|
+| _TBD_phase_1_entry_gate_command_ | _TBD_phase_1_exit_gate_command_ | _TBD_owner_phase_1_ |
 
 ### Tasks
 
@@ -18459,6 +21621,10 @@ synced_to_commit: "{FULL_SHA}"
 **Goal:** {What this phase delivers}
 **Verification:** {How to confirm phase is complete}
 
+| Entry gate | Exit gate | Owner | <!-- REQUIRED -->
+|---|---|---|
+| _TBD_phase_2_entry_gate_command_ | _TBD_phase_2_exit_gate_command_ | _TBD_owner_phase_2_ |
+
 ### Tasks
 
 - [ ] **Task 2.1:** {Description} — `{file_path}`
@@ -18471,10 +21637,35 @@ synced_to_commit: "{FULL_SHA}"
 **Goal:** {What this phase delivers}
 **Verification:** {How to confirm phase is complete — run full test suite, manual verification}
 
+| Entry gate | Exit gate | Owner | <!-- REQUIRED -->
+|---|---|---|
+| _TBD_phase_3_entry_gate_command_ | _TBD_phase_3_exit_gate_command_ | _TBD_owner_phase_3_ |
+
 ### Tasks
 
 - [ ] **Task 3.1:** {Description} — `{file_path}`
 - [ ] **Task 3.2:** Verify — {Run tests, confirm all acceptance criteria met}
+
+<!-- DECOMPOSE:REGENERATE END -->
+
+---
+
+## Pre-Deploy Validation <!-- REQUIRED -->
+
+Before any phase advances past `[~]` in-progress to `[x]` complete, run the
+validator chain via the canonical resolver pattern (see
+[core/shared/verification-gates.md](../../core/shared/verification-gates.md)):
+
+```bash
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+"$DRAFT_TOOLS/check-track-hygiene.sh" .; "$DRAFT_TOOLS/verify-citations.sh" .
+"$DRAFT_TOOLS/verify-doc-anchors.sh" .; "$DRAFT_TOOLS/check-graph-usage-report.sh" .
+"$DRAFT_TOOLS/check-scope-conflicts.sh" ..;"$DRAFT_TOOLS/diff-templates-vs-tracks.sh" .
+```
+
+`metadata.json:pre_deploy_status` MUST be `passing` to deploy.
 
 ---
 
@@ -18514,6 +21705,36 @@ synced_to_commit: "{FULL_SHA}"
     "completed": 0
   },
 
+  "template_version": "2.0.0",
+
+  "scope_includes": [],
+  "scope_excludes": [],
+
+  "classification": {
+    "criticality": "_TBD_criticality_",
+    "data_classification": "_TBD_data_classification_",
+    "deployment_surface": "_TBD_deployment_surface_"
+  },
+
+  "git": {
+    "branch": "_TBD_branch_",
+    "remote": "_TBD_remote_",
+    "commit": "_TBD_commit_",
+    "commit_short": "_TBD_commit_short_",
+    "commit_date": "_TBD_commit_date_",
+    "commit_message": "_TBD_commit_message_",
+    "dirty": false
+  },
+  "synced_to_commit": "_TBD_synced_to_commit_",
+
+  "hygiene_budget": {
+    "draft_tbd_cap": -1,
+    "ready_for_review_tbd_cap": 3,
+    "discovery_min_hotspots": 3
+  },
+
+  "pre_deploy_status": "unrun",
+
   "lastReviewed": "<ISO 8601 timestamp — set by draft review>",
   "reviewCount": 0,
   "lastReviewVerdict": "PASS|PASS_WITH_NOTES|FAIL",
@@ -18534,6 +21755,884 @@ synced_to_commit: "{FULL_SHA}"
 
 ---
 
+## core/templates/hld.md
+
+<core-file path="core/templates/hld.md">
+
+---
+project: "{PROJECT_NAME}"
+module: "root"
+track_id: "{TRACK_ID}"
+generated_by: "draft:decompose"
+generated_at: "{ISO_TIMESTAMP}"
+# Stable frontmatter only (WS-8). Ephemeral fields live in metadata.json
+# and render via <!-- META:<key> --> directives.
+links:
+  spec: "./spec.md"
+  plan: "./plan.md"
+  lld: "./lld.md"
+  project_architecture: "../../architecture.md"
+---
+
+# {TRACK_TITLE} — HLD
+
+**_TBD_author_** (_TBD_email_) <!-- REQUIRED -->
+
+**Status:** <!-- META:status --> <!-- REQUIRED -->
+
+> Track ID: `{TRACK_ID}` — generated by `draft:decompose`. Requirements live in [`./spec.md`](./spec.md); implementation tasks in [`./plan.md`](./plan.md); detailed design in [`./lld.md`](./lld.md). For project-wide architecture, see [`../../architecture.md`](../../architecture.md).
+
+## Scope <!-- OPTIONAL -->
+
+- **Includes:** <!-- META:scope_includes -->
+- **Excludes:** <!-- META:scope_excludes -->
+
+> Conflicts surfaced by `scripts/tools/check-scope-conflicts.sh`.
+
+---
+
+## Approvals
+
+> **Pre-fill:** Pulled from `spec.md` frontmatter `approvers.*`. Replace `{...}` with actual names; capture sign-off date and comments per row. Draft gates `git upload` on this table being populated for `criticality ∈ {high, mission-critical}` tracks.
+
+| Role | Approver | Date | Comments | <!-- REQUIRED for criticality ∈ {high, mission-critical} -->
+|------|----------|------|----------|
+| Technical Leads | _TBD_approver_tech_leads_ | _TBD_date_ | _TBD_comments_ |
+| Architecture Review Board | _TBD_approver_arb_ | _TBD_date_ | _TBD_comments_ |
+| Cloud Operations (For SaaS deployments) | _TBD_approver_cloudops_ | _TBD_date_ | _TBD_comments_ |
+| Quality Assurance (For on-prem services) | _TBD_approver_qa_ | _TBD_date_ | _TBD_comments_ |
+| Product Management | _TBD_approver_pm_ | _TBD_date_ | _TBD_comments_ |
+
+---
+
+## Table of Contents
+
+1. [Background](#background)
+2. [Requirements](#requirements)
+3. [High Level Design](#high-level-design)
+4. [Detailed Design](#detailed-design)
+5. [Dependencies](#dependencies)
+6. [Intellectual Property](#intellectual-property)
+7. [Checklist](#checklist)
+8. [Deployment](#deployment)
+9. [Observability](#observability)
+
+---
+
+## Background
+
+<Describe the background - current state, why>
+
+**Ideal Length:** ½ to 1 page
+
+> **Source:** auto-pulled from `spec.md` §Problem Statement and §Background & Why Now. Tighten as needed for HLD audience.
+
+---
+
+## Requirements
+
+> **Source:** [`./spec.md`](./spec.md) is the requirements scorecard. Do not duplicate content here — link to the spec sections.
+
+- **Blackbox (feature/service-level) requirements:** see [`./spec.md` §Requirements / Functional](./spec.md#requirements)
+- **Whitebox (technical, per-component) requirements:** see [`./lld.md` §Requirements](./lld.md#requirements)
+- **Acceptance Criteria:** see [`./spec.md` §Acceptance Criteria](./spec.md#acceptance-criteria)
+- **Non-Functional Requirements:** see [`./spec.md` §Requirements / Non-Functional](./spec.md#requirements)
+
+<If requirements warrant changes in UX or a new UX, include UX mock here>
+
+---
+
+## High Level Design
+
+### Architecture
+
+**Primary goal:** Explain various components and their interactions at a very high level
+
+<!-- GRAPH:track-component-diagram:START -->
+<!-- Rendered by draft:decompose Step 5a from track module set + integration edges.
+     Mermaid flowchart TD with three subgraphs: Track (modules in scope),
+     Existing (existing modules this track touches), External (DB/queue/3P APIs).
+     Edges labeled with transport (HTTP, RPC, queue, direct call) when non-obvious. -->
+<!-- GRAPH:track-component-diagram:END -->
+
+**Architecture narrative** (≤300 words). Explain how the blackbox requirements are translated into the architecture — name the architectural style (hexagonal / layered / pipeline / event-driven), justify from observable evidence, and call out the dominant interaction pattern (sync RPC, async event, batch).
+
+### UI Architecture Changes
+
+**Primary goal:** Explain UI changes necessary for the feature / service
+
+- Is it MFE based, or is factored into existing service UI?
+- Are there changes to the UI infra libraries, components?
+- Tradeoffs between implementing business logic in backend vs UI
+
+_If no UI changes: write `N/A — backend-only track.`_
+
+### Key Design Decisions
+
+<Discuss key design choices. This is a summary of the design choices in the architecture>
+
+- **Decision 1:** {one-sentence statement} — _Why:_ {observable constraint, not aesthetic}
+- **Decision 2:** {one-sentence statement} — _Why:_ {observable constraint, not aesthetic}
+
+### Alternatives Considered
+
+<Alternative architectures and design choices considered and reasons for decisions>
+
+| Alternative | Rejected Because | promote_to_adr | <!-- REQUIRED -->
+|-------------|------------------|----------------|
+| _TBD_alt_1_ | _TBD_alt_1_reason_ | _TBD_alt_1_promote_to_adr_ (yes / no — if yes, run `draft adr`) |
+
+#### Notes for HLD Sections
+
+- Try not to use examples to illustrate the design here
+- Don't include detailed design aspects here (e.g. Sequence diagrams for workflows — those go in [`./lld.md`](./lld.md))
+
+---
+
+## Detailed Design
+
+### Component Level Design
+
+**Primary goal:** Zoom into each component and explain its design in detail
+
+<!-- GRAPH:track-component-table:START -->
+<!-- Rendered by draft:decompose Step 5a — one row per module in scope.
+     Columns: Module, Status (New/Modified/Existing), Files, Public API count,
+     Fan-In, Fan-Out, Complexity, Primary Deps, concurrency_model,
+     aggregate_resource_cap, parallel_flag_interaction, Citation. -->
+<!-- WS-7 required columns: concurrency_model, aggregate_resource_cap,
+     parallel_flag_interaction. Use "n/a" when truly inapplicable. -->
+<!-- GRAPH:track-component-table:END -->
+
+For each component, populate one subsection:
+
+#### [Component Name]
+
+**Responsibility:** {one sentence — what this module owns}
+**Status:** `New` | `Modified` | `Existing`
+**Entry point:** `{path:line}` → `{symbol}`
+**Public API:** see [`./lld.md` §Classes and Interfaces — {component}](./lld.md#classes-and-interfaces)
+**Whitebox requirements addressed:** {list AC IDs from spec.md} <!-- back-link to discovery.md Hotspot rows -->
+**Discovery hotspots addressed:** {list Hotspot-row IDs from `./discovery.md`} <!-- REQUIRED -->
+
+**Design notes** (≤200 words). How this component translates whitebox requirements into structure. Cite `path:line` for non-obvious decisions.
+
+#### Key Design Decisions
+
+<Discuss key design choices that are relevant at the component level>
+
+#### Alternatives Considered
+
+<Alternative designs considered for the component if any, and reasons for decisions>
+
+#### Notes for Detailed Sections
+
+- Include APIs, sequence diagrams for important workflows in the components — sequence diagrams live in [`./lld.md` §Key Algorithms and Workflows](./lld.md#key-algorithms-and-workflows)
+- Don't include data structures, protobuf definitions, class level interfaces here (they belong in [`./lld.md`](./lld.md))
+
+---
+
+## Dependencies
+
+<Identify all components dependent on your design proposal. It is important to review this list to identify alternatives, which would minimize/eliminate the impact to other components. It is also important to highlight this list during the design review discussion to raise awareness of the dependent component changes that need to be planned.>
+
+<!-- GRAPH:track-dependencies:START -->
+<!-- Rendered by draft:decompose Step 5a from cross-module integration edges.
+     Columns: Dependent Component, Edge Kind (call/import/event/shared-schema),
+     Impact Assessment (Small/Medium/Large), Description, Citation. -->
+<!-- GRAPH:track-dependencies:END -->
+
+| Dependent Component | Impact Assessment | Description | Citation |
+|---|---|---|---|
+| [Component Name] | Small / Medium / Large | Detailed description of the impacted functionality. | `path:line` |
+
+---
+
+## Intellectual Property
+
+### Inventions
+
+Provide a brief list and summary of all inventions associated with the proposed design.
+
+1. 
+2. 
+3. 
+
+**Were Invention Disclosure Forms (IDFs) submitted for the inventions listed?**
+
+- [ ] Yes
+- [ ] No
+
+> If No, submit an Invention Disclosure Form through your company's standard IP process.
+
+### Third Party Technology (TPT)
+
+**TPT includes:**
+- **Open Source Software (OSS):** Software licensed under an Open Source License (e.g., MIT, BSD, GPL, Apache)
+- **Commercial (non-OSS) Technology:** Non- software, documentation, content, APIs, SDKs, logos, artwork, data, GUIs, Tools, databases, and other intellectual property NOT licensed under an Open Source License
+
+#### List All NEW TPT Used
+
+| TPT | Where/How? |
+|---|---|
+| | |
+
+**Note:** As noted in the TPT Policy, prior to downloading/onboarding any new TPT, you must do the following:
+
+1. **For all new OSS:**
+   - Document the license and usage. Follow your organization's legal and security review process for Open Source.
+
+2. **For all new Commercial TPT:**
+   - Follow your organization's procurement and legal review process before onboarding any commercial technology or non-open-source assets.
+
+---
+
+## Checklist
+
+> **Draft integration:** `draft deploy-checklist` validates each row below is populated before allowing deploy of `criticality ∈ {high, mission-critical}` tracks.
+
+### Performance <!-- REQUIRED -->
+
+- Describe request QPS and 95th percentile latency
+
+| Budget | Value | Baseline source | <!-- REQUIRED -->
+|--------|-------|-----------------|
+| p50 latency | _TBD_p50_ | _TBD_p50_baseline_ |
+| p95 latency | _TBD_p95_ | _TBD_p95_baseline_ |
+| p99 latency | _TBD_p99_ | _TBD_p99_baseline_ |
+| Throughput target | _TBD_throughput_ | _TBD_throughput_baseline_ |
+| Resource budget (CPU / RAM / IO) | _TBD_resource_budget_ | _TBD_resource_baseline_ |
+
+### Scale <!-- REQUIRED -->
+
+- Does the service scale horizontally? What are the metrics used for this?
+- Is vertical scaling required?
+- Are there fundamental scaling bottlenecks? (e.g., single leader doing unbounded work)
+
+### Security <!-- REQUIRED -->
+
+- How are credentials protected?
+- Are there any firewall / ports implications?
+- Is there any resource level RBAC needed for this feature / service?
+- Are there any certificate management implications? (e.g., manual deployment etc.)
+- Is customer data protected with encryption?
+
+### Resiliency <!-- REQUIRED -->
+
+- Describe the kind and number of failures that may cause service unavailability
+- How is graceful degradation on a fault handled?
+
+### Multi-tenancy <!-- REQUIRED -->
+
+- Is the data / metadata isolated across tenants? In other words, even if datastore is shared, query correctness / partitioning should ensure no leaks should happen
+- Can the tenants expect predictable performance regardless of other tenants' workloads?
+- Can the data and state (config and runtime) of a tenant be migrated?
+
+### Upgrade <!-- REQUIRED -->
+
+- Is there any breakage in backward compatibility in API or data model?
+- What are the dependent services that need to be upgraded prior to this? (e.g., in SaaS, this service upgrade depends on a new ElasticSearch manager service version)
+- Does the impact of changes go beyond the upgraded cluster / service instance? (e.g., if this is a cluster change, will it break reporting or remote replication)
+
+### Flags and Controlled Rollout of Features <!-- REQUIRED -->
+
+- Does this change the persistent state? If yes, describe the flags used to protect the change
+- Is the feature going to be rolled out in a controlled manner? If yes, describe the targets and the feature flags here
+
+| Field | Value | <!-- REQUIRED -->
+|-------|-------|
+| `flag_name` | _TBD_flag_name_ |
+| `cluster_feature_gate` | _TBD_cluster_feature_gate_ |
+| `kill_switch_test_id` | _TBD_kill_switch_test_id_ |
+| `runbook_link` | _TBD_runbook_link_ |
+| `sunset_criteria` | _TBD_sunset_criteria_ |
+
+### Cost Implications <!-- REQUIRED -->
+
+*Primarily for SaaS deployments*
+
+- Include cloud cost calculation here
+- Is there any cost to the customer for cloud workloads?
+- Is there any sizing impact?
+
+---
+
+## Pre-Deploy Validation <!-- REQUIRED -->
+
+`scripts/tools/check-track-hygiene.sh` → hygiene clean
+`scripts/tools/verify-citations.sh` → citations clean (±5 lines tolerance)
+`scripts/tools/verify-doc-anchors.sh` → anchors and §-refs resolve
+`scripts/tools/check-graph-usage-report.sh` → Graph Usage Report present
+`scripts/tools/check-scope-conflicts.sh` → no overlap with adjacent tracks
+`scripts/tools/diff-templates-vs-tracks.sh` → no schema drift
+
+Result stored in `metadata.json:pre_deploy_status`
+(`unrun` / `passing` / `failing` / `bypassed`). Deploy is blocked unless
+`passing`.
+
+---
+
+## Deployment
+
+- Is there any dependency on the platform where this is deployed?
+  - For DP: on-prem vs customer managed cloud vs SaaS vs Services running in the cloud
+  - For CP: self managed on-prem vs SaaS vs IBM cloud
+
+---
+
+## Observability
+
+- List down the key metrics (don't list all metrics) that SREs need to look at to identify issues
+- List down alerting thresholds on those metrics
+
+> Per-component metrics + alert threshold tables live in [`./lld.md` §Observability](./lld.md#observability).
+
+</core-file>
+
+---
+
+## core/templates/lld.md
+
+<core-file path="core/templates/lld.md">
+
+---
+project: "{PROJECT_NAME}"
+module: "root"
+track_id: "{TRACK_ID}"
+generated_by: "draft:decompose"
+generated_at: "{ISO_TIMESTAMP}"
+# Stable frontmatter only (WS-8). Ephemeral fields live in metadata.json
+# and render via <!-- META:<key> --> directives.
+links:
+  spec: "./spec.md"
+  plan: "./plan.md"
+  hld: "./hld.md"
+  project_architecture: "../../architecture.md"
+---
+
+# {TRACK_TITLE} — LLD
+
+**_TBD_author_** (_TBD_email_) <!-- REQUIRED -->
+
+**Status:** <!-- META:status --> <!-- REQUIRED -->
+
+> Track ID: `{TRACK_ID}` — generated by `draft:decompose`. Sibling docs: [`./hld.md`](./hld.md), [`./spec.md`](./spec.md), [`./plan.md`](./plan.md). For project-wide architecture, see [`../../architecture.md`](../../architecture.md).
+
+## Approvals
+
+> **Pre-fill:** Pulled from `spec.md` frontmatter `approvers.{team_leads, tech_leads, qa}`. Captured per row before code review begins.
+
+| Role | Approver | Date | Comments | <!-- REQUIRED for criticality ∈ {high, mission-critical} -->
+|------|----------|------|----------|
+| Team Leads | _TBD_approver_team_leads_ | _TBD_date_ | _TBD_comments_ |
+| Technical Leads | _TBD_approver_tech_leads_ | _TBD_date_ | _TBD_comments_ |
+| Quality Assurance | _TBD_approver_qa_ | _TBD_date_ | _TBD_comments_ |
+
+---
+
+## Table of Contents
+
+1. [Background](#background)
+2. [Requirements](#requirements)
+3. [Low Level Design](#low-level-design)
+4. [Observability](#observability)
+
+---
+
+## Background
+
+<Link to HLD and explain context here>
+
+> See [`./hld.md` §Background](./hld.md#background) for the high-level rationale. Use this section only for component-internal context the HLD doesn't cover.
+
+> **Citations.** Use `path/to/file.ext:LINE` (or `LINE-RANGE`); verifier:
+> `scripts/tools/verify-citations.sh`. Prefer `// DRAFT-CITE: <id>` source
+> anchors over raw line numbers for code that moves often.
+
+---
+
+## Requirements
+
+> **Source:** [`./spec.md`](./spec.md). Whitebox (per-component) requirements live there. Do not duplicate.
+
+- **Whitebox requirements scorecard:** see [`./spec.md` §Requirements](./spec.md#requirements)
+- **Acceptance criteria mapped to this LLD:** {list AC IDs covered by this LLD}
+
+---
+
+## Low Level Design
+
+> **NOTE:**
+> - HLD and Detailed Design covers components and interactions across various services that the feature touches
+> - LLD to be documented here is for each such component and internal implementation
+> - A single doc here can cover all components, or they can be split up, but the key is to ensure every component in every service the design touches has an LLD
+
+### Classes and Interfaces
+
+**Describe the class level design preferably with a diagram**
+
+- This should convey what interfaces each class provides and how it interacts with other classes
+- Describe choice of message queues vs RPCs for interactions
+
+<!-- GRAPH:track-class-table:START -->
+<!-- Rendered by draft:decompose Step 5b for each module marked New/Modified.
+     Per-module table. Columns: Symbol, Kind (class/iface/func/method),
+     Signature, Visibility, Citation, Concurrency Notes, lock_acquired,
+     reentrant. -->
+<!-- WS-7 required columns: lock_acquired (named lock or "none"),
+     reentrant (yes/no/n/a). -->
+<!-- GRAPH:track-class-table:END -->
+
+#### [Component/Service Name]
+
+**Public API:**
+
+| Function / Method | Signature | Params | Returns | Errors / Exceptions | Citation |
+|-------------------|-----------|--------|---------|---------------------|----------|
+| `{name}` | `{lang-appropriate signature}` | `{param: type — constraint}` | `{type — shape}` | `{error types / codes}` | `path:line` |
+
+**Preconditions:** {what must be true before call — caller responsibilities}
+**Postconditions:** {what is guaranteed after successful call}
+**Invariants:** {properties preserved across calls — thread safety, idempotency, ordering}
+
+{Repeat per component.}
+
+---
+
+### Data Model
+
+**Describe the schemas of persistent state - protobuf or db schemas**
+
+- Describe the schemas of messages / RPCs
+- Describe caching considerations
+
+<!-- GRAPH:track-data-models:START -->
+<!-- Rendered by draft:decompose Step 5b. One block per new/modified entity.
+     Pulls proto/struct/class declarations + field metadata from the graph. -->
+<!-- GRAPH:track-data-models:END -->
+
+#### [Component/Service Name]
+
+**`{ModelName}`** (`path:line`)
+
+```{language}
+{actual type definition — struct, class, interface, proto message, TypedDict, etc.}
+```
+
+| Field | Type | Nullable | Default | Validation / Constraint |
+|-------|------|----------|---------|-------------------------|
+| `{field}` | `{type}` | yes/no | `{default or —}` | `{rule}` |
+
+**Storage:** {where persisted — table, collection, key prefix}
+**Indexes / Keys:** {primary key, unique constraints, indexed fields}
+**Migration:** {if this is a schema change — migration path and rollback}
+
+{Repeat per model.}
+
+---
+
+### Eligibility / Cap Tables <!-- OPTIONAL -->
+
+> When the LLD specifies caps (byte limits, row limits, concurrency caps),
+> use this schema. Every cap value carries `derived_from` (a flag, threshold,
+> benchmark, or vendor limit). Pure invention without `derived_from` is
+> rejected by the deploy-checklist gate.
+
+| Cap | Value | derived_from | Notes | <!-- REQUIRED if section present -->
+|-----|-------|--------------|-------|
+| _TBD_cap_1_name_ | _TBD_cap_1_value_ | _TBD_cap_1_derived_from_ | _TBD_cap_1_notes_ |
+
+---
+
+### Key Algorithms and Workflows
+
+**Describe certain key algorithms / workflows**
+
+> **WS-7 sequence-diagram rule.** When the prose enumerates edge cases (cap
+> exceeded, OOM, flag flip mid-flow, retry exhausted), the Mermaid sequence
+> diagram **must** include an explicit `alt` / `opt` block per edge case.
+> `Note over X,Y: ... TBD policy ...` is **not** sufficient. Reviewers and
+> deploy-checklist fail on bare prose without diagram blocks.
+
+Examples:
+- List of steps to failover a multi-region database cluster
+- Analysis phase of a background data indexing service
+- Transferring session state information between authentication and profile services via a secure messaging protocol
+
+#### [Algorithm/Workflow Name]
+
+**Inputs:** `{...}`
+**Outputs:** `{...}`
+**Complexity:** `O({...})` time, `O({...})` space
+
+```mermaid
+sequenceDiagram
+    participant U as {Caller}
+    participant A as {module-1}
+    participant B as {module-2}
+    participant D as {DB / external}
+
+    U->>A: {request payload}
+    A->>B: {internal call}
+    B->>D: {query / write}
+    D-->>B: {result}
+    B-->>A: {response}
+    A-->>U: {final response}
+
+    Note over A,B: {invariant / gate}
+```
+
+**Pseudocode:**
+
+```
+1. validate inputs
+2. ...
+3. return result
+```
+
+**Edge cases handled:**
+- {case 1 — what happens}
+- {case 2 — what happens}
+
+---
+
+### Error Handling & Retry Semantics
+
+| Operation | Error Class | Classification | Retry? | Backoff | Max Attempts | Fallback | fault_injection_site | <!-- REQUIRED -->
+|-----------|-------------|----------------|--------|---------|--------------|----------|----------------------|
+| _TBD_err_1_op_ | _TBD_err_1_class_ | _TBD_err_1_classification_ | _TBD_err_1_retry_ | _TBD_err_1_backoff_ | _TBD_err_1_max_attempts_ | _TBD_err_1_fallback_ | _TBD_err_1_fault_injection_site_ |
+
+**Propagation model:** {Result type / exceptions / error codes}
+**Circuit breaker:** {thresholds, half-open policy, reset} — omit if N/A
+**Idempotency:** {which operations are idempotent and how — dedup key, tx id}
+
+---
+
+### Refactoring of Existing Code
+
+<Describe if large sections of existing code is being refactored, and why (e.g., not modular and hence can't be reused; can't write UTs well as interfaces are not defined cleanly)>
+
+---
+
+### Programming Language Choice and Unit Testing
+
+#### Programming Language Choice
+
+<Describe Programming Language choice and justification>
+
+#### Unit Testing Strategy
+
+- **Mock Interfaces:**
+  - How mock interfaces are going to be implemented and used in UTs
+  
+- **Functional Test Cases:**
+  - What are major cases to be UT'd functionally
+  
+- **Error & Fault Injection:**
+  - How errors & faults are injected
+  
+- **Race Condition Simulation:**
+  - How race conditions are simulated
+
+> See `draft testing-strategy` for the project's authoritative test strategy. This LLD section captures only what is specific to this track's components.
+
+---
+
+### PaaS Choices
+
+<Describe the choices made in each of the following areas with justification:>
+
+#### Data Store
+
+- Relational vs NoSQL
+- Justification
+
+#### Workflow Engine
+
+- (e.g., Temporal, etc.)
+- Justification
+
+#### Operational State Checkpointing Store
+
+- (e.g., Scribe, Mongo, etc.)
+- Justification
+
+---
+
+## Observability
+
+### Metrics
+
+List down all metrics that developers and SREs need to look at to identify issues:
+
+- 
+- 
+- 
+
+### Alerting Thresholds
+
+List down alerting thresholds on those metrics:
+
+| Metric | Threshold | Severity | Action |
+|--------|-----------|----------|--------|
+| | | | |
+
+> `draft deploy-checklist` validates this table is populated before deploy.
+
+</core-file>
+
+---
+
+## core/templates/discovery.md
+
+<core-file path="core/templates/discovery.md">
+
+---
+project: "{PROJECT_NAME}"
+module: "root"
+track_id: "{TRACK_ID}"
+generated_by: "draft:discover"
+generated_at: "{ISO_TIMESTAMP}"
+links:
+  spec: "./spec.md"
+  plan: "./plan.md"
+  hld: "./hld.md"
+  lld: "./lld.md"
+---
+
+# {TRACK_TITLE} — Discovery
+
+> Phase 0 (code spike). Captures the current-state code reading the AI
+> performed before the spec was written, anchored to
+> `metadata.json:synced_to_commit`. See
+> [core/shared/discovery-schema.md](../../core/shared/discovery-schema.md)
+> for the schema. Hygiene validator forbids empty hotspots without an
+> adjacent `_NONE_FOUND_` justification.
+
+**Status:** <!-- META:status --> <!-- REQUIRED -->
+
+---
+
+## Hotspots <!-- REQUIRED -->
+
+Code locations the spec must address. Each row cites `path:line` that
+verify-citations.sh resolves against the pinned commit.
+
+| Step | Location | Behavior |
+|------|----------|----------|
+| _TBD_hotspot_1_step_ | _TBD_hotspot_1_location_ | _TBD_hotspot_1_behavior_ |
+| _TBD_hotspot_2_step_ | _TBD_hotspot_2_location_ | _TBD_hotspot_2_behavior_ |
+| _TBD_hotspot_3_step_ | _TBD_hotspot_3_location_ | _TBD_hotspot_3_behavior_ |
+
+> If the spike found nothing: keep this table empty and add a
+> `_NONE_FOUND_ — <justification>` line below before saving.
+
+---
+
+## Mode Selection <!-- REQUIRED -->
+
+Flags, feature gates, environment switches that govern the current code
+path. Receivers of the spec use this to scope rollout planning.
+
+| Switch | Location | Notes |
+|--------|----------|-------|
+| _TBD_switch_1_name_ | _TBD_switch_1_location_ | _TBD_switch_1_notes_ |
+
+---
+
+## Open Questions <!-- REQUIRED -->
+
+Load-bearing unknowns that must close before spec freeze. Each question
+must resolve into a decision in `spec.md`, a deferral with a follow-up
+track ID, or `_NONE_FOUND_` with justification.
+
+- Q1: _TBD_question_1_
+- Q2: _TBD_question_2_
+
+---
+
+## References <!-- REQUIRED -->
+
+Flat list of files and functions touched in the spike. Files cited here
+without line numbers are exempt from drift checks (they document
+*familiarity*, not pinned facts).
+
+- _TBD_reference_1_path_ — _TBD_reference_1_symbol_ — _TBD_reference_1_role_
+- _TBD_reference_2_path_ — _TBD_reference_2_symbol_ — _TBD_reference_2_role_
+
+---
+
+## Conversation Log <!-- OPTIONAL -->
+
+> Free-form notes captured during the spike. Reviewers can skim this for
+> context the structured sections above don't carry. Not validator-checked.
+
+</core-file>
+
+---
+
+## core/templates/session-summary.md
+
+<core-file path="core/templates/session-summary.md">
+
+# Session Summary Template
+
+Compact summary emitted by `draft implement` at the end of sessions where 3 or more tasks were completed. Saved to `draft/tracks/<id>/session-summary-<timestamp>.md`.
+
+**Called by:** `draft implement` Step 6 (track completion or end-of-session with ≥3 completed tasks)
+
+---
+
+## Template
+
+```markdown
+---
+track_id: "{TRACK_ID}"
+generated_by: "draft:implement"
+generated_at: "{ISO_TIMESTAMP}"
+synced_to_commit: "{FULL_SHA}"
+---
+
+# Session Summary — {TRACK_TITLE}
+
+**Date:** {ISO_DATE}
+**Commit range:** {START_SHA}^..{END_SHA}
+
+## Tasks Completed
+
+| # | Task | Commit |
+|---|------|--------|
+| 1 | {task description} | `{sha}` |
+| 2 | {task description} | `{sha}` |
+| ... | | |
+
+**Total:** N tasks completed this session
+
+## Files Touched
+
+- `{path/to/file}` — {brief description of change}
+- `{path/to/file}` — {brief description of change}
+
+## Tests Run
+
+- **Suite:** {test command run}
+- **Result:** {pass count} passed / {fail count} failed / {skip count} skipped
+- **Coverage delta:** {+N%} (if available)
+
+## Drift Detected
+
+{One of:}
+- None
+- ⚠️ LLD interface conflict in task N: {description of conflict, resolution deferred}
+- ⚠️ Architecture drift: {description}
+
+## Blockers
+
+{One of:}
+- None
+- {Blocker description and recovery action}
+
+## Next Task
+
+{First pending `[ ]` task from plan.md, or "Track complete" if all tasks done}
+```
+
+---
+
+## Emission Rules
+
+Emit when `draft implement` completes a session and **any** of these conditions are met:
+- 3 or more tasks completed in the current session
+- Track is fully complete (all tasks `[x]`)
+- A drift or blocker was detected and resolved
+
+**Do not emit** for sessions with fewer than 3 completed tasks and no track completion — use the standard Progress Report instead.
+
+**File naming:** `session-summary-{YYYYMMDD}-{HHMM}.md` in `draft/tracks/<id>/`
+
+</core-file>
+
+---
+
+## core/templates/CHANGELOG.md
+
+<core-file path="core/templates/CHANGELOG.md">
+
+# Template Schema Changelog
+
+Semver-style change log for the schema defined by files under `core/templates/`.
+Tracks are generated from these templates by `skills/new-track`, `skills/decompose`,
+and downstream skills. Any change here is a contract change consumed by every
+downstream repo. Major bumps require a `scripts/tools/migrate-track-frontmatter.sh`
+migration path.
+
+## How template versions are referenced
+
+- `metadata.json` carries the optional field `template_version` (semver string).
+- Validators in `scripts/tools/` (hygiene, citations, anchors, scope-conflicts,
+  graph-usage-report) read this field and refuse to lint tracks whose
+  `template_version` major-bumps past the validator's known schema.
+
+## Shared blocks each template depends on
+
+| Template | Depends on (under `core/shared/`) |
+|---|---|
+| `spec.md` | `template-contract.md`, `template-hygiene.md`, `discovery-schema.md` (back-link), `verification-gates.md` |
+| `hld.md` | `template-contract.md`, `template-hygiene.md`, `graph-query.md`, `verification-gates.md` |
+| `lld.md` | `template-contract.md`, `template-hygiene.md`, `graph-query.md`, `verification-gates.md` |
+| `plan.md` | `template-contract.md`, `template-hygiene.md`, `verification-gates.md` |
+| `metadata.json` | `template-contract.md` (canonical schema for ephemeral fields) |
+| `discovery.md` | `discovery-schema.md` |
+
+Templates are markdown-only (and JSON for `metadata.json`). Viewer artifacts
+(HTML/PDF) are rendered on demand by `scripts/tools/render-track.sh` and are
+git-ignored at the track level. No HTML or PDF templates ship here.
+
+## Versions
+
+### 2.0.0 — Templates-as-contract baseline
+
+- **Breaking:** Introduces parseable sentinel placeholders (`_TBD_<field>_`,
+  `_PLACEHOLDER_<kind>_`). Silent placeholders such as `Author1`,
+  `xxx@example.com`, pre-checked `Status: [x] Complete` are forbidden.
+- **Breaking:** Introduces `<!-- REQUIRED -->` and `<!-- OPTIONAL -->` markers
+  next to authorable fields. Hygiene validator gates `ready-for-review` on the
+  required set being populated; optional fields may carry sentinels indefinitely.
+- **New:** `core/templates/discovery.md` becomes a first-class artifact.
+- **New:** `core/templates/CHANGELOG.md` (this file) and
+  `core/shared/template-contract.md` (narrative + field index).
+- **New:** Scope frontmatter — `scope_includes: []`, `scope_excludes: []`.
+  Lives on `spec.md` and mirrored into `metadata.json`.
+- **New:** Table columns required by WS-7 — `concurrency_model`,
+  `aggregate_resource_cap`, `derived_from`, `mitigation_test_id`, `test_id`,
+  `entry_gate_command`, `exit_gate_command`, `owner`, `flag_name`,
+  `cluster_feature_gate`, `kill_switch_test_id`, `runbook_link`,
+  `sunset_criteria`, `promote_to_adr`, `lock_acquired`, `reentrant`,
+  `fault_injection_site`.
+- **New:** `<!-- DECOMPOSE:REGENERATE START -->` / `<!-- ... END -->` markers
+  in `plan.md` so `draft:decompose` can rewrite phase tables without clobbering
+  manual notes outside the markers.
+- **New:** `<!-- META:<key> -->` directives in `spec.md`, `hld.md`, `lld.md`,
+  `plan.md` that pull ephemeral fields from `metadata.json` at render time.
+- **Breaking:** Ephemeral fields stripped from per-file YAML frontmatter —
+  `git.*`, `synced_to_commit`, `classification.*`, `status`. They live solely
+  in `metadata.json` from this version forward.
+- **Migration:** `scripts/tools/migrate-track-frontmatter.sh` rewrites pre-2.0
+  tracks in place (idempotent; emits `.bak`).
+- **Validators:** any commit touching `skills/**` or `scripts/tools/**` that
+  affects artifact schema must also touch `core/templates/**`, or carry
+  `[template-noop]` in the commit message.
+
+### 1.x.y — pre-baseline (historical)
+
+- See `git log -- core/templates/` for changes before 2.0.0. No formal version
+  tagging; downstream consumers relied on `generated_by` and `generated_at`
+  frontmatter only.
+
+</core-file>
+
+---
+
 ## core/templates/service-index.md
 
 <core-file path="core/templates/service-index.md">
@@ -18543,15 +22642,6 @@ project: "{PROJECT_NAME}"
 module: "root"
 generated_by: "draft:index"
 generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{COMMIT_MESSAGE}"
-  dirty: false
-synced_to_commit: "{FULL_SHA}"
 ---
 
 # Service Index
@@ -18616,15 +22706,6 @@ project: "{PROJECT_NAME}"
 module: "root"
 generated_by: "draft:index"
 generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{COMMIT_MESSAGE}"
-  dirty: false
-synced_to_commit: "{FULL_SHA}"
 ---
 
 # Service Dependency Graph
@@ -18737,15 +22818,6 @@ project: "{PROJECT_NAME}"
 module: "root"
 generated_by: "draft:index"
 generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{COMMIT_MESSAGE}"
-  dirty: false
-synced_to_commit: "{FULL_SHA}"
 ---
 
 # Technology Matrix
@@ -18856,15 +22928,6 @@ project: "{PROJECT_NAME}"
 module: "root"
 generated_by: "draft:index"
 generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{COMMIT_MESSAGE}"
-  dirty: false
-synced_to_commit: "{FULL_SHA}"
 ---
 
 # Product: [Org/Product Name]
@@ -18927,15 +22990,6 @@ project: "{PROJECT_NAME}"
 module: "root"
 generated_by: "draft:index"
 generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{COMMIT_MESSAGE}"
-  dirty: false
-synced_to_commit: "{FULL_SHA}"
 ---
 
 # Architecture: [Org/Product Name]
@@ -19072,15 +23126,6 @@ project: "{PROJECT_NAME}"
 module: "root"
 generated_by: "draft:index"
 generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{COMMIT_MESSAGE}"
-  dirty: false
-synced_to_commit: "{FULL_SHA}"
 ---
 
 # Tech Stack: [Org/Product Name]
@@ -19208,15 +23253,6 @@ track_id: "{TRACK_ID}"
 jira_ticket: "{JIRA_KEY}"
 generated_by: "draft:new-track"
 generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{COMMIT_MESSAGE}"
-  dirty: false
-synced_to_commit: "{FULL_SHA}"
 ---
 
 # Root Cause Analysis: {TITLE}
@@ -19407,7 +23443,7 @@ Each module typically contains some combination of:
 
 ```
 [auth] ──> [database]
-   │            │
+   │ │
    └──> [config] <──┘
             │
       [logging] (shared, no deps)
@@ -19438,7 +23474,7 @@ When modules form a circular dependency (A → B → A), apply this decision pro
 Before (cycle):
 ```
 [user-service] ──> [notification-service]
-       ↑                    │
+       ↑ │
        └────────────────────┘
 ```
 `user-service` imports `sendNotification` from `notification-service`.
@@ -19449,9 +23485,9 @@ Analysis: Both modules need user preference data. Extract it.
 After (resolved):
 ```
 [user-preferences] (new - extracted shared concern)
-       ↑         ↑
-       │         │
-[user-service]  [notification-service]
+       ↑ ↑
+       │ │
+[user-service] [notification-service]
        │
        └──> [notification-service]
 ```
@@ -19499,11 +23535,11 @@ Stories flow through three stages:
 ```
 // Story: [Module/File Name]
 //
-// Input:  [what this module/function receives]
+// Input: [what this module/function receives]
 // Process:
-//   1. [first algorithmic step]
-//   2. [second algorithmic step]
-//   3. [third algorithmic step]
+// 1. [first algorithmic step]
+// 2. [second algorithmic step]
+// 3. [third algorithmic step]
 // Output: [what this module/function produces]
 //
 // Dependencies: [what this module relies on]
@@ -20120,7 +24156,7 @@ Track data transformation through the system:
 ```
 input: { userId: "abc", role: "admin" }
   → after auth middleware (file:line): { userId: "abc", role: "admin", verified: true }
-  → after service layer (file:line): { userId: "abc", role: null }  ← DATA LOST HERE
+  → after service layer (file:line): { userId: "abc", role: null } ← DATA LOST HERE
   → at failure point (file:line): TypeError: cannot read 'role' of null
 ```
 

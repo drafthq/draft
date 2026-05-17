@@ -1,6 +1,6 @@
 ---
 name: jira-create
-description: "Create Jira issues from jira-export-latest.md via MCP. Auto-generates export if missing. Use when the user asks to 'create Jira issues', 'push to Jira', 'sync track to Jira', or says 'file these as Jira tickets'."
+description: Create Jira issues from jira-export-latest.md via MCP. Auto-generates export if missing.
 ---
 
 # Create Jira Issues from Export
@@ -31,8 +31,8 @@ Create Jira epic, stories, and sub-tasks from `jira-export-latest.md` using MCP-
 
 1. **Capture git context first:**
    ```bash
-   git branch --show-current    # Current branch name
-   git rev-parse --short HEAD   # Current commit hash
+   git branch --show-current # Current branch name
+   git rev-parse --short HEAD # Current commit hash
    ```
 2. Find active track from `draft/tracks.md` (look for `[~] In Progress` or first `[ ]` track)
 3. If track ID provided as argument, use that instead
@@ -170,7 +170,7 @@ MCP call: create_issue
 - labels: ["draft"]
 ```
 - Capture sub-task key (e.g., PROJ-125)
-- Report: "  - Sub-task: PROJ-125 - Task 1.1"
+- Report: " - Sub-task: PROJ-125 - Task 1.1"
 
 ### 5d. Create Bug Issues (from Bug Hunt Report)
 

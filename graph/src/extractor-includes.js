@@ -1,6 +1,6 @@
 'use strict';
 
-const fs   = require('fs');
+const fs = require('fs');
 const path = require('path');
 const { walkFiles, countLines, warn, C_CPP_EXTS_LIST } = require('./util');
 
@@ -8,21 +8,21 @@ const { walkFiles, countLines, warn, C_CPP_EXTS_LIST } = require('./util');
  * Build the C++ include graph for a repository.
  *
  * Produces:
- *   nodes       — one per source file (id, module, path, lines, kind)
- *   edges       — one per #include relationship between files (source→target)
- *   moduleEdges — aggregated inter-module edges with weight (count)
+ * nodes — one per source file (id, module, path, lines, kind)
+ * edges — one per #include relationship between files (source→target)
+ * moduleEdges — aggregated inter-module edges with weight (count)
  *
  * Method: read each file line-by-line, parse #include directives.
  * No compiler or tree-sitter needed — purely textual, 100% accurate for
  * include relationships.
  *
- * @param {string}              repo
- * @param {Module[]}            modules             from detectModules()
- * @param {RegExp[]}            excludeRes          pre-compiled exclude patterns
- * @param {Map<string,string[]>|null} preCollectedFiles   pre-collected file map, or null to walk
+ * @param {string} repo
+ * @param {Module[]} modules from detectModules()
+ * @param {RegExp[]} excludeRes pre-compiled exclude patterns
+ * @param {Map<string,string[]>|null} preCollectedFiles pre-collected file map, or null to walk
  */
 function buildIncludeGraph(repo, modules, excludeRes = [], preCollectedFiles = null) {
-  const repoName    = path.basename(repo);
+  const repoName = path.basename(repo);
 
   // Build module lookup: absolute path prefix → module name
   const modulePaths = new Map(); // modPath → modName
@@ -37,24 +37,24 @@ function buildIncludeGraph(repo, modules, excludeRes = [], preCollectedFiles = n
 
   // File path → node id (relative to repo root)
   const pathToId = new Map();
-  const nodes    = [];
+  const nodes = [];
 
   for (const f of allFiles) {
-    const rel    = path.relative(repo, f);
-    const parts  = rel.split(path.sep);
+    const rel = path.relative(repo, f);
+    const parts = rel.split(path.sep);
     const module = parts.length > 1 ? parts[0] : '__root__';
-    const ext    = path.extname(f);
-    const kind   = (ext === '.h' || ext === '.hpp' || ext === '.hxx') ? 'header' : 'source';
-    const lines  = countLines(f);
+    const ext = path.extname(f);
+    const kind = (ext === '.h' || ext === '.hpp' || ext === '.hxx') ? 'header' : 'source';
+    const lines = countLines(f);
 
     const node = {
-      id:     rel,
+      id: rel,
       module,
-      path:   rel,
-      file:   path.basename(f),
+      path: rel,
+      file: path.basename(f),
       kind,
       lines,
-      ext:    ext.slice(1),
+      ext: ext.slice(1),
     };
 
     nodes.push(node);
@@ -63,7 +63,7 @@ function buildIncludeGraph(repo, modules, excludeRes = [], preCollectedFiles = n
   }
 
   // ── Parse #include directives ─────────────────────────────────────────────
-  const edges       = [];
+  const edges = [];
   const moduleEdgeMap = new Map(); // "src→tgt" → count
 
   // Build a fast lookup: filename → list of candidate full paths
@@ -71,9 +71,9 @@ function buildIncludeGraph(repo, modules, excludeRes = [], preCollectedFiles = n
   const fileIndex = buildFileIndex(allFiles, repo);
 
   for (const f of allFiles) {
-    const rel        = path.relative(repo, f);
-    const parts      = rel.split(path.sep);
-    const srcModule  = parts.length > 1 ? parts[0] : '__root__';
+    const rel = path.relative(repo, f);
+    const parts = rel.split(path.sep);
+    const srcModule = parts.length > 1 ? parts[0] : '__root__';
 
     let content;
     try { content = fs.readFileSync(f).toString('utf8').replace(/\0/g, ''); }
@@ -89,22 +89,22 @@ function buildIncludeGraph(repo, modules, excludeRes = [], preCollectedFiles = n
       if (!quotedMatch) continue;
 
       const includePath = quotedMatch[1];
-      const targetRel   = resolveInclude(includePath, f, repo, repoName, fileIndex, pathToId);
+      const targetRel = resolveInclude(includePath, f, repo, repoName, fileIndex, pathToId);
       if (!targetRel) continue;
 
-      const targetParts  = targetRel.split('/');
+      const targetParts = targetRel.split('/');
       const targetModule = targetParts.length > 1 ? targetParts[0] : '__root__';
 
       // File-level edge
       edges.push({
         source: rel,
         target: targetRel,
-        type:   'INCLUDES',
+        type: 'INCLUDES',
       });
 
       // Module-level edge (skip self-references)
       if (srcModule !== targetModule) {
-        const key   = `${srcModule}→${targetModule}`;
+        const key = `${srcModule}→${targetModule}`;
         moduleEdgeMap.set(key, (moduleEdgeMap.get(key) || 0) + 1);
       }
     }
@@ -133,7 +133,7 @@ function buildIncludeGraph(repo, modules, excludeRes = [], preCollectedFiles = n
 function buildFileIndex(files, repo) {
   const index = new Map(); // basename → [relPath, ...]
   for (const f of files) {
-    const rel  = path.relative(repo, f);
+    const rel = path.relative(repo, f);
     const base = path.basename(f);
     if (!index.has(base)) index.set(base, []);
     index.get(base).push(rel);
@@ -146,7 +146,7 @@ function buildFileIndex(files, repo) {
  *
  * Resolution order:
  * 1. Exact match: includePath is already a valid repo-relative path
- *    e.g. #include "bridge/base/util.h"
+ * e.g. #include "bridge/base/util.h"
  * 2. Repo-name prefixed: #include "bridge/..." → strip prefix
  * 3. Relative to current file's directory
  * 4. Basename fallback: look up by filename in the index
@@ -170,13 +170,13 @@ function resolveInclude(includePath, currentFile, repo, repoName, fileIndex, pat
 
   // 3. Resolve relative to current file's directory.
   const currentDir = path.dirname(currentFile);
-  const abs2       = path.resolve(currentDir, inc);
+  const abs2 = path.resolve(currentDir, inc);
   if (pathToId.has(abs2)) {
     return path.relative(repo, abs2).replace(/\\/g, '/');
   }
 
   // 4. Basename fallback — useful for flat-ish include structures
-  const base      = path.basename(inc);
+  const base = path.basename(inc);
   const candidates = fileIndex.get(base);
   if (candidates && candidates.length === 1) {
     return candidates[0]; // unambiguous

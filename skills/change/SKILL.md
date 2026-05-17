@@ -1,11 +1,11 @@
 ---
 name: change
-description: "Handle mid-track requirement changes. Analyzes impact on completed and pending tasks, proposes amendments to spec.md and plan.md before applying. Use when the user asks to 'change the spec', 'amend the plan', 'modify requirements mid-track', or says 'we need to add X to this track', 'requirements changed'."
+description: Handle mid-track requirement changes. Analyzes impact on completed and pending tasks, proposes amendments to spec.md and plan.md before applying.
 ---
 
 # Course Correction
 
-Handle a mid-track requirement change using Draft's Context-Driven Development methodology.
+You are handling a mid-track requirement change using Draft's Context-Driven Development methodology.
 
 ## Red Flags - STOP if you're:
 
@@ -52,12 +52,16 @@ If no change description provided:
 1. Read `draft/tracks/<id>/spec.md` — extract requirements and acceptance criteria
 2. Read `draft/tracks/<id>/plan.md` — extract all tasks with their current status (`[ ]`, `[~]`, `[x]`, `[!]`)
 3. Read `draft/tracks/<id>/metadata.json` — for track type and status
+4. Read `draft/tracks/<id>/hld.md` if present — extract Architecture, Detailed Design components, Dependencies, Checklist sections, and Approvals table (signed/unsigned)
+5. Read `draft/tracks/<id>/lld.md` if present — extract Classes/Interfaces, Data Model, Algorithms, Error Handling sections
 
 ---
 
-## Step 3: Analyze Spec Impact
+## Step 3: Analyze Spec / HLD / LLD Impact
 
-Analyze the change description against the loaded spec.
+Analyze the change description against the loaded spec, HLD, and LLD.
+
+**Code-grounded impact (Ground-Truth Discipline G1, G2, G4):** Classification ("Modified", "Unaffected", etc.) must be informed by the current code, not just the prior spec text. For each requirement / AC you're about to mark **Unaffected**, confirm the code path it depends on still behaves as the spec claims — Read the cited file or a representative file in the affected module before stamping Unaffected. Specs and implementations drift; "spec text unchanged" ≠ "behavior unchanged."
 
 For each requirement and acceptance criterion, classify the effect:
 
@@ -75,6 +79,31 @@ Spec impact:
 - AC #5 "Export limited to 1000 rows" → Removed (no row limit)
 - NEW: AC #6 "Export progress indicator for large datasets"
 ```
+
+**HLD impact** (only when `hld.md` exists):
+- §Architecture / Component Diagram — does the change introduce new modules or alter integration edges?
+- §Detailed Design — does any per-component subsection need updating, or are new components introduced?
+- §Dependencies — new/removed dependent components?
+- §Checklist (Performance, Scale, Security, Resiliency, Multi-tenancy, Upgrade, Cost) — do any answers need re-evaluation?
+- §IP / TPT — does the change introduce new third-party technology or invention disclosure?
+- §Deployment — does the deployment surface change?
+
+**LLD impact** (only when `lld.md` exists):
+- §Classes and Interfaces — signatures added/modified/removed?
+- §Data Model — schema changes? New fields? Migration required?
+- §Key Algorithms and Workflows — algorithm changes? New sequence diagrams needed?
+- §Error Handling — new error classes or retry policy changes?
+- §Observability — new metrics or alert thresholds?
+
+**Re-approval flag:** If the HLD Approvals table has any signed rows (Date column populated) AND the change touches HLD structural sections (Architecture, Detailed Design, Dependencies, Checklist, IP, Deployment), surface this warning prominently:
+
+```
+⚠️ HLD modified after sign-off — Approvals table requires re-circulation.
+    Signed rows: [list which roles signed and when]
+    Changed sections: [list of HLD sections impacted]
+```
+
+Same logic applies to LLD Approvals when LLD §Classes/Interfaces, §Data Model, or §Key Algorithms change.
 
 ---
 
@@ -103,7 +132,7 @@ Display a clear summary before proposing any file changes:
 
 ```
 Change: [change description]
-Track:  <track_id> — <track_name>
+Track: <track_id> — <track_name>
 
 Spec impact:
   - [classification] [requirement/AC]
@@ -120,7 +149,7 @@ Completed tasks that may need rework:
 
 Pending tasks with proposed changes:
   Before: - [ ] [original task text]
-  After:  - [ ] [proposed new task text]
+  After: - [ ] [proposed new task text]
 ```
 
 ---
@@ -136,6 +165,14 @@ Show the diff as before/after for each modified section. Do not rewrite unchange
 ### Proposed plan.md changes
 
 Show each task that would be modified as before/after. Do not rewrite the full plan.
+
+### Proposed hld.md changes (when HLD exists and is impacted)
+
+Show before/after for each impacted HLD section. Preserve §Approvals table verbatim — do not modify Approvals as part of the spec amendment; re-circulation is the author's manual step. Surface a "Sections changed" list at the top of the diff so reviewers can see scope at a glance.
+
+### Proposed lld.md changes (when LLD exists and is impacted)
+
+Show before/after for each impacted LLD section. Preserve §Approvals verbatim. Flag schema changes (Data Model) for migration consideration.
 
 ---
 
@@ -153,7 +190,7 @@ Apply these changes to spec.md and plan.md? [yes / no / edit]
 
 ## Step 8: Apply Changes and Log
 
-1. Apply the agreed amendments to `spec.md` and `plan.md`
+1. Apply the agreed amendments to `spec.md`, `plan.md`, and (when impacted) `hld.md` / `lld.md`. Preserve §Approvals tables in HLD/LLD verbatim — re-approval is a manual author step, not an automated edit.
 
 2. Update `draft/tracks/<id>/metadata.json`:
    - Set `updated` to current ISO timestamp
@@ -177,10 +214,18 @@ Changes applied: <track_id>
 Updated:
 - draft/tracks/<id>/spec.md
 - draft/tracks/<id>/plan.md
+[when HLD impacted:]
+- draft/tracks/<id>/hld.md
+[when LLD impacted:]
+- draft/tracks/<id>/lld.md
 
 [If completed tasks flagged:]
-⚠️  Review N completed task(s) — they may not align with the updated spec.
+⚠️ Review N completed task(s) — they may not align with the updated spec.
     Re-run /draft:implement to address rework, or /draft:review to assess.
+
+[If HLD/LLD modified after sign-off:]
+⚠️ HLD/LLD modified after sign-off — re-circulate to approvers listed in §Approvals.
+    /draft:upload will block git upload for high-criticality tracks until re-signed.
 
 Next: /draft:implement to continue, or /draft:review to assess current state.
 ```

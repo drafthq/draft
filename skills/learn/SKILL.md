@@ -1,14 +1,27 @@
 ---
 name: learn
-description: "Scan codebase to discover coding patterns and update draft/guardrails.md. Learns conventions (skip in future) and anti-patterns (always flag). Supports migration from workflow.md and pattern promotion. Use when the user asks to 'learn the codebase patterns', 'discover conventions', 'update guardrails', 'promote a pattern', or says 'what conventions does this repo follow'."
+description: Scan codebase to discover coding patterns and update draft/guardrails.md. Learns conventions (skip in future) and anti-patterns (always flag). Supports migration from workflow.md and pattern promotion.
 ---
 
 # Learn — Pattern Discovery & Guardrails Update
 
 Scan the codebase to discover recurring coding patterns and update `draft/guardrails.md` with learned conventions and anti-patterns. This improves future quality command accuracy by reducing false positives and catching known-bad patterns.
 
+## MANDATORY GRAPH LOOKUP (read before pattern scanning)
+
+When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Use the graph to:
+
+1. Enumerate source files per module from `draft/graph/modules/<name>.jsonl` (preferred over `find`).
+2. Prioritize hotspots from `draft/graph/hotspots.jsonl` — patterns in high-fanIn files are more impactful when learned.
+3. For TS/Python/Go/C/C++, use `*-index.jsonl` to identify class/function definitions rather than re-discovering them via regex.
+
+Filesystem `find` for source discovery (Step 2.1) is permitted **as a complement** to the graph for languages not covered by indexes (e.g. Ruby, Java without ctags). Record the rationale in the Graph Usage Report.
+
 ## Red Flags - STOP if you're:
 
+See [shared red flags](../../core/shared/red-flags.md) — applies to all code-touching skills.
+
+Skill-specific:
 - Writing to guardrails.md without reading the codebase first
 - Learning a pattern from fewer than 3 occurrences
 - Auto-promoting patterns to Hard Guardrails (requires human approval)
@@ -51,6 +64,14 @@ If it exists, read it and internalize:
 - Current Hard Guardrails (checked items)
 - Current Learned Conventions (existing entries)
 - Current Learned Anti-Patterns (existing entries)
+
+**Then verify core guardrails integrity (backfill if missing):**
+
+Check if `draft/guardrails.md` contains the C++/Systems Hard Guardrails from `core/guardrails.md`. Detection: look for the marker heading `### C++/Systems — Object Lifecycle & Memory Safety`.
+
+- **If missing AND project contains C++ code:** The file predates `core/guardrails.md`. Backfill by inserting the full C++/Systems Hard Guardrails sections from `core/templates/guardrails.md` (G1.x–G7.x, all pre-checked `[x]`) into the `## Hard Guardrails` section, after any existing general guardrails. Preserve all existing entries. Announce: "Backfilled C++/Systems Hard Guardrails (G1.x–G7.x) from core/guardrails.md into draft/guardrails.md."
+- **If missing AND project has no C++ code:** Skip — these guardrails only apply to C++ projects.
+- **If present:** No action — core guardrails already integrated.
 
 ### 1.2: Check for Legacy Guardrails (migration path)
 
@@ -253,6 +274,8 @@ Follow the threshold from `core/shared/pattern-learning.md`:
 | Found >5x, all consistent, cross-verified | `high` | Learn + flag as promotion candidate |
 | Found >5x but inconsistent | — | Do NOT learn (investigate inconsistency) |
 
+**Consistency-claim ground-truth gate (Ground-Truth Discipline G1, G4):** "Consistent" and "cross-verified" require you to have **Read** at least 3 of the instances in this session (5 if claiming `high`). A grep match count is not consistency proof — variant call sites can use the same identifier with different semantics. List the file:line of each Read instance in the learned-pattern record under §Evidence. A `medium` or `high` entry whose Evidence list shows only grep counts is a Red Flag and must be downgraded or discarded.
+
 ### Distinguishing Conventions from Anti-Patterns
 
 - **Convention:** Pattern is consistently applied AND does not cause bugs, security issues, or violations of documented invariants
@@ -321,7 +344,7 @@ Follow the write procedure in `core/shared/pattern-learning.md`:
 1. Read current `draft/guardrails.md`
 2. For each new pattern: check for duplicates, then append
 3. For existing patterns: update evidence count, confidence, `last_verified`
-4. Update YAML frontmatter `synced_to_commit`
+4. Update `draft/metadata.json` with current git state (use `git-metadata.sh --project-metadata --generated-by "draft:learn"` or update `git.commit`, `git.commit_message`, and `synced_to_commit` manually) — `guardrails.md` frontmatter carries only stable fields per WS-8
 
 **Cap enforcement:** Maintain a maximum of 50 learned entries per section. If at capacity, replace the oldest `medium` confidence entry that has not been re-verified in 90+ days (per `core/shared/pattern-learning.md`).
 
@@ -346,15 +369,15 @@ Follow the write procedure in `core/shared/pattern-learning.md`:
 ### [Anti-Pattern Name]
 - **Category:** security | reliability | performance | correctness | concurrency
 - **Severity:** critical | high | medium
-- **graph_severity:** critical | high | medium | low | unresolved  (fanIn-derived from Step 2.7; "unresolved" if no graph data)
-- **high_fanin_files:** `path/file.go` (fanIn:12), `path/other.go` (fanIn:7)  (omit line if none meet fanIn ≥ 5)
+- **graph_severity:** critical | high | medium | low | unresolved (fanIn-derived from Step 2.7; "unresolved" if no graph data)
+- **high_fanin_files:** `path/file.go` (fanIn:12), `path/other.go` (fanIn:7) (omit line if none meet fanIn ≥ 5)
 - **Evidence:** Found in N files — `path/file1.ext:line`, `path/file2.ext:line`
 - **Discovered at:** YYYY-MM-DD (when Draft first observed this pattern)
 - **Established at:** YYYY-MM-DD (when the pattern entered the codebase, via git blame)
 - **Last verified:** YYYY-MM-DD
 - **Last active:** YYYY-MM-DD (when source files containing this pattern were last modified)
-- **recently_active:** true | false  (true if any evidence file modified within 90 days)
-- **stale:** true | false  (true if all evidence files unmodified for 12+ months)
+- **recently_active:** true | false (true if any evidence file modified within 90 days)
+- **stale:** true | false (true if all evidence files unmodified for 12+ months)
 - **Discovered by:** draft:learn on YYYY-MM-DD
 - **Description:** [What the pattern is and why it's problematic]
 - **Suggested fix:** [Brief description of the correct approach]
@@ -397,9 +420,9 @@ Scanned: N source files across M directories
 Duration: ~Xs
 
 Results:
-  New conventions learned:     N  [list names]
-  New anti-patterns learned:   N  [list names]
-  Existing patterns updated:   N  [list names]
+  New conventions learned: N [list names]
+  New anti-patterns learned: N [list names]
+  Existing patterns updated: N [list names]
   Skipped (insufficient data): N
   Skipped (already documented): N
 
@@ -439,3 +462,17 @@ This creates a **continuous improvement loop**:
 | Learn framework defaults as conventions | Only learn project-specific patterns |
 | Remove entries on re-scan | Update evidence/dates, never delete |
 | Learn from test/mock code | Focus on production source code |
+
+## Mandatory Self-Check (before completion summary)
+
+Before printing the completion summary, internally verify and report:
+
+1. **Graph files queried** — JSONL files loaded plus any live `graph --query` invocations.
+2. **Layer 1 files deliberately skipped** — list any context sections skipped.
+3. **Filesystem find/grep fallback justification** — for every `find`/`grep` run for source discovery, state which languages or extensions were not covered by the graph indexes (e.g. Ruby without ctags).
+
+If `draft/graph/schema.yaml` does not exist, set `Graph files queried: NONE` and use justification `graph data unavailable`.
+
+## Graph Usage Report (append to completion summary)
+
+Emit the canonical footer from [core/shared/graph-usage-report.md](../../core/shared/graph-usage-report.md) §Canonical footer. The lint hook `scripts/tools/check-graph-usage-report.sh` validates the section on save.

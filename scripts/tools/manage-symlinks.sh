@@ -6,7 +6,7 @@
 # (timestamps embedded in filenames), not mtime, so result is reproducible.
 #
 # Usage:
-#   scripts/tools/manage-symlinks.sh <DIR> <KIND>
+# scripts/tools/manage-symlinks.sh <DIR> <KIND>
 #
 # Exit codes: 0 created/refreshed, 1 invocation error, 2 no matching files.
 set -euo pipefail
@@ -22,11 +22,11 @@ Usage:
   scripts/tools/manage-symlinks.sh <DIR> <KIND>
 
 Positional:
-  DIR    Directory containing <kind>-report-<timestamp>.md files.
-  KIND   Report kind (e.g. "bughunt", "review", "standup").
+  DIR Directory containing <kind>-report-<timestamp>.md files.
+  KIND Report kind (e.g. "bughunt", "review", "standup").
 
 Flags:
-  --help  Show this help.
+  --help Show this help.
 
 Selects the highest-sorted filename, creates/refreshes <kind>-report-latest.md
 (relative symlink). Emits the chosen target filename to stdout.

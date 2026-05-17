@@ -74,17 +74,17 @@ Draft solves this through **Context-Driven Development**: structured documents t
 ### The Constraint Hierarchy
 
 ```
-product.md          →  "Build a task manager for developers"
+product.md → "Build a task manager for developers"
   ↓
-tech-stack.md       →  "Use React, TypeScript, Tailwind"
+tech-stack.md → "Use React, TypeScript, Tailwind"
   ↓
-architecture.md     →  "Express API → Service layer → Prisma ORM → PostgreSQL"
-  ↓                     (.ai-context.md condensed for AI consumption)
-  ↓                     (.ai-profile.md ultra-compact 20-50 line always-on profile)
-  ↓                     (.state/facts.json atomic fact registry with knowledge graph)
-spec.md             →  "Add drag-and-drop reordering"
+architecture.md → "Express API → Service layer → Prisma ORM → PostgreSQL"
+  ↓ (.ai-context.md condensed for AI consumption)
+  ↓ (.ai-profile.md ultra-compact 20-50 line always-on profile)
+  ↓ (.state/facts.json atomic fact registry with knowledge graph)
+spec.md → "Add drag-and-drop reordering"
   ↓
-plan.md             →  "Phase 1: sortable list, Phase 2: persistence"
+plan.md → "Phase 1: sortable list, Phase 2: persistence"
 ```
 
 Each layer narrows the solution space. By the time AI writes code, most decisions are already made.
@@ -94,10 +94,10 @@ Each layer narrows the solution space. By the time AI writes code, most decision
 Draft uses a layered context system inspired by memory tiering — see `core/shared/draft-context-loading.md` for the authoritative specification.
 
 ```
-Layer 0:   .ai-profile.md (20-50 lines)    — Always loaded. Minimum project context.
-Layer 1:   .ai-context.md (200-400 lines)  — Base context: boundaries, invariants, flows.
-Layer 1.5: draft/graph/*.jsonl             — Structural graph (when available).
-Layer 2:   draft/.state/facts.json         — Fact-level precision (queried by relevance).
+Layer 0: .ai-profile.md (20-50 lines) — Always loaded. Minimum project context.
+Layer 1: .ai-context.md (200-400 lines) — Base context: boundaries, invariants, flows.
+Layer 1.5: draft/graph/*.jsonl — Structural graph (when available).
+Layer 2: draft/.state/facts.json — Fact-level precision (queried by relevance).
 ```
 
 `architecture.md` is the source-of-truth document these layers are condensed from, not a layer itself. Simple tasks only need Layer 0. Implementation tasks load Layer 0+1 plus relevant graph/facts. Deep reviews access all layers. Relevance-scored loading keeps tokens bounded.
@@ -118,7 +118,7 @@ graph TD
     G -->|Fail| E
     H -->|No| E
     H -->|Yes| I["Track Complete"]
-    I -->|"git push + PR"| U["GitHub PR"]
+    I -->|"Upload for review"| U["/draft:upload"]
 
     J["/draft:status"] -.->|"Check anytime"| E
     K["/draft:revert"] -.->|"Undo if needed"| E
@@ -321,12 +321,12 @@ A **track** is a high-level unit of work (feature, bug fix, refactor). Each trac
 Two layouts are supported; both are valid:
 
 ```
-# Single-track project (default)           # Multi-track project
-draft/                                      draft/tracks/<track-id>/
-├── spec.md                                 ├── spec.md
-├── plan.md                                 ├── plan.md
-├── metadata.json                           ├── metadata.json
-└── jira-export.md (optional)               └── jira-export.md (optional)
+# Single-track project (default) # Multi-track project
+draft/ draft/tracks/<track-id>/
+├── spec.md ├── spec.md
+├── plan.md ├── plan.md
+├── metadata.json ├── metadata.json
+└── jira-export.md (optional) └── jira-export.md (optional)
 ```
 
 `/draft:new-track` selects the multi-track layout when a second track is created (existing `draft/spec.md` and `draft/plan.md` are migrated into `draft/tracks/<original-track-id>/`). Commands referring to "the active track" resolve to whichever layout is in use.
@@ -814,12 +814,12 @@ Generates unified report at `draft/tracks/<id>/review-report.md` or `draft/revie
 #### Examples
 
 ```bash
-/draft:review                              # auto-detect active track
-/draft:review track add-user-auth          # review specific track
-/draft:review project                      # review uncommitted changes
-/draft:review files "src/**/*.ts"          # review specific files
-/draft:review commits main...HEAD          # review commit range
-/draft:review track my-feature full        # comprehensive review with bughunt
+/draft:review # auto-detect active track
+/draft:review track add-user-auth # review specific track
+/draft:review project # review uncommitted changes
+/draft:review files "src/**/*.ts" # review specific files
+/draft:review commits main...HEAD # review commit range
+/draft:review track my-feature full # comprehensive review with bughunt
 ```
 
 ---
@@ -850,10 +850,10 @@ Quality commands (`/draft:bughunt`, `/draft:deep-review`, `/draft:review`) also 
 #### Examples
 
 ```bash
-/draft:learn                           # full codebase pattern scan
-/draft:learn src/api/                  # scan specific directory
-/draft:learn promote                   # review promotion candidates
-/draft:learn migrate                   # migrate from workflow.md
+/draft:learn # full codebase pattern scan
+/draft:learn src/api/ # scan specific directory
+/draft:learn promote # review promotion candidates
+/draft:learn migrate # migrate from workflow.md
 ```
 
 ---
@@ -997,11 +997,11 @@ Coverage complements TDD — TDD is the process (write test, implement, refactor
      │ → Architecture mode AUTO-ENABLED
      │
 /draft:implement
-     │  ├── Story → CHECKPOINT
-     │  ├── Execution State → CHECKPOINT
-     │  ├── Skeletons → CHECKPOINT
-     │  ├── TDD (red/green/refactor)
-     │  └── ~200-line chunk review → CHECKPOINT
+     │ ├── Story → CHECKPOINT
+     │ ├── Execution State → CHECKPOINT
+     │ ├── Skeletons → CHECKPOINT
+     │ ├── TDD (red/green/refactor)
+     │ └── ~200-line chunk review → CHECKPOINT
      │
 /draft:coverage → coverage report → CHECKPOINT
 ```
@@ -1056,6 +1056,9 @@ Natural language patterns that map to Draft commands:
 | "requirements changed", "scope changed", "update the spec" | Handle mid-track requirement change |
 | "preview jira", "export to jira" | Preview Jira issues |
 | "create jira issues" | Create Jira issues via MCP |
+| "upload for review", "open a PR", "submit code" | Upload for review |
+| "find regression", "when did this break", "bisect" | Regression detection |
+| "qualify epic", "epic qualification" | Epic status and qualification |
 | "the plan" | Read active track's plan.md |
 | "the spec" | Read active track's spec.md |
 
