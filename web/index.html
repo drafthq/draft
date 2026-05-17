@@ -638,7 +638,7 @@
                     </div>
                     <div class="pipeline-connector"></div>
                     <h3>Spec &amp; Plan</h3>
-                    <p class="pipeline-cmd">/draft:new-track</p>
+                    <p class="pipeline-cmd">/draft:plan</p>
                     <p>Collaborative intake — AI asks one question at a time, contributes expertise, surfaces risks. Builds spec progressively with citations from DDD, Clean Architecture, OWASP.</p>
                 </div>
                 <div class="pipeline-step" data-step="3">
@@ -800,7 +800,7 @@
                         <span class="bento-tag">v2.4</span>
                     </div>
                     <h3>Track Impact Memory</h3>
-                    <p>Each completed track records its blast radius in <code>metadata.json</code> &mdash; files touched, modules affected, downstream count, by-category breakdown. <code>/draft:new-track</code> reads recent tracks' impact during context load and surfaces overlap warnings before you even write a spec.</p>
+                    <p>Each completed track records its blast radius in <code>metadata.json</code> &mdash; files touched, modules affected, downstream count, by-category breakdown. <code>/draft:plan</code> reads recent tracks' impact during context load and surfaces overlap warnings before you even write a spec.</p>
                     <div class="bento-stats">
                         <span>Auto-recorded</span><span>Overlap detection</span>
                     </div>
@@ -1020,7 +1020,7 @@
                 <div class="team-step glass-card">
                     <div class="team-num">2</div>
                     <h3>Spec &amp; Plan</h3>
-                    <p>Lead runs <code>/draft:new-track</code>. Team reviews requirements and task breakdown via PR.</p>
+                    <p>Lead runs <code>/draft:plan</code>. Team reviews requirements and task breakdown via PR.</p>
                 </div>
                 <div class="team-step glass-card">
                     <div class="team-num">3</div>
@@ -1090,7 +1090,7 @@
 
 <span class="c-comment"># Then use:</span>
 <span class="c-cmd">@draft init</span>
-<span class="c-cmd">@draft new-track</span></code></pre>
+<span class="c-cmd">@draft plan</span></code></pre>
                     </div>
                     <p class="install-note">Cursor natively supports .claude/ plugin structure</p>
                 </div>
