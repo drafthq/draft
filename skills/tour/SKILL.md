@@ -20,6 +20,9 @@ Provide an interactive codebase walk-through based on existing architecture and 
 2. **Interactive Cadence:** Ask the developer if they are familiar with the tech stack constraints found in `draft/tech-stack.md`.
 3. **Module Introduction:** Instead of listing all modules, introduce the "Entry Point" module first.
 4. **Active Challenge:** After explaining a module's responsibility, challenge the developer: "Based on our *Context-Driven Development* rules, how do you think we handle data persistence here?" Wait for their answer before revealing the architecture strategy.
+   - If the answer is correct, confirm briefly and cite the supporting line in `architecture.md` / `guardrails.md`.
+   - If the answer is partially right, name what they got right, then ask a narrower follow-up (e.g., "Right that we cache reads — what's the invalidation trigger?") before revealing the rest.
+   - If the answer is wrong, do not just hand them the answer. Quote the specific guardrail or HLD section that contradicts it, then re-prompt with a hint scoped to that section.
 5. **Traceability:** Highlight `draft/.state/facts.json` showing how module constraints have evolved.
 6. **Track Lifecycle Walk:** Show the full feature lifecycle and who owns each gate:
    - `/draft:new-track` → `spec.md` (requirements + classification + approvers) + `plan.md` (phases/tasks)

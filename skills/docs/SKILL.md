@@ -40,6 +40,8 @@ If no explicit mode is specified, infer the intent from the user's prompt:
 | "Log technical debt", "We need to fix this later", "Track shortcuts" | Tech Debt | `/draft:tech-debt` |
 | "How does this work?", "Walk me through the codebase", "Onboard me" | System Tour | `/draft:tour` |
 
+**Ambiguous phrasing** (e.g., "document our testing approach" could match `documentation` or `testing-strategy`): do not guess. Ask the user one clarifying question — "Do you want (a) prose docs describing the existing tests, or (b) a test plan defining what to test next?" — then route.
+
 ## Step 2: Bare Parent Command Fallback
 
 If the user runs a bare `/draft:docs` without clear intent, present a small documentation menu with a recommended default path based on the current context:

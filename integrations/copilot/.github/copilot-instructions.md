@@ -10165,7 +10165,7 @@ When user says "discover features" or "draft discover [path]":
 - Schema: [core/shared/discovery-schema.md](../../core/shared/discovery-schema.md)
 - Template: [core/templates/discovery.md](../../core/templates/discovery.md)
 - Hygiene rules: [core/shared/template-hygiene.md](../../core/shared/template-hygiene.md)
-- Citation verifier: `scripts/tools/verify-citations.sh`
+- Citation verifier: `scripts/tools/verify-citations.sh tracks/<track-id>` (exit 0 = clean, 1 = drift detected; add `--tolerance N` to widen the line-window match)
 
 ## Inputs
 
@@ -10347,6 +10347,8 @@ If no explicit mode is specified, infer the intent from the user's prompt:
 | "How should we test this?", "Create test plan", "Testing strategy" | Testing Strategy | `draft testing-strategy` |
 | "Log technical debt", "We need to fix this later", "Track shortcuts" | Tech Debt | `draft tech-debt` |
 | "How does this work?", "Walk me through the codebase", "Onboard me" | System Tour | `draft tour` |
+
+**Ambiguous phrasing** (e.g., "document our testing approach" could match `documentation` or `testing-strategy`): do not guess. Ask the user one clarifying question — "Do you want (a) prose docs describing the existing tests, or (b) a test plan defining what to test next?" — then route.
 
 ## Step 2: Bare Parent Command Fallback
 
@@ -12595,6 +12597,11 @@ Save to:
 
 Create `draft/docs/` directory if needed.
 
+**Pre-save validation:**
+- Every file path referenced in the doc resolves to a real file (broken links are a common LLM failure mode here).
+- Every relative link in the doc resolves under the project root.
+- Code blocks copied from sources match the current commit (no stale snippets).
+
 Present generated doc to user for review before final save.
 
 ## Cross-Skill Dispatch
@@ -14064,6 +14071,9 @@ Provide an interactive codebase walk-through based on existing architecture and 
 2. **Interactive Cadence:** Ask the developer if they are familiar with the tech stack constraints found in `draft/tech-stack.md`.
 3. **Module Introduction:** Instead of listing all modules, introduce the "Entry Point" module first.
 4. **Active Challenge:** After explaining a module's responsibility, challenge the developer: "Based on our *Context-Driven Development* rules, how do you think we handle data persistence here?" Wait for their answer before revealing the architecture strategy.
+   - If the answer is correct, confirm briefly and cite the supporting line in `architecture.md` / `guardrails.md`.
+   - If the answer is partially right, name what they got right, then ask a narrower follow-up (e.g., "Right that we cache reads — what's the invalidation trigger?") before revealing the rest.
+   - If the answer is wrong, do not just hand them the answer. Quote the specific guardrail or HLD section that contradicts it, then re-prompt with a hint scoped to that section.
 5. **Traceability:** Highlight `draft/.state/facts.json` showing how module constraints have evolved.
 6. **Track Lifecycle Walk:** Show the full feature lifecycle and who owns each gate:
    - `draft new-track` → `spec.md` (requirements + classification + approvers) + `plan.md` (phases/tasks)
@@ -14121,12 +14131,29 @@ Generate a project-wide impact report measuring Context-Driven Development effec
    - Count modules decomposed via `draft decompose`.
 
 5. **Report Output:**
-   Generate a Markdown report with sections:
-   - **Summary:** Total tracks, completed, in-progress, abandoned.
-   - **Delivery Pace:** Average and median track duration.
-   - **Friction Hotspots:** Tracks with highest revert counts, longest stalls, or phase regressions.
-   - **CDD Adoption:** ADR count, guardrail growth, decomposition usage.
-   - **Recommendations:** Actionable suggestions based on detected friction patterns.
+   Generate a Markdown report with sections shown below. The shape is fixed so reports diff cleanly across runs.
+
+   ```markdown
+   # Draft Impact Report — {YYYY-MM-DD}
+
+   ## Summary
+   - Total tracks: 12   (Completed: 7, In-progress: 3, Abandoned: 2)
+
+   ## Delivery Pace
+   - Average track duration: 8.4 days   |   Median: 6 days
+   - Phases exceeding 14d without update: <list track IDs or "none">
+
+   ## Friction Hotspots
+   | Track | Reverts | Stall (days) | Notes |
+   |---|---|---|---|
+   | track-042 | 3 | 9 | Reverted after review; spec scope unclear |
+
+   ## CDD Adoption
+   - ADRs: 4   |   Guardrail entries: 11   |   Decomposed modules: 6
+
+   ## Recommendations
+   - <one actionable suggestion per detected pattern>
+   ```
 
 ---
 

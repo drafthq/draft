@@ -15,7 +15,7 @@ description: Draft Phase 0 — produce a discovery.md code-spike report before s
 - Schema: [core/shared/discovery-schema.md](../../core/shared/discovery-schema.md)
 - Template: [core/templates/discovery.md](../../core/templates/discovery.md)
 - Hygiene rules: [core/shared/template-hygiene.md](../../core/shared/template-hygiene.md)
-- Citation verifier: `scripts/tools/verify-citations.sh`
+- Citation verifier: `scripts/tools/verify-citations.sh tracks/<track-id>` (exit 0 = clean, 1 = drift detected; add `--tolerance N` to widen the line-window match)
 
 ## Inputs
 

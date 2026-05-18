@@ -179,6 +179,11 @@ Save to:
 
 Create `draft/docs/` directory if needed.
 
+**Pre-save validation:**
+- Every file path referenced in the doc resolves to a real file (broken links are a common LLM failure mode here).
+- Every relative link in the doc resolves under the project root.
+- Code blocks copied from sources match the current commit (no stale snippets).
+
 Present generated doc to user for review before final save.
 
 ## Cross-Skill Dispatch
