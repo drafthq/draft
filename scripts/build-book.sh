@@ -100,7 +100,7 @@ CHAPTER_TITLES=(
 CHAPTER_NUMS=("0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12" "13" "14" "15" "16" "17" "18" "19" "20" "21" "A" "B")
 
 CHAPTER_DESCRIPTIONS=(
-    "What Draft is, what it is not, who it is for, and what you get — 28 commands and 7 specialized agents for structured AI development."
+    "What Draft is, what it is not, who it is for, and what you get — 33 commands and 7 specialized agents for structured AI development."
     "Why AI coding assistants produce wrong code without structure — the gap between speed and correctness, and why better prompting is not the answer."
     "The Context-Driven Development methodology — every decision grounded in explicit, versioned, reviewable documents rather than implicit assumptions."
     "Install Draft and run your first commands in five minutes. Set up architecture discovery, create a track, and start implementing."
@@ -122,7 +122,7 @@ CHAPTER_DESCRIPTIONS=(
     "Mapping Draft tracks to Jira issues — preview before creation, epic/story/sub-task mapping, and bidirectional sync."
     "How Draft works across Claude Code, Copilot, Cursor, Gemini, and Antigravity IDE — platform-specific syntax transforms."
     "The philosophical foundations of Context-Driven Development — structured development, quality gates, incremental refinement."
-    "Complete reference for all 28 Draft commands — usage, options, examples, and output for each slash command."
+    "Complete reference for all 33 Draft commands — usage, options, examples, and output for each slash command."
     "Complete reference for all Draft-generated files — architecture.md, .ai-context.md, .ai-profile.md, specs, plans, and state files."
 )
 
@@ -322,6 +322,11 @@ generate_chapter_page() {
     </noscript>
 
     <link rel="stylesheet" href="../css/book.css">
+
+    <!-- Theme: apply early to prevent flash of wrong theme -->
+    <script>
+    (function(){try{var t=localStorage.getItem('draft-theme');if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
+    </script>
 </head>
 <body data-chapter="${id}">
 
@@ -365,6 +370,7 @@ ${chapter_content}
     </div>
 
     <script src="../js/book.js"></script>
+    <script src="../../js/theme-toggle.js"></script>
 </body>
 </html>
 HEREDOC
@@ -384,7 +390,7 @@ generate_landing_page() {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Draft Book — Context-Driven Development Deep Dive</title>
-    <meta name="description" content="A comprehensive guide to Draft's Context-Driven Development methodology. 22 chapters covering specs, plans, TDD, code review, bug hunting, ACID audits, and more.">
+    <meta name="description" content="A comprehensive guide to Draft's Context-Driven Development methodology. 24 chapters covering specs, plans, TDD, code review, bug hunting, ACID audits, and more.">
     <meta name="author" content="Mayur Pise">
     <meta name="theme-color" content="#2563eb">
     <meta name="keywords" content="context-driven development book, ai coding methodology, claude code guide, spec driven development, ai code review, tdd enforcement, ai architecture discovery, bug hunting methodology, copilot best practices, ai development workflow">
@@ -471,6 +477,11 @@ LANDING_HEAD
     </noscript>
 
     <link rel="stylesheet" href="css/book.css">
+
+    <!-- Theme: apply early to prevent flash of wrong theme -->
+    <script>
+    (function(){try{var t=localStorage.getItem('draft-theme');if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
+    </script>
 </head>
 <body>
 
@@ -554,6 +565,7 @@ LANDING_MAIN_START
     </div>
 
     <script src="js/book.js"></script>
+    <script src="../js/theme-toggle.js"></script>
 </body>
 </html>
 LANDING_FOOTER
@@ -577,6 +589,42 @@ generate_sitemap() {
         <lastmod>${TODAY}</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://getdraft.dev/blog/</loc>
+        <lastmod>${TODAY}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://getdraft.dev/blog/blast-radius-walkthrough/</loc>
+        <lastmod>${TODAY}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://getdraft.dev/blog/decompose-payment-gateway/</loc>
+        <lastmod>${TODAY}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://getdraft.dev/blog/local-graph-engine/</loc>
+        <lastmod>${TODAY}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://getdraft.dev/blog/mcp-tool-discovery/</loc>
+        <lastmod>${TODAY}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://getdraft.dev/blog/replaced-kiro-with-free-plugin/</loc>
+        <lastmod>${TODAY}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
     </url>
 SITEMAP_HEAD
 

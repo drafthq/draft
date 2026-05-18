@@ -56,6 +56,7 @@ Use `/draft:plan` first. These specialist planning commands remain available:
 |---------|---------|
 | `/draft` | This overview |
 | `/draft:index` | Monorepo service aggregation |
+| `/draft:discover` | Discover features and patterns |
 
 **Planning & Architecture Beyond `/draft:plan`:**
 | Command | Purpose |
@@ -190,6 +191,7 @@ You can also use natural language:
 | "set up the project" | `/draft:init` |
 | "plan this", "scope this work", "start a feature" | `/draft:plan` |
 | "index services", "aggregate context" | `/draft:index` |
+| "discover features", "discover patterns" | `/draft:discover` |
 | "new feature", "add X" | `/draft:plan` |
 | "continue planning" | `/draft:plan` |
 | "start implementing" | `/draft:implement` |

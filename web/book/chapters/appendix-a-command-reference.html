@@ -2,7 +2,7 @@
     <h1>Appendix A: Command Reference</h1>
     <p class="chapter-meta"><span class="part-name">Appendix</span></p>
 
-    <p class="chapter-intro">Quick-reference for all 32 Draft commands. Syntax shown is for Claude Code; Copilot uses <code>draft command</code> (no slash), Cursor uses <code>@draft command</code>.</p>
+    <p class="chapter-intro">Quick-reference for all 33 Draft commands. Syntax shown is for Claude Code; Copilot uses <code>draft command</code> (no slash), Cursor uses <code>@draft command</code>.</p>
 
     <div class="figure">
         <div class="figure-content">
@@ -67,7 +67,7 @@
                 <text x="310" y="370" text-anchor="middle" fill="#718096" font-family="Arial,sans-serif" font-size="11">Context &rarr; Planning &rarr; Execution &rarr; Quality &rarr; Operations &rarr; Knowledge &rarr; Integration</text>
             </svg>
         </div>
-        <div class="figure-caption">Command map: Draft's 32 commands organized by workflow category, reflecting the natural development lifecycle from context setup through quality assurance and external integration.</div>
+        <div class="figure-caption">Command map: Draft's 33 commands organized by workflow category, reflecting the natural development lifecycle from context setup through quality assurance and external integration.</div>
     </div>
 
     <table class="command-reference">
@@ -101,6 +101,13 @@
                 <td><code>--init-missing</code> &mdash; initialize uninitialized services; <code>bughunt [dirs]</code> &mdash; run bughunt across services</td>
                 <td><code>/draft:init</code> at root and at least one service</td>
                 <td>18</td>
+            </tr>
+            <tr>
+                <td><code>/draft:discover</code></td>
+                <td>Discover features and patterns across the codebase</td>
+                <td><code>[path]</code> &mdash; specific directory to scan</td>
+                <td><code>/draft:init</code></td>
+                <td>12</td>
             </tr>
             <tr>
                 <td><code>/draft:plan</code></td>
@@ -330,6 +337,7 @@
                 <tr><td>"Write the docs"</td><td><code>/draft:documentation</code></td></tr>
                 <tr><td>"Learn the patterns"</td><td><code>/draft:learn</code></td></tr>
                 <tr><td>"Send to Jira"</td><td><code>/draft:jira-create</code></td></tr>
+                <tr><td>"Discover features"</td><td><code>/draft:discover</code></td></tr>
                 <tr><td>"Tour the codebase"</td><td><code>/draft:tour</code></td></tr>
                 <tr><td>"Show AI impact metrics"</td><td><code>/draft:impact</code></td></tr>
                 <tr><td>"Assist PR review"</td><td><code>/draft:assist-review</code></td></tr>
@@ -339,6 +347,6 @@
 
     <div class="callout callout-tip">
         <div class="callout-title">Full Intent List</div>
-        <p>Run <code>/draft</code> (the overview command) to see the complete intent mapping table with all 32 commands and their natural language triggers.</p>
+        <p>Run <code>/draft</code> (the overview command) to see the complete intent mapping table with all 33 commands and their natural language triggers.</p>
     </div>
 </div>
