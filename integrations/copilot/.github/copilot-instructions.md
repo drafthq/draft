@@ -53,11 +53,12 @@ When `draft/` exists in the project, always consider:
 | `draft status` | Show progress overview |
 | `draft revert` | Git-aware rollback |
 | `draft change <description>` | Handle mid-track requirement changes |
-| `draft upload` | Upload work for code review |
-| `draft regression` | Detect regression source commit |
+| `draft discover [path]` | Discover features and patterns |
+| `draft ops [debug|deploy-checklist|incident-response|standup]` | Canonical operations entry point |
+| `draft docs [documentation|testing-strategy|tech-debt|tour]` | Canonical documentation entry point |
+| `draft integrations [jira-preview|jira-create]` | Canonical integrations entry point |
 | `draft jira-preview [track-id]` | Generate jira-export.md for review |
 | `draft jira-create [track-id]` | Create Jira issues from export via MCP |
-| `draft epic-status <epic-id>` | Qualify a Jira Epic via MCP |
 | `draft tour` | Interactive onboarding tour |
 | `draft impact` | Telemetry and analytics insights |
 | `draft assist-review` | Assist human reviewers with architectural risk audit |
@@ -90,11 +91,12 @@ Recognize these natural language patterns:
 | "what's the status" | Show status |
 | "undo", "revert" | Run revert |
 | "requirements changed", "scope changed", "update the spec" | Run change |
-| "upload", "submit for review" | Run upload |
-| "find regression", "bisect" | Run regression |
+| "discover features", "discover patterns" | Run discover |
+| "ops", "debug", "deploy", "incident", "standup" | Run ops |
+| "docs", "documentation", "test strategy", "tech debt", "tour" | Run docs |
+| "integrations", "jira" | Run integrations |
 | "preview jira", "export to jira" | Run jira-preview |
 | "create jira", "push to jira" | Run jira-create |
-| "epic status", "qualify epic" | Run epic-status |
 | "tour", "onboard me" | Run tour |
 | "impact", "analytics" | Run impact |
 | "assist review", "help reviewer" | Run assist-review |
@@ -10246,6 +10248,181 @@ End every invocation with the standard footer from
 
 ---
 
+## Ops Command
+
+When user says "ops" or "draft ops [debug|deploy-checklist|incident-response|standup]":
+
+`draft ops` is the **canonical operations parent command**.
+
+It provides a unified entry point for debugging, deployment readiness, incident handling, and daily summaries, absorbing the cognitive load of selecting the right specialist tool.
+
+Specialist operations workflows remain available as named modes:
+
+- `draft ops debug` (formerly `draft debug`)
+- `draft ops deploy-checklist` (formerly `draft deploy-checklist`)
+- `draft ops incident-response` (formerly `draft incident-response`)
+- `draft ops standup` (formerly `draft standup`)
+
+## Step 1: Parse Intent and Route
+
+Examine the user's input and route to the correct operations workflow.
+
+### Explicit Named Modes
+
+If the user explicitly invokes a specialist mode, route directly:
+
+- `draft ops debug` → follow `draft debug`
+- `draft ops deploy-checklist` → follow `draft deploy-checklist`
+- `draft ops incident-response` → follow `draft incident-response`
+- `draft ops standup` → follow `draft standup`
+
+### Intent Routing
+
+If no explicit mode is specified, infer the intent from the user's prompt:
+
+| Intent | Action | Route |
+|--------|--------|-------|
+| "I have a bug", "Help me fix this error", "Why is this failing?" | Debugging | `draft debug` |
+| "Ready to ship", "Are we good to deploy?", "Go live check" | Deploy readiness | `draft deploy-checklist` |
+| "Site is down", "Production error", "Sev 1" | Incident handling | `draft incident-response` |
+| "What did I do yesterday?", "Write my update", "Summarize work" | Standup summary | `draft standup` |
+
+## Step 2: Bare Parent Command Fallback
+
+If the user runs a bare `draft ops` without clear intent, present a small ops menu with a recommended default path:
+
+```text
+Draft Operations Menu:
+1. draft ops debug (Structured debugging session)
+2. draft ops deploy-checklist (Pre-deployment verification)
+3. draft ops incident-response (Production incident handling)
+4. draft ops standup (Generate daily summary)
+
+How can I help you operate the system today?
+```
+
+Do not automatically launch a specialist workflow without explicit or clear inferred intent, unless an ongoing incident is already active.
+
+## Compatibility Note
+
+The legacy specialist commands remain supported during the migration period, but `draft ops` is the canonical parent for operational tasks.
+
+---
+
+## Docs Command
+
+When user says "docs" or "draft docs [documentation|testing-strategy|tech-debt|tour]":
+
+`draft docs` is the **canonical documentation parent command**.
+
+It orchestrates the generation and maintenance of engineering documentation, absorbing the cognitive load of selecting the right specialist tool.
+
+Specialist documentation workflows remain available as named modes:
+
+- `draft docs documentation` (formerly `draft documentation`)
+- `draft docs testing-strategy` (formerly `draft testing-strategy`)
+- `draft docs tech-debt` (formerly `draft tech-debt`)
+- `draft docs tour` (formerly `draft tour`)
+
+## Step 1: Parse Intent and Route
+
+Examine the user's input and route to the correct documentation workflow.
+
+### Explicit Named Modes
+
+If the user explicitly invokes a specialist mode, route directly:
+
+- `draft docs documentation` → follow `draft documentation`
+- `draft docs testing-strategy` → follow `draft testing-strategy`
+- `draft docs tech-debt` → follow `draft tech-debt`
+- `draft docs tour` → follow `draft tour`
+
+### Intent Routing
+
+If no explicit mode is specified, infer the intent from the user's prompt:
+
+| Intent | Action | Route |
+|--------|--------|-------|
+| "Document this feature", "Write README", "Generate API docs" | Engineering Docs | `draft documentation` |
+| "How should we test this?", "Create test plan", "Testing strategy" | Testing Strategy | `draft testing-strategy` |
+| "Log technical debt", "We need to fix this later", "Track shortcuts" | Tech Debt | `draft tech-debt` |
+| "How does this work?", "Walk me through the codebase", "Onboard me" | System Tour | `draft tour` |
+
+## Step 2: Bare Parent Command Fallback
+
+If the user runs a bare `draft docs` without clear intent, present a small documentation menu with a recommended default path based on the current context:
+
+```text
+Draft Documentation Menu:
+1. draft docs documentation (Generate engineering docs)
+2. draft docs testing-strategy (Define project testing approach)
+3. draft docs tech-debt (Log or review technical debt)
+4. draft docs tour (Onboarding walkthrough of the system)
+
+What type of documentation do you need?
+```
+
+Do not automatically launch a specialist workflow without explicit or clear inferred intent.
+
+## Compatibility Note
+
+The legacy specialist commands remain supported during the migration period, but `draft docs` is the canonical parent for documentation tasks.
+
+---
+
+## Integrations Command
+
+When user says "integrations" or "draft integrations [jira-preview|jira-create]":
+
+`draft integrations` is the **canonical integrations parent command**.
+
+It handles connectors and exports to external systems like Jira.
+
+Specialist integration workflows remain available as named modes:
+
+- `draft integrations jira-preview` (formerly `draft jira-preview`)
+- `draft integrations jira-create` (formerly `draft jira-create`)
+
+## Step 1: Parse Intent and Route
+
+Examine the user's input and route to the correct integrations workflow.
+
+### Explicit Named Modes
+
+If the user explicitly invokes a specialist mode, route directly:
+
+- `draft integrations jira-preview` → follow `draft jira-preview`
+- `draft integrations jira-create` → follow `draft jira-create`
+
+### Intent Routing
+
+If no explicit mode is specified, infer the intent from the user's prompt:
+
+| Intent | Action | Route |
+|--------|--------|-------|
+| "Export to Jira", "Preview Jira issues", "Show me what you'll create in Jira" | Jira Preview | `draft jira-preview` |
+| "Create Jira issues", "Sync to Jira", "Make tickets" | Jira Create | `draft jira-create` |
+
+## Step 2: Bare Parent Command Fallback
+
+If the user runs a bare `draft integrations` without clear intent, present a small integrations menu with a recommended default path:
+
+```text
+Draft Integrations Menu:
+1. draft integrations jira-preview (Generate Jira export file for review)
+2. draft integrations jira-create (Create Jira issues from export)
+
+What integration action do you want to perform?
+```
+
+Do not automatically launch a specialist workflow without explicit or clear inferred intent.
+
+## Compatibility Note
+
+The legacy specialist commands remain supported during the migration period, but `draft integrations` is the canonical parent for integration tasks.
+
+---
+
 ## Testing Strategy Command
 
 When user says "test strategy" or "draft testing-strategy [track <id>|path]":
@@ -14222,7 +14399,7 @@ Draft solves this through **Context-Driven Development**: structured documents t
 |----------|---------|----------|
 | `product.md` | Defines users, goals, success criteria, guidelines | AI building features nobody asked for |
 | `tech-stack.md` | Languages, frameworks, patterns, accepted patterns | AI introducing random dependencies |
-| `architecture.md` | **Source of truth.** Comprehensive human-readable engineering reference with 28 sections + 5 appendices, Mermaid diagrams, and code snippets. Generated from 5-phase codebase analysis. | Engineers needing onboarding documentation |
+| `architecture.md` | **Source of truth.** Comprehensive human-readable engineering reference with 28 sections + 5 appendices, Mermaid diagrams, and code snippets. Generated from Graph build + 5-phase codebase analysis. | Engineers needing onboarding documentation |
 | `.ai-profile.md` | **Derived from .ai-context.md.** 20-50 lines, ultra-compact always-injected project profile. Contains: language, framework, database, auth, API style, critical invariants, safety rules, active tracks, recent changes. Auto-refreshed on mutations. | AI needing full context for simple tasks |
 | `.ai-context.md` | **Derived from architecture.md.** 200-400 lines, token-optimized, self-contained AI context. 15+ mandatory sections: architecture, invariants, interface contracts, data flows, concurrency rules, error handling, implementation catalogs, extension cookbooks, testing strategy, glossary. Auto-refreshed on mutations. | AI re-analyzing codebase every session |
 | `workflow.md` | TDD preference, commit style, review process | AI skipping tests or making giant commits |
@@ -14506,7 +14683,7 @@ Located in `draft/` of the target project:
 |------|---------|
 | `product.md` | Product vision, users, goals, guidelines (optional section) |
 | `tech-stack.md` | Languages, frameworks, patterns, accepted patterns |
-| `architecture.md` | **Source of truth.** Comprehensive human-readable engineering reference with 28 sections + 5 appendices. Generated from 5-phase codebase analysis. |
+| `architecture.md` | **Source of truth.** Comprehensive human-readable engineering reference with 28 sections + 5 appendices. Generated from Graph build + 5-phase codebase analysis. |
 | `.ai-context.md` | **Derived from architecture.md.** 200-400 lines, token-optimized, self-contained AI context with 15+ mandatory sections. Consumed by all Draft commands and external AI tools. Auto-refreshed on mutations. |
 | `workflow.md` | TDD preferences, commit strategy, validation config |
 | `guardrails.md` | Hard guardrails, learned conventions, learned anti-patterns |

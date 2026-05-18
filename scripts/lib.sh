@@ -36,6 +36,9 @@ SKILL_ORDER=(
     quick-review
     deep-review
     discover
+    ops
+    docs
+    integrations
     testing-strategy
     learn
     adr

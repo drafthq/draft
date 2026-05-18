@@ -60,6 +60,9 @@ get_skill_header() {
         jira-preview) echo "Jira Preview Command" ;;
         jira-create) echo "Jira Create Command" ;;
         discover) echo "Discover Command" ;;
+        ops) echo "Ops Command" ;;
+        docs) echo "Docs Command" ;;
+        integrations) echo "Integrations Command" ;;
         tour) echo "Tour Command" ;;
         impact) echo "Impact Command" ;;
         assist-review) echo "Assist Review Command" ;;
@@ -101,6 +104,9 @@ get_copilot_trigger() {
         jira-preview) echo "\"preview jira\" or \"draft jira-preview [track-id]\"" ;;
         jira-create) echo "\"create jira\" or \"draft jira-create [track-id]\"" ;;
         discover) echo "\"discover features\" or \"draft discover [path]\"" ;;
+        ops) echo "\"ops\" or \"draft ops [debug|deploy-checklist|incident-response|standup]\"" ;;
+        docs) echo "\"docs\" or \"draft docs [documentation|testing-strategy|tech-debt|tour]\"" ;;
+        integrations) echo "\"integrations\" or \"draft integrations [jira-preview|jira-create]\"" ;;
         tour) echo "\"tour\" or \"draft tour\"" ;;
         impact) echo "\"impact\" or \"draft impact\"" ;;
         assist-review) echo "\"assist review\" or \"draft assist-review\"" ;;
@@ -350,11 +356,12 @@ COMMON_HEADER
     echo "| \`draft status\` | Show progress overview |"
     echo "| \`draft revert\` | Git-aware rollback |"
     echo "| \`draft change <description>\` | Handle mid-track requirement changes |"
-    echo "| \`draft upload\` | Upload work for code review |"
-    echo "| \`draft regression\` | Detect regression source commit |"
+    echo "| \`draft discover [path]\` | Discover features and patterns |"
+    echo "| \`draft ops [debug|deploy-checklist|incident-response|standup]\` | Canonical operations entry point |"
+    echo "| \`draft docs [documentation|testing-strategy|tech-debt|tour]\` | Canonical documentation entry point |"
+    echo "| \`draft integrations [jira-preview|jira-create]\` | Canonical integrations entry point |"
     echo "| \`draft jira-preview [track-id]\` | Generate jira-export.md for review |"
     echo "| \`draft jira-create [track-id]\` | Create Jira issues from export via MCP |"
-    echo "| \`draft epic-status <epic-id>\` | Qualify a Jira Epic via MCP |"
     echo "| \`draft tour\` | Interactive onboarding tour |"
     echo "| \`draft impact\` | Telemetry and analytics insights |"
     echo "| \`draft assist-review\` | Assist human reviewers with architectural risk audit |"
@@ -390,11 +397,12 @@ Recognize these natural language patterns:
 | "what's the status" | Show status |
 | "undo", "revert" | Run revert |
 | "requirements changed", "scope changed", "update the spec" | Run change |
-| "upload", "submit for review" | Run upload |
-| "find regression", "bisect" | Run regression |
+| "discover features", "discover patterns" | Run discover |
+| "ops", "debug", "deploy", "incident", "standup" | Run ops |
+| "docs", "documentation", "test strategy", "tech debt", "tour" | Run docs |
+| "integrations", "jira" | Run integrations |
 | "preview jira", "export to jira" | Run jira-preview |
 | "create jira", "push to jira" | Run jira-create |
-| "epic status", "qualify epic" | Run epic-status |
 | "tour", "onboard me" | Run tour |
 | "impact", "analytics" | Run impact |
 | "assist review", "help reviewer" | Run assist-review |
