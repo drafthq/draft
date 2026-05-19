@@ -1,14 +1,28 @@
 ---
 name: tech-debt
-description: "Identify, categorize, and prioritize technical debt across six dimensions. Generates remediation plans with effort estimates. Offered by /draft:new-track for refactor tracks. Use when the user asks to 'analyze tech debt', 'catalog debt', 'plan debt remediation', or says 'what should we refactor', 'where is our tech debt'."
+description: Identify, categorize, and prioritize technical debt across seven dimensions. Generates remediation plans with effort estimates. Offered by /draft:new-track for refactor tracks.
 ---
 
 # Tech Debt
 
-Conduct a technical debt analysis to catalog, prioritize, and plan remediation of debt across the codebase.
+You are conducting a technical debt analysis to catalog, prioritize, and plan remediation of debt across the codebase.
+
+## MANDATORY GRAPH LOOKUP (read before debt scan)
+
+When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Tech-debt prioritization is fundamentally driven by graph data:
+
+1. Load `draft/graph/hotspots.jsonl` — **rank candidates by `fanIn × complexity`** to surface high-leverage debt first.
+2. Load `draft/graph/module-graph.jsonl` — flag debt in modules involved in cycles as higher priority.
+3. Run `graph --query --mode cycles` to enumerate dependency cycles — every cycle is a candidate architecture-debt entry.
+4. For each catalogued finding, run `graph --query --file <path> --mode impact` so the remediation plan includes blast-radius.
+
+Filesystem `grep` (e.g. `scan-markers.sh`) is still primary for TODO/FIXME marker discovery — markers are source-text, not graph-derived. The graph governs **prioritization**, the marker scan governs **discovery**.
 
 ## Red Flags — STOP if you're:
 
+See [shared red flags](../../core/shared/red-flags.md) — applies to all code-touching skills.
+
+Skill-specific:
 - Flagging intentional design choices as debt (check tech-stack.md accepted patterns first)
 - Cataloging debt without understanding the business context
 - Setting priorities without considering team capacity
@@ -26,8 +40,8 @@ Conduct a technical debt analysis to catalog, prioritize, and plan remediation o
 Before starting, capture the current git state:
 
 ```bash
-git branch --show-current    # Current branch name
-git rev-parse --short HEAD   # Current commit hash
+git branch --show-current # Current branch name
+git rev-parse --short HEAD # Current commit hash
 ```
 
 Store this for the report header. All findings are relative to this specific branch/commit.
@@ -61,13 +75,27 @@ Read and follow the base procedure in `core/shared/draft-context-loading.md`.
 
 ## Step 3: Scan for Debt
 
-Scan the codebase systematically across all six categories. For each finding, record: location (file:line), description, evidence, and category.
+Scan the codebase systematically across all seven categories. For each finding, record: location (file:line OR track id for Process Debt), description, evidence, and category.
 
 ### Category 1: Code Debt
 
+For TODO/FIXME/HACK/XXX/DEPRECATED markers, prefer the deterministic `scan-markers.sh` wrapper — it emits JSON `[{path,line,marker,text,sha,author,introduced,age_days}]` with blame ages already computed. Resolve via the canonical tool resolver (see [core/shared/tool-resolver.md](../../core/shared/tool-resolver.md)):
+
+```bash
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+[ -x "$DRAFT_TOOLS/scan-markers.sh" ] && bash "$DRAFT_TOOLS/scan-markers.sh" --root .
+# Fallback when script unavailable: grep -rn 'TODO\|FIXME\|HACK\|XXX\|DEPRECATED' .
+```
+
+Use the JSON output to prioritise: markers with `age_days > 180` are stale and should be promoted to tracked tech debt.
+
+**Marker context gate (Ground-Truth Discipline G1):** `scan-markers.sh` produces *candidates*, not findings. Before promoting a TODO/FIXME/HACK/XXX/DEPRECATED marker to your debt catalog, **Read** the surrounding 10–20 lines at that `file:line`. Many markers are justified (intentional deferrals with ownership) or already addressed (the marker rotted, the work shipped). A debt entry whose Evidence is "marker exists" without a Read is a Ground-Truth Red Flag — produce false positives and reviewer churn.
+
 - Complex functions (cyclomatic complexity >10, deep nesting >4 levels)
 - Duplicated code blocks (>20 lines similar across multiple locations)
-- TODO/FIXME/HACK/XXX comments (especially old ones — check git blame age)
+- TODO/FIXME/HACK/XXX comments (especially old ones — check git blame age via `scan-markers.sh` above)
 - Dead code (unreachable branches, unused exports, commented-out blocks)
 - Inconsistent naming patterns within the same module
 - Long functions (>100 lines without clear separation of concerns)
@@ -127,6 +155,34 @@ Scan the codebase systematically across all six categories. For each finding, re
 - Missing or outdated Dockerfiles / container configs
 - Inconsistent environment parity (dev/staging/prod divergence)
 - Missing rate limiting or resource guards on public endpoints
+
+### Category 7: Process Debt ( HLD/LLD compliance)
+
+Scan `draft/tracks/*/` for design-process gaps. For each track:
+
+- Read `spec.md` frontmatter `classification.criticality`. Default to `standard` if absent.
+- Check for `hld.md`:
+  - Missing for `criticality ∈ {standard, high, mission-critical}` → flag as Process Debt
+  - Severity: `critical` for mission-critical, `high` for high, `medium` for standard
+  - Remediation: "Run `/draft:decompose <track>` to generate hld.md"
+- Check `hld.md` Approvals table:
+  - Required rows unsigned (per `/draft:upload` Step 3.1 logic) and the track has merged commits → flag
+  - Severity: `high` if criticality ∈ {high, mission-critical}, `medium` otherwise
+  - Remediation: "Re-circulate hld.md to listed approvers; update Date column on sign-off"
+- Check for `lld.md`:
+  - Any module in HLD §Detailed Design has `Complexity: High` AND `lld.md` is missing → flag
+  - Severity: `medium`
+  - Remediation: "Run `/draft:decompose <track> --lld`"
+- Check HLD §Checklist completeness:
+  - For criticality ≥ standard: any §Checklist sub-section still showing the placeholder text "<Describe..." or empty bullets → flag as Process Debt
+  - Severity: `high` for high/mission-critical, `medium` for standard
+  - Remediation: "Author must populate hld.md §Checklist before /draft:deploy-checklist will pass"
+- Check HLD/LLD freshness:
+  - If `synced_to_commit` is older than the latest merged commit touching files in HLD §Detailed Design → flag as drift
+  - Severity: `medium`
+  - Remediation: "Run `/draft:decompose <track>` to refresh graph slots; review structural sections; re-circulate if signed"
+
+Process Debt findings carry the same Impact/Effort/Risk scoring as other categories. They surface in the remediation plan alongside code/architecture debt.
 
 ## Step 4: Prioritize
 
@@ -215,6 +271,36 @@ Report structure:
 4. **Remediation Plan** — Three tiers with effort estimates
 5. **Recommendations** — Strategic advice on debt management practices
 
+## Report Closing: Next Actions (REQUIRED)
+
+Every tech-debt report must end with a `## Next Actions` section listing the smallest set of follow-ups in execution order. Use this exact shape:
+
+```markdown
+## Next Actions
+
+| # | Action | Owner | Blocker? | Skill / Command |
+|---|---|---|---|---|
+| 1 | <imperative one-liner> | <team\|TBD> | yes/no | `/draft:<skill> <args>` or `n/a` |
+```
+
+Rules:
+- Tech-debt rarely "blocks" merge; mark `Blocker? = yes` only for items that will cause an outage on next deploy.
+- Suggest `/draft:new-track` for items >1 day of work, `/draft:adr` for design re-decisions, `/draft:implement` for surgical cleanups.
+- Cap at 10 actions; full backlog stays in the report body.
+
+## Mandatory Self-Check (before debt report)
+
+Before printing the final debt report, internally verify and report:
+
+1. **Graph files queried** — JSONL files loaded plus any live `graph --query` invocations (especially `cycles` and `impact`).
+2. **Layer 1 files deliberately skipped** — list any context sections skipped as irrelevant to the categories scanned.
+3. **Filesystem grep fallback justification** — for every `grep`/`find` run beyond `scan-markers.sh`, name the concept it searched for.
+
+If `draft/graph/schema.yaml` does not exist, set `Graph files queried: NONE` and use justification `graph data unavailable`.
+
+## Graph Usage Report (append to debt report)
+
+Emit the canonical footer from [core/shared/graph-usage-report.md](../../core/shared/graph-usage-report.md) §Canonical footer. The lint hook `scripts/tools/check-graph-usage-report.sh` validates the section on save.
 ## Cross-Skill Dispatch
 
 - **Offered by:** `/draft:new-track` (refactor tracks — scope the debt before planning)

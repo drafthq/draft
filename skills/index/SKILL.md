@@ -1,11 +1,11 @@
 ---
 name: index
-description: "Build federated index from all child draft/ directories. Aggregates service-level context into root-level knowledge without deep code analysis. Run at monorepo root after services have been initialized with /draft:init. Use when the user asks to 'index services', 'aggregate monorepo context', 'build root index', or says 'index this monorepo'."
+description: Build federated index from all child draft/ directories. Aggregates service-level context into root-level knowledge without deep code analysis. Use at monorepo root after services have been initialized with /draft:init.
 ---
 
 # Draft Index
 
-Build a federated knowledge index for a monorepo with multiple services.
+You are building a federated knowledge index for a monorepo with multiple services.
 
 ## Red Flags - STOP if you're:
 
@@ -23,39 +23,23 @@ Build a federated knowledge index for a monorepo with multiple services.
 
 **ALL generated files MUST include the standard YAML frontmatter.** This enables refresh tracking, sync verification, and traceability.
 
-### Gathering Git Information
+### Project Metadata File (single source of truth)
 
-Before generating any file, run these commands to gather metadata:
+Before writing any file, update `draft/metadata.json` with current git state. This is the single source of truth for `synced_to_commit` and all `git.*` fields for every project-level artifact. Do NOT embed git fields in per-file frontmatter.
+
+Use the `--project-metadata` flag (preferred):
 
 ```bash
-# Project name (from manifest or directory)
-basename "$(pwd)"
-
-# Git branch
-git branch --show-current
-
-# Git remote tracking branch
-git rev-parse --abbrev-ref --symbolic-full-name @{upstream} 2>/dev/null || echo "none"
-
-# Git commit SHA (full)
-git rev-parse HEAD
-
-# Git commit SHA (short)
-git rev-parse --short HEAD
-
-# Git commit date
-git log -1 --format="%ci"
-
-# Git commit message (first line)
-git log -1 --format="%s"
-
-# Check for uncommitted changes
-git status --porcelain | head -1
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+bash "$DRAFT_TOOLS/git-metadata.sh" --project-metadata \
+    --project "$PROJECT" --generated-by "draft:index"
 ```
 
-### Metadata Template
+### Per-File Metadata Template
 
-Insert this YAML frontmatter block at the **top of every generated file** (`service-index.md`, `dependency-graph.md`, `tech-matrix.md`, `draft-index-bughunt-summary.md`):
+Insert this **stable** YAML frontmatter at the top of every generated file (`service-index.md`, `dependency-graph.md`, `tech-matrix.md`, `draft-index-bughunt-summary.md`):
 
 ```yaml
 ---
@@ -63,15 +47,6 @@ project: "{PROJECT_NAME}"
 module: "root"
 generated_by: "draft:index"
 generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH or 'none'}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{FIRST_LINE_OF_COMMIT_MESSAGE}"
-  dirty: {true|false}
-synced_to_commit: "{FULL_SHA}"
 ---
 ```
 
@@ -257,10 +232,9 @@ Create `draft/bughunt-summary.md`:
 ### 1A.5: Completion Report
 
 ```
-═══════════════════════════════════════════════════════════
+---
               DRAFT INDEX BUGHUNT COMPLETE
-═══════════════════════════════════════════════════════════
-
+---
 Scanned: N directories
 Completed: X successful
 Skipped: Y (no draft/)
@@ -268,9 +242,9 @@ Failed: Z errors
 
 Grand Total Bugs:
   Critical: W
-  High:     X
-  Medium:   Y
-  Low:      Z
+  High: X
+  Medium: Y
+  Low: Z
 
 Summary Report: draft/bughunt-summary.md
 
@@ -278,7 +252,7 @@ Directories requiring immediate attention:
   - services/billing/ (1 CRITICAL)
   - services/auth/ (2 HIGH)
 
-═══════════════════════════════════════════════════════════
+---
 ```
 
 **STOP HERE** if bughunt mode. Do not continue to Step 2 (normal indexing flow).
@@ -411,7 +385,7 @@ Analyze extracted data to build dependency graph:
 
 Build a dependency map:
 ```
-auth-service: []  # no dependencies on other services
+auth-service: [] # no dependencies on other services
 billing-service: [auth-service]
 api-gateway: [auth-service, billing-service]
 ```
@@ -770,7 +744,7 @@ exclude_patterns:
   - "vendor"
   - ".git"
   - "draft"
-  - ".*"  # Hidden directories
+  - ".*" # Hidden directories
 
 # Re-index on these events (for CI integration)
 reindex_triggers:
@@ -799,7 +773,7 @@ If a marker pair is absent (legacy file): insert slot at the designated position
 `"Injected GRAPH:{id} slot into architecture.md (slot was absent — legacy file upgraded)"`
 
 **D. Write updated `architecture.md` back to disk.**
-Update frontmatter: `generated_by = "draft:index"`, `generated_at = now`.
+Update frontmatter: `generated_by = "draft:index"`, `generated_at = now`. Also update `draft/metadata.json` via `git-metadata.sh --project-metadata --generated-by "draft:index"` to re-anchor `synced_to_commit`.
 
 **E. Re-run Condensation Subroutine** (condensation.md) to propagate updated hotspot data into `.ai-context.md` GRAPH:HOTSPOTS and recompute tier budget. If `.ai-profile.md` exists, regenerate via Profile Generation Subroutine.
 
@@ -818,22 +792,21 @@ rm -f draft/.index-lock
 ```
 
 ```
-═══════════════════════════════════════════════════════════
+---
                     DRAFT INDEX COMPLETE
-═══════════════════════════════════════════════════════════
-
+---
 Scanned: X service directories (depth=1)
 Indexed: Y services with draft/ context
 Skipped: Z uninitialized services
 
 Generated/Updated:
-  ✓ draft/service-index.md      (service registry)
-  ✓ draft/dependency-graph.md   (inter-service topology)
-  ✓ draft/tech-matrix.md        (technology distribution)
-  ✓ draft/product.md            (synthesized product vision)
-  ✓ draft/architecture.md       (system-of-systems view)
-  ✓ draft/tech-stack.md         (org standards)
-  ✓ draft/config.yaml           (index configuration)
+  ✓ draft/service-index.md (service registry)
+  ✓ draft/dependency-graph.md (inter-service topology)
+  ✓ draft/tech-matrix.md (technology distribution)
+  ✓ draft/product.md (synthesized product vision)
+  ✓ draft/architecture.md (system-of-systems view)
+  ✓ draft/tech-stack.md (org standards)
+  ✓ draft/config.yaml (index configuration)
 
 Service manifests updated: Y services
 
@@ -845,7 +818,7 @@ Next steps:
 
 For uninitialized services, run:
   /draft:index init-missing
-═══════════════════════════════════════════════════════════
+---
 ```
 
 ## Operational Notes

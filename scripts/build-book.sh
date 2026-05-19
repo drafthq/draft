@@ -100,7 +100,7 @@ CHAPTER_TITLES=(
 CHAPTER_NUMS=("0" "1" "2" "3" "4" "5" "6" "7" "8" "9" "10" "11" "12" "13" "14" "15" "16" "17" "18" "19" "20" "21" "A" "B")
 
 CHAPTER_DESCRIPTIONS=(
-    "What Draft is, what it is not, who it is for, and what you get — 28 commands and 7 specialized agents for structured AI development."
+    "What Draft is, what it is not, who it is for, and what you get — 33 commands and 7 specialized agents for structured AI development."
     "Why AI coding assistants produce wrong code without structure — the gap between speed and correctness, and why better prompting is not the answer."
     "The Context-Driven Development methodology — every decision grounded in explicit, versioned, reviewable documents rather than implicit assumptions."
     "Install Draft and run your first commands in five minutes. Set up architecture discovery, create a track, and start implementing."
@@ -122,7 +122,7 @@ CHAPTER_DESCRIPTIONS=(
     "Mapping Draft tracks to Jira issues — preview before creation, epic/story/sub-task mapping, and bidirectional sync."
     "How Draft works across Claude Code, Copilot, Cursor, Gemini, and Antigravity IDE — platform-specific syntax transforms."
     "The philosophical foundations of Context-Driven Development — structured development, quality gates, incremental refinement."
-    "Complete reference for all 28 Draft commands — usage, options, examples, and output for each slash command."
+    "Complete reference for all 33 Draft commands — usage, options, examples, and output for each slash command."
     "Complete reference for all Draft-generated files — architecture.md, .ai-context.md, .ai-profile.md, specs, plans, and state files."
 )
 
@@ -167,14 +167,14 @@ NUM_CHAPTERS=${#CHAPTER_IDS[@]}
 # ============================================================
 generate_sidebar() {
     local current_id="$1"
-    local prefix="$2"  # "./" for landing page, "../" for chapter pages
+    local prefix="$2" # "./" for landing page, "../" for chapter pages
 
     local sidebar=""
-    sidebar+='        <aside class="book-sidebar" id="book-sidebar">'$'\n'
-    sidebar+='            <div class="sidebar-search">'$'\n'
-    sidebar+='                <svg class="sidebar-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>'$'\n'
-    sidebar+='                <input type="text" id="sidebar-search-input" placeholder="Search chapters..." autocomplete="off">'$'\n'
-    sidebar+='            </div>'$'\n'
+    sidebar+=' <aside class="book-sidebar" id="book-sidebar">'$'\n'
+    sidebar+=' <div class="sidebar-search">'$'\n'
+    sidebar+=' <svg class="sidebar-search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>'$'\n'
+    sidebar+=' <input type="text" id="sidebar-search-input" placeholder="Search chapters..." autocomplete="off">'$'\n'
+    sidebar+=' </div>'$'\n'
 
     # Part definitions: name|start_idx|end_idx
     local parts=(
@@ -190,9 +190,9 @@ generate_sidebar() {
 
     for part_def in "${parts[@]}"; do
         IFS='|' read -r part_name start end <<< "$part_def"
-        sidebar+='            <div class="sidebar-part">'$'\n'
-        sidebar+="                <div class=\"sidebar-part-title\">$part_name</div>"$'\n'
-        sidebar+='                <ul class="sidebar-chapters">'$'\n'
+        sidebar+=' <div class="sidebar-part">'$'\n'
+        sidebar+=" <div class=\"sidebar-part-title\">$part_name</div>"$'\n'
+        sidebar+=' <ul class="sidebar-chapters">'$'\n'
 
         for ((i=start; i<=end; i++)); do
             local id="${CHAPTER_IDS[$i]}"
@@ -202,16 +202,16 @@ generate_sidebar() {
             if [[ "$id" == "$current_id" ]]; then
                 active=" active"
             fi
-            sidebar+="                    <li><a href=\"${prefix}${id}/\" class=\"sidebar-chapter${active}\" data-chapter=\"${id}\">"$'\n'
-            sidebar+="                        <span class=\"ch-num\">${num}.</span>${title}"$'\n'
-            sidebar+='                    </a></li>'$'\n'
+            sidebar+=" <li><a href=\"${prefix}${id}/\" class=\"sidebar-chapter${active}\" data-chapter=\"${id}\">"$'\n'
+            sidebar+=" <span class=\"ch-num\">${num}.</span>${title}"$'\n'
+            sidebar+=' </a></li>'$'\n'
         done
 
-        sidebar+='                </ul>'$'\n'
-        sidebar+='            </div>'$'\n'
+        sidebar+=' </ul>'$'\n'
+        sidebar+=' </div>'$'\n'
     done
 
-    sidebar+='        </aside>'
+    sidebar+=' </aside>'
 
     echo "$sidebar"
 }
@@ -322,6 +322,11 @@ generate_chapter_page() {
     </noscript>
 
     <link rel="stylesheet" href="../css/book.css">
+
+    <!-- Theme: apply early to prevent flash of wrong theme -->
+    <script>
+    (function(){try{var t=localStorage.getItem('draft-theme');if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
+    </script>
 </head>
 <body data-chapter="${id}">
 
@@ -365,6 +370,7 @@ ${chapter_content}
     </div>
 
     <script src="../js/book.js"></script>
+    <script src="../../js/theme-toggle.js"></script>
 </body>
 </html>
 HEREDOC
@@ -384,7 +390,7 @@ generate_landing_page() {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Draft Book — Context-Driven Development Deep Dive</title>
-    <meta name="description" content="A comprehensive guide to Draft's Context-Driven Development methodology. 22 chapters covering specs, plans, TDD, code review, bug hunting, ACID audits, and more.">
+    <meta name="description" content="A comprehensive guide to Draft's Context-Driven Development methodology. 24 chapters covering specs, plans, TDD, code review, bug hunting, ACID audits, and more.">
     <meta name="author" content="Mayur Pise">
     <meta name="theme-color" content="#2563eb">
     <meta name="keywords" content="context-driven development book, ai coding methodology, claude code guide, spec driven development, ai code review, tdd enforcement, ai architecture discovery, bug hunting methodology, copilot best practices, ai development workflow">
@@ -444,19 +450,19 @@ generate_landing_page() {
 LANDING_HEAD
 
     # Generate the known IDs array for the redirect script
-    printf '    (function() {\n' >> "$BOOK_DIR/index.html"
-    printf '        if (location.hash && location.hash.length > 1) {\n' >> "$BOOK_DIR/index.html"
-    printf '            var id = location.hash.slice(1);\n' >> "$BOOK_DIR/index.html"
-    printf '            var known = [' >> "$BOOK_DIR/index.html"
+    printf ' (function() {\n' >> "$BOOK_DIR/index.html"
+    printf ' if (location.hash && location.hash.length > 1) {\n' >> "$BOOK_DIR/index.html"
+    printf ' var id = location.hash.slice(1);\n' >> "$BOOK_DIR/index.html"
+    printf ' var known = [' >> "$BOOK_DIR/index.html"
     local first=true
     for id in "${CHAPTER_IDS[@]}"; do
         if $first; then first=false; else printf ',' >> "$BOOK_DIR/index.html"; fi
         printf '"%s"' "$id" >> "$BOOK_DIR/index.html"
     done
     printf '];\n' >> "$BOOK_DIR/index.html"
-    printf '            if (known.indexOf(id) !== -1) { location.replace(id + "/"); }\n' >> "$BOOK_DIR/index.html"
-    printf '        }\n' >> "$BOOK_DIR/index.html"
-    printf '    })();\n' >> "$BOOK_DIR/index.html"
+    printf ' if (known.indexOf(id) !== -1) { location.replace(id + "/"); }\n' >> "$BOOK_DIR/index.html"
+    printf ' }\n' >> "$BOOK_DIR/index.html"
+    printf ' })();\n' >> "$BOOK_DIR/index.html"
 
     cat >> "$BOOK_DIR/index.html" <<'LANDING_REDIRECT_END'
     </script>
@@ -471,6 +477,11 @@ LANDING_HEAD
     </noscript>
 
     <link rel="stylesheet" href="css/book.css">
+
+    <!-- Theme: apply early to prevent flash of wrong theme -->
+    <script>
+    (function(){try{var t=localStorage.getItem('draft-theme');if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
+    </script>
 </head>
 <body>
 
@@ -533,15 +544,15 @@ LANDING_MAIN_START
 
         if [[ "$part" != "$current_part" ]]; then
             if [[ -n "$current_part" ]]; then
-                echo '                    </ul></div>' >> "$BOOK_DIR/index.html"
+                echo ' </ul></div>' >> "$BOOK_DIR/index.html"
             fi
-            echo "                    <div class=\"book-toc-part\"><div class=\"book-toc-part-title\">$part</div><ul class=\"book-toc-list\">" >> "$BOOK_DIR/index.html"
+            echo " <div class=\"book-toc-part\"><div class=\"book-toc-part-title\">$part</div><ul class=\"book-toc-list\">" >> "$BOOK_DIR/index.html"
             current_part="$part"
         fi
 
-        echo "                        <li><a href=\"${id}/\" class=\"book-toc-entry\"><span class=\"book-toc-num\">${num}.</span><span class=\"book-toc-name\">${title}</span></a></li>" >> "$BOOK_DIR/index.html"
+        echo " <li><a href=\"${id}/\" class=\"book-toc-entry\"><span class=\"book-toc-num\">${num}.</span><span class=\"book-toc-name\">${title}</span></a></li>" >> "$BOOK_DIR/index.html"
     done
-    echo '                    </ul></div>' >> "$BOOK_DIR/index.html"
+    echo ' </ul></div>' >> "$BOOK_DIR/index.html"
 
     cat >> "$BOOK_DIR/index.html" <<'LANDING_FOOTER'
                 </div>
@@ -554,6 +565,7 @@ LANDING_MAIN_START
     </div>
 
     <script src="js/book.js"></script>
+    <script src="../js/theme-toggle.js"></script>
 </body>
 </html>
 LANDING_FOOTER
@@ -577,6 +589,42 @@ generate_sitemap() {
         <lastmod>${TODAY}</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://getdraft.dev/blog/</loc>
+        <lastmod>${TODAY}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://getdraft.dev/blog/blast-radius-walkthrough/</loc>
+        <lastmod>${TODAY}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://getdraft.dev/blog/decompose-payment-gateway/</loc>
+        <lastmod>${TODAY}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://getdraft.dev/blog/local-graph-engine/</loc>
+        <lastmod>${TODAY}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://getdraft.dev/blog/mcp-tool-discovery/</loc>
+        <lastmod>${TODAY}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
+        <loc>https://getdraft.dev/blog/replaced-kiro-with-free-plugin/</loc>
+        <lastmod>${TODAY}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
     </url>
 SITEMAP_HEAD
 
@@ -604,15 +652,15 @@ echo "Building book pages..."
 # Generate all chapter pages
 for ((i=0; i<NUM_CHAPTERS; i++)); do
     generate_chapter_page "$i"
-    echo "  Generated: ${CHAPTER_IDS[$i]}/index.html"
+    echo " Generated: ${CHAPTER_IDS[$i]}/index.html"
 done
 
 # Generate landing page
 generate_landing_page
-echo "  Generated: book/index.html (TOC + hash redirect)"
+echo " Generated: book/index.html (TOC + hash redirect)"
 
 # Generate sitemap
 generate_sitemap
-echo "  Generated: sitemap.xml (${NUM_CHAPTERS} chapter URLs)"
+echo " Generated: sitemap.xml (${NUM_CHAPTERS} chapter URLs)"
 
 echo "Done. ${NUM_CHAPTERS} chapter pages built."

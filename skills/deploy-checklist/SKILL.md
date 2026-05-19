@@ -1,14 +1,27 @@
 ---
 name: deploy-checklist
-description: "Pre-deployment verification checklist. Generates customized checklists based on tech-stack with rollback triggers. Use when the user asks to 'generate a deploy checklist', 'pre-deploy verification', 'rollback plan', or says 'we're shipping', 'about to deploy'."
+description: Pre-deployment verification checklist. Generates customized checklists based on tech-stack with rollback triggers. Auto-invoked by /draft:upload.
 ---
 
 # Deploy Checklist
 
-Generate a pre-deployment verification checklist customized to this project's technology stack.
+You are generating a pre-deployment verification checklist customized to this project's technology stack.
+
+## MANDATORY GRAPH LOOKUP (read before Phase 1)
+
+When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Use the graph to validate module boundaries before the deploy:
+
+1. For each file in the deploy diff, run `graph --query --file <path> --mode impact` to enumerate the modules affected — flag any module **not** declared in `hld.md` §Detailed Design as a deployment-scope miss.
+2. Run `graph --query --mode cycles` and `--mode modules` to ensure no fresh cycles were introduced after HLD sign-off.
+3. Load `draft/graph/hotspots.jsonl` — any hotspot in the diff escalates the Resiliency row of Phase 0.
+
+Filesystem `grep` is reserved for source-text scans (migration file names, flag-key strings). Module/impact discovery goes through the graph.
 
 ## Red Flags — STOP if you're:
 
+See [shared red flags](../../core/shared/red-flags.md) — applies to all code-touching skills.
+
+Skill-specific:
 - Deploying without a rollback plan
 - Skipping database migration verification
 - Deploying on Friday without explicit team approval
@@ -26,8 +39,8 @@ Generate a pre-deployment verification checklist customized to this project's te
 Before starting, capture the current git state:
 
 ```bash
-git branch --show-current    # Current branch name
-git rev-parse --short HEAD   # Current commit hash
+git branch --show-current # Current branch name
+git rev-parse --short HEAD # Current commit hash
 ```
 
 Store this for the checklist header. The checklist is scoped to this specific branch/commit.
@@ -43,6 +56,32 @@ If `draft/` doesn't exist, this skill can still run standalone — generate a ge
 ### 2. Load Draft Context (if available)
 
 Read and follow the base procedure in `core/shared/draft-context-loading.md`.
+
+### 3. Run validator gate chain (WS-9)
+
+Canonical chain documented in
+[core/shared/verification-gates.md](../../core/shared/verification-gates.md).
+A single non-zero exit aborts the checklist and the output groups defects
+by validator.
+
+```bash
+TRACK_DIR="$1" # absolute path to track-under-deploy, or .
+
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+
+"$DRAFT_TOOLS/check-track-hygiene.sh" "$TRACK_DIR" || rc=$?
+"$DRAFT_TOOLS/verify-citations.sh" "$TRACK_DIR" || rc=$?
+"$DRAFT_TOOLS/verify-doc-anchors.sh" "$TRACK_DIR" || rc=$?
+"$DRAFT_TOOLS/check-graph-usage-report.sh" "$TRACK_DIR" || rc=$?
+"$DRAFT_TOOLS/check-scope-conflicts.sh" "$TRACK_DIR/.." || rc=$?
+"$DRAFT_TOOLS/diff-templates-vs-tracks.sh" "$TRACK_DIR" || rc=$?
+```
+
+After the chain runs, write the result into `metadata.json:pre_deploy_status`
+(`passing` / `failing` / `bypassed`). The downstream checklist sections must
+not be considered "ready to deploy" if `pre_deploy_status != passing`.
 
 ## Step 1: Parse Arguments
 
@@ -61,12 +100,37 @@ If a track is active: read `draft/tracks/<id>/spec.md` and `plan.md` for change 
    - CI/CD pipeline details
    - Feature flag system
    - Monitoring/alerting stack
-2. Read `draft/workflow.md` — Deployment conventions and verification gates
+2. Read `draft/workflow.md` — Deployment conventions, toolchain (git)
 3. Read `draft/.ai-context.md` — Service topology, dependencies
+4. **If track-scoped:** Read `draft/tracks/<id>/hld.md` and `lld.md` if present — these are the source of truth for HLD §Checklist (Performance, Scale, Security, Resiliency, Multi-tenancy, Upgrade, Cost, Flags), §Deployment, §Observability, and LLD §Alerting Thresholds. The deploy checklist validates they are populated.
 
 ## Step 3: Generate Checklist
 
-Generate a three-phase checklist customized to the project's tech stack. Adapt items based on what the project actually uses — omit irrelevant items (e.g., skip database items if there is no database) and add project-specific items discovered in context.
+Generate a four-phase checklist customized to the project's tech stack. Adapt items based on what the project actually uses — omit irrelevant items (e.g., skip database items if there is no database) and add project-specific items discovered in context.
+
+### Phase 0: HLD/LLD Gate (track-scoped only, when hld.md exists)
+
+> ** blocker:** the HLD's §Checklist sections were the design-time commitment. If they are still empty at deploy time, the design was never validated against operational reality. This phase enforces that.
+
+For `criticality ∈ {high, mission-critical}` (read from `hld.md` frontmatter `classification.criticality`), every row below MUST be checked before Phase 1 begins. For `standard` criticality, missing rows produce warnings but do not block. For `low`, this phase is informational.
+
+- [ ] **HLD §Performance** populated — QPS and p95 latency stated
+- [ ] **HLD §Scale** populated — horizontal scaling story documented; bottlenecks named
+- [ ] **HLD §Security** populated — credentials, RBAC, encryption answered
+- [ ] **HLD §Resiliency** populated — failure modes and graceful degradation described
+- [ ] **HLD §Multi-tenancy** populated — isolation, predictable performance, migration covered
+- [ ] **HLD §Upgrade** populated — backward compat, dependent service order, blast radius
+- [ ] **HLD §Flags and Controlled Rollout** populated — flag names, kill switches
+- [ ] **HLD §Cost Implications** populated — Cloud cost calculation included for SaaS deployments
+
+- [ ] **HLD §Deployment** populated — DP/CP platform call answered (on-prem / SaaS / Cloud Console / IBM cloud)
+- [ ] **HLD §Observability** populated — key metrics named with thresholds
+- [ ] **HLD §Approvals table** signed by Technical Leads and Architecture Review Board (and Cloud Operations if SaaS, QA if on-prem) — Date column populated
+- [ ] **LLD §Alerting Thresholds** table populated (when `lld.md` exists) — every metric has Threshold, Severity, Action
+
+If any blocker row is empty for high/mission-critical: STOP. Do not generate Phases 1–3, **do not run Step 5 (Save Output)**, and do not create the `deploy-checklist.md` file. Tell the developer: "HLD/LLD §[section] is empty for a [criticality] track. Fill it in `hld.md` / `lld.md` before deploy. Run `/draft:decompose` to refresh structural sections; author-driven sections must be filled manually."
+
+If a partial file is needed for tracking, write it with `status: BLOCKED` in the frontmatter and `_latest` symlinks must NOT be updated — `/draft:upload` Step 2.5 detects `status: BLOCKED` and refuses to treat the file as a passing checklist.
 
 ### Phase 1: Pre-Deploy
 
@@ -163,12 +227,25 @@ TIMESTAMP=$(date +%Y-%m-%dT%H%M)
 ln -sf deploy-checklist-${TIMESTAMP}.md draft/deploy-checklist-latest.md
 ```
 
+## Mandatory Self-Check (before saving the checklist)
+
+Before saving the checklist file, internally verify and report:
+
+1. **Graph files queried** — JSONL files loaded plus any live `graph --query` invocations (`impact`, `cycles`, `modules`).
+2. **Layer 1 files deliberately skipped** — list any context sections skipped.
+3. **Filesystem grep fallback justification** — for every `grep`/`find` run, name the concept it searched for.
+
+If `draft/graph/schema.yaml` does not exist, set `Graph files queried: NONE` and use justification `graph data unavailable`.
+
+## Graph Usage Report (append to checklist)
+
+Emit the canonical footer from [core/shared/graph-usage-report.md](../../core/shared/graph-usage-report.md) §Canonical footer. The lint hook `scripts/tools/check-graph-usage-report.sh` validates the section on save.
 ## Cross-Skill Dispatch
 
-- **Invoked manually before deployment.**
+- **Auto-invoked by:** `/draft:upload` (pre-upload verification)
 - **References:** `core/agents/ops.md` for production-safety mindset
 - **Jira sync:** If ticket linked, attach checklist and post comment via `core/shared/jira-sync.md`
-- **MCP:** GitHub MCP / `gh` CLI for PR details, Jira MCP for ticket context
+- **MCP:** GitHub MCP for change details, Jira MCP for ticket context
 
 ## Error Handling
 

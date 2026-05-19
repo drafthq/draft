@@ -9,7 +9,7 @@
 # - All real skills pass frontmatter validation
 #
 # Usage:
-#   ./tests/test-skill-frontmatter.sh
+# ./tests/test-skill-frontmatter.sh
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -177,7 +177,7 @@ for skill_dir in "$SKILLS_DIR"/*/; do
     skill_file="$skill_dir/SKILL.md"
     if [[ -f "$skill_file" ]]; then
         if ! "$RUNNER" "$skill_file" > /dev/null 2>&1; then
-            echo "  FAIL: Real skill '$skill_name' failed validation"
+            echo " FAIL: Real skill '$skill_name' failed validation"
             ALL_REAL_PASS=false
         fi
     fi

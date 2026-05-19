@@ -24,6 +24,9 @@ integrations/copilot/.github/copilot-instructions.md.*
 .claude/teams/
 .claude/tasks.json
 
+# Gemini local session state
+.gemini/
+
 # Dependencies
 node_modules/
 

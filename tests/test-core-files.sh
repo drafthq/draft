@@ -9,7 +9,7 @@
 # expanded CORE_FILES per manifest §2.1, §2.5.
 #
 # Usage:
-#   ./tests/test-core-files.sh
+# ./tests/test-core-files.sh
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -32,7 +32,7 @@ for core_file in "${CORE_FILES[@]}"; do
     [[ -z "$core_file" ]] && continue
     full_path="$CORE_DIR/$core_file"
     if [[ ! -f "$full_path" ]]; then
-        echo "  MISSING: $full_path"
+        echo " MISSING: $full_path"
         ALL_EXIST=false
     fi
 done
@@ -52,7 +52,7 @@ while IFS= read -r -d '' file; do
         fi
     done
     if [[ "$found" == false ]]; then
-        echo "  ORPHAN: $rel_path (on disk but not in CORE_FILES)"
+        echo " ORPHAN: $rel_path (on disk but not in CORE_FILES)"
         ALL_REGISTERED=false
     fi
 done < <(find "$CORE_DIR" -type f -print0 | sort -z)

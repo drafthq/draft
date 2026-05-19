@@ -7,7 +7,7 @@
 # - Edge cases: multiple occurrences, mid-sentence, backtick-wrapped
 #
 # Usage:
-#   ./tests/test-syntax-transforms.sh
+# ./tests/test-syntax-transforms.sh
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -37,13 +37,13 @@ assert_transform() {
     local actual
     actual=$(echo "$input" | "$transform_fn")
     if [[ "$actual" == "$expected" ]]; then
-        echo "  PASS: $description"
+        echo " PASS: $description"
         PASS=$((PASS + 1))
     else
-        echo "  FAIL: $description"
-        echo "    Input:    '$input'"
-        echo "    Expected: '$expected'"
-        echo "    Actual:   '$actual'"
+        echo " FAIL: $description"
+        echo " Input: '$input'"
+        echo " Expected: '$expected'"
+        echo " Actual: '$actual'"
         FAIL=$((FAIL + 1))
     fi
 }

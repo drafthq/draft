@@ -1,11 +1,11 @@
 ---
 name: documentation
-description: "Technical documentation writing and maintenance. Modes — readme, runbook, api, onboarding. Uses writer agent principles for audience-appropriate, maintainable docs. Use when the user asks to 'write a README', 'generate a runbook', 'document the API', 'write onboarding docs', or says 'we need docs for X'."
+description: Technical documentation writing and maintenance. Modes — readme, runbook, api, onboarding. Uses writer agent principles for audience-appropriate, maintainable docs.
 ---
 
 # Documentation
 
-Generate or update technical documentation for this project using structured writing principles.
+You are generating or updating technical documentation for this project using structured writing principles.
 
 ## Red Flags — STOP if you're:
 
@@ -51,7 +51,7 @@ If `draft/` doesn't exist, this skill works standalone — generate docs from co
 - Read `draft/architecture.md` or `draft/.ai-context.md` — Service topology, dependencies
 - Read `draft/workflow.md` — Deployment conventions
 - Read `draft/tech-stack.md` — Infrastructure details
-- If GitHub MCP / `gh` CLI available: check recent merged PRs touching deployment configs
+- If GitHub MCP available: check recent deployment changes
 - If Jira MCP available: check recent incident tickets for the service
 
 ### API Mode
@@ -179,11 +179,16 @@ Save to:
 
 Create `draft/docs/` directory if needed.
 
+**Pre-save validation:**
+- Every file path referenced in the doc resolves to a real file (broken links are a common LLM failure mode here).
+- Every relative link in the doc resolves under the project root.
+- Code blocks copied from sources match the current commit (no stale snippets).
+
 Present generated doc to user for review before final save.
 
 ## Cross-Skill Dispatch
 
-- **Suggested by:** `/draft:init` (after context generation), `/draft:implement` (track completion with new APIs), `/draft:decompose` (module API docs)
+- **Suggested by:** `/draft:init` (after context generation), `/draft:implement` (track completion with new APIs), `/draft:upload` (pre-upload for new APIs), `/draft:decompose` (module API docs)
 - **Jira sync:** If ticket linked, attach doc and post comment via `core/shared/jira-sync.md`
 
 ## Error Handling

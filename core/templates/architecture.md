@@ -3,24 +3,9 @@ project: "{PROJECT_NAME}"
 module: "root"
 generated_by: "draft:init"
 generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{COMMIT_MESSAGE}"
-  dirty: false
-synced_to_commit: "{FULL_SHA}"
 
 # Classification — drives which sections are Required vs skippable.
 # Do not leave placeholders. If unknown, ask during draft:init interview.
-classification:
-  project_type: "{library | cli | service | batch | monolith | distributed | plugin}"
-  criticality: "{low | standard | high | mission-critical}"
-  data_classification: "{public | internal | confidential | regulated}"
-  compliance: ["{SOC2 | HIPAA | PCI-DSS | GDPR | FedRAMP | ISO27001 | none}"]
-  change_policy: "{codeowner-review | two-reviewer | architecture-board}"
 
 # Ownership — enterprise accountability. Populate from CODEOWNERS / docs / interview.
 ownership:
@@ -198,19 +183,19 @@ One paragraph, plain prose, no bullets. State what the system IS, what it DOES, 
 Compact block optimized for agent context loading. Every field populated or explicit "N/A".
 
 ```
-Module              : {PROJECT_NAME}
-Root Path           : ./
-Language            : {e.g., Go 1.21, Python 3.12, TypeScript 5.3}
-Build               : {exact command, e.g., `bazel build //path:target`, `npm run build`}
-Test                : {exact command, e.g., `pytest -q`, `go test ./...`}
-Entry Point         : {file:line → symbol}
-Config System       : {gflags / .env + YAML / Viper / Spring / environment / N/A}
-Extension Point     : {interface + registration site — or N/A}
-API Definition      : {path to .proto / OpenAPI / GraphQL — or N/A}
-Key Config Prefix   : {MODULE_* env / module.* YAML / --module-* CLI — or N/A}
-CODEOWNERS          : {path — or "none"}
-Security Contact    : {from ownership block}
-On-Call             : {from ownership block — or "none"}
+Module : {PROJECT_NAME}
+Root Path : ./
+Language : {e.g., Go 1.21, Python 3.12, TypeScript 5.3}
+Build : {exact command, e.g., `bazel build //path:target`, `npm run build`}
+Test : {exact command, e.g., `pytest -q`, `go test ./...`}
+Entry Point : {file:line → symbol}
+Config System : {gflags / .env + YAML / Viper / Spring / environment / N/A}
+Extension Point : {interface + registration site — or N/A}
+API Definition : {path to .proto / OpenAPI / GraphQL — or N/A}
+Key Config Prefix : {MODULE_* env / module.* YAML / --module-* CLI — or N/A}
+CODEOWNERS : {path — or "none"}
+Security Contact : {from ownership block}
+On-Call : {from ownership block — or "none"}
 ```
 
 **Before Making Changes, Always:**

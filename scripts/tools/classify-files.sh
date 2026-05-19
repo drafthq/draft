@@ -6,7 +6,7 @@
 # LOC, and top-level module.
 #
 # Usage:
-#   scripts/tools/classify-files.sh [--root DIR] [--json]
+# scripts/tools/classify-files.sh [--root DIR] [--json]
 #
 # Output fields: path, lang, category, is_test, is_generated, loc, module
 # Exit codes: 0 OK (with or without results), 1 invocation error.
@@ -26,9 +26,9 @@ Usage:
   scripts/tools/classify-files.sh [--root DIR] [--json]
 
 Flags:
-  --root DIR    Root directory to scan (default: cwd).
-  --json        Emit a single JSON array instead of JSONL.
-  --help        Show this help.
+  --root DIR Root directory to scan (default: cwd).
+  --json Emit a single JSON array instead of JSONL.
+  --help Show this help.
 
 Output (per file): {path, lang, category, is_test, is_generated, loc, module}
 
@@ -59,8 +59,6 @@ EXCLUDE_DIRS=(
     .git node_modules dist build out .next .venv venv __pycache__
     target vendor third_party .mypy_cache .pytest_cache coverage
     .cache .tox .gradle .idea .vscode
-    .terraform _build .svelte-kit .dart_tool Pods cdk.out
-    .turbo .parcel-cache .nuxt .vercel .pnpm-store
 )
 
 lang_for() {
@@ -176,10 +174,10 @@ emit_record() {
     local json="$1"
     if [[ "$FORMAT" == "json" ]]; then
         if $first_record; then
-            printf '[\n  %s' "$json"
+            printf '[\n %s' "$json"
             first_record=false
         else
-            printf ',\n  %s' "$json"
+            printf ',\n %s' "$json"
         fi
     else
         printf '%s\n' "$json"

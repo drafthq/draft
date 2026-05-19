@@ -94,6 +94,80 @@ rc=$?
 set -e
 assert "Missing file → exit 2" "$([[ "$rc" == "2" ]] && echo true || echo false)"
 
+# --mode project-doc: clean file (no forbidden fields) → exit 0
+cat > "$FIXTURE/project-doc-clean.md" <<'EOF'
+---
+project: my-service
+module: root
+generated_by: draft:init
+generated_at: "2026-01-01T00:00:00Z"
+---
+
+# My Service
+EOF
+set +e
+"$TOOL" "$FIXTURE/project-doc-clean.md" --mode project-doc --require project,generated_by >/dev/null 2>&1
+rc=$?
+set -e
+assert "--mode project-doc: clean file → exit 0" "$([[ "$rc" == "0" ]] && echo true || echo false)"
+
+# --mode project-doc: file with git: block → exit 1
+cat > "$FIXTURE/project-doc-git.md" <<'EOF'
+---
+project: my-service
+generated_by: draft:init
+generated_at: "2026-01-01T00:00:00Z"
+git:
+  branch: main
+  commit: abc123
+---
+
+# My Service
+EOF
+set +e
+"$TOOL" "$FIXTURE/project-doc-git.md" --mode project-doc --require project,generated_by >/dev/null 2>&1
+rc=$?
+set -e
+assert "--mode project-doc: git: block present → exit 1" "$([[ "$rc" == "1" ]] && echo true || echo false)"
+
+# --mode project-doc: file with synced_to_commit → exit 1
+cat > "$FIXTURE/project-doc-synced.md" <<'EOF'
+---
+project: my-service
+generated_by: draft:init
+generated_at: "2026-01-01T00:00:00Z"
+synced_to_commit: "abc1234567890abc1234567890abc1234567890ab"
+---
+
+# My Service
+EOF
+set +e
+"$TOOL" "$FIXTURE/project-doc-synced.md" --mode project-doc --require project,generated_by >/dev/null 2>&1
+rc=$?
+set -e
+assert "--mode project-doc: synced_to_commit present → exit 1" "$([[ "$rc" == "1" ]] && echo true || echo false)"
+
+# --mode project-doc: file with both git: and synced_to_commit → exit 1
+cat > "$FIXTURE/project-doc-both.md" <<'EOF'
+---
+project: my-service
+generated_by: draft:init
+generated_at: "2026-01-01T00:00:00Z"
+git:
+  branch: main
+synced_to_commit: "abc1234567890abc1234567890abc1234567890ab"
+---
+
+# My Service
+EOF
+set +e
+err_msg="$("$TOOL" "$FIXTURE/project-doc-both.md" --mode project-doc --require project,generated_by 2>&1)"
+rc=$?
+set -e
+assert "--mode project-doc: git: + synced_to_commit both present → exit 1" "$([[ "$rc" == "1" ]] && echo true || echo false)"
+assert "--mode project-doc: error message mentions draft/metadata.json" \
+    "$(echo "$err_msg" | grep -q "draft/metadata.json" && echo true || echo false)"
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 exit "$FAIL"

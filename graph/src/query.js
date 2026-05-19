@@ -1,6 +1,6 @@
 'use strict';
 
-const fs   = require('fs');
+const fs = require('fs');
 const path = require('path');
 const { die, warn } = require('./util');
 const { generateModuleDeps, generateProtoMap, generateAllMermaid } = require('./mermaid');
@@ -10,11 +10,11 @@ const { generateModuleDeps, generateProtoMap, generateAllMermaid } = require('./
  * Reads JSONL files directly — no database needed.
  *
  * Modes:
- *   callers  — what files/modules include the given symbol/file
- *   impact   — transitive blast radius of changing a file
- *   hotspots — top complexity files (optionally filtered to a module)
- *   modules  — show the inter-module dependency graph
- *   mermaid  — generate Mermaid diagram text (module deps + proto map)
+ * callers — what files/modules include the given symbol/file
+ * impact — transitive blast radius of changing a file
+ * hotspots — top complexity files (optionally filtered to a module)
+ * modules — show the inter-module dependency graph
+ * mermaid — generate Mermaid diagram text (module deps + proto map)
  *
  * Output: JSON to stdout — consumed by draft:implement, draft:bughunt etc.
  */
@@ -23,12 +23,12 @@ function query({ out, symbol, file, mode }) {
   if (!fs.existsSync(out)) die(`Graph not found at ${out}. Run graph --repo <path> first.`);
 
   switch (mode) {
-    case 'callers':   return queryCallers(out, symbol || file);
-    case 'impact':    return queryImpact(out, symbol || file);
-    case 'hotspots':  return queryHotspots(out, symbol);
-    case 'modules':   return queryModules(out);
-    case 'cycles':    return queryCycles(out);
-    case 'mermaid':   return queryMermaid(out, symbol);
+    case 'callers': return queryCallers(out, symbol || file);
+    case 'impact': return queryImpact(out, symbol || file);
+    case 'hotspots': return queryHotspots(out, symbol);
+    case 'modules': return queryModules(out);
+    case 'cycles': return queryCycles(out);
+    case 'mermaid': return queryMermaid(out, symbol);
     default: die(`Unknown mode: ${mode}. Options: callers|impact|hotspots|modules|cycles|mermaid`);
   }
 }
@@ -39,11 +39,11 @@ function query({ out, symbol, file, mode }) {
 
 function loadJsonl(filePath) {
   if (!fs.existsSync(filePath)) return [];
-  const buf     = fs.readFileSync(filePath);
+  const buf = fs.readFileSync(filePath);
   const results = [];
   let start = 0;
   for (let i = 0; i <= buf.length; i++) {
-    if (i === buf.length || buf[i] === 10) {  // 10 = '\n'
+    if (i === buf.length || buf[i] === 10) { // 10 = '\n'
       if (i > start) {
         const line = buf.toString('utf8', start, i).trimEnd();
         if (line) {
@@ -74,18 +74,16 @@ function loadHotspots(out) {
 // =============================================================================
 // QUERY: CALLERS
 // Two modes:
-//   1. File target (contains '/' or has a file extension): include-edge callers
-//   2. Symbol name (bare identifier): function-level callers from call-index.jsonl
+// 1. File target (contains '/' or has a file extension): include-edge callers
+// 2. Symbol name (bare identifier): function-level callers from call-index.jsonl
 // =============================================================================
 
 function queryCallers(out, target) {
   if (!target) die('--symbol or --file required for callers mode');
 
-  // Dispatch: only treat as a file path when the target contains a slash. Bare
-  // names (even ones ending in a dot-token like `Foo.cc`) are ambiguous between
-  // a file at the repo root and a symbol — prefer the symbol path. Pass a path
-  // with `/` (e.g. `./Foo.cc`) to force file-callers mode.
-  const looksLikeFile = target.includes('/');
+  // Dispatch: if target looks like a file path use include-edge logic,
+  // otherwise use the call index for function-level callers.
+  const looksLikeFile = target.includes('/') || /\.\w{1,6}$/.test(target);
   if (looksLikeFile) {
     return queryFileCallers(out, target);
   } else {
@@ -113,8 +111,8 @@ function queryFileCallers(out, target) {
     .filter(r => r.kind === 'include' && r.target === target)
     .map(r => ({ file: r.source, module: targetModule, type: 'intra-module' }));
 
-  const moduleGraph  = loadModuleGraph(out);
-  const moduleNodes  = moduleGraph.filter(r => r.kind === 'node').map(r => r.id);
+  const moduleGraph = loadModuleGraph(out);
+  const moduleNodes = moduleGraph.filter(r => r.kind === 'node').map(r => r.id);
   const crossCallers = [];
 
   for (const mod of moduleNodes) {
@@ -149,26 +147,26 @@ function queryFunctionCallers(out, target) {
   if (!fs.existsSync(callIndexPath)) {
     console.log(JSON.stringify({
       error: 'no call index — rebuild graph to generate call edges',
-      hint:  'Run: graph --repo <path> --out ' + out,
+      hint: 'Run: graph --repo <path> --out ' + out,
     }, null, 2));
     return;
   }
 
   const allCalls = loadJsonl(callIndexPath);
-  const callers  = allCalls
+  const callers = allCalls
     .filter(r => r.to === target)
     .map(r => ({
-      func:     r.from,
-      file:     r.fromFile,
-      module:   r.module,
-      line:     r.line,
-      kind:     r.kind,
+      func: r.from,
+      file: r.fromFile,
+      module: r.module,
+      line: r.line,
+      kind: r.kind,
       resolved: r.resolved,
     }));
 
   // Deduplicate by (func, file) — same function calling same target multiple times
-  const seen    = new Set();
-  const unique  = callers.filter(c => {
+  const seen = new Set();
+  const unique = callers.filter(c => {
     const key = `${c.func}::${c.file}`;
     if (seen.has(key)) return false;
     seen.add(key);
@@ -183,8 +181,8 @@ function queryFunctionCallers(out, target) {
 
   const result = {
     target,
-    callers:  unique,
-    total:    unique.length,
+    callers: unique,
+    total: unique.length,
     by_module: byModule,
     note: 'intra-file call edges only; cross-file resolution requires type information',
   };
@@ -241,24 +239,24 @@ function queryImpact(out, target) {
   }
 
   // BFS: start from target file, find all transitive callers
-  const visited    = new Set([target]);
-  const queue      = [target];
+  const visited = new Set([target]);
+  const queue = [target];
   const impactList = [];
-  const depthMap   = new Map([[target, 0]]); // O(1) depth lookup, replaces O(n) list scan
+  const depthMap = new Map([[target, 0]]); // O(1) depth lookup, replaces O(n) list scan
 
-  let head = 0;  // index into queue — O(1) dequeue, no element shifting
+  let head = 0; // index into queue — O(1) dequeue, no element shifting
   while (head < queue.length) {
     const current = queue[head++];
-    const depth   = depthMap.get(current) ?? 0;
+    const depth = depthMap.get(current) ?? 0;
 
     for (const { source, module } of (reverseIndex.get(current) || [])) {
       if (!visited.has(source)) {
         visited.add(source);
         depthMap.set(source, depth + 1);
         impactList.push({
-          file:     source,
+          file: source,
           module,
-          depth:    depth + 1,
+          depth: depth + 1,
           category: classifyFile(source),
         });
         queue.push(source);
@@ -274,10 +272,10 @@ function queryImpact(out, target) {
   const result = {
     target,
     impact: {
-      files:   impactList.length,
+      files: impactList.length,
       modules: affectedModules.length,
       affected_modules: affectedModules,
-      by_category:    byCategory,
+      by_category: byCategory,
       files_by_depth: groupByDepth(impactList),
       files_by_category: groupByCategory(impactList),
     },
@@ -311,8 +309,8 @@ function queryHotspots(out, moduleFilter) {
 
 function queryModules(out) {
   const records = loadModuleGraph(out);
-  const nodes   = records.filter(r => r.kind === 'node');
-  const edges   = records.filter(r => r.kind === 'edge').sort((a, b) => b.weight - a.weight);
+  const nodes = records.filter(r => r.kind === 'node');
+  const edges = records.filter(r => r.kind === 'edge').sort((a, b) => b.weight - a.weight);
 
   // Detect circular dependencies
   const cycles = detectCycles(nodes.map(n => n.id), edges);
@@ -322,9 +320,9 @@ function queryModules(out) {
     dependencies: edges,
     cycles,
     summary: {
-      modules:     nodes.length,
-      edges:       edges.length,
-      cycles:      cycles.length,
+      modules: nodes.length,
+      edges: edges.length,
+      cycles: cycles.length,
       hub_modules: findHubs(nodes, edges),
     },
   }, null, 2));
@@ -337,9 +335,9 @@ function queryModules(out) {
 
 function queryCycles(out) {
   const records = loadModuleGraph(out);
-  const nodes   = records.filter(r => r.kind === 'node').map(r => r.id);
-  const edges   = records.filter(r => r.kind === 'edge');
-  const cycles  = detectCycles(nodes, edges);
+  const nodes = records.filter(r => r.kind === 'node').map(r => r.id);
+  const edges = records.filter(r => r.kind === 'edge');
+  const cycles = detectCycles(nodes, edges);
 
   if (cycles.length === 0) {
     console.log(JSON.stringify({ cycles: [], message: 'No circular dependencies detected.' }));
@@ -380,7 +378,7 @@ function queryMermaid(out, diagramType) {
 // =============================================================================
 
 /** Detect cycles using iterative DFS + WHITE/GRAY/BLACK color marking.
- *  Avoids call stack overflow on deeply linear module chains. */
+ * Avoids call stack overflow on deeply linear module chains. */
 function detectCycles(nodes, edges) {
   const adj = new Map();
   for (const n of nodes) adj.set(n, []);
@@ -389,7 +387,7 @@ function detectCycles(nodes, edges) {
   }
 
   const WHITE = 0, GRAY = 1, BLACK = 2;
-  const color  = new Map(nodes.map(n => [n, WHITE]));
+  const color = new Map(nodes.map(n => [n, WHITE]));
   const cycles = [];
 
   for (const startNode of nodes) {

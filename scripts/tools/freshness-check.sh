@@ -2,30 +2,27 @@
 # freshness-check.sh — verify recorded file hashes against current contents.
 #
 # Input state file format (draft/.state/freshness.json):
-#   {
-#     "generated_at": "2026-04-22T10:00:00Z",
-#     "files": [
-#       {"path": "draft/architecture.md", "sha256": "abc..."},
-#       ...
-#     ]
-#   }
+# {
+# "generated_at": "2026-04-22T10:00:00Z",
+# "files": [
+# {"path": "draft/architecture.md", "sha256": "abc..."},
+# ...
+# ]
+# }
 #
 # Emits:
-#   {
-#     "fresh": true|false,
-#     "stale_files": ["..."],
-#     "missing_files": ["..."],
-#     "reason": "..."
-#   }
+# {
+# "fresh": true|false,
+# "stale_files": ["..."],
+# "missing_files": ["..."],
+# "reason": "..."
+# }
 #
 # Usage:
-#   scripts/tools/freshness-check.sh [--state PATH] [--root DIR]
+# scripts/tools/freshness-check.sh [--state PATH] [--root DIR]
 #
 # Exit codes: 0 fresh, 1 invocation error, 2 stale (still emits JSON).
 set -euo pipefail
-
-# shellcheck source=_lib.sh
-source "$(dirname "${BASH_SOURCE[0]}")/_lib.sh"
 
 STATE_FILE=""
 ROOT="."
@@ -38,9 +35,9 @@ Usage:
   scripts/tools/freshness-check.sh [--state PATH] [--root DIR]
 
 Flags:
-  --state PATH   Path to freshness JSON (default: <root>/draft/.state/freshness.json).
-  --root DIR     Repository root to resolve file paths against (default: cwd).
-  --help         Show this help.
+  --state PATH Path to freshness JSON (default: <root>/draft/.state/freshness.json).
+  --root DIR Repository root to resolve file paths against (default: cwd).
+  --help Show this help.
 
 Output: JSON {fresh, stale_files, missing_files, reason}.
 Exit 0 fresh, 2 stale (still emits JSON), 1 invocation error.
@@ -127,7 +124,10 @@ json_array() {
     local first=true
     for x in "${arr[@]}"; do
         if $first; then first=false; else printf ','; fi
-        printf '"%s"' "$(json_escape "$x")"
+        # Escape quotes.
+        escaped="${x//\\/\\\\}"
+        escaped="${escaped//\"/\\\"}"
+        printf '"%s"' "$escaped"
     done
     printf ']'
 }
@@ -136,7 +136,7 @@ printf '{"fresh":%s,"stale_files":%s,"missing_files":%s,"reason":"%s"}\n' \
     "$fresh" \
     "$(json_array "${stale[@]+"${stale[@]}"}")" \
     "$(json_array "${missing[@]+"${missing[@]}"}")" \
-    "$(json_escape "$reason")"
+    "$reason"
 
 if [[ "$fresh" == "false" ]]; then
     exit 2

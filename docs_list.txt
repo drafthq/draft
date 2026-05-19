@@ -1,0 +1,10 @@
+coverage
+debugprovides
+documentationgenerates
+implementbuilds
+index
+jira-create
+new-trackcreates
+tech-debtfor
+testing-strategy
+tour(exploratory

@@ -1,13 +1,13 @@
 'use strict';
 
-const fs   = require('fs');
+const fs = require('fs');
 const path = require('path');
 const { walkFiles, countLinesFromContent, warn, initTreeSitter, walkNodeEnterLeave } = require('./util');
 
-const TS_EXTS       = new Set(['.ts', '.js', '.mjs', '.cjs']);
-const TSX_EXTS      = new Set(['.tsx', '.jsx']);
-const ALL_EXTS      = [...TS_EXTS, ...TSX_EXTS];
-const TS_EXTS_LIST  = ['.ts', '.js', '.mjs', '.cjs'];
+const TS_EXTS = new Set(['.ts', '.js', '.mjs', '.cjs']);
+const TSX_EXTS = new Set(['.tsx', '.jsx']);
+const ALL_EXTS = [...TS_EXTS, ...TSX_EXTS];
+const TS_EXTS_LIST = ['.ts', '.js', '.mjs', '.cjs'];
 const TSX_EXTS_LIST = ['.tsx', '.jsx'];
 
 /**
@@ -17,14 +17,14 @@ const TSX_EXTS_LIST = ['.tsx', '.jsx'];
  * Fallback: regex-based extraction (~90% accurate for common patterns).
  *
  * Extracts:
- *   functions  — function declarations, arrow functions, methods
- *   classes    — class, interface, and type alias declarations
- *   imports    — ES module import statements
- *   calls      — intra-file function call edges (tree-sitter only)
+ * functions — function declarations, arrow functions, methods
+ * classes — class, interface, and type alias declarations
+ * imports — ES module import statements
+ * calls — intra-file function call edges (tree-sitter only)
  *
- * @param {string}              repo
- * @param {RegExp[]}            excludeRes   pre-compiled exclude patterns
- * @param {Map<string,string[]>|null} allFiles   pre-collected file map, or null to walk
+ * @param {string} repo
+ * @param {RegExp[]} excludeRes pre-compiled exclude patterns
+ * @param {Map<string,string[]>|null} allFiles pre-collected file map, or null to walk
  */
 async function buildTsIndex(repo, excludeRes = [], allFiles = null) {
   const tsFiles = allFiles
@@ -32,26 +32,26 @@ async function buildTsIndex(repo, excludeRes = [], allFiles = null) {
     : walkFiles(repo, ALL_EXTS, excludeRes);
 
   const functions = [];
-  const classes   = [];
-  const imports   = [];
-  const calls     = [];
+  const classes = [];
+  const imports = [];
+  const calls = [];
 
   if (tsFiles.length === 0) return { functions, classes, imports, calls };
 
   await tryLoadParsers();
 
   for (const f of tsFiles) {
-    const rel    = path.relative(repo, f);
-    const parts  = rel.split(path.sep);
+    const rel = path.relative(repo, f);
+    const parts = rel.split(path.sep);
     const module = parts.length > 1 ? parts[0] : '__root__';
-    const ext    = path.extname(f);
+    const ext = path.extname(f);
 
     let content;
     try { content = fs.readFileSync(f).toString('utf8').replace(/\0/g, ''); }
     catch (_) { continue; }
 
     const totalLines = countLinesFromContent(content);
-    const useTsx     = TSX_EXTS.has(ext);
+    const useTsx = TSX_EXTS.has(ext);
 
     if (_parsers.ts || _parsers.tsx) {
       parseTsTreeSitter(content, rel, module, totalLines, functions, classes, imports, calls, useTsx);
@@ -112,10 +112,7 @@ async function tryLoadParsers() {
 }
 
 function parseTsTreeSitter(content, filePath, module, totalLines, functions, classes, imports, calls, useTsx) {
-  // For .tsx/.jsx files the TS parser will choke on JSX. Skip the cross-grammar
-  // fallback and route straight to the regex extractor so we don't emit half a
-  // file's symbols and zero call edges.
-  const parser = useTsx ? _parsers.tsx : (_parsers.ts || _parsers.tsx);
+  const parser = useTsx ? (_parsers.tsx || _parsers.ts) : (_parsers.ts || _parsers.tsx);
   if (!parser) {
     parseTsRegex(content, filePath, module, totalLines, functions, classes, imports);
     return;
@@ -126,9 +123,9 @@ function parseTsTreeSitter(content, filePath, module, totalLines, functions, cla
     const root = tree.rootNode;
 
     // State for tracking context during traversal
-    const funcStack  = []; // stack of enclosing function names
+    const funcStack = []; // stack of enclosing function names
     const classStack = []; // stack of enclosing class names (handles nesting)
-    let exportDepth  = 0;  // counter not bool: export{export{}} nests correctly
+    let exportDepth = 0; // counter not bool: export{export{}} nests correctly
 
     walkNodeEnterLeave(root,
       // enter
@@ -140,15 +137,15 @@ function parseTsTreeSitter(content, filePath, module, totalLines, functions, cla
 
           case 'function_declaration': {
             const nameNode = node.childForFieldName('name');
-            const name     = nameNode ? nameNode.text : '__anon__';
-            const isAsync  = !!node.children.find(c => c.type === 'async');
+            const name = nameNode ? nameNode.text : '__anon__';
+            const isAsync = !!node.children.find(c => c.type === 'async');
             functions.push({
               name, file: filePath, module,
-              line:     node.startPosition.row + 1,
-              lines:    totalLines,
+              line: node.startPosition.row + 1,
+              lines: totalLines,
               exported: exportDepth > 0,
-              class:    classStack.length > 0 ? classStack[classStack.length - 1] : null,
-              async:    isAsync,
+              class: classStack.length > 0 ? classStack[classStack.length - 1] : null,
+              async: isAsync,
             });
             funcStack.push(name);
             break;
@@ -156,16 +153,16 @@ function parseTsTreeSitter(content, filePath, module, totalLines, functions, cla
 
           case 'method_definition': {
             const nameNode = node.childForFieldName('name');
-            const name     = nameNode ? nameNode.text : '__anon__';
-            const isAsync  = !!node.children.find(c => c.type === 'async');
+            const name = nameNode ? nameNode.text : '__anon__';
+            const isAsync = !!node.children.find(c => c.type === 'async');
             if (name !== 'constructor') { // skip constructors — they're not independently callable
               functions.push({
                 name, file: filePath, module,
-                line:     node.startPosition.row + 1,
-                lines:    totalLines,
+                line: node.startPosition.row + 1,
+                lines: totalLines,
                 exported: false,
-                class:    classStack.length > 0 ? classStack[classStack.length - 1] : null,
-                async:    isAsync,
+                class: classStack.length > 0 ? classStack[classStack.length - 1] : null,
+                async: isAsync,
               });
             }
             funcStack.push(name);
@@ -177,15 +174,15 @@ function parseTsTreeSitter(content, filePath, module, totalLines, functions, cla
             const valueNode = node.childForFieldName('value');
             if (valueNode && (valueNode.type === 'arrow_function' || valueNode.type === 'function')) {
               const nameNode = node.childForFieldName('name');
-              const name     = nameNode ? nameNode.text : '__anon__';
-              const isAsync  = !!valueNode.children.find(c => c.type === 'async');
+              const name = nameNode ? nameNode.text : '__anon__';
+              const isAsync = !!valueNode.children.find(c => c.type === 'async');
               functions.push({
                 name, file: filePath, module,
-                line:     node.startPosition.row + 1,
-                lines:    totalLines,
+                line: node.startPosition.row + 1,
+                lines: totalLines,
                 exported: exportDepth > 0,
-                class:    classStack.length > 0 ? classStack[classStack.length - 1] : null,
-                async:    isAsync,
+                class: classStack.length > 0 ? classStack[classStack.length - 1] : null,
+                async: isAsync,
               });
               funcStack.push(name);
             }
@@ -194,14 +191,14 @@ function parseTsTreeSitter(content, filePath, module, totalLines, functions, cla
 
           case 'class_declaration': {
             const nameNode = node.childForFieldName('name');
-            const name     = nameNode ? nameNode.text : '__anon__';
+            const name = nameNode ? nameNode.text : '__anon__';
             classStack.push(name); // push before emitting so methods inside see the right class
             classes.push({
               name, file: filePath, module,
-              line:     node.startPosition.row + 1,
-              lines:    totalLines,
+              line: node.startPosition.row + 1,
+              lines: totalLines,
               exported: exportDepth > 0,
-              kind:     'class',
+              kind: 'class',
             });
             break;
           }
@@ -210,12 +207,12 @@ function parseTsTreeSitter(content, filePath, module, totalLines, functions, cla
             const nameNode = node.childForFieldName('name');
             if (nameNode) {
               classes.push({
-                name:     nameNode.text,
-                file:     filePath, module,
-                line:     node.startPosition.row + 1,
-                lines:    totalLines,
+                name: nameNode.text,
+                file: filePath, module,
+                line: node.startPosition.row + 1,
+                lines: totalLines,
                 exported: exportDepth > 0,
-                kind:     'interface',
+                kind: 'interface',
               });
             }
             break;
@@ -225,12 +222,12 @@ function parseTsTreeSitter(content, filePath, module, totalLines, functions, cla
             const nameNode = node.childForFieldName('name');
             if (nameNode) {
               classes.push({
-                name:     nameNode.text,
-                file:     filePath, module,
-                line:     node.startPosition.row + 1,
-                lines:    totalLines,
+                name: nameNode.text,
+                file: filePath, module,
+                line: node.startPosition.row + 1,
+                lines: totalLines,
                 exported: exportDepth > 0,
-                kind:     'type',
+                kind: 'type',
               });
             }
             break;
@@ -238,8 +235,8 @@ function parseTsTreeSitter(content, filePath, module, totalLines, functions, cla
 
           case 'import_statement': {
             const sourceNode = node.children.find(c => c.type === 'string');
-            const from       = sourceNode ? sourceNode.text.replace(/['"]/g, '') : '';
-            const names      = [];
+            const from = sourceNode ? sourceNode.text.replace(/['"]/g, '') : '';
+            const names = [];
             // Collect named imports from import_clause → named_imports
             for (const child of node.children) {
               if (child.type === 'import_clause') {
@@ -280,7 +277,7 @@ function parseTsTreeSitter(content, filePath, module, totalLines, functions, cla
               calls.push({
                 kind: 'ts-call', from: enclosing, to: callee,
                 fromFile: filePath, module,
-                line:     node.startPosition.row + 1,
+                line: node.startPosition.row + 1,
                 resolved: false,
                 confidence,
               });
@@ -329,13 +326,13 @@ function parseTsRegex(content, filePath, module, totalLines, functions, classes,
   const lines = content.split('\n');
 
   for (let i = 0; i < lines.length; i++) {
-    const line    = lines[i];
+    const line = lines[i];
     const trimmed = line.trim();
     if (trimmed.startsWith('//') || trimmed === '') continue;
 
     const lineNo = i + 1;
 
-    // import { foo } from './bar'  or  import foo from './bar'
+    // import { foo } from './bar' or import foo from './bar'
     const importMatch = trimmed.match(/^import\s+(?:type\s+)?(?:.*?\s+from\s+)?['"]([^'"]+)['"]/);
     if (importMatch) {
       imports.push({ from: importMatch[1], names: [], file: filePath, module });
@@ -346,11 +343,11 @@ function parseTsRegex(content, filePath, module, totalLines, functions, classes,
     const funcMatch = trimmed.match(/^(?:export\s+)?(?:async\s+)?function\s+(\w+)\s*[(<]/);
     if (funcMatch) {
       functions.push({
-        name:     funcMatch[1],
-        file:     filePath, module,
-        line:     lineNo, lines: totalLines,
+        name: funcMatch[1],
+        file: filePath, module,
+        line: lineNo, lines: totalLines,
         exported: trimmed.startsWith('export'),
-        class:    null, async: trimmed.includes('async'),
+        class: null, async: trimmed.includes('async'),
       });
       continue;
     }
@@ -359,11 +356,11 @@ function parseTsRegex(content, filePath, module, totalLines, functions, classes,
     const arrowMatch = trimmed.match(/^(?:export\s+)?(?:const|let)\s+(\w+)\s*=\s*(?:async\s+)?(?:\(|function)/);
     if (arrowMatch) {
       functions.push({
-        name:     arrowMatch[1],
-        file:     filePath, module,
-        line:     lineNo, lines: totalLines,
+        name: arrowMatch[1],
+        file: filePath, module,
+        line: lineNo, lines: totalLines,
         exported: trimmed.startsWith('export'),
-        class:    null, async: trimmed.includes('async'),
+        class: null, async: trimmed.includes('async'),
       });
       continue;
     }
@@ -372,11 +369,11 @@ function parseTsRegex(content, filePath, module, totalLines, functions, classes,
     const classMatch = trimmed.match(/^(?:export\s+)?(?:abstract\s+)?class\s+(\w+)/);
     if (classMatch) {
       classes.push({
-        name:     classMatch[1],
-        file:     filePath, module,
-        line:     lineNo, lines: totalLines,
+        name: classMatch[1],
+        file: filePath, module,
+        line: lineNo, lines: totalLines,
         exported: trimmed.startsWith('export'),
-        kind:     'class',
+        kind: 'class',
       });
       continue;
     }
@@ -385,11 +382,11 @@ function parseTsRegex(content, filePath, module, totalLines, functions, classes,
     const ifaceMatch = trimmed.match(/^(?:export\s+)?interface\s+(\w+)/);
     if (ifaceMatch) {
       classes.push({
-        name:     ifaceMatch[1],
-        file:     filePath, module,
-        line:     lineNo, lines: totalLines,
+        name: ifaceMatch[1],
+        file: filePath, module,
+        line: lineNo, lines: totalLines,
         exported: trimmed.startsWith('export'),
-        kind:     'interface',
+        kind: 'interface',
       });
       continue;
     }
@@ -398,11 +395,11 @@ function parseTsRegex(content, filePath, module, totalLines, functions, classes,
     const typeMatch = trimmed.match(/^(?:export\s+)?type\s+(\w+)\s*[=<]/);
     if (typeMatch) {
       classes.push({
-        name:     typeMatch[1],
-        file:     filePath, module,
-        line:     lineNo, lines: totalLines,
+        name: typeMatch[1],
+        file: filePath, module,
+        line: lineNo, lines: totalLines,
         exported: trimmed.startsWith('export'),
-        kind:     'type',
+        kind: 'type',
       });
     }
   }

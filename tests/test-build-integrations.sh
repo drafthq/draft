@@ -16,7 +16,7 @@
 # - Individual skill inclusion/exclusion
 #
 # Usage:
-#   ./tests/test-build-integrations.sh
+# ./tests/test-build-integrations.sh
 #
 # Expected runtime: < 2 seconds
 # Exit code: Number of failed tests (0 = all pass)

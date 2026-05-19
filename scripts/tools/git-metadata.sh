@@ -2,12 +2,17 @@
 # git-metadata.sh — emit deterministic git metadata for Draft reports.
 #
 # Output is YAML frontmatter by default; --json emits the same fields as JSON.
+# Use --project-metadata to write/update draft/metadata.json (project-level
+# single source of truth for git state, used by all project-level artifacts).
 #
 # Usage:
-#   scripts/tools/git-metadata.sh [--yaml|--json]
-#                                 [--project NAME] [--module NAME]
-#                                 [--track-id ID] [--generated-by CMD]
-#                                 [--base BRANCH]
+# scripts/tools/git-metadata.sh [--yaml|--json]
+# [--project NAME] [--module NAME]
+# [--track-id ID] [--generated-by CMD]
+# [--base BRANCH]
+# scripts/tools/git-metadata.sh --project-metadata [--project NAME]
+# [--generated-by CMD] [--base BRANCH]
+# [--output-dir DIR]
 #
 # Exit codes: 0 OK, 1 not a git repo or invocation error.
 set -euo pipefail
@@ -21,6 +26,8 @@ MODULE="root"
 TRACK_ID="null"
 GENERATED_BY=""
 BASE_BRANCH="main"
+WRITE_PROJECT_METADATA=0
+OUTPUT_DIR="."
 
 usage() {
     cat <<'EOF'
@@ -31,16 +38,24 @@ Usage:
                                 [--project NAME] [--module NAME]
                                 [--track-id ID] [--generated-by CMD]
                                 [--base BRANCH]
+  scripts/tools/git-metadata.sh --project-metadata [--project NAME]
+                                [--generated-by CMD] [--base BRANCH]
+                                [--output-dir DIR]
 
 Flags:
-  --yaml           Emit YAML frontmatter (default).
-  --json           Emit JSON object.
-  --project NAME   Project name (default: basename of repo).
-  --module NAME    Module name (default: "root").
-  --track-id ID    Track id (default: null).
-  --generated-by   Command or skill name that produced the report.
-  --base BRANCH    Upstream branch to compare against (default: main).
-  --help           Show this help.
+  --yaml Emit YAML frontmatter (default).
+  --json Emit JSON object.
+  --project-metadata Write git state to draft/metadata.json (project-level
+                          single source of truth). Creates the file if absent,
+                          merges git.* and synced_to_commit if present.
+  --project NAME Project name (default: basename of repo).
+  --module NAME Module name (default: "root").
+  --track-id ID Track id (default: null).
+  --generated-by CMD Command or skill name that produced the report.
+  --base BRANCH Upstream branch to compare against (default: main).
+  --output-dir DIR Directory containing draft/ (default: cwd). Used with
+                          --project-metadata.
+  --help Show this help.
 
 Exit codes: 0 OK, 1 not a git repo or invocation error.
 EOF
@@ -50,11 +65,13 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --yaml) FORMAT="yaml"; shift;;
         --json) FORMAT="json"; shift;;
+        --project-metadata) WRITE_PROJECT_METADATA=1; shift;;
         --project) PROJECT="$2"; shift 2;;
         --module) MODULE="$2"; shift 2;;
         --track-id) TRACK_ID="$2"; shift 2;;
         --generated-by) GENERATED_BY="$2"; shift 2;;
         --base) BASE_BRANCH="$2"; shift 2;;
+        --output-dir) OUTPUT_DIR="$2"; shift 2;;
         --help|-h) usage; exit 0;;
         *) echo "Unknown flag: $1" >&2; usage >&2; exit 1;;
     esac
@@ -99,6 +116,42 @@ escape_for_yaml() {
     s="${s//\"/\\\"}"
     printf '%s' "$s"
 }
+
+# --project-metadata: write draft/metadata.json and exit
+if (( WRITE_PROJECT_METADATA )); then
+    DRAFT_DIR="$OUTPUT_DIR/draft"
+    META_FILE="$DRAFT_DIR/metadata.json"
+    if [[ ! -d "$DRAFT_DIR" ]]; then
+        echo "ERROR: $DRAFT_DIR not found — run draft:init first" >&2
+        exit 1
+    fi
+    CMD="${GENERATED_BY:-draft:init}"
+    cat > "$META_FILE" <<EOF
+{
+  "\$schema": "Draft Project Metadata Schema",
+  "\$description": "Single source of truth for project-level git state. Read by all project-level skills. Written by $CMD.",
+  "project": "$(json_escape "$PROJECT")",
+  "schema_version": "1.0.0",
+  "generated_by": "$(json_escape "$CMD")",
+  "generated_at": "$GENERATED_AT",
+  "git": {
+    "branch": "$(json_escape "$LOCAL_BRANCH")",
+    "remote": "$(json_escape "$REMOTE_BRANCH")",
+    "commit": "$FULL_SHA",
+    "commit_short": "$SHORT_SHA",
+    "commit_date": "$COMMIT_DATE",
+    "commit_message": "$(json_escape "$COMMIT_MESSAGE")",
+    "dirty": $DIRTY,
+    "base_branch": "$(json_escape "$BASE_BRANCH")",
+    "commits_ahead_base": $AHEAD,
+    "commits_behind_base": $BEHIND
+  },
+  "synced_to_commit": "$FULL_SHA"
+}
+EOF
+    echo "Written: $META_FILE (synced_to_commit=$FULL_SHA)"
+    exit 0
+fi
 
 if [[ "$FORMAT" == "json" ]]; then
     cat <<EOF

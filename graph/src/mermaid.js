@@ -1,22 +1,22 @@
 'use strict';
 
-const fs   = require('fs');
+const fs = require('fs');
 const path = require('path');
 
 /**
  * Generate Mermaid diagram text from graph JSONL data.
  *
  * Supports two diagram types:
- *   - module-deps:  Module dependency graph from module-graph.jsonl
- *   - proto-map:    Proto service topology from proto-index.jsonl
+ * - module-deps: Module dependency graph from module-graph.jsonl
+ * - proto-map: Proto service topology from proto-index.jsonl
  *
  * Large graphs are automatically filtered to keep diagrams readable.
  */
 
-const MAX_NODES_FULL    = 30;
-const MAX_EDGES_FULL    = 80;
+const MAX_NODES_FULL = 30;
+const MAX_EDGES_FULL = 80;
 const DEFAULT_TOP_EDGES = 20;
-const WEIGHT_DIVISOR    = 10;
+const WEIGHT_DIVISOR = 10;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // LOADERS
@@ -26,7 +26,6 @@ function loadJsonl(filePath) {
   if (!fs.existsSync(filePath)) return [];
   return fs.readFileSync(filePath, 'utf8')
     .split('\n')
-    .map(line => line.replace(/\r$/, ''))  // tolerate CRLF
     .filter(Boolean)
     .map(line => { try { return JSON.parse(line); } catch (_) { return null; } })
     .filter(Boolean);
@@ -37,18 +36,18 @@ function loadJsonl(filePath) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * @param {string} graphDir  Path to draft/graph/ directory
+ * @param {string} graphDir Path to draft/graph/ directory
  * @param {object} opts
- * @param {Array}  [opts.records]        Pre-loaded module-graph records (skips disk read)
- * @param {number} [opts.maxEdges]       Max edges to show (default: auto)
- * @param {number} [opts.minWeight]      Min edge weight to include (default: auto)
- * @param {string} [opts.direction]      'LR' or 'TD' (default: 'LR')
+ * @param {Array} [opts.records] Pre-loaded module-graph records (skips disk read)
+ * @param {number} [opts.maxEdges] Max edges to show (default: auto)
+ * @param {number} [opts.minWeight] Min edge weight to include (default: auto)
+ * @param {string} [opts.direction] 'LR' or 'TD' (default: 'LR')
  * @returns {{ mermaid: string, filtered: boolean, stats: object }}
  */
 function generateModuleDeps(graphDir, opts = {}) {
   const records = opts.records || loadJsonl(path.join(graphDir, 'module-graph.jsonl'));
-  const nodes   = records.filter(r => r.kind === 'node');
-  const edges   = records.filter(r => r.kind === 'edge')
+  const nodes = records.filter(r => r.kind === 'node');
+  const edges = records.filter(r => r.kind === 'edge')
     .sort((a, b) => b.weight - a.weight);
 
   if (nodes.length === 0) {
@@ -56,14 +55,14 @@ function generateModuleDeps(graphDir, opts = {}) {
   }
 
   const direction = opts.direction || 'LR';
-  let filtered    = false;
+  let filtered = false;
   let visibleEdges = edges;
 
   if (nodes.length > MAX_NODES_FULL || edges.length > MAX_EDGES_FULL) {
     filtered = true;
     const maxWeight = edges.length > 0 ? edges[0].weight : 0;
-    const autoMin   = opts.minWeight || Math.max(1, Math.floor(maxWeight / WEIGHT_DIVISOR));
-    const maxEdges  = opts.maxEdges || DEFAULT_TOP_EDGES;
+    const autoMin = opts.minWeight || Math.max(1, Math.floor(maxWeight / WEIGHT_DIVISOR));
+    const maxEdges = opts.maxEdges || DEFAULT_TOP_EDGES;
 
     visibleEdges = edges.filter(e => e.weight >= autoMin).slice(0, maxEdges);
   }
@@ -80,8 +79,8 @@ function generateModuleDeps(graphDir, opts = {}) {
 
   // Build collision-safe node ID map: sanitizeId can produce identical results
   // for distinct originals (e.g. "auth-service" and "auth_service" → "auth_service").
-  const usedIds   = new Map(); // sanitized base → count
-  const nodeIdMap = new Map(); // original id   → final sanitized id
+  const usedIds = new Map(); // sanitized base → count
+  const nodeIdMap = new Map(); // original id → final sanitized id
 
   for (const n of visibleNodes) {
     const base = sanitizeId(n.id);
@@ -97,7 +96,7 @@ function generateModuleDeps(graphDir, opts = {}) {
 
   const nodeLabels = new Map();
   for (const n of visibleNodes) {
-    const safeId     = nodeIdMap.get(n.id);
+    const safeId = nodeIdMap.get(n.id);
     const totalFiles = n.files ? n.files.total : 0;
     const label = totalFiles > 0
       ? `${safeId}["${n.id}<br/>${totalFiles} files"]`
@@ -110,7 +109,7 @@ function generateModuleDeps(graphDir, opts = {}) {
   const lines = [`graph ${direction}`];
 
   for (const [id, label] of nodeLabels) {
-    lines.push(`    ${label}`);
+    lines.push(` ${label}`);
   }
 
   for (const e of visibleEdges) {
@@ -119,7 +118,7 @@ function generateModuleDeps(graphDir, opts = {}) {
     const tgt = nodeIdMap.get(e.target) || sanitizeId(e.target);
     const isCycle = cycleEdges.has(`${e.source}->${e.target}`);
     const arrow = isCycle ? '-.->' : '-->';
-    lines.push(`    ${src} ${arrow}|${e.weight}| ${tgt}`);
+    lines.push(` ${src} ${arrow}|${e.weight}| ${tgt}`);
   }
 
   const stats = {
@@ -137,15 +136,15 @@ function generateModuleDeps(graphDir, opts = {}) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * @param {string} graphDir  Path to draft/graph/ directory
+ * @param {string} graphDir Path to draft/graph/ directory
  * @param {object} opts
- * @param {Array}  [opts.records]   Pre-loaded proto-index records (skips disk read)
+ * @param {Array} [opts.records] Pre-loaded proto-index records (skips disk read)
  * @returns {{ mermaid: string, stats: object }}
  */
 function generateProtoMap(graphDir, opts = {}) {
-  const records  = opts.records || loadJsonl(path.join(graphDir, 'proto-index.jsonl'));
+  const records = opts.records || loadJsonl(path.join(graphDir, 'proto-index.jsonl'));
   const services = records.filter(r => r.kind === 'service');
-  const rpcs     = records.filter(r => r.kind === 'rpc');
+  const rpcs = records.filter(r => r.kind === 'rpc');
 
   if (services.length === 0) {
     return { mermaid: '', stats: { services: 0, rpcs: 0 } };
@@ -165,12 +164,12 @@ function generateProtoMap(graphDir, opts = {}) {
   }
 
   // Build collision-safe node ID map for service nodes across all modules.
-  const usedSvcIds   = new Map(); // sanitized base → count
+  const usedSvcIds = new Map(); // sanitized base → count
   const svcNodeIdMap = new Map(); // "${mod}::${svc.name}" → final sanitized id
 
   for (const [mod, svcList] of byModule) {
     for (const svc of svcList) {
-      const base  = sanitizeId(`${mod}_${svc.name}`);
+      const base = sanitizeId(`${mod}_${svc.name}`);
       const mapKey = `${mod}::${svc.name}`;
       if (usedSvcIds.has(base)) {
         const cnt = usedSvcIds.get(base) + 1;
@@ -184,7 +183,7 @@ function generateProtoMap(graphDir, opts = {}) {
   }
 
   // Build collision-safe subgraph IDs for modules.
-  const usedModIds   = new Map(); // sanitized base → count
+  const usedModIds = new Map(); // sanitized base → count
   const modNodeIdMap = new Map(); // original mod → final sanitized id
 
   for (const mod of byModule.keys()) {
@@ -203,23 +202,23 @@ function generateProtoMap(graphDir, opts = {}) {
 
   for (const [mod, svcList] of byModule) {
     const safeMod = modNodeIdMap.get(mod);
-    lines.push(`    subgraph ${safeMod}["${mod}"]`);
+    lines.push(` subgraph ${safeMod}["${mod}"]`);
 
     for (const svc of svcList) {
       const mapKey = `${mod}::${svc.name}`;
       const rpcKey = `${svc.module}::${svc.name}`;
-      const count  = rpcCounts.get(rpcKey) || 0;
+      const count = rpcCounts.get(rpcKey) || 0;
       const nodeId = svcNodeIdMap.get(mapKey);
-      lines.push(`        ${nodeId}["${svc.name}<br/>${count} RPCs"]`);
+      lines.push(` ${nodeId}["${svc.name}<br/>${count} RPCs"]`);
     }
 
-    lines.push('    end');
+    lines.push(' end');
   }
 
   const stats = {
     services: services.length,
-    rpcs:     rpcs.length,
-    modules:  byModule.size,
+    rpcs: rpcs.length,
+    modules: byModule.size,
   };
 
   return { mermaid: lines.join('\n'), stats };
@@ -231,7 +230,7 @@ function generateProtoMap(graphDir, opts = {}) {
 
 /**
  * @param {string} graphDir
- * @returns {string}  Markdown text with fenced Mermaid blocks, ready for injection
+ * @returns {string} Markdown text with fenced Mermaid blocks, ready for injection
  */
 function generateAllMermaid(graphDir) {
   const sections = [];

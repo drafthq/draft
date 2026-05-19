@@ -25,7 +25,7 @@ CYAN='\033[0;36m'
 BOLD='\033[1m'
 NC='\033[0m'
 
-log()  { echo -e "${CYAN}[analyze]${NC} $1"; }
+log() { echo -e "${CYAN}[analyze]${NC} $1"; }
 done_() { echo -e "${GREEN}[done]${NC} $1"; }
 warn() { echo -e "${YELLOW}[warn]${NC} $1"; }
 
@@ -40,7 +40,7 @@ h3() { echo -e "\n### $1\n" >> "$REPORT"; }
 row() { echo "$1" >> "$REPORT"; }
 blank() { echo "" >> "$REPORT"; }
 code_start() { echo '```' >> "$REPORT"; }
-code_end()   { echo '```' >> "$REPORT"; }
+code_end() { echo '```' >> "$REPORT"; }
 table_header() { echo "$1" >> "$REPORT"; echo "$2" >> "$REPORT"; }
 
 # =============================================================================
@@ -232,7 +232,7 @@ h2 "3. Size Breakdown"
 h3 "3.1 Top-level Directories by Size"
 blank
 row '```'
-du -sh "$DIR"/*/  2>/dev/null | sort -rh | head -20 >> "$REPORT"
+du -sh "$DIR"/*/ 2>/dev/null | sort -rh | head -20 >> "$REPORT"
 row '```'
 blank
 
@@ -249,7 +249,7 @@ row "| Language | Extension | Files | Lines | Est. Symbols |"
 row "|----------|-----------|-------|-------|--------------|"
 
 # Only emit rows for languages actually present (file count > 0)
-declare -A LANG_LINES  # store for later use
+declare -A LANG_LINES # store for later use
 
 emit_lang_row() {
   local label="$1" exts="$2" files="$3" avg_lines="$4" note="$5"
@@ -272,16 +272,16 @@ emit_lang_row() {
   row "| $label | .$exts | $files | $(printf "%'d" $lines) | $est_sym |"
 }
 
-emit_lang_row "C++ Source"  "cc,cpp,cxx"  "$CC_COUNT"    30  ""
-emit_lang_row "C/C++ Header" "h,hpp,hxx"  "$H_COUNT"     20  "decls"
-emit_lang_row "C Source"    "c"           "$C_COUNT"     30  ""
-emit_lang_row "Go"          "go"          "$GO_COUNT"    20  ""
-emit_lang_row "Python"      "py"          "$PY_COUNT"    25  ""
-emit_lang_row "Java"        "java"        "$JAVA_COUNT"  25  ""
-emit_lang_row "Rust"        "rs"          "$RUST_COUNT"  25  ""
-emit_lang_row "JavaScript"  "js,jsx"      "$JS_COUNT"    25  ""
-emit_lang_row "TypeScript"  "ts,tsx"      "$TS_COUNT"    25  ""
-emit_lang_row "Protobuf"    "proto"       "$PROTO_COUNT"  0  "service defs"
+emit_lang_row "C++ Source" "cc,cpp,cxx" "$CC_COUNT" 30 ""
+emit_lang_row "C/C++ Header" "h,hpp,hxx" "$H_COUNT" 20 "decls"
+emit_lang_row "C Source" "c" "$C_COUNT" 30 ""
+emit_lang_row "Go" "go" "$GO_COUNT" 20 ""
+emit_lang_row "Python" "py" "$PY_COUNT" 25 ""
+emit_lang_row "Java" "java" "$JAVA_COUNT" 25 ""
+emit_lang_row "Rust" "rs" "$RUST_COUNT" 25 ""
+emit_lang_row "JavaScript" "js,jsx" "$JS_COUNT" 25 ""
+emit_lang_row "TypeScript" "ts,tsx" "$TS_COUNT" 25 ""
+emit_lang_row "Protobuf" "proto" "$PROTO_COUNT" 0 "service defs"
 
 blank
 
@@ -304,13 +304,13 @@ blank
 # Build dynamic header based on which languages are present
 MOD_HEADER="| Module | Size"
 MOD_SEP="|--------|------"
-[ $CC_COUNT -gt 0 ]    && { MOD_HEADER="$MOD_HEADER | .cc"; MOD_SEP="$MOD_SEP|-----"; }
-[ $H_COUNT -gt 0 ]     && { MOD_HEADER="$MOD_HEADER | .h";  MOD_SEP="$MOD_SEP|----"; }
-[ $GO_COUNT -gt 0 ]    && { MOD_HEADER="$MOD_HEADER | .go"; MOD_SEP="$MOD_SEP|-----"; }
-[ $PY_COUNT -gt 0 ]    && { MOD_HEADER="$MOD_HEADER | .py"; MOD_SEP="$MOD_SEP|-----"; }
-[ $JAVA_COUNT -gt 0 ]  && { MOD_HEADER="$MOD_HEADER | .java"; MOD_SEP="$MOD_SEP|------"; }
-[ $RUST_COUNT -gt 0 ]  && { MOD_HEADER="$MOD_HEADER | .rs"; MOD_SEP="$MOD_SEP|-----"; }
-[ $TS_COUNT -gt 0 ]    && { MOD_HEADER="$MOD_HEADER | .ts"; MOD_SEP="$MOD_SEP|-----"; }
+[ $CC_COUNT -gt 0 ] && { MOD_HEADER="$MOD_HEADER | .cc"; MOD_SEP="$MOD_SEP|-----"; }
+[ $H_COUNT -gt 0 ] && { MOD_HEADER="$MOD_HEADER | .h"; MOD_SEP="$MOD_SEP|----"; }
+[ $GO_COUNT -gt 0 ] && { MOD_HEADER="$MOD_HEADER | .go"; MOD_SEP="$MOD_SEP|-----"; }
+[ $PY_COUNT -gt 0 ] && { MOD_HEADER="$MOD_HEADER | .py"; MOD_SEP="$MOD_SEP|-----"; }
+[ $JAVA_COUNT -gt 0 ] && { MOD_HEADER="$MOD_HEADER | .java"; MOD_SEP="$MOD_SEP|------"; }
+[ $RUST_COUNT -gt 0 ] && { MOD_HEADER="$MOD_HEADER | .rs"; MOD_SEP="$MOD_SEP|-----"; }
+[ $TS_COUNT -gt 0 ] && { MOD_HEADER="$MOD_HEADER | .ts"; MOD_SEP="$MOD_SEP|-----"; }
 [ $PROTO_COUNT -gt 0 ] && { MOD_HEADER="$MOD_HEADER | .proto"; MOD_SEP="$MOD_SEP|-------"; }
 MOD_HEADER="$MOD_HEADER | Tests | Notes |"
 MOD_SEP="$MOD_SEP|-------|-------|"
@@ -476,7 +476,7 @@ for subdir in "$DIR"/*/; do
   MOD=$(basename "$subdir")
   LARGE=$(find "$subdir" -type f \( -name "*.cc" -o -name "*.h" \) \
     -exec wc -l {} \; 2>/dev/null | awk '$1>1000' | wc -l)
-  [ $LARGE -gt 0 ] && echo "  $MOD: $LARGE files > 1000 lines" >> "$REPORT"
+  [ $LARGE -gt 0 ] && echo " $MOD: $LARGE files > 1000 lines" >> "$REPORT"
 done
 row '```'
 blank
@@ -574,7 +574,7 @@ for subdir in "$DIR"/*/; do
   [ -d "$subdir" ] || continue
   MOD=$(basename "$subdir")
   TST=$(find "$subdir" -name "*test*" 2>/dev/null | wc -l)
-  [ $TST -eq 0 ] && echo "  $MOD (no test files)" >> "$REPORT"
+  [ $TST -eq 0 ] && echo " $MOD (no test files)" >> "$REPORT"
 done
 row '```'
 blank
@@ -637,7 +637,7 @@ fi
 h3 "9.3 Python Symbol Counts"
 blank
 if [ "$PY_COUNT" -gt 0 ]; then
-  PY_FUNCS=$(grep -r "^def \|^    def " "$DIR" --include="*.py" -h 2>/dev/null | wc -l)
+  PY_FUNCS=$(grep -r "^def \|^ def " "$DIR" --include="*.py" -h 2>/dev/null | wc -l)
   PY_CLASSES=$(grep -r "^class " "$DIR" --include="*.py" -h 2>/dev/null | wc -l)
   cat >> "$REPORT" << EOF
 | Symbol Type | Count |
@@ -705,7 +705,7 @@ for subdir in "$DIR"/*/; do
   [ -d "$subdir" ] || continue
   MOD=$(basename "$subdir")
   BLD=$(find "$subdir" \( -name "CMakeLists.txt" -o -name "Makefile" -o -name "BUILD" -o -name "*.bzl" \) 2>/dev/null | wc -l)
-  [ $BLD -gt 0 ] && echo "  $MOD: $BLD build files" >> "$REPORT"
+  [ $BLD -gt 0 ] && echo " $MOD: $BLD build files" >> "$REPORT"
 done
 row '```'
 blank
@@ -724,8 +724,8 @@ EST_NODES=$(( CPP_CLASSES + CPP_STRUCTS + GO_FUNCS + PROTO_COUNT * 5 + CC_COUNT 
 EST_EDGES=$(find "$DIR" -type f \( -name "*.cc" -o -name "*.h" \) \
   -exec grep -c "^#include" {} \; 2>/dev/null | \
   awk '{s+=$1} END {print s}')
-EST_NODES_JSONL=$(( EST_NODES * 200 / 1024 / 1024 ))  # ~200 bytes per node
-EST_EDGES_JSONL=$(( EST_EDGES * 150 / 1024 / 1024 ))  # ~150 bytes per edge
+EST_NODES_JSONL=$(( EST_NODES * 200 / 1024 / 1024 )) # ~200 bytes per node
+EST_EDGES_JSONL=$(( EST_EDGES * 150 / 1024 / 1024 )) # ~150 bytes per edge
 
 cat >> "$REPORT" << EOF
 ### 11.1 Estimated Graph Size
@@ -780,13 +780,13 @@ EOF
 
 row '```'
 echo "Exclusion patterns:" >> "$REPORT"
-echo "  *.pb.cc *.pb.h          — protobuf generated" >> "$REPORT"
-echo "  *_generated.*           — generated code" >> "$REPORT"
-echo "  */test/* *_test.cc      — test files (index separately)" >> "$REPORT"
-echo "  */third_party/*         — vendored deps" >> "$REPORT"
-echo "  */vendor/*              — vendored deps" >> "$REPORT"
-echo "  *.json *.yaml *.csv     — data files" >> "$REPORT"
-echo "  *.pem *.key *.crt       — certs/keys" >> "$REPORT"
+echo " *.pb.cc *.pb.h — protobuf generated" >> "$REPORT"
+echo " *_generated.* — generated code" >> "$REPORT"
+echo " */test/* *_test.cc — test files (index separately)" >> "$REPORT"
+echo " */third_party/* — vendored deps" >> "$REPORT"
+echo " */vendor/* — vendored deps" >> "$REPORT"
+echo " *.json *.yaml *.csv — data files" >> "$REPORT"
+echo " *.pem *.key *.crt — certs/keys" >> "$REPORT"
 echo "Generated count in repo: $GEN_COUNT files" >> "$REPORT"
 row '```'
 blank
@@ -813,8 +813,8 @@ analyzed: $TIMESTAMP
 
 indexer:
   cpp:
-    method: include-graph        # grep-based, 100% accurate
-    symbol_extraction: regex     # class/struct/namespace patterns
+    method: include-graph # grep-based, 100% accurate
+    symbol_extraction: regex # class/struct/namespace patterns
     exclude_generated: true
     exclude_patterns:
       - "*.pb.cc"
@@ -823,24 +823,24 @@ indexer:
       - "*/test/*"
       - "*_test.cc"
   go:
-    method: tree-sitter          # accurate for Go
+    method: tree-sitter # accurate for Go
   proto:
-    method: proto-parser         # dedicated proto parser
+    method: proto-parser # dedicated proto parser
 
 graph_levels:
   module_graph:
     always_load: true
-    nodes: directory             # top-level dirs = modules
+    nodes: directory # top-level dirs = modules
     edges: include_cross_module
   file_graph:
-    load_on_demand: true         # per module session
+    load_on_demand: true # per module session
     nodes: source_files
     edges: include_within_module
   proto_index:
     always_load: true
     nodes: services_and_messages
   symbol_index:
-    load_on_demand: true         # only for bughunt/validate
+    load_on_demand: true # only for bughunt/validate
     nodes: classes_structs_namespaces
 
 modules:
@@ -850,7 +850,7 @@ for subdir in "$DIR"/*/; do
   [ -d "$subdir" ] || continue
   MOD=$(basename "$subdir")
   MOD_SIZE=$(du -sh "$subdir" 2>/dev/null | cut -f1)
-  echo "  $MOD:  # $MOD_SIZE" >> "$REPORT"
+  echo " $MOD: # $MOD_SIZE" >> "$REPORT"
 done
 
 row '```'
@@ -894,11 +894,11 @@ echo -e "${BOLD}=== Analysis Complete ===${NC}"
 echo -e "Report written to: ${GREEN}$OUTPUT${NC}"
 echo ""
 echo "Key findings:"
-echo -e "  Total source files:   ${CYAN}$(( CC_COUNT + H_COUNT + GO_COUNT ))${NC}"
-echo -e "  C++ lines of code:    ${CYAN}$(printf "%'d" $CC_LINES)${NC}"
-echo -e "  Estimated symbols:    ${CYAN}~$(( CPP_CLASSES + CPP_STRUCTS ))${NC} classes/structs"
-echo -e "  Proto RPCs:           ${CYAN}$RPC_COUNT${NC}"
-echo -e "  Top-level modules:    ${CYAN}$(ls -d "$DIR"/*/ 2>/dev/null | wc -l)${NC}"
-echo -e "  Est. #include edges:  ${CYAN}~$EST_EDGES${NC}"
-echo -e "  Files > 1000 lines:   ${CYAN}$LARGE_FILES${NC}"
+echo -e " Total source files: ${CYAN}$(( CC_COUNT + H_COUNT + GO_COUNT ))${NC}"
+echo -e " C++ lines of code: ${CYAN}$(printf "%'d" $CC_LINES)${NC}"
+echo -e " Estimated symbols: ${CYAN}~$(( CPP_CLASSES + CPP_STRUCTS ))${NC} classes/structs"
+echo -e " Proto RPCs: ${CYAN}$RPC_COUNT${NC}"
+echo -e " Top-level modules: ${CYAN}$(ls -d "$DIR"/*/ 2>/dev/null | wc -l)${NC}"
+echo -e " Est. #include edges: ${CYAN}~$EST_EDGES${NC}"
+echo -e " Files > 1000 lines: ${CYAN}$LARGE_FILES${NC}"
 echo ""

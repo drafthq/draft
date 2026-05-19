@@ -22,7 +22,7 @@
             ]
         },
         {
-            cmd: '/draft:new-track "Add user authentication"',
+            cmd: '/draft:plan "Add user authentication"',
             output: [
                 { text: 'Starting collaborative intake...', cls: 'out-info' },
                 { text: 'Loading context: .ai-context.md, tech-stack.md', cls: 'out-info' },

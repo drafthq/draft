@@ -2,19 +2,19 @@
 # parse-git-log.sh — parse conventional commits into structured JSONL.
 #
 # Output one JSON object per commit:
-#   {sha, type, scope, track_id, subject, author, timestamp, files_changed}
+# {sha, type, scope, track_id, subject, author, timestamp, files_changed}
 #
 # Conventional commit subject: "type(scope): subject"
-#   type may end in "!" to denote breaking change.
+# type may end in "!" to denote breaking change.
 #
 # track_id:
-#   - extracted from the scope if it matches --scope-pattern (default none)
-#   - OR from the subject if a literal `[TRACK-123]` / `(TRACK-123)` appears
-#   - else null
+# - extracted from the scope if it matches --scope-pattern (default none)
+# - OR from the subject if a literal `[TRACK-123]` / `(TRACK-123)` appears
+# - else null
 #
 # Usage:
-#   scripts/tools/parse-git-log.sh [--since RANGE] [--limit N]
-#                                  [--scope-pattern REGEX] [--branch REF]
+# scripts/tools/parse-git-log.sh [--since RANGE] [--limit N]
+# [--scope-pattern REGEX] [--branch REF]
 #
 # Exit codes: 0 OK, 1 invocation error.
 set -euo pipefail
@@ -36,11 +36,11 @@ Usage:
                                  [--scope-pattern REGEX] [--branch REF]
 
 Flags:
-  --since RANGE        Passed to git log --since (e.g. "7d", "2 weeks ago").
-  --limit N            Max number of commits (git log -n N).
-  --scope-pattern RE   Extended regex; if a commit's scope matches, it becomes the track_id.
-  --branch REF         Branch/ref to inspect (default: HEAD).
-  --help               Show this help.
+  --since RANGE Passed to git log --since (e.g. "7d", "2 weeks ago").
+  --limit N Max number of commits (git log -n N).
+  --scope-pattern RE Extended regex; if a commit's scope matches, it becomes the track_id.
+  --branch REF Branch/ref to inspect (default: HEAD).
+  --help Show this help.
 
 Output: JSONL with one record per commit.
 Fields: sha, type, scope, track_id, subject, author, timestamp, files_changed
@@ -92,20 +92,18 @@ process_commit() {
     # Track ID detection
     track_id="null"
     if [[ -n "$SCOPE_PATTERN" && "$scope" != "null" ]]; then
-        # Strip the surrounding JSON quotes the previous step added back.
-        scope_val="${scope#\"}"
-        scope_val="${scope_val%\"}"
+        scope_val="${scope#?}"
+        scope_val="${scope_val%?}" # strip surrounding quotes
         if [[ "$scope_val" =~ $SCOPE_PATTERN ]]; then
-            # Use the matched substring, not the whole scope, so unanchored
-            # patterns extract just the relevant token.
-            track_id="\"$(json_escape "${BASH_REMATCH[0]}")\""
+            track_id="\"$(json_escape "$scope_val")\""
         fi
     fi
     # Look for [TRACK-XXX] or (TRACK-XXX) tokens in subject
     if [[ "$track_id" == "null" ]]; then
         token="$(printf '%s' "$clean_subject" | grep -oE '[[(][A-Z]+-[0-9]+[])]' | head -1 || true)"
         if [[ -n "$token" ]]; then
-            inner="${token:1:${#token}-2}"
+            inner="${token#?}"
+            inner="${inner%?}"
             track_id="\"$(json_escape "$inner")\""
         fi
     fi
