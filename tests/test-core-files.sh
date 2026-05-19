@@ -5,6 +5,9 @@
 # - All files listed in CORE_FILES array exist on disk
 # - No duplicate entries in CORE_FILES
 #
+# Foundations additions (9 shared + guardrails/* + 2 templates) validated via
+# expanded CORE_FILES per manifest §2.1, §2.5.
+#
 # Usage:
 #   ./tests/test-core-files.sh
 set -euo pipefail

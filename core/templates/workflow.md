@@ -175,7 +175,7 @@ If task exceeds 5 iterations:
 - [x] git + GitHub Pull Requests
 
 ### MCP Auto-Connect (optional)
-- [ ] Jira MCP — for ticket linking via `/draft:jira-preview` / `/draft:jira-create`
+- [ ] Jira MCP — for ticket linking via `/draft:jira` (preview / create / review)
 - [ ] Confluence MCP — for design-doc and runbook lookups
 
 > **How to configure:** Check the MCP boxes above to enable optional integrations. See `core/shared/vcs-commands.md` for git command conventions used across skills.

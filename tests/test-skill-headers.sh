@@ -46,8 +46,6 @@ assert_eq "adr" "ADR Command" "$(get_skill_header "adr")"
 assert_eq "status" "Status Command" "$(get_skill_header "status")"
 assert_eq "revert" "Revert Command" "$(get_skill_header "revert")"
 assert_eq "change" "Change Command" "$(get_skill_header "change")"
-assert_eq "jira-preview" "Jira Preview Command" "$(get_skill_header "jira-preview")"
-assert_eq "jira-create" "Jira Create Command" "$(get_skill_header "jira-create")"
 
 # Test fallback case
 assert_eq "unknown" "Unknown Command" "$(get_skill_header "unknown")"

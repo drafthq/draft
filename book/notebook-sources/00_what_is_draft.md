@@ -26,19 +26,11 @@ Draft is for developers and teams who use AI coding assistants and have experien
 
 ## What You Get
 
-28 commandscovering the full development lifecycle:
+4 primary workflow commands (`/draft:init`, `/draft:new-track`, `/draft:implement`, `/draft:review`) plus 5 routers (`/draft:plan`, `/draft:ops`, `/draft:docs`, `/draft:discover`, `/draft:jira`) as the recommended public interface. 22 specialist commands are dispatched by the routers for targeted work (debug, bughunt, deep-review, tech-debt, ADR, etc.).
 
-* Context—/draft:init,/draft:tour(exploratory walkthroughs), architecture documentation, AI context files, and state tracking
-* Planning—/draft:new-trackcreates specifications and phased plans through collaborative dialogue
-* Execution—/draft:implementbuilds features task-by-task with TDD cycles and architecture checkpoints
-* Debugging—/draft:debugprovides structured debugging: reproduce, isolate, diagnose, fix
-* Quality—/draft:review,/draft:deep-review,/draft:bughunt,/draft:quick-review,/draft:impact(risk analysis),/draft:assist-review(intent summaries), and/draft:testing-strategy
-* Operations—/draft:deploy-checklist,/draft:incident-response,/draft:standup,/draft:status,/draft:revert,/draft:change,/draft:coverage
-* Strategy—/draft:tech-debtfor technical debt analysis across 6 dimensions with prioritization
-* Authoring—/draft:documentationgenerates technical docs: readme, runbook, api, onboarding
-* Knowledge & Governance—/draft:adr,/draft:learn,/draft:decompose,/draft:index
-* Integration—/draft:jira-preview,/draft:jira-create
-7 specialized agents— Architect, Debugger, Planner, RCA, Reviewer, Ops, and Writer — each with behavioral protocols tuned for their domain.
+The router model reduces cognitive load: state your intent to a router and it dispatches to the right specialist with context.
+
+7 specialized agents (Architect, Debugger, Planner, RCA, Reviewer, Ops, Writer) provide behavioral protocols for deep work when invoked by the routers or primary commands.
 
 ## Platform Support
 

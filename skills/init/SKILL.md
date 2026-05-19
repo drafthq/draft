@@ -440,56 +440,100 @@ If **Greenfield**: skip to Step 2 (Product Definition).
 
 ### 1. Detect and run graph binary
 
+**Updated for binary adoption (Phase 3 skeleton)**: Prefer native `graph` (PATH → bundled arch-specific) for speed and C/C++ fidelity via optional `graph-clang`. Full graceful fallback to legacy Node wrapper. Clear messages always emitted. Existing behavior unchanged when no native present.
+
 ```bash
-# Find the graph binary shipped with the draft plugin.
-# Method 1: .draft-install-path breadcrumb (written by install.sh)
-# Method 2: search known install locations
-# Method 3: check if 'graph' is on PATH
+# Prefer the new canonical verifier (implements PATH > bundled-<arch> > legacy)
 GRAPH_BIN=""
-
-# Method 1: breadcrumb file (most reliable — works on any machine)
-for breadcrumb in \
-    "$HOME/.cursor/plugins/local/draft/.draft-install-path" \
-    "$HOME/.claude-plugin/../.draft-install-path" \
-    ; do
-    if [ -f "$breadcrumb" ]; then
-        PLUGIN_ROOT="$(cat "$breadcrumb")"
-        if [ -x "$PLUGIN_ROOT/graph/bin/graph" ]; then
-            GRAPH_BIN="$PLUGIN_ROOT/graph/bin/graph"
-            break
-        fi
+GRAPH_CLANG_BIN=""
+if command -v scripts/tools/verify-graph-binary.sh >/dev/null 2>&1 || \
+   [ -x "./scripts/tools/verify-graph-binary.sh" ]; then
+    VERIFY="./scripts/tools/verify-graph-binary.sh"
+    # --repo . ensures report written to draft/.graph-binary-report.json
+    if REPORT="$($VERIFY --repo . --json 2>/dev/null)"; then
+        GRAPH_BIN=$(echo "$REPORT" | sed -n 's/.*"graph_bin":"\([^"]*\)".*/\1/p')
+        GRAPH_CLANG_BIN=$(echo "$REPORT" | sed -n 's/.*"graph_clang_bin":"\([^"]*\)".*/\1/p' | grep -v '^null$' || true)
+        echo "Graph binary selected via verifier (source=$(echo "$REPORT" | sed -n 's/.*"source":"\([^"]*\)".*/\1/p')): $GRAPH_BIN"
+        [ -n "$GRAPH_CLANG_BIN" ] && echo "  graph-clang companion: $GRAPH_CLANG_BIN (high-fidelity C/C++ enabled)"
     fi
-done
-
-# Method 2: search common install paths
-if [ -z "$GRAPH_BIN" ]; then
-    for candidate in \
-        "$HOME/.cursor/plugins/local/draft/graph/bin/graph" \
-        "$HOME/.claude-plugin/../graph/bin/graph" \
-        "graph/bin/graph" \
-        ; do
-        if [ -x "$candidate" ]; then
-            GRAPH_BIN="$candidate"
-            break
-        fi
-    done
 fi
 
-# Method 3: check PATH
+# Fallback / legacy path (kept for environments without the verify script yet)
 if [ -z "$GRAPH_BIN" ]; then
-    GRAPH_BIN="$(command -v graph 2>/dev/null || true)"
+    # New preference order (native first):
+    # 1. PATH (system or user native graph)
+    if [ -z "$GRAPH_BIN" ]; then
+        GRAPH_BIN="$(command -v graph 2>/dev/null || true)"
+        [ -n "$GRAPH_BIN" ] && echo "Using graph from PATH (preferred native): $GRAPH_BIN"
+    fi
+    # 2. Bundled native per-arch under plugin (written by install.sh / package.sh)
+    if [ -z "$GRAPH_BIN" ]; then
+        ARCH="$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')"
+        for root in \
+            "$HOME/.cursor/plugins/local/draft" \
+            "$HOME/.claude-plugin/.." \
+            "." \
+            ; do
+            cand="$root/graph/bin/$ARCH/graph"
+            if [ -x "$cand" ]; then
+                GRAPH_BIN="$cand"
+                echo "Using bundled native graph for $ARCH: $GRAPH_BIN"
+                clang_cand="$root/graph/bin/$ARCH/graph-clang"
+                [ -x "$clang_cand" ] && GRAPH_CLANG_BIN="$clang_cand"
+                break
+            fi
+        done
+    fi
+    # 3. Legacy Node wrapper (exact prior behavior)
+    if [ -z "$GRAPH_BIN" ]; then
+        for breadcrumb in \
+            "$HOME/.cursor/plugins/local/draft/.draft-install-path" \
+            "$HOME/.claude-plugin/../.draft-install-path" \
+            ; do
+            if [ -f "$breadcrumb" ]; then
+                PLUGIN_ROOT="$(cat "$breadcrumb")"
+                if [ -x "$PLUGIN_ROOT/graph/bin/graph" ]; then
+                    GRAPH_BIN="$PLUGIN_ROOT/graph/bin/graph"
+                    echo "Falling back to legacy Node graph (no native found): $GRAPH_BIN"
+                    break
+                fi
+            fi
+        done
+    fi
+    if [ -z "$GRAPH_BIN" ]; then
+        for candidate in \
+            "$HOME/.cursor/plugins/local/draft/graph/bin/graph" \
+            "$HOME/.claude-plugin/../graph/bin/graph" \
+            "graph/bin/graph" \
+            ; do
+            if [ -x "$candidate" ]; then
+                GRAPH_BIN="$candidate"
+                echo "Falling back to legacy Node graph: $GRAPH_BIN"
+                break
+            fi
+        done
+    fi
 fi
 
-# Run if found
+# Execute (pass graph-clang discovery via env or sibling for the binary to auto-probe)
 if [ -n "$GRAPH_BIN" ]; then
-    echo "Found graph binary: $GRAPH_BIN"
-    "$GRAPH_BIN" --repo . --out draft/graph/
+    echo "Running graph build with: $GRAPH_BIN"
+    if [ -n "$GRAPH_CLANG_BIN" ]; then
+        # Companion discovery is also file-sibling / PATH based inside the binary
+        echo "  (graph-clang available at $GRAPH_CLANG_BIN — C/C++ extraction will use it when compile_commands present)"
+    fi
+    "$GRAPH_BIN" --repo . --out draft/graph/ || {
+        echo "WARNING: graph build failed (exit $?) — continuing with manual discovery. Graph data may be partial or absent."
+        GRAPH_BIN=""
+    }
 else
-    echo "Graph binary not found — skipping automated analysis"
+    echo "Graph binary not found (native or legacy) — skipping automated graph analysis. All downstream steps degrade gracefully."
 fi
 ```
 
-Run the above bash script. If the graph binary is found, it will analyze the codebase and produce `draft/graph/` with all artifacts.
+Run the detection logic above. When a native binary (or `graph-clang`) is chosen, you will see explicit selection messages. Legacy Node path is used only as final fallback — behavior for projects without native binaries is identical to before the skeleton. See `core/shared/graph-query.md` and `graph/bin/README.md` for full contract.
+
+If the build succeeds, `draft/graph/` is populated and later steps consume the always-load artifacts + injection slots exactly as before.
 
 ### 2. If graph build succeeds, load the always-load artifacts
 

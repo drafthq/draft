@@ -31,8 +31,6 @@ assert "Accepts 'new-track'" \
     "$(is_valid_skill_name "new-track" && echo true || echo false)"
 assert "Accepts 'deep-review'" \
     "$(is_valid_skill_name "deep-review" && echo true || echo false)"
-assert "Accepts 'jira-create'" \
-    "$(is_valid_skill_name "jira-create" && echo true || echo false)"
 assert "Accepts 'adr'" \
     "$(is_valid_skill_name "adr" && echo true || echo false)"
 assert "Accepts 'skill123'" \

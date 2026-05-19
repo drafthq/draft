@@ -451,14 +451,14 @@ If track type is refactor:
   → /draft:tech-debt scans 6 debt categories with prioritization
   Run tech-debt analysis? [Y/n]"
 ```
-If accepted: invoke `/draft:tech-debt`, use its prioritized output to scope the refactor spec.
+If accepted: invoke `/draft:plan "tech debt for this refactor"`, use its prioritized output to scope the refactor spec.
 
 #### Design Decision Detection → ADR Suggestion
 
 If spec introduces technology not in `tech-stack.md` or changes service boundaries in `.ai-context.md`:
 ```
 "This involves a significant design decision. Consider running:
-  → /draft:adr to document the architectural decision"
+  → /draft:plan \"adr ...\" to document the architectural decision"
 ```
 
 ---
@@ -514,12 +514,12 @@ If Jira ticket provided:
 
 ```
 "Bug track detected with [Jira context / error description]. Run a structured debug session before writing the spec?
-  → /draft:debug will help reproduce and isolate the issue
+  → /draft:discover debug will help reproduce and isolate the issue
   Run debug session? [Y/n]"
 ```
 
 If accepted:
-- Invoke `/draft:debug` with gathered triage context
+- Invoke `/draft:discover "debug ..."` (routes to debug) with gathered triage context
 - Feed the Debug Report into spec-draft.md "Reproduction" and "Root Cause Hypothesis" sections
 
 #### Triage Step 3: RCA Analysis
@@ -561,7 +561,7 @@ Only proceed to spec/plan generation after developer approval.
 
 If track description contains "incident", "outage", "SEV", or "postmortem":
 - Check for existing postmortem: `ls draft/tracks/*/incident-*.md 2>/dev/null`
-- If none found, suggest: "Run `/draft:incident-response postmortem` first to capture incident context."
+- If none found, suggest: "Run `/draft:ops incident-response postmortem` first to capture incident context."
 - If found, feed postmortem findings into spec-draft.md.
 
 ---
@@ -821,7 +821,8 @@ Based on track type, suggest relevant follow-ups:
 **Bug tracks:**
 ```
 "Track ready for implementation. Also consider:
-  → /draft:incident-response postmortem — If this bug caused an incident
+  → /draft:ops incident-response postmortem — If this bug caused an incident
+  → /draft:discover debug — Structured investigation
   → git bisect — Find the exact commit that introduced this bug"
 ```
 
@@ -829,12 +830,12 @@ Based on track type, suggest relevant follow-ups:
 ```
 "Track ready for implementation.
   Next: /draft:implement
-  Also: /draft:testing-strategy — Define test approach for this feature"
+  Also: /draft:discover \"test strategy\" — Define test approach for this feature"
 ```
 
 **Refactor tracks:**
 ```
 "Track ready for implementation.
   Next: /draft:implement
-  Also: /draft:adr — Document refactoring decisions"
+  Also: /draft:plan \"adr ...\" — Document refactoring decisions"
 ```

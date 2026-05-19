@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-Draft is a Claude Code plugin that implements Context-Driven Development methodology. It provides 28 slash commands organized in a two-tier architecture: 4 primary workflow commands (`/draft:init`, `/draft:new-track`, `/draft:implement`, `/draft:review`) with auto-invocation, plus 24 specialist commands for debugging (`/draft:debug`), operations (`/draft:deploy-checklist`, `/draft:incident-response`, `/draft:standup`), quality (`/draft:quick-review`, `/draft:testing-strategy`, `/draft:tech-debt`), authoring (`/draft:documentation`), DX (`/draft:assist-review`, `/draft:impact`, `/draft:tour`), and more (`/draft:status`, `/draft:revert`, `/draft:decompose`, `/draft:coverage`, `/draft:deep-review`, `/draft:bughunt`, `/draft:learn`, `/draft:adr`, `/draft:change`, `/draft:index`, `/draft:jira-preview`, `/draft:jira-create`). Run `/draft` for overview.
+Draft is a Claude Code plugin that implements Context-Driven Development methodology. It provides a two-tier command surface: 4 primary workflow commands (`/draft:init`, `/draft:new-track`, `/draft:implement`, `/draft:review`) plus 5 routers (`/draft:plan`, `/draft:ops`, `/draft:docs`, `/draft:discover`, `/draft:jira`) as the recommended public interface. 22 specialist commands are dispatched underneath the routers. The unified `/draft:jira` router supports `preview`, `create`, and the advanced `review <JIRA-ID>` qualification pipeline (deep-review + bughunt + coverage + test-gap analysis). Run `/draft` for the full intent map. Total surface: 31 skills.
 
 Draft also ships a **knowledge graph engine** under `graph/` (Node.js + tree-sitter WASM) and **14 deterministic shell helpers** under `scripts/tools/`. Skills are markdown (source of truth, processed by a bash build script into platform-specific integration files for Copilot and Gemini); the graph engine and shell helpers handle mechanical work that markdown can't.
 
@@ -47,7 +47,7 @@ core/agents/*.md          ──┘
 ```
 
 The build script (`scripts/build-integrations.sh`) reads `SKILL_ORDER`, `CORE_FILES`, and `TOOLS` from `scripts/lib.sh` (sourced) and:
-1. Iterates `SKILL_ORDER` (28 skills, order matters)
+1. Iterates `SKILL_ORDER` (31 skills in current two-tier model, order matters)
 2. Validates YAML frontmatter (`name:` and `description:` required)
 3. Validates body format: blank, `# Title`, blank, then content
 4. Extracts body via `extract_body()`, skipping frontmatter

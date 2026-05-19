@@ -120,8 +120,7 @@ The authoritative Draft implementation skills are located at:
 | **`/draft:standup`** | Git activity standup summary (read-only) |
 | **`/draft:incident-response`** | Incident lifecycle: triage, communicate, mitigate, postmortem |
 | **`/draft:documentation`** | Technical docs: readme, runbook, api, onboarding |
-| **`/draft:jira-preview`** | Generate Jira export for review |
-| **`/draft:jira-create`** | Push issues to Jira via MCP |
+| **`/draft:jira`** | Unified Jira workflows (preview / create / review) |
 | **`/draft:tour`** | Interactive architecture mentorship and codebase walk-through |
 | **`/draft:impact`** | ROI analytics tracking friction and timeline metrics |
 | **`/draft:assist-review`** | Summarize intent and highlight structural PR risks for reviewers |

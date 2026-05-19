@@ -172,7 +172,7 @@ For each item:
 
 ### Tier 2: Strategic Improvements (Priority > 2, Effort > 2)
 
-Items requiring dedicated effort. Create via `/draft:new-track` or feed into `/draft:jira-preview`.
+Items requiring dedicated effort. Create via `/draft:new-track` or route via `/draft:jira` (or `/draft:plan "tech debt remediation"`).
 
 For each item:
 - Scope and approach
@@ -220,7 +220,7 @@ Report structure:
 - **Offered by:** `/draft:new-track` (refactor tracks — scope the debt before planning)
 - **Suggested by:** `/draft:implement` (when TODO/FIXME detected at completion)
 - **Suggested by:** `/draft:deep-review` (architecture debt findings)
-- **Feeds into:** `/draft:jira-preview` (create remediation tickets from Tier 2 items)
+- **Feeds into:** `/draft:jira` (or `/draft:plan` for remediation tracks) (create remediation tickets from Tier 2 items)
 - **Feeds into:** `/draft:testing-strategy` (Test Debt findings inform test planning)
 - **Jira sync:** If ticket linked, attach report and post summary via `core/shared/jira-sync.md`
 

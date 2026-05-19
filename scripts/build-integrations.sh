@@ -55,8 +55,11 @@ get_skill_header() {
         status)            echo "Status Command" ;;
         revert)            echo "Revert Command" ;;
         change)            echo "Change Command" ;;
-        jira-preview)      echo "Jira Preview Command" ;;
-        jira-create)       echo "Jira Create Command" ;;
+        plan)              echo "Plan Router" ;;
+        ops)               echo "Ops Router" ;;
+        docs)              echo "Docs Router" ;;
+        discover)          echo "Discover Router" ;;
+        jira)              echo "Jira Router" ;;
         tour)              echo "Tour Command" ;;
         impact)            echo "Impact Command" ;;
         assist-review)     echo "Assist Review Command" ;;
@@ -94,8 +97,11 @@ get_copilot_trigger() {
         status)            echo "\"status\" or \"draft status\"" ;;
         revert)            echo "\"revert\" or \"draft revert\"" ;;
         change)            echo "\"handle change\" or \"draft change <description>\"" ;;
-        jira-preview)      echo "\"preview jira\" or \"draft jira-preview [track-id]\"" ;;
-        jira-create)       echo "\"create jira\" or \"draft jira-create [track-id]\"" ;;
+        plan)              echo "\"plan feature\" or \"draft plan <intent>\" (new-track, decompose, adr, tech-debt, change)" ;;
+        ops)               echo "\"ops deploy\" or \"draft ops <intent>\" (deploy-checklist, incident, standup, status, revert)" ;;
+        docs)              echo "\"write docs\" or \"draft docs <intent>\" (documentation)" ;;
+        discover)          echo "\"discover debug\" or \"draft discover <intent>\" (debug, bughunt, reviews, coverage, learn, index, etc.)" ;;
+        jira)              echo "\"jira preview\", \"jira create\", or \"jira review <ID>\"" ;;
         tour)              echo "\"tour\" or \"draft tour\"" ;;
         impact)            echo "\"impact\" or \"draft impact\"" ;;
         assist-review)     echo "\"assist review\" or \"draft assist-review\"" ;;
@@ -326,17 +332,23 @@ When `draft/` exists in the project, always consider:
 |---------|---------|
 COMMON_HEADER
 
-    # Command table
+    # Command table - 5 routers are the recommended primary interface
     echo "| \`draft\` | Show overview and available commands |"
     echo "| \`draft init\` | Initialize project (run once) |"
-    echo "| \`draft index [--init-missing]\` | Aggregate monorepo service contexts |"
     echo "| \`draft new-track <description>\` | Create feature/bug track |"
-    echo "| \`draft decompose\` | Module decomposition with dependency mapping |"
     echo "| \`draft implement\` | Execute tasks from plan |"
+    echo "| \`draft review [--track <id>]\` | Three-stage code review |"
+
+    echo "| \`draft plan <intent>\` | Planning & architecture router (new-track, decompose, adr, tech-debt, change) |"
+    echo "| \`draft ops <intent>\` | Operations & lifecycle router (deploy-checklist, incident, standup, status, revert) |"
+    echo "| \`draft docs <intent>\` | Authoring router (documentation) |"
+    echo "| \`draft discover <intent>\` | Investigation & quality router (debug, bughunt, reviews, coverage, learn...) |"
+    echo "| \`draft jira [preview|create|review <ID>]\` | Unified Jira integration (preview, create, review) |"
+
+    echo "| \`draft decompose\` | Module decomposition with dependency mapping |"
     echo "| \`draft coverage\` | Code coverage report (target 95%+) |"
     echo "| \`draft deploy-checklist [track <id>]\` | Pre-deployment verification checklist |"
     echo "| \`draft bughunt [--track <id>]\` | Systematic bug discovery |"
-    echo "| \`draft review [--track <id>]\` | Three-stage code review |"
     echo "| \`draft quick-review [file|pr <number>]\` | Lightweight 4-dimension review |"
     echo "| \`draft deep-review [module]\` | Exhaustive production-grade module audit |"
     echo "| \`draft testing-strategy [track <id>|path]\` | Design test strategy with coverage targets |"
@@ -350,8 +362,7 @@ COMMON_HEADER
     echo "| \`draft status\` | Show progress overview |"
     echo "| \`draft revert\` | Git-aware rollback |"
     echo "| \`draft change <description>\` | Handle mid-track requirement changes |"
-    echo "| \`draft jira-preview [track-id]\` | Generate jira-export.md for review |"
-    echo "| \`draft jira-create [track-id]\` | Create Jira issues from export via MCP |"
+    echo "| \`draft index [--init-missing]\` | Aggregate monorepo service contexts |"
     echo "| \`draft tour\` | Interactive onboarding tour |"
     echo "| \`draft impact\` | Telemetry and analytics insights |"
     echo "| \`draft assist-review\` | Assist human reviewers with architectural risk audit |"
@@ -387,8 +398,11 @@ Recognize these natural language patterns:
 | "what's the status" | Show status |
 | "undo", "revert" | Run revert |
 | "requirements changed", "scope changed", "update the spec" | Run change |
-| "preview jira", "export to jira" | Run jira-preview |
-| "create jira", "push to jira" | Run jira-create |
+| "plan the work", "new feature", "tech debt", "adr", "decompose" | Run draft plan (router) |
+| "ops task", "deploy", "incident", "standup", "status", "revert" | Run draft ops (router) |
+| "write docs", "documentation" | Run draft docs (router) |
+| "discover", "debug", "review code", "hunt bugs", "coverage" | Run draft discover (router) |
+| "jira", "send to Jira", "jira review" | Run draft jira (router) |
 | "tour", "onboard me" | Run tour |
 | "impact", "analytics" | Run impact |
 | "assist review", "help reviewer" | Run assist-review |

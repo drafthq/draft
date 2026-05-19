@@ -165,47 +165,56 @@ Use the no-`--symbol` form for direct injection. Use `--symbol` forms when you n
 
 Note: `draft/graph/module-deps.mermaid` and `draft/graph/proto-map.mermaid` are static files written only during a full graph build (`graph --repo`). Running `--query --mode mermaid` reads the current JSONL and is always current — prefer it over the static files.
 
-## Finding the Graph Binary
+## Finding the Graph Binary (Binary Preference + Usage Report)
 
-The graph binary ships with the draft plugin. Detect it at runtime using the breadcrumb file written by `install.sh`, then fallback to known paths:
+**Preference order** (native first for performance/fidelity):
+1. `graph` (and `graph-clang`) on `$PATH` — allows system-wide or user native installs to take precedence.
+2. Bundled arch-specific native under the Draft plugin tree: `graph/bin/<arch>/graph` (and `graph-clang`), where `<arch>` is `linux-amd64`, `darwin-arm64`, etc. (resolved from `uname`).
+3. Legacy Node wrapper: `graph/bin/graph` (preserved for dual-mode and environments without native binaries).
+
+The canonical resolver is `scripts/tools/verify-graph-binary.sh` (see its `--json --verbose --strict` modes). It:
+- Implements the exact order above.
+- Probes liveness (`--help` / `--version`).
+- Locates the optional `graph-clang` companion using sibling/PATH/bundled rules.
+- On success, optionally writes `draft/.graph-binary-report.json` — the **usage report contract** consumed by status, hygiene, and `graph-usage-report` tooling for auditing which binary (and clang) was active during an init/refresh.
+
+Skills and wrappers should prefer:
+```bash
+# Preferred (new skeleton)
+GRAPH_INFO="$(scripts/tools/verify-graph-binary.sh --repo . --json 2>/dev/null || true)"
+GRAPH_BIN="$(echo "$GRAPH_INFO" | grep -o '"graph_bin":"[^"]*"' | cut -d'"' -f4 || true)"
+# Fallback to legacy inline detection only if verify script absent (keeps all prior behavior working)
+```
+
+When the verify script (or equivalent) is unavailable, the legacy detection still functions unchanged for backward compatibility.
 
 ```bash
+# Legacy inline detection (still supported; PATH now checked early)
 GRAPH_BIN=""
-
-# Method 1: .draft-install-path breadcrumb (written by install.sh)
-for breadcrumb in \
-    "$HOME/.cursor/plugins/local/draft/.draft-install-path" \
-    "$HOME/.claude-plugin/../.draft-install-path" \
-    ; do
-    if [ -f "$breadcrumb" ]; then
-        PLUGIN_ROOT="$(cat "$breadcrumb")"
-        if [ -x "$PLUGIN_ROOT/graph/bin/graph" ]; then
-            GRAPH_BIN="$PLUGIN_ROOT/graph/bin/graph"
-            break
-        fi
-    fi
-done
-
-# Method 2: search common install paths
-if [ -z "$GRAPH_BIN" ]; then
-    for candidate in \
-        "$HOME/.cursor/plugins/local/draft/graph/bin/graph" \
-        "$HOME/.claude/plugins/draft/graph/bin/graph" \
-        "graph/bin/graph" \
-        ; do
-        # "graph/bin/graph" only resolves when CWD is the plugin root
-        if [ -x "$candidate" ]; then
-            GRAPH_BIN="$candidate"
-            break
-        fi
-    done
-fi
-
-# Method 3: check PATH
+# 1. PATH (native preference)
 if [ -z "$GRAPH_BIN" ]; then
     GRAPH_BIN="$(command -v graph 2>/dev/null || true)"
 fi
+# 2. Bundled arch-specific (graph/bin/<arch>/graph) via breadcrumb or known paths
+if [ -z "$GRAPH_BIN" ]; then
+    # ... (arch resolution + $PLUGIN_ROOT/graph/bin/$ARCH/graph) ...
+fi
+# 3. Legacy graph/bin/graph
+if [ -z "$GRAPH_BIN" ]; then
+    # breadcrumb + common paths to graph/bin/graph (Node)
+fi
 ```
+
+`install.sh` writes the `.draft-install-path` breadcrumb so bundled resolution works after marketplace install.
+
+See `graph/bin/README.md` for the exact layout, Git LFS requirements, and placeholder rules. The Node `src/` and `dist/bundle.cjs` remain intact.
+
+## Usage Report Contract
+
+After successful detection:
+- `draft/.graph-binary-report.json` contains: `detected_at`, `graph_bin`, `graph_clang_bin`, `source` ("path"|"bundled:<arch>"|"legacy"), `arch`, `status`.
+- This enables later tools (e.g. `check-graph-usage-report.sh`) to surface "you are using the fast native binary on darwin-arm64 with graph-clang" or warn on legacy-only in large C++ codebases.
+- The report is a derived artifact (safe to gitignore or prune); it is regenerated on each graph-using command that calls the verifier.
 
 ## Building the Graph
 
