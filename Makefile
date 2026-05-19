@@ -28,7 +28,22 @@ TEST_SCRIPTS = \
 	./tests/test-tools-adr-index.sh \
 	./tests/test-tools-manage-symlinks.sh \
 	./tests/test-tools-mermaid-from-graph.sh \
-	./tests/test-tools-validate-frontmatter.sh
+	./tests/test-tools-validate-frontmatter.sh \
+./tests/test-tools-check-graph-usage-report.sh \
+./tests/test-tools-check-scope-conflicts.sh \
+./tests/test-tools-check-skill-line-caps.sh \
+./tests/test-tools-check-template-noop.sh \
+./tests/test-tools-check-track-hygiene.sh \
+./tests/test-tools-diff-templates-vs-tracks.sh \
+./tests/test-tools-emit-skill-metrics.sh \
+./tests/test-tools-fix-whitespace.sh \
+./tests/test-tools-migrate-track-frontmatter.sh \
+./tests/test-tools-render-track.sh \
+./tests/test-tools-verify-citations.sh \
+./tests/test-tools-verify-doc-anchors.sh \
+./tests/test-tools-verify-graph-binary.sh
+
+# Phase 0 Foundations hygiene/verification tool tests (per manifest §2.2) — see above
 
 help: ## Show this help message
 	@echo "Available targets:"

@@ -35,7 +35,18 @@ init → new-track → implement → review
 | `/draft:implement` | Execute tasks from plan with TDD | review (phase boundaries), testing-strategy (TDD context) |
 | `/draft:review` | Three-stage code review | coverage (if TDD enabled), bughunt (with --full) |
 
-### Specialist Commands (21 commands)
+### Routed Core Workflows (5 routers)
+The 5 router commands provide intent-based dispatch into the 20+ specialist commands. Use the router form for discoverability; leaf commands remain supported for compatibility.
+
+| Router | Scope | Dispatches To (examples) |
+|--------|-------|--------------------------|
+| `/draft:plan` | Planning & architecture | new-track, decompose, adr, tech-debt, change |
+| `/draft:ops` | Operations & lifecycle | deploy-checklist, incident-response, standup, status, revert |
+| `/draft:docs` | Authoring | documentation |
+| `/draft:discover` | Investigation & quality | debug, bughunt, quick/deep-review, coverage, testing-strategy, learn, index, tour, impact, assist-review |
+| `/draft:jira` | Jira integration (preview, create, review) | - |
+
+### Specialist Commands (leaf skills, invoked via routers or directly)
 
 **Setup & Navigation:**
 | `/draft` | This overview | `/draft:index` | Monorepo service aggregation |
@@ -81,8 +92,7 @@ init → new-track → implement → review
 **Integration:**
 | Command | Purpose |
 |---------|---------|
-| `/draft:jira-preview` | Generate Jira export for review |
-| `/draft:jira-create` | Push issues to Jira via MCP |
+| `/draft:jira` | Unified Jira workflows (preview / create / review) |
 
 
 ## Quick Start
@@ -150,10 +160,15 @@ Used throughout plan.md files:
 
 ## Intent Mapping
 
-You can also use natural language:
+You can also use natural language. Prefer the 5 router commands (`/draft:plan`, `/draft:ops`, `/draft:docs`, `/draft:discover`, `/draft:jira`) for grouped access; they analyze intent and dispatch.
 
 | Say this... | Runs this |
 |-------------|-----------|
+| "plan the work", "new feature", "start X", "tech debt", "adr", "decompose", "scope changed" | `/draft:plan` (routes to new-track / decompose / adr / tech-debt / change) |
+| "ops task", "deploy", "incident", "standup", "status", "revert" | `/draft:ops` (routes to deploy-checklist / incident-response / standup / status / revert) |
+| "write docs", "documentation", "runbook", "api docs" | `/draft:docs` (routes to documentation) |
+| "discover", "debug", "review code", "hunt bugs", "coverage", "learn patterns", "index", "tour", "impact" | `/draft:discover` (routes to debug / bughunt / quick-review / deep-review / coverage / testing-strategy / learn / index / tour / impact / assist-review) |
+| "jira", "jira preview", "jira create", "jira review" | `/draft:jira` (unified Jira router) |
 | "set up the project" | `/draft:init` |
 | "index services", "aggregate context" | `/draft:index` |
 | "new feature", "add X" | `/draft:new-track` |
@@ -168,8 +183,7 @@ You can also use natural language:
 | "document decision", "create ADR" | `/draft:adr` |
 | "requirements changed", "scope changed", "update the spec" | `/draft:change` |
 | "learn patterns", "update guardrails", "discover conventions" | `/draft:learn` |
-| "preview jira", "export to jira" | `/draft:jira-preview` |
-| "create jira", "push to jira" | `/draft:jira-create` |
+
 | "quick review", "fast review" | `/draft:quick-review` |
 | "debug this", "investigate bug" | `/draft:debug` |
 | "deploy checklist", "pre-deploy" | `/draft:deploy-checklist` |

@@ -14,8 +14,11 @@ init → new-track → implement → review
                        └───────────┘  (auto-invoked at phase boundaries)
 ```
 
-### Specialist Commands
-Grouped into subsystems that primary commands auto-invoke or that users invoke directly.
+### Routed Core Workflows (5 routers)
+The 5 routers (`/draft:plan`, `/draft:ops`, `/draft:docs`, `/draft:discover`, `/draft:jira`) provide intent analysis and dispatch to the leaf specialist skills. Primary commands and routers are the public surface; leaves remain for compatibility and direct scripting.
+
+### Specialist Leaf Commands
+Grouped into subsystems dispatched by the routers (or primary commands).
 
 ---
 
@@ -68,8 +71,7 @@ graph TD
     end
 
     subgraph "Integration"
-        jira-preview["/draft:jira-preview"]
-        jira-create["/draft:jira-create"]
+        jira["/draft:jira"]
     end
 
     subgraph "DX"
@@ -79,6 +81,14 @@ graph TD
 
     subgraph "Navigation"
         draft["/draft"]
+    end
+
+    subgraph "Routed Core Workflows"
+        plan["/draft:plan"]
+        ops["/draft:ops"]
+        docs["/draft:docs"]
+        discover["/draft:discover"]
+        jira["/draft:jira"]
     end
 
     %% Foundation dependencies
@@ -95,6 +105,31 @@ graph TD
     init --> documentation
     init --> standup
 
+    %% Router dispatch (primary entry for specialists)
+    plan --> new-track
+    plan --> decompose
+    plan --> adr
+    plan --> "tech-debt"
+    plan --> change
+    ops --> deploy-checklist
+    ops --> incident-response
+    ops --> standup
+    ops --> status
+    ops --> revert
+    docs --> documentation
+    discover --> debug
+    discover --> bughunt
+    discover --> quick-review
+    discover --> deep-review
+    discover --> coverage
+    discover --> testing-strategy
+    discover --> learn
+    discover --> index
+    discover --> tour
+    discover --> impact
+    discover --> assist-review
+    %% jira router handles preview/create/review internally
+
     %% Track lifecycle
     new-track --> implement
     new-track --> change
@@ -102,7 +137,7 @@ graph TD
     new-track --> review
     new-track --> coverage
     new-track --> decompose
-    new-track --> jira-preview
+    new-track --> jira  %% via router
     new-track --> status
     new-track --> debug
 
@@ -125,9 +160,9 @@ graph TD
     deep-review -.->|suggests| documentation
 
     %% Integration chain
-    jira-preview --> jira-create
-    bughunt -.->|report feeds| jira-preview
-    review -.->|report feeds| jira-preview
+    %% preview/create/review are now subcommands of the jira router
+    bughunt -.->|report feeds| jira
+    review -.->|report feeds| jira
 
     %% Operations chain
     incident-response -.->|post-incident| debug
@@ -149,14 +184,16 @@ graph TD
 
 ## Dependency Matrix
 
+> Routers (`plan`, `ops`, `docs`, `discover`, `jira`) depend on their dispatched leaves and are the recommended public interface. Leaves list their direct deps.
+
 | Skill | Requires | Required By | Shared Artifacts |
 |-------|----------|-------------|-----------------|
 | `init` | -- | all others | architecture.md, .ai-context.md, .ai-profile.md, product.md, tech-stack.md, guardrails.md, .state/* |
-| `new-track` | init | implement, review, change, revert, coverage, decompose, jira-preview, status, debug | spec.md, plan.md, metadata.json |
+| `new-track` | init | implement, review, change, revert, coverage, decompose, jira, status, debug | spec.md, plan.md, metadata.json |
 | `implement` | init, new-track | review (triggers at phase boundaries) | Modifies source code; regenerates .ai-context.md |
 | `review` | init, new-track | implement (called at phase boundaries) | review-report-latest.md |
 | `quick-review` | init | review (fast alternative) | quick-review-report.md |
-| `bughunt` | init | review (optional), index (optional), jira-preview (optional) | bughunt-report-latest.md |
+| `bughunt` | init | review (optional), index (optional), jira (optional) | bughunt-report-latest.md |
 | `deep-review` | init | -- | deep-review audit report |
 | `coverage` | init, new-track | -- | Regenerates .ai-context.md |
 | `testing-strategy` | init | coverage (informs), bughunt (informs) | testing-strategy.md |
@@ -174,8 +211,7 @@ graph TD
 | `standup` | init | -- | standup summary (reads status, git log) |
 | `documentation` | init | deep-review (suggests), incident-response (feeds) | Generated docs, runbooks |
 | `index` | init (per-service) | -- | service-index.md, dependency-graph.md, tech-matrix.md |
-| `jira-preview` | new-track | jira-create | jira-export-latest.md |
-| `jira-create` | jira-preview | -- | Creates Jira issues via API |
+| `jira` | new-track | -- | jira-export-latest.md (internal) |
 | `assist-review` | init | -- | Inline PR review assistance |
 | `tour` | init | -- | Read-only architecture walk |
 | `draft` | -- | -- | Navigation only -- references all skills |
@@ -227,7 +263,7 @@ init → decompose (optional pre-step for large modules)
 
 ### Jira Integration Flow
 ```
-new-track → jira-preview → jira-create
+new-track → jira (preview / create / review subcommands)
                 ↑
          bughunt + review reports (optional enrichment)
 ```
@@ -282,13 +318,13 @@ init → learn → (updates guardrails.md)
     └────┬─────┘                    │
          │                     ┌────┴─────┐
          ▼                     ▼          ▼
-    implement             jira-preview  debug
+    implement             jira  debug
     ┌──────────┐          ┌──────────┐  ┌──────────┐
     │  code    │          │export.md │  │report.md │
     │ changes  │          └────┬─────┘  └──────────┘
     └────┬─────┘               │
          │                     ▼
-         ▼                jira-create
+         ▼                (preview/create/review)
       review              ┌──────────┐
     ┌──────────┐          │Jira API  │
     │report.md │          └──────────┘

@@ -32,6 +32,11 @@ SKILL_ORDER=(
     deploy-checklist
     bughunt
     review
+    plan
+    ops
+    docs
+    discover
+    jira
     quick-review
     deep-review
     testing-strategy
@@ -45,8 +50,6 @@ SKILL_ORDER=(
     status
     revert
     change
-    jira-preview
-    jira-create
     tour
     impact
     assist-review
@@ -69,6 +72,16 @@ CORE_FILES=(
     "shared/jira-sync.md"
     "shared/graph-query.md"
     "shared/parallel-analysis.md"
+    # Foundations additions (Phase 0)
+    "shared/context-verify.md"
+    "shared/discovery-schema.md"
+    "shared/graph-usage-report.md"
+    "shared/parallel-fanout.md"
+    "shared/red-flags.md"
+    "shared/template-contract.md"
+    "shared/template-hygiene.md"
+    "shared/tool-resolver.md"
+    "shared/verification-gates.md"
     # Templates
     "templates/guardrails.md"
     "templates/intake-questions.md"
@@ -83,6 +96,9 @@ CORE_FILES=(
     "templates/spec.md"
     "templates/plan.md"
     "templates/metadata.json"
+    # Foundations additions
+    "templates/ai-context-export.md"
+    "templates/session-summary.md"
     # Index templates (monorepo)
     "templates/service-index.md"
     "templates/dependency-graph.md"
@@ -101,6 +117,16 @@ CORE_FILES=(
     "agents/ops.md"
     # VCS abstraction
     "shared/vcs-commands.md"
+    # Guardrails system (Foundations)
+    "guardrails.md"
+    "guardrails/README.md"
+    "guardrails/security.md"
+    "guardrails/code-quality.md"
+    "guardrails/design-norms.md"
+    "guardrails/review-checks.md"
+    "guardrails/secure-patterns.md"
+    "guardrails/dependency-triage.md"
+    "guardrails/language-standards.md"
 )
 
 # ─────────────────────────────────────────────────────────
@@ -124,6 +150,20 @@ TOOLS=(
     "manage-symlinks.sh"
     "mermaid-from-graph.sh"
     "validate-frontmatter.sh"
+    # Foundations hygiene/verification tools
+    "check-graph-usage-report.sh"
+    "check-scope-conflicts.sh"
+    "check-skill-line-caps.sh"
+    "check-template-noop.sh"
+    "check-track-hygiene.sh"
+    "diff-templates-vs-tracks.sh"
+    "emit-skill-metrics.sh"
+    "fix-whitespace.sh"
+    "migrate-track-frontmatter.sh"
+    "render-track.sh"
+    "verify-citations.sh"
+    "verify-doc-anchors.sh"
+    "verify-graph-binary.sh"
 )
 
 # ─────────────────────────────────────────────────────────

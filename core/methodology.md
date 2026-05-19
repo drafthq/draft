@@ -36,8 +36,7 @@ Draft solves this through **Context-Driven Development**: structured documents t
   - [/draft:revert](#draftrevert--git-aware-rollback)
   - [/draft:decompose](#draftdecompose--module-decomposition)
   - [/draft:coverage](#draftcoverage--code-coverage-report)
-  - [/draft:jira-preview](#draftjira-preview--preview-jira-issues)
-  - [/draft:jira-create](#draftjira-create--create-jira-issues)
+  - [/draft:jira](#draftjira--unified-jira-integration)
   - [/draft:adr](#draftadr--architecture-decision-records)
   - [/draft:deep-review](#draftdeep-review--module-lifecycle-audit)
   - [/draft:bughunt](#draftbughunt--exhaustive-bug-discovery)
@@ -126,7 +125,7 @@ graph TD
     N["/draft:bughunt"] -.->|"Quality check"| E
     O["/draft:review"] -.->|"At track end"| G
     P["/draft:adr"] -.->|"Document decisions"| B
-    Q["/draft:jira-preview"] -.->|"Export to Jira"| B
+    Q["/draft:jira"] -.->|"Jira integration"| B
     R["/draft:deep-review"] -.->|"Audit module"| E
 ```
 
@@ -192,7 +191,7 @@ Draft's artifacts are designed for team collaboration through standard git workf
 1. **Project context** — Tech lead runs `/draft:init`. Team reviews `product.md`, `tech-stack.md`, and `workflow.md` via PR. Product managers review vision without reading code. Engineers review technical choices without context-switching into implementation.
 2. **Spec & plan** — Lead runs `/draft:new-track`. Team reviews `spec.md` (requirements, acceptance criteria) and `plan.md` (phased task breakdown, dependencies) via PR. Disagreements surface as markdown comments — resolved by editing a paragraph, not rewriting a module.
 3. **Architecture** — Lead runs `/draft:decompose`. Team reviews `architecture.md` (derived human-readable guide with module boundaries, API surfaces, dependency graph, implementation order) via PR. Senior engineers validate architecture without touching the codebase. The machine-optimized `.ai-context.md` is the source of truth.
-4. **Work distribution** — Lead runs `/draft:jira-preview` and `/draft:jira-create`. Epics, stories, and sub-tasks are created from the approved plan. Individual team members pick up Jira stories and implement — with or without `/draft:implement`.
+4. **Work distribution** — Lead runs `/draft:jira` (preview/create). Work is pushed to Jira. Individual team members pick up stories and implement — with or without `/draft:implement`.
 5. **Implementation** — Only after all documents are merged does coding start. Every developer has full context: what to build (`spec.md`), in what order (`plan.md`), with what boundaries (`.ai-context.md` / `architecture.md`).
 
 **Why this works:** The CLI is single-user, but the artifacts it produces are the collaboration layer. Draft handles planning and decomposition. Git handles review. Jira handles distribution. Changing a sentence in `spec.md` takes seconds. Changing an architectural decision after 2,000 lines of code takes days.
@@ -691,31 +690,15 @@ Target: 95%+ line coverage (configurable in `workflow.md`).
 
 ---
 
-### `/draft:jira-preview` — Preview Jira Issues
+### `/draft:jira` — Unified Jira Integration
 
-Generates a `jira-export.md` file from the track's plan for review before creating Jira issues.
+Single entry point for Jira workflows via subcommands:
 
-#### Mapping
+- `preview` (default): Generate editable export from track plan (supports `--epic` for richer hierarchy).
+- `create`: Push issues to Jira via MCP (supports `--epic`).
+- `review <JIRA-ID>`: Full qualification review of any existing Jira ticket using Draft's analysis tools (delegates to the review pipeline in `skills/jira/references/review.md`).
 
-| Draft Concept | Jira Entity |
-|---------------|-------------|
-| Track | Epic |
-| Phase | Story |
-| Task | Sub-task |
-
-Story points are auto-calculated from task count per phase — see the formula in the Jira Integration section below.
-
-The export file is editable — adjust points, descriptions, or sub-tasks before running `/draft:jira-create`.
-
----
-
-### `/draft:jira-create` — Create Jira Issues
-
-Creates Jira epic, stories, and sub-tasks from `jira-export.md` via MCP-Jira integration. Auto-generates the export file if missing.
-
-Creates issues in order: Epic → Stories (one per phase) → Sub-tasks (one per task). Updates plan.md and jira-export.md with Jira issue keys after creation.
-
-Requires MCP-Jira server configuration and `draft/jira.md` with project key.
+All work items live inside the root issue description by default. Use the unified router in normal usage.
 
 ---
 
@@ -1012,11 +995,9 @@ Coverage complements TDD — TDD is the process (write test, implement, refactor
 
 ## Jira Integration (Optional)
 
-Sync tracks to Jira with a two-step workflow:
+Sync tracks to Jira via the unified router:
 
-1. **Preview** (`/draft:jira-preview`) - Generate `jira-export.md` with epic and stories
-2. **Review** - Adjust story points, descriptions, acceptance criteria as needed
-3. **Create** (`/draft:jira-create`) - Push to Jira via MCP server
+`/draft:jira preview` → review/edit export → `/draft:jira create`
 
 Story points are auto-calculated from task count:
 - 1-2 tasks = 1 point

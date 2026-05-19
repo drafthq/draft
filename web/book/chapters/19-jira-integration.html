@@ -3,7 +3,7 @@
     <p class="chapter-meta"><span class="part-name">Part VI: Enterprise</span> &middot; Chapter 19</p>
     <p class="read-time">3 min read</p>
 
-    <p class="chapter-intro">Draft produces specs and plans. Jira tracks issues and assigns work. The gap between them is manual: someone reads the plan, creates an epic, writes stories for each phase, adds sub-tasks for each task. This is tedious, error-prone, and inevitably drifts from the source document. Draft's Jira integration closes the gap with two commands: <code>/draft:jira-preview</code> to generate the export, and <code>/draft:jira-create</code> to push it.</p>
+    <p class="chapter-intro">Draft produces specs and plans. Jira tracks issues and assigns work. The gap between them is manual and error-prone. The unified <code>/draft:jira</code> router closes this gap with three subcommands: <code>preview</code>, <code>create</code>, and <code>review &lt;ID&gt;</code> (advanced qualification pipeline). Default = one Story per track (phases/tasks live inside the description). Use <code>--epic</code> for richer 1-Epic + 1-3-Stories hierarchy. <code>jira review &lt;JIRA-ID&gt;</code> runs the full deep-review + bughunt + coverage + test-gap analysis against any live Jira ticket.</p>
 
     <div class="figure">
         <div class="figure-content">
@@ -76,7 +76,7 @@
     <p>A track with 4 phases averaging 3 tasks each produces 1 epic, 4 stories, and 12 sub-tasks. Story points are calculated automatically from task count: 1-2 tasks = 1 point, 3-4 tasks = 2 points, 5-6 tasks = 3 points, 7+ tasks = 5 points.</p>
 
     <h2>Preview Before Push</h2>
-    <p><code>/draft:jira-preview</code> generates a timestamped <code>jira-export-&lt;timestamp&gt;.md</code> file in the track directory, with a <code>jira-export-latest.md</code> symlink for easy access. This file is a complete, editable representation of what will be created in Jira.</p>
+    <p><code>/draft:jira preview</code> generates a timestamped <code>jira-export-&lt;timestamp&gt;.md</code> file in the track directory, with a <code>jira-export-latest.md</code> symlink for easy access. This file is a complete, editable representation of what will be created in Jira.</p>
 
     <p>The preview includes:</p>
     <ul>
@@ -86,10 +86,10 @@
         <li><strong>Bug issues</strong> &mdash; If <code>/draft:bughunt</code> or <code>/draft:review</code> reports exist, their findings are included as separate Bug issues with full detail: location, confidence level, code evidence, data flow trace, impact, and recommended fix</li>
     </ul>
 
-    <p>The preview file is editable. Adjust story points, rewrite descriptions, add or remove sub-tasks, change bug priorities &mdash; then run <code>/draft:jira-create</code> to push the edited version.</p>
+    <p>The preview file is editable. Adjust story points, rewrite descriptions, add or remove sub-tasks, change bug priorities &mdash; then run <code>/draft:jira create</code> to push the edited version.</p>
 
     <h2>Creating Issues</h2>
-    <p><code>/draft:jira-create</code> reads the export file and creates issues in Jira via MCP (Anthropic's Model Context Protocol). It automatically detects available MCP-Jira tools and adapts to the configured tool naming convention.</p>
+    <p><code>/draft:jira create</code> reads the export file and creates issues in Jira via MCP (Anthropic's Model Context Protocol). It automatically detects available MCP-Jira tools and adapts to the configured tool naming convention.</p>
 
     <p>The creation order matters:</p>
     <ol>
@@ -99,7 +99,7 @@
         <li><strong>Bugs</strong> &mdash; Created as Bug issues linked to the epic, with severity mapped to Jira priority (Critical = Highest, High = High, Medium = Medium, Low = Low)</li>
     </ol>
 
-    <p>Each issue is persisted incrementally: after creating each issue, its Jira key is written back to the export file immediately. If the process fails mid-way (network error, API limit), re-running <code>/draft:jira-create</code> skips already-created items and picks up where it left off.</p>
+    <p>Each issue is persisted incrementally: after creating each issue, its Jira key is written back to the export file immediately. If the process fails mid-way (network error, API limit), re-running <code>/draft:jira create</code> skips already-created items and picks up where it left off.</p>
 
     <h2>Configuration</h2>
     <p>The Jira project key is stored in <code>draft/workflow.md</code> under a <code>## Jira</code> section:</p>
@@ -111,7 +111,7 @@ Project Key: PROJ</code></pre>
     <p>If the key is missing on first run, Draft prompts for it and persists the value for all future invocations. The project key is validated against the Jira API before any issues are created &mdash; an invalid key fails fast with a clear error.</p>
 
     <h2>Plan Synchronization</h2>
-    <p>After issue creation, <code>/draft:jira-create</code> updates <code>plan.md</code> with Jira keys inline:</p>
+    <p>After issue creation, <code>/draft:jira create</code> updates <code>plan.md</code> with Jira keys inline:</p>
 
     <pre><code>## Phase 1: Setup [PROJ-124]
 - [x] **Task 1.1:** Extract logging utilities [PROJ-125]
@@ -131,6 +131,6 @@ Project Key: PROJ</code></pre>
 
     <div class="callout callout-tip">
         <div class="callout-title">MCP Requirement</div>
-        <p><code>/draft:jira-create</code> requires a configured MCP-Jira server. If MCP is not available, Draft provides the export file as a complete, structured document that can be manually imported or used with other Jira integration tools. The preview command (<code>/draft:jira-preview</code>) works without MCP.</p>
+        <p><code>/draft:jira create</code> requires a configured MCP-Jira server. If MCP is not available, Draft provides the export file as a complete, structured document that can be manually imported or used with other Jira integration tools. The preview command (<code>/draft:jira preview</code>) works without MCP.</p>
     </div>
 </div>

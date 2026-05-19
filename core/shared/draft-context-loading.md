@@ -16,6 +16,41 @@ If `draft/.ai-profile.md` exists, **always** read it first. This ultra-compact f
 - **Purpose**: Enables simple tasks (quick edits, config changes, small fixes) without loading full context
 - **Fallback**: If `.ai-profile.md` does not exist, proceed to Layer 1
 
+### Layer 0.5: Plugin Guardrails (Selective Loading)
+
+Layer 0.5 files live in the Draft plugin (`core/guardrails/`) and provide numbered, versioned baseline rules. **Project-level `draft/guardrails.md` always takes precedence** — if a project rule conflicts with a plugin rule, the project rule wins. See `core/guardrails/README.md` for vocabulary and full precedence order. (Portable improvement merged per manifest §2.1.)
+
+| File | Rules | Scope |
+|------|-------|-------|
+| `core/guardrails/README.md` | (index) | Vocabulary, ID prefixes, precedence rules |
+| `core/guardrails/code-quality.md` | CQ-001…CQ-012 | Code authoring, naming, error messages, structure |
+| `core/guardrails/design-norms.md` | DN-001…DN-010 | HLD/LLD depth split, diagrams, traceability, secrets |
+| `core/guardrails/review-checks.md` | RC-001…RC-015 | Cross-cutting review baseline (security, tests, observability) |
+| `core/guardrails/security.md` | SEC-01…SEC-10 | Hard security red lines + reasoning chain |
+| `core/guardrails/secure-patterns.md` | (cross-cites SEC) | Per-language enforcement of SEC rules |
+| `core/guardrails/dependency-triage.md` | RC-014 | Third-party dependency vulnerability handling |
+| `core/guardrails/language-standards.md` | Per-stack sections | Language-specific style, safety, test standards |
+| `core/guardrails.md` *(existing)* | G1…G8 | C++ systems guardrails — always enforced for C++ code (conditioned on language signals for public language-agnostic use) |
+
+#### Selective Loading Matrix (binding)
+
+This matrix is the **single source of truth** for which Layer 0.5 files load per command. Skills MUST honor it — over-loading is a Red Flag (see red-flags.md) and costs tokens per invocation.
+
+| Command type | Commands | Guardrails loaded |
+|---|---|---|
+| **Read-only** | `/draft:status`, `/draft:standup`, `/draft:tour`, `/draft:index`, `/draft:coverage` | **none** |
+| **Spec / Plan** | `/draft:new-track`, `/draft:decompose`, `/draft:adr`, `/draft:testing-strategy`, `/draft:documentation` | `design-norms.md` only (architecture-shaped rules) |
+| **Code-touching (generation)** | `/draft:implement`, `/draft:debug`, `/draft:change`, `/draft:revert` | `code-quality.md` + `security.md` + `secure-patterns.md` + `language-standards.md` (detected stack) |
+| **Review** | `/draft:review`, `/draft:quick-review`, `/draft:deep-review`, `/draft:assist-review`, `/draft:bughunt`, `/draft:tech-debt` | `review-checks.md` + `security.md` + `language-standards.md` (detected stack); deep-review also loads `code-quality.md` + `design-norms.md` |
+| **Deploy** | `/draft:deploy-checklist`, `/draft:incident-response` | `security.md` + `dependency-triage.md` |
+| **Pattern / Meta** | `/draft:learn`, `/draft:init` | `code-quality.md` + `security.md` (baseline only — pattern discovery uses project-level guardrails as primary signal) |
+
+**Sensitive-task escalation:** Even when the matrix says "none" or a narrow set, code-touching tasks whose title/spec mentions authentication, authorization, login, token, session, password, SQL, database query, subprocess, exec, crypto, encryption, hash, file upload, or external API input MUST additionally load `security.md` + `secure-patterns.md` and treat `[SEC-*]` violations as Critical.
+
+**Citation requirement:** When a rule is enforced or violated, cite the ID inline — `[SEC-03]`, `[CQ-007]`, `[RC-012]`, `[DN-004]`.
+
+**Fallback**: If `core/guardrails/` files are not present (older plugin installation), skip gracefully — no degradation.
+
 ### Layer 1: Base Context Files
 
 If `draft/` directory exists, read and internalize these files in order:

@@ -4,7 +4,7 @@
 
 Draft is a plugin that adds three things to AI coding agents: a knowledge graph engine that maps your repo, spec-driven planning that produces git-tracked specs and phased plans, and a three-stage review pipeline that validates work against the plan. Together, they force AI to execute pre-approved work — grounded in real codebase understanding — instead of guessing.
 
-Draft works with Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Google Gemini. 28 slash commands, 7 specialized agents, 14-dimension bug hunting, ACID-style module audits, knowledge graph with six query modes, 14 deterministic shell helpers. MIT license, no telemetry, no paid tiers.
+Draft works with Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Google Gemini. 5 primary routers + 20+ specialist commands (still directly callable), 7 specialized agents, 14-dimension bug hunting, ACID-style module audits, knowledge graph with six query modes, 14 deterministic shell helpers. MIT license, no telemetry, no paid tiers.
 
 ## Installation
 
@@ -46,6 +46,18 @@ The primary development cycle follows four stages:
 
 After initial setup, `/draft:init refresh` uses stored file hashes and signal classification to only re-analyze changed files — no full re-scan needed.
 
+## Recommended Primary Interface (5 Routers)
+
+For better discoverability, use the consolidated router commands instead of the individual specialist commands:
+
+- **`/draft:plan`** — Planning & architecture router (new-track, decompose, adr, tech-debt, change)
+- **`/draft:ops`** — Operations & lifecycle router (deploy-checklist, incident-response, standup, status, revert)
+- **`/draft:docs`** — Authoring router (documentation)
+- **`/draft:discover`** — Investigation & quality router (debug, bughunt, quick/deep-review, coverage, testing-strategy, learn, index, tour, impact, assist-review)
+- **`/draft:jira`** — Unified Jira integration (preview, create, review <ID>)
+
+All specialist commands remain directly callable for compatibility.
+
 ## All Commands (28)
 
 ### Primary Workflow
@@ -79,8 +91,7 @@ After initial setup, `/draft:init refresh` uses stored file hashes and signal cl
 - `/draft:status` — Show progress overview
 - `/draft:revert` — Git-aware rollback
 - `/draft:index` — Aggregate monorepo service contexts
-- `/draft:jira-preview` — Generate Jira export for review
-- `/draft:jira-create` — Push issues to Jira via MCP
+- `/draft:jira [preview|create|review <ID>]` — Unified Jira integration (generate export, push issues, qualify existing tickets)
 
 ### Authoring & Onboarding
 - `/draft:documentation` — Technical docs: readme, runbook, api, onboarding

@@ -149,7 +149,7 @@
           "name": "Does Draft support Jira integration?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes. /draft:jira-preview generates a Jira export file mapping tracks to epics, phases to stories, and tasks to sub-tasks with auto-generated story points. /draft:jira-create pushes these issues to Jira via MCP."
+            "text": "Yes. /draft:jira preview generates an editable export, /draft:jira create pushes issues via MCP, and /draft:jira review qualifies existing tickets using Draft's quality tools."
           }
         }
       ]
@@ -925,12 +925,12 @@
                     <span class="cmd-desc">Architecture Decision Records</span>
                 </div>
                 <div class="cmd-card" data-category="enterprise">
-                    <span class="cmd-name">/draft:jira-preview</span>
-                    <span class="cmd-desc">Generate Jira export</span>
+                    <span class="cmd-name">/draft:jira</span>
+                    <span class="cmd-desc">Unified Jira (preview / create / review)</span>
                 </div>
                 <div class="cmd-card" data-category="enterprise">
-                    <span class="cmd-name">/draft:jira-create</span>
-                    <span class="cmd-desc">Push to Jira via MCP</span>
+                    <span class="cmd-name">/draft:jira</span>
+                    <span class="cmd-desc">Unified Jira (preview / create / review)</span>
                 </div>
                 <div class="cmd-card" data-category="quality">
                     <span class="cmd-name">/draft:debug</span>
@@ -1009,7 +1009,7 @@
                 <div class="team-step glass-card">
                     <div class="team-num">4</div>
                     <h3>Distribute</h3>
-                    <p><code>/draft:jira-create</code> pushes epics and stories to Jira. Developers pick up stories with full context.</p>
+                    <p><code>/draft:jira create</code> (or the unified <code>/draft:jira</code> router) pushes the work to Jira with full track context.</p>
                 </div>
                 <div class="team-step glass-card">
                     <div class="team-num">5</div>
@@ -1225,7 +1225,7 @@
                     <h3>Product Managers</h3>
                     <p class="audience-role">PM / TPM</p>
                     <p>Readable specs anyone can review. Jira integration with auto story points. Status tracking across tracks. Know what's being built before it's built.</p>
-                    <div class="audience-cta">/draft:jira-preview + /draft:status</div>
+                    <div class="audience-cta">/draft:jira (preview/create) + /draft:status</div>
                 </div>
 
                 <div class="glass-card audience-card" data-accent="emerald">
@@ -1433,7 +1433,7 @@
                 <details class="faq-item glass-card">
                     <summary class="faq-question">Does Draft support Jira integration?</summary>
                     <div class="faq-answer">
-                        <p>Yes. <code>/draft:jira-preview</code> generates a Jira export file mapping tracks to epics, phases to stories, and tasks to sub-tasks with auto-generated story points. <code>/draft:jira-create</code> pushes these issues to Jira via MCP.</p>
+                        <p>Yes. Use <code>/draft:jira preview</code> to generate the export and <code>/draft:jira create</code> (or the unified router) to push issues. The modern entry point is <code>/draft:jira</code>.</p>
                     </div>
                 </details>
             </div>

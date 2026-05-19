@@ -32,14 +32,18 @@ When `draft/` exists in the project, always consider:
 |---------|---------|
 | `draft` | Show overview and available commands |
 | `draft init` | Initialize project (run once) |
-| `draft index [--init-missing]` | Aggregate monorepo service contexts |
 | `draft new-track <description>` | Create feature/bug track |
-| `draft decompose` | Module decomposition with dependency mapping |
 | `draft implement` | Execute tasks from plan |
+| `draft review [--track <id>]` | Three-stage code review |
+| `draft plan <intent>` | Planning & architecture router (new-track, decompose, adr, tech-debt, change) |
+| `draft ops <intent>` | Operations & lifecycle router (deploy-checklist, incident, standup, status, revert) |
+| `draft docs <intent>` | Authoring router (documentation) |
+| `draft discover <intent>` | Investigation & quality router (debug, bughunt, reviews, coverage, learn...) |
+| `draft jira [preview|create|review <ID>]` | Unified Jira integration (preview, create, review) |
+| `draft decompose` | Module decomposition with dependency mapping |
 | `draft coverage` | Code coverage report (target 95%+) |
 | `draft deploy-checklist [track <id>]` | Pre-deployment verification checklist |
 | `draft bughunt [--track <id>]` | Systematic bug discovery |
-| `draft review [--track <id>]` | Three-stage code review |
 | `draft quick-review [file|pr <number>]` | Lightweight 4-dimension review |
 | `draft deep-review [module]` | Exhaustive production-grade module audit |
 | `draft testing-strategy [track <id>|path]` | Design test strategy with coverage targets |
@@ -53,8 +57,7 @@ When `draft/` exists in the project, always consider:
 | `draft status` | Show progress overview |
 | `draft revert` | Git-aware rollback |
 | `draft change <description>` | Handle mid-track requirement changes |
-| `draft jira-preview [track-id]` | Generate jira-export.md for review |
-| `draft jira-create [track-id]` | Create Jira issues from export via MCP |
+| `draft index [--init-missing]` | Aggregate monorepo service contexts |
 | `draft tour` | Interactive onboarding tour |
 | `draft impact` | Telemetry and analytics insights |
 | `draft assist-review` | Assist human reviewers with architectural risk audit |
@@ -87,8 +90,11 @@ Recognize these natural language patterns:
 | "what's the status" | Show status |
 | "undo", "revert" | Run revert |
 | "requirements changed", "scope changed", "update the spec" | Run change |
-| "preview jira", "export to jira" | Run jira-preview |
-| "create jira", "push to jira" | Run jira-create |
+| "plan the work", "new feature", "tech debt", "adr", "decompose" | Run draft plan (router) |
+| "ops task", "deploy", "incident", "standup", "status", "revert" | Run draft ops (router) |
+| "write docs", "documentation" | Run draft docs (router) |
+| "discover", "debug", "review code", "hunt bugs", "coverage" | Run draft discover (router) |
+| "jira", "send to Jira", "jira review" | Run draft jira (router) |
 | "tour", "onboard me" | Run tour |
 | "impact", "analytics" | Run impact |
 | "assist review", "help reviewer" | Run assist-review |
@@ -555,56 +561,100 @@ If **Greenfield**: skip to Step 2 (Product Definition).
 
 ### 1. Detect and run graph binary
 
+**Updated for binary adoption (Phase 3 skeleton)**: Prefer native `graph` (PATH → bundled arch-specific) for speed and C/C++ fidelity via optional `graph-clang`. Full graceful fallback to legacy Node wrapper. Clear messages always emitted. Existing behavior unchanged when no native present.
+
 ```bash
-# Find the graph binary shipped with the draft plugin.
-# Method 1: .draft-install-path breadcrumb (written by install.sh)
-# Method 2: search known install locations
-# Method 3: check if 'graph' is on PATH
+# Prefer the new canonical verifier (implements PATH > bundled-<arch> > legacy)
 GRAPH_BIN=""
-
-# Method 1: breadcrumb file (most reliable — works on any machine)
-for breadcrumb in \
-    "$HOME/.cursor/plugins/local/draft/.draft-install-path" \
-    "$HOME/.claude-plugin/../.draft-install-path" \
-    ; do
-    if [ -f "$breadcrumb" ]; then
-        PLUGIN_ROOT="$(cat "$breadcrumb")"
-        if [ -x "$PLUGIN_ROOT/graph/bin/graph" ]; then
-            GRAPH_BIN="$PLUGIN_ROOT/graph/bin/graph"
-            break
-        fi
+GRAPH_CLANG_BIN=""
+if command -v scripts/tools/verify-graph-binary.sh >/dev/null 2>&1 || \
+   [ -x "./scripts/tools/verify-graph-binary.sh" ]; then
+    VERIFY="./scripts/tools/verify-graph-binary.sh"
+    # --repo . ensures report written to draft/.graph-binary-report.json
+    if REPORT="$($VERIFY --repo . --json 2>/dev/null)"; then
+        GRAPH_BIN=$(echo "$REPORT" | sed -n 's/.*"graph_bin":"\([^"]*\)".*/\1/p')
+        GRAPH_CLANG_BIN=$(echo "$REPORT" | sed -n 's/.*"graph_clang_bin":"\([^"]*\)".*/\1/p' | grep -v '^null$' || true)
+        echo "Graph binary selected via verifier (source=$(echo "$REPORT" | sed -n 's/.*"source":"\([^"]*\)".*/\1/p')): $GRAPH_BIN"
+        [ -n "$GRAPH_CLANG_BIN" ] && echo "  graph-clang companion: $GRAPH_CLANG_BIN (high-fidelity C/C++ enabled)"
     fi
-done
-
-# Method 2: search common install paths
-if [ -z "$GRAPH_BIN" ]; then
-    for candidate in \
-        "$HOME/.cursor/plugins/local/draft/graph/bin/graph" \
-        "$HOME/.claude-plugin/../graph/bin/graph" \
-        "graph/bin/graph" \
-        ; do
-        if [ -x "$candidate" ]; then
-            GRAPH_BIN="$candidate"
-            break
-        fi
-    done
 fi
 
-# Method 3: check PATH
+# Fallback / legacy path (kept for environments without the verify script yet)
 if [ -z "$GRAPH_BIN" ]; then
-    GRAPH_BIN="$(command -v graph 2>/dev/null || true)"
+    # New preference order (native first):
+    # 1. PATH (system or user native graph)
+    if [ -z "$GRAPH_BIN" ]; then
+        GRAPH_BIN="$(command -v graph 2>/dev/null || true)"
+        [ -n "$GRAPH_BIN" ] && echo "Using graph from PATH (preferred native): $GRAPH_BIN"
+    fi
+    # 2. Bundled native per-arch under plugin (written by install.sh / package.sh)
+    if [ -z "$GRAPH_BIN" ]; then
+        ARCH="$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')"
+        for root in \
+            "$HOME/.cursor/plugins/local/draft" \
+            "$HOME/.claude-plugin/.." \
+            "." \
+            ; do
+            cand="$root/graph/bin/$ARCH/graph"
+            if [ -x "$cand" ]; then
+                GRAPH_BIN="$cand"
+                echo "Using bundled native graph for $ARCH: $GRAPH_BIN"
+                clang_cand="$root/graph/bin/$ARCH/graph-clang"
+                [ -x "$clang_cand" ] && GRAPH_CLANG_BIN="$clang_cand"
+                break
+            fi
+        done
+    fi
+    # 3. Legacy Node wrapper (exact prior behavior)
+    if [ -z "$GRAPH_BIN" ]; then
+        for breadcrumb in \
+            "$HOME/.cursor/plugins/local/draft/.draft-install-path" \
+            "$HOME/.claude-plugin/../.draft-install-path" \
+            ; do
+            if [ -f "$breadcrumb" ]; then
+                PLUGIN_ROOT="$(cat "$breadcrumb")"
+                if [ -x "$PLUGIN_ROOT/graph/bin/graph" ]; then
+                    GRAPH_BIN="$PLUGIN_ROOT/graph/bin/graph"
+                    echo "Falling back to legacy Node graph (no native found): $GRAPH_BIN"
+                    break
+                fi
+            fi
+        done
+    fi
+    if [ -z "$GRAPH_BIN" ]; then
+        for candidate in \
+            "$HOME/.cursor/plugins/local/draft/graph/bin/graph" \
+            "$HOME/.claude-plugin/../graph/bin/graph" \
+            "graph/bin/graph" \
+            ; do
+            if [ -x "$candidate" ]; then
+                GRAPH_BIN="$candidate"
+                echo "Falling back to legacy Node graph: $GRAPH_BIN"
+                break
+            fi
+        done
+    fi
 fi
 
-# Run if found
+# Execute (pass graph-clang discovery via env or sibling for the binary to auto-probe)
 if [ -n "$GRAPH_BIN" ]; then
-    echo "Found graph binary: $GRAPH_BIN"
-    "$GRAPH_BIN" --repo . --out draft/graph/
+    echo "Running graph build with: $GRAPH_BIN"
+    if [ -n "$GRAPH_CLANG_BIN" ]; then
+        # Companion discovery is also file-sibling / PATH based inside the binary
+        echo "  (graph-clang available at $GRAPH_CLANG_BIN — C/C++ extraction will use it when compile_commands present)"
+    fi
+    "$GRAPH_BIN" --repo . --out draft/graph/ || {
+        echo "WARNING: graph build failed (exit $?) — continuing with manual discovery. Graph data may be partial or absent."
+        GRAPH_BIN=""
+    }
 else
-    echo "Graph binary not found — skipping automated analysis"
+    echo "Graph binary not found (native or legacy) — skipping automated graph analysis. All downstream steps degrade gracefully."
 fi
 ```
 
-Run the above bash script. If the graph binary is found, it will analyze the codebase and produce `draft/graph/` with all artifacts.
+Run the detection logic above. When a native binary (or `graph-clang`) is chosen, you will see explicit selection messages. Legacy Node path is used only as final fallback — behavior for projects without native binaries is identical to before the skeleton. See `core/shared/graph-query.md` and `graph/bin/README.md` for full contract.
+
+If the build succeeds, `draft/graph/` is populated and later steps consume the always-load artifacts + injection slots exactly as before.
 
 ### 2. If graph build succeeds, load the always-load artifacts
 
@@ -4645,14 +4695,14 @@ If track type is refactor:
   → draft tech-debt scans 6 debt categories with prioritization
   Run tech-debt analysis? [Y/n]"
 ```
-If accepted: invoke `draft tech-debt`, use its prioritized output to scope the refactor spec.
+If accepted: invoke `draft plan "tech debt for this refactor"`, use its prioritized output to scope the refactor spec.
 
 #### Design Decision Detection → ADR Suggestion
 
 If spec introduces technology not in `tech-stack.md` or changes service boundaries in `.ai-context.md`:
 ```
 "This involves a significant design decision. Consider running:
-  → draft adr to document the architectural decision"
+  → draft plan \"adr ...\" to document the architectural decision"
 ```
 
 ---
@@ -4708,12 +4758,12 @@ If Jira ticket provided:
 
 ```
 "Bug track detected with [Jira context / error description]. Run a structured debug session before writing the spec?
-  → draft debug will help reproduce and isolate the issue
+  → draft discover debug will help reproduce and isolate the issue
   Run debug session? [Y/n]"
 ```
 
 If accepted:
-- Invoke `draft debug` with gathered triage context
+- Invoke `draft discover "debug ..."` (routes to debug) with gathered triage context
 - Feed the Debug Report into spec-draft.md "Reproduction" and "Root Cause Hypothesis" sections
 
 #### Triage Step 3: RCA Analysis
@@ -4755,7 +4805,7 @@ Only proceed to spec/plan generation after developer approval.
 
 If track description contains "incident", "outage", "SEV", or "postmortem":
 - Check for existing postmortem: `ls draft/tracks/*/incident-*.md 2>/dev/null`
-- If none found, suggest: "Run `draft incident-response postmortem` first to capture incident context."
+- If none found, suggest: "Run `draft ops incident-response postmortem` first to capture incident context."
 - If found, feed postmortem findings into spec-draft.md.
 
 ---
@@ -5015,7 +5065,8 @@ Based on track type, suggest relevant follow-ups:
 **Bug tracks:**
 ```
 "Track ready for implementation. Also consider:
-  → draft incident-response postmortem — If this bug caused an incident
+  → draft ops incident-response postmortem — If this bug caused an incident
+  → draft discover debug — Structured investigation
   → git bisect — Find the exact commit that introduced this bug"
 ```
 
@@ -5023,14 +5074,14 @@ Based on track type, suggest relevant follow-ups:
 ```
 "Track ready for implementation.
   Next: draft implement
-  Also: draft testing-strategy — Define test approach for this feature"
+  Also: draft discover \"test strategy\" — Define test approach for this feature"
 ```
 
 **Refactor tracks:**
 ```
 "Track ready for implementation.
   Next: draft implement
-  Also: draft adr — Document refactoring decisions"
+  Also: draft plan \"adr ...\" — Document refactoring decisions"
 ```
 
 ---
@@ -8472,6 +8523,2129 @@ If Jira ticket linked, sync via `core/shared/jira-sync.md`:
 
 ---
 
+## Plan Router
+
+When user says "plan feature" or "draft plan <intent>" (new-track, decompose, adr, tech-debt, change):
+
+`draft plan` is the consolidated entry point for all planning and upfront architecture work in the Context-Driven Development lifecycle.
+
+## When to Use
+
+- Starting a new feature, bug fix, or refactor track
+- Decomposing large modules or changes into dependency-aware units
+- Recording Architecture Decision Records (ADRs)
+- Cataloging and prioritizing technical debt
+- Handling mid-track requirement or scope changes
+
+## Routing Logic
+
+The router parses intent from natural language and dispatches to the correct leaf skill. Ambiguous requests surface a short menu of options.
+
+| User Intent Keywords                  | Dispatches To         | Purpose |
+|---------------------------------------|-----------------------|---------|
+| new feature, new track, start X, add Y, plan a refactor, fix the Z bug | `draft new-track` | Collaborative spec + plan creation for track |
+| decompose, break into modules, dependency map | `draft decompose` | Module decomposition + graph |
+| adr, architecture decision, record decision, design decision | `draft adr` | ADR authoring and evaluation |
+| tech debt, technical debt, catalog debt, debt analysis | `draft tech-debt` | 6-dimension debt scan + prioritization |
+| change, scope changed, requirements changed, update spec, mid-track pivot | `draft change` | Structured change impact & plan update |
+
+## Dispatch Examples
+
+User: "start a new feature for user profile editing"
+
+→ dispatches to `draft new-track "user profile editing"`
+
+User: "decompose the payment module"
+
+→ dispatches to `draft decompose "payment module"`
+
+User: "document our decision to use event sourcing"
+
+→ dispatches to `draft adr "Use event sourcing for order processing"`
+
+User: "find and prioritize our technical debt"
+
+→ dispatches to `draft tech-debt`
+
+User: "the requirements changed, we need to support multi-tenancy now"
+
+→ dispatches to `draft change "add multi-tenancy support"`
+
+## Relationship to Primary Workflow
+
+`draft plan` augments but does not replace the core `draft new-track` and `draft implement` flow. Many planning activities are launched via `draft plan` for discoverability, then flow into the primary track lifecycle.
+
+Direct leaf commands remain available during the transition period (see MIGRATION).
+
+## Quality Gate
+
+All planning dispatches should result in updated `draft/tracks/<id>/spec.md` or `plan.md` (or new ADR/debt artifacts) with proper metadata headers and citations back to product/tech-stack context.
+
+---
+
+## Ops Router
+
+When user says "ops deploy" or "draft ops <intent>" (deploy-checklist, incident, standup, status, revert):
+
+`draft ops` groups all operational, deployment, and runtime lifecycle commands.
+
+## When to Use
+
+- Preparing a deployment or release
+- Responding to incidents or outages
+- Generating team standup / activity summaries
+- Checking overall project or track status
+- Performing git-aware reverts or rollbacks
+
+## Routing Logic
+
+Intent keywords drive deterministic dispatch. Multi-intent requests are sequenced (e.g., status then incident).
+
+| User Intent Keywords                     | Dispatches To              | Purpose |
+|------------------------------------------|----------------------------|---------|
+| deploy checklist, pre-deploy, release check, readiness | `draft deploy-checklist` | Pre-deployment verification with rollback triggers |
+| incident, outage, sev, postmortem, triage | `draft incident-response` | Full incident lifecycle (triage → mitigate → postmortem) |
+| standup, daily summary, what did I do, activity report | `draft standup` | Git activity standup summary (read-only) |
+| status, progress, what's the state, track overview | `draft status` | Progress overview across tracks and git |
+| revert, rollback, undo, git revert, restore | `draft revert` | Git-aware safe rollback of changes or tracks |
+
+## Dispatch Examples
+
+User: "run the deploy checklist for the auth track"
+
+→ dispatches to `draft deploy-checklist [track auth]`
+
+User: "we had an outage last night, start postmortem"
+
+→ dispatches to `draft incident-response postmortem`
+
+User: "give me today's standup"
+
+→ dispatches to `draft standup`
+
+User: "what's the current status of the project"
+
+→ dispatches to `draft status`
+
+User: "revert the last two commits on this branch safely"
+
+→ dispatches to `draft revert`
+
+## Integration Notes
+
+Ops commands often read `draft/tracks.md`, `draft/*/plan.md`, and git metadata. They feed forward into documentation and jira flows when needed.
+
+Direct invocation of the leaf skills continues to work for power users and scripts during the deprecation window.
+
+---
+
+## Docs Router
+
+When user says "write docs" or "draft docs <intent>" (documentation):
+
+`draft docs` provides a single namespace for all documentation generation and maintenance tasks.
+
+## When to Use
+
+- Generating or refreshing README, API docs, runbooks, or onboarding guides
+- Producing technical documentation from existing architecture and code context
+- Keeping documentation in sync after implementation or review phases
+
+## Routing Logic
+
+Currently focused on the documentation specialist. Future expansion may include additional authoring helpers under the same router.
+
+| User Intent Keywords                        | Dispatches To         | Purpose |
+|---------------------------------------------|-----------------------|---------|
+| write docs, documentation, readme, runbook, api docs, onboarding guide, generate docs | `draft documentation` | Technical documentation authoring (readme, runbook, api, onboarding) |
+
+## Dispatch Examples
+
+User: "write a README for the new service"
+
+→ dispatches to `draft documentation readme`
+
+User: "generate an API reference and runbook for the billing module"
+
+→ dispatches to `draft documentation api runbook`
+
+User: "create onboarding guide for new engineers"
+
+→ dispatches to `draft documentation onboarding`
+
+## Notes
+
+The documentation command reads heavily from `draft/architecture.md`, `draft/.ai-context.md`, `draft/product.md`, and `draft/tech-stack.md` (plus graph artifacts when present).
+
+Prefer `draft docs` going forward for all authoring requests. The legacy direct form remains for compatibility (see migration guidance).
+
+---
+
+## Discover Router
+
+When user says "discover debug" or "draft discover <intent>" (debug, bughunt, reviews, coverage, learn, index, etc.):
+
+`draft discover` is the single front door for all investigation, auditing, pattern learning, and quality exploration activities.
+
+## When to Use
+
+- Any debugging or root-cause work
+- Code quality reviews (lightweight to exhaustive to architectural)
+- Coverage analysis and test strategy design
+- Discovering and codifying project conventions
+- Monorepo indexing and context aggregation
+- Project tours, impact analysis, or reviewer assistance
+
+## Routing Logic
+
+Strong keyword and phrase matching with fallback to a menu when intent is broad or compound. Several quality commands auto-chain (e.g. review may call bughunt).
+
+| User Intent Keywords                              | Dispatches To            | Purpose |
+|---------------------------------------------------|--------------------------|---------|
+| debug, investigate bug, reproduce, isolate, diagnose | `draft debug` | Structured 4-phase debugging |
+| hunt bugs, find bugs, exhaustive sweep, regression hunt | `draft bughunt` | 14-dimension bug hunt + regression tests |
+| quick review, fast review, sanity check, lightweight review | `draft quick-review` | 4-dimension review (~2 min) |
+| deep review, production audit, module audit, ACID compliance | `draft deep-review` | Full module lifecycle + architecture audit |
+| coverage, code coverage, test coverage report | `draft coverage` | Coverage measurement and gap report |
+| test strategy, testing plan, coverage targets, pyramid | `draft testing-strategy` | Test approach design |
+| learn patterns, discover conventions, update guardrails, anti-patterns | `draft learn` | Pattern mining + guardrail evolution |
+| index services, aggregate context, monorepo index | `draft index` | Monorepo service context aggregation |
+| tour, walkthrough, onboard me, getting started tour | `draft tour` | Guided interactive project tour |
+| impact, blast radius, change impact, analytics | `draft impact` | Telemetry-driven change impact reports |
+| assist review, help reviewer, PR architectural audit | `draft assist-review` | Risk audit to support human reviewers |
+
+## Dispatch Examples
+
+User: "debug the flaky test in CI"
+
+→ dispatches to `draft debug "flaky test in CI"`
+
+User: "quick review the PR diff"
+
+→ dispatches to `draft quick-review [pr context]`
+
+User: "run a deep production audit on the auth service"
+
+→ dispatches to `draft deep-review auth`
+
+User: "learn the coding patterns in this repo and tighten guardrails"
+
+→ dispatches to `draft learn`
+
+User: "index the monorepo so agents see all services"
+
+→ dispatches to `draft index --init-missing`
+
+## Auto-Chains & Recommendations
+
+- `draft implement` and `draft review` (primary) frequently call into discover skills at phase boundaries.
+- `draft discover "full quality"` may suggest or chain review + bughunt + coverage.
+- After major changes, `draft discover learn` is recommended to keep guardrails current.
+
+Direct specialist commands are preserved as shims for existing workflows and scripts.
+
+---
+
+## Jira Router
+
+When user says "jira preview", "jira create", or "jira review <ID>":
+
+Single entry point for all Jira workflows: preview Draft tracks as Jira issues, create them via MCP (default = 1 Story per track; --epic = 1 Epic + 1-3 Stories), and review any Jira ticket (epic, story, bug, sub-task) end-to-end.
+
+
+## Subcommand Routing
+
+Parse `$ARGUMENTS` and dispatch:
+
+| User Intent | Subcommand | Behavior |
+|-------------|------------|----------|
+| `(no args)`, `preview`, `preview <track-id>` | **preview** (default) | Generate `jira-export-<timestamp>.md` — **one Story** containing all phases/tasks |
+| `preview --epic ...` | **preview --epic** | Generate rich export: 1 Epic + 1–3 Stories (max) |
+| `create`, `create <track-id>` | **create** | Create **1 Story** (default) via MCP |
+| `review <JIRA_ID>` | **review** | Full qualification review of any Jira ticket — delegates to [review.md](review.md) |
+
+- `preview` is the default when no subcommand is supplied.
+- `review` requires a Jira ID as the next argument. Validate format `<PROJECT>-<NUMBER>` (e.g., `ENG-446236`). If numeric-only, prompt for project prefix — do NOT assume.
+
+---
+
+## Jira Configuration (Shared)
+
+All subcommands read project-level Jira configuration from `draft/workflow.md` under a `## Jira` section:
+
+```markdown
+## Jira
+
+Project Key: <KEY>
+Integration: jira-mcp
+Team: <team-name>
+Component: <component-name>
+Swimlane: <swimlane-name>
+Assignee Display Name: <assignee-name>
+```
+
+- **Project Key** — required for `create`. If missing, prompt and persist.
+- **Integration** — informational; defaults to `jira-mcp` if absent.
+- **Team / Component / Swimlane / Assignee Display Name** — applied as defaults to every issue created by `create`. Empty values are skipped (Jira ignores blank fields).
+
+If a value is missing when needed:
+1. Prompt the user for it.
+2. Append to (or create) the `## Jira` section in `draft/workflow.md` so subsequent runs reuse it.
+
+---
+
+## Jira Content Hygiene (Mandatory)
+
+When writing any text that will go into Jira (descriptions, summaries, bug details):
+
+- Be **minimal, concise, and precise**.
+- Do **not** dump full plans, long task lists, verbose context, or Draft-internal reasoning into Jira.
+- Use short summaries + key outcomes only.
+- Structured content (phases, tasks) may be included as compact markdown, but keep it brief.
+- Never pollute Jira with excessive text.
+
+This rule applies to both `preview` generation and `create` descriptions.
+
+---
+
+# Subcommand: preview
+
+Generate a timestamped `jira-export-<timestamp>.md` (with `jira-export-latest.md` symlink) from the active track's plan for review and editing before creating Jira issues.
+
+**Flag handling:** Check `$ARGUMENTS` for `--epic` at the very start of this section. If present, set `EPIC_MODE=true` and remove the flag from the working arguments. This flag changes the entire output structure (see Step 2).
+
+## Red Flags — STOP if you're:
+
+- Generating a preview without an approved plan.md
+- Assigning story points inconsistent with task count
+- Missing sub-tasks that exist in plan.md
+- Not including quality findings when review/bughunt reports exist
+- Overwriting a reviewed jira-export without warning the user
+
+**Plan first, then preview. Accuracy over speed.**
+
+---
+
+## Standard File Metadata
+
+The generated `jira-export-<timestamp>.md` MUST include the standard YAML frontmatter for traceability and sync verification.
+
+### Gathering Git Information
+
+```bash
+basename "$(pwd)"                                                # Project name
+git branch --show-current                                        # Local branch
+git rev-parse --abbrev-ref --symbolic-full-name @{upstream} 2>/dev/null || echo "none"
+git rev-parse HEAD                                               # Full SHA
+git rev-parse --short HEAD                                       # Short SHA
+git log -1 --format="%ci"                                        # Commit date
+git log -1 --format="%s"                                         # Commit subject
+git status --porcelain | head -1                                 # Dirty check
+```
+
+### Metadata Template
+
+```yaml
+---
+project: "{PROJECT_NAME}"
+module: "root"
+track_id: "{TRACK_ID}"
+generated_by: "draft:jira:preview"
+generated_at: "{ISO_TIMESTAMP}"
+git:
+  branch: "{LOCAL_BRANCH}"
+  remote: "{REMOTE/BRANCH or 'none'}"
+  commit: "{FULL_SHA}"
+  commit_short: "{SHORT_SHA}"
+  commit_date: "{COMMIT_DATE}"
+  commit_message: "{FIRST_LINE_OF_COMMIT_MESSAGE}"
+  dirty: {true|false}
+synced_to_commit: "{FULL_SHA}"
+---
+```
+
+---
+
+## Mapping Structure
+
+
+### Default behavior (recommended)
+
+- Every track becomes **exactly 1 Story**.
+- All phases and their tasks are included **inside the Story description** (as markdown sections).
+- No child Jira issues are created.
+
+This keeps Jira clean and keeps the export focused on root issues by default.
+
+### Opt-in rich hierarchy (`--epic`)
+
+Use `draft jira preview --epic` or `draft jira create --epic` when you want an Epic.
+
+**Splitting rule (simple):**
+- 5 or fewer phases → **1 Story** under the Epic
+- More than 5 phases → split across **2 or 3 Stories** (maximum)
+
+All detailed tasks remain inside the Story descriptions — we never create Jira Tasks or Sub-tasks.
+
+### Summary of mappings
+
+| Flag       | Root Issue | Child Issues          | Where phases/tasks live                     |
+|------------|------------|-----------------------|---------------------------------------------|
+| (default)  | 1 Story    | None                  | Inside the single Story description         |
+| `--epic`   | 1 Epic     | 1–3 Stories (max)     | Distributed across the Story descriptions   |
+
+## Step 1: Load Context
+
+1. Capture git context (commands above).
+2. Find the active track from `draft/tracks.md` (look for `[~] In Progress` or first `[ ]`). If a track ID is provided in `$ARGUMENTS`, use that instead.
+3. Read the track's `plan.md` for phases and tasks.
+4. Read the track's `metadata.json` for title and type.
+5. Read the track's `spec.md` for root-issue description.
+6. Check for quality reports:
+   - `draft/tracks/<id>/review-report-latest.md` — review findings (from `draft review`)
+   - `draft/tracks/<id>/bughunt-report-latest.md` — defect findings
+7. Read `draft/workflow.md` → `## Jira` section for shared config (see Jira Configuration above).
+
+If no track found: tell the user "No track found. Run `draft new-track` to create one, or specify track ID."
+
+## Step 2: Determine Export Mode, Count Phases, and Group Content
+
+### 2.1 Detect Mode
+- If `EPIC_MODE=true` (from `--epic` flag), use Epic + Stories mode.
+- Otherwise, use **default single-Story mode**.
+
+### 2.2 Count Phases and Decide Story Count (Epic Mode Only)
+Count the number of `## Phase` sections in `plan.md`.
+
+**Splitting guideline (when using --epic):**
+- Phases ≤ 5  → 1 Story under the Epic
+- Phases 6–12 → 2 Stories under the Epic
+- Phases > 12 → 3 Stories under the Epic (hard cap)
+
+Store the target number of stories: `TARGET_STORIES`.
+
+### 2.3 Group Phases (for Epic Mode)
+Divide the phases as evenly as possible across `TARGET_STORIES`.
+
+Example grouping (store this in memory):
+- Story 1 gets phases 1..K
+- Story 2 gets phases K+1..M
+- Story 3 gets remaining phases
+
+In **default mode**, ignore grouping — everything goes under one Story.
+
+### 2.4 Build Data Structures
+For every phase:
+- Capture Phase name, Goal, Verification
+- Collect all its tasks (with status)
+
+Calculate total story points using the existing simple table (1-2 tasks = 1pt, 3-4=2pt, 5-6=3pt, 7+=5pt). This total goes on the root issue (or split across stories in epic mode if desired — default is to put total on the first Story).
+
+### 2.5 Root Issue Data
+- Summary = Track title
+- Description base = content from `spec.md` (first 2-3 paragraphs) + later the full structured plan
+- Issue Type = "Story" (default) or "Epic" (--epic)
+
+## Step 3: Extract Quality Findings (if reports exist)
+
+If `review-report-latest.md` or `bughunt-report-latest.md` exists in the track directory:
+
+### From `bughunt-report-latest.md`
+
+1. Parse findings by severity (Critical, High, Medium, Low).
+2. Extract all sections for each bug: Location, Confidence, Code Evidence, Data Flow Trace, Issue, Impact, Verification Done, Why Not a False Positive, Fix, Regression Test.
+3. Group by severity for the export.
+
+### From `review-report-latest.md`
+
+1. Parse findings from review report stages — Stage 1: Automated Validation (Architecture Conformance, Dead Code, Dependency Cycles, Security Scan, Performance), Stage 2: Spec Compliance, Stage 3: Code Quality (Architecture, Error Handling, Testing, Maintainability).
+2. Extract for each finding: Severity (Critical ✗ / Warning ⚠), Category, Location, Issue, Risk/Impact, Fix.
+3. Group by severity for the export.
+
+**Critical/High findings** should be highlighted — consider suggesting additional stories or tasks to address them before the track is complete.
+
+## Step 4: Generate the Export File
+
+```bash
+TIMESTAMP=$(date +%Y-%m-%dT%H%M)
+EXPORT_FILE="draft/tracks/<track_id>/jira-export-${TIMESTAMP}.md"
+SYMLINK="draft/tracks/<track_id>/jira-export-latest.md"
+```
+
+Create the file and the `latest` symlink.
+
+### 4.1 Write Frontmatter + Header
+Use the standard YAML frontmatter.
+Add a `mode: default` or `mode: epic` field.
+
+Write a clean summary table.
+
+### 4.2 Write Root Issue Section
+
+**Jira Content Rule:** Keep the description **minimal and focused**. Use short paragraphs. Do not dump full plans or verbose reasoning. Structured phases/tasks must be compact.
+
+**Always start with:**
+
+```markdown
+## Root Issue
+
+**Summary:** [Track Title]
+**Issue Type:** Story          # or Epic when --epic
+**Labels:** draft
+**Description:**
+{noformat}
+[First 2-3 paragraphs from spec.md]
+
+## Plan
+```
+
+Then render the plan content **concisely**:
+
+- In **default mode**: Render **all** phases as `### Phase X: Name` headings, with Goal, Verification, and a compact task checklist under each.
+- In **--epic mode**: If this is the root Epic section, put a short overview only.
+
+Include the Draft signature at the bottom of the description.
+
+### 4.3 Write Story Sections (only in --epic mode)
+
+**Jira Content Rule:** Keep every Story description **short and scannable**. Use compact headings and minimal text.
+
+If `mode: epic`:
+- Emit 1 to 3 `## Story N: [Short Title]` blocks (using the grouping decided in Step 2).
+- Under each Story, put the phases assigned to it as `### Phase ...` + **compact** task checklists.
+- Each Story gets its share of the total story points (or put the total on the first one — simple is fine).
+
+### 4.4 Write Bug Issues Section (always)
+
+Use the existing high-quality bug export format from `bughunt-report-latest.md`.
+These will become real Bug issues linked to the root (Epic or the main Story).
+
+### 4.5 Final Notes in the Export
+Add at the top:
+
+> Default = 1 Story. Use `--epic` for 1 Epic + 1-3 Stories.
+
+Update the symlink.
+
+## Step 5: Report
+
+```
+Jira Preview Generated
+
+Track:   [track_id] - [title]
+Mapping: [story-rooted | epic-rooted]   (phases: N)
+Export:  draft/tracks/<id>/jira-export-<timestamp>.md
+Symlink: draft/tracks/<id>/jira-export-latest.md
+
+Summary:
+- 1 root issue ({Story | Epic})
+- N mid-level issues ({Tasks | Stories})
+- M leaf issues (Sub-tasks)
+- P total story points
+- B bugs (from bughunt-report-latest.md)
+
+Breakdown:
+- Phase 1: [name] - X pts, Y tasks
+- Phase 2: [name] - X pts, Y tasks
+- ...
+
+Bugs (if bughunt-report-latest.md exists):
+- X critical bugs
+- Y high bugs
+- Z medium/low bugs
+
+Next steps:
+1. Review and edit the export via jira-export-latest.md (adjust points, descriptions, leaf issues, bug priorities)
+2. Run `draft jira create` to create issues in Jira
+```
+
+## Error Handling (preview)
+
+**plan.md has no phases:**
+- Tell user: "No phases found in plan.md. Run `draft new-track` to generate a proper plan."
+
+**spec.md missing:**
+- Use `plan.md` overview for root-issue description.
+- Warn: "spec.md not found, using plan overview for root-issue description."
+
+**jira-export-latest.md already exists:**
+- Check if the target file has been manually modified (user-added content not matching generated patterns — edited descriptions, added rows, changed story points from generated values).
+- If modifications detected, prompt: "Existing jira-export appears to have manual edits. Overwrite? [y/N]"
+- If unmodified, proceed with regeneration (new timestamped file + updated symlink).
+
+**Phase has no tasks:**
+- Create mid-level issue with 1 story point.
+- Add note: "No leaf issues defined for this phase."
+
+---
+
+# Subcommand: create
+
+Create Jira issues from `jira-export-latest.md` using MCP-Jira. If no export file exists, auto-generates one first by running the `preview` subcommand.
+
+## Red Flags — STOP if you're:
+
+- Creating Jira issues without reviewing `jira-export-latest.md` first (run `draft jira preview`)
+- Proceeding when MCP-Jira is not configured
+- Creating duplicate issues (check if jira-export-latest.md already has Jira keys)
+- Not verifying the target Jira project before creation
+- Skipping the export file update after issue creation
+
+**Preview before you create. Never create duplicates.**
+
+**Default = 1 Story only.** Use `--epic` when you want an Epic + 1–3 Stories. We never create Jira Tasks or Sub-tasks.
+
+---
+
+## Step 1: Load Context
+
+1. Capture git context (commands above).
+2. Find the active track from `draft/tracks.md`. If a track ID is provided in `$ARGUMENTS`, use that.
+3. Check for `draft/tracks/<track_id>/jira-export-latest.md`.
+
+If no track found: tell user "No track found. Run `draft new-track` to create one, or specify track ID."
+
+## Step 2: Ensure Export Exists
+
+**If `jira-export-latest.md` exists:** read and parse it (follow the symlink to the timestamped file). Proceed to Step 3.
+
+**If missing:** inform user "No jira-export-latest.md found. Generating preview first..." then execute the `preview` subcommand. Proceed to Step 3.
+
+## Step 3: Check MCP-Jira Availability
+
+Detect MCP-Jira tools. Known tool name variants: `mcp_jira_create_issue`, `jira_createIssue`, `create_jira_issue`, `jira-create-issue`. Use whichever is available.
+
+If unavailable:
+
+```
+MCP-Jira not configured.
+
+To create issues:
+1. Configure MCP-Jira server in your settings
+2. Run `draft jira create` again
+
+Or manually import from:
+  draft/tracks/<id>/jira-export-latest.md
+```
+
+Stop execution.
+
+## Step 4: Parse Export File (Export Format)
+
+Read the `mode` field from frontmatter:
+- `default` → expect 1 root Story
+- `epic`   → expect 1 Epic + 1–3 Stories
+
+### Root Issue(s)
+- Parse the `## Root Issue` (and any `## Story N:` sections if mode=epic).
+- For each Story section: Summary, Description (which now contains the phases and task checklists), story points if present.
+
+### Bug Issues
+Parse the `## Bug Issues` section completely (same as before). These are always created as separate Bug issues.
+
+**Important:** There are no longer "Mid-Level" or "Leaf Issues" tables that become separate Jira Tasks/Sub-tasks. All work items live inside the Story description(s).
+
+## Step 4b: Resolve Jira Configuration
+
+Read `draft/workflow.md` → `## Jira` section. Required fields and behavior:
+
+| Field | Required? | Behavior if missing |
+|-------|-----------|---------------------|
+| Project Key | Yes | Prompt user; append to `## Jira` section |
+| Integration | No | Defaults to `jira-mcp` |
+| Team | No | Skip — not applied to issues |
+| Component | No | Skip |
+| Swimlane | No | Skip |
+| Assignee Display Name | No | Skip |
+
+When prompting for a missing field, append to `draft/workflow.md`:
+
+```markdown
+## Jira
+
+Project Key: <KEY>
+Integration: jira-mcp
+Team: <team-name>
+Component: <component-name>
+Swimlane: <swimlane-name>
+Assignee Display Name: <assignee-name>
+```
+
+### Validate Project Key
+
+Before creating issues, attempt to fetch project metadata via MCP to verify the project key exists:
+
+```
+MCP call: get_project (or equivalent)
+- project: [project key]
+```
+
+If invalid: "Jira project '[KEY]' not found. Verify the project key and try again." Stop execution.
+
+### Resolve Assignee
+
+If `Assignee Display Name` is provided, resolve to an account ID via MCP user search (e.g., `find_users(query=<display_name>)`). Cache the resolved ID for the session. If resolution fails, warn and create issues unassigned rather than failing.
+
+## Step 5: Create Issues via MCP
+
+**Pin the symlink target:** At the start of this step, resolve the symlink to its actual timestamped file path (e.g., via `readlink -f jira-export-latest.md`). Use the resolved path for all subsequent writes to prevent data loss if the symlink is updated mid-run.
+
+**Incremental persistence:** After creating each issue, immediately update the corresponding entry in the export file with the Jira key. This ensures re-runs can skip already-created items even if the process fails mid-way.
+
+**Note:** Some Jira configurations do not allow setting status during creation. If status setting fails, create in default status and log a warning.
+
+### Shared field defaults
+
+Apply these to every `create_issue` call (omit any that resolved to empty in Step 4b):
+
+```
+- project: [Project Key]
+- labels: ["draft"]
+- component: [Component if set]
+- assignee: [Resolved account ID if set]
+- custom_field_swimlane: [Swimlane if set]   # field ID is Jira-config specific
+- custom_field_team: [Team if set]         # field ID is Jira-config specific
+```
+
+> Swimlane and Team are often custom fields. If your Jira project uses different field IDs, configure your MCP server's field mapping. Unknown fields will be rejected — log the rejection and continue without them.
+
+### 5a. Create Root Issue(s)
+
+- If mode = default: Create **1 Story**.
+- If mode = epic: Create **1 Epic**, then create the 1–3 Stories (using the sections from the export file) and link them to the Epic.
+
+For each Story/Epic:
+**Jira Content Rule (strict):** The description sent to Jira must be concise. Use short summaries and compact structured sections only. Do not include long reasoning or exhaustive lists.
+
+```
+MCP call: create_issue
+- issue_type: Story or Epic
+- summary: ...
+- description: [concise content — phases as compact sections, tasks as short checklists]
++ shared field defaults
+```
+Capture the keys.
+
+### 5b. Create Bug Issues (from Bug Hunt Report)
+
+For every bug parsed in Step 4, create a real **Bug** issue:
+
+```
+MCP call: create_issue
+- issue_type: Bug
+- summary: ...
+- description: [full bughunt evidence]
+- parent / epic_link: [link to the root Story or Epic]
+- priority: [from severity]
++ shared field defaults
+```
+
+**Detailed work lives inside the root issue description(s) by default.** All detailed work lives inside the Story descriptions.
+
+## Step 6: Finalize Tracking
+
+Export file has already been updated incrementally during Step 5. Now update `plan.md` with the Jira keys:
+
+```markdown
+## Phase 1: Setup [PROJ-124]
+...
+- [x] **Task 1.1:** Extract logging utilities [PROJ-125]
+- [x] **Task 1.2:** Extract security utilities [PROJ-126]
+```
+
+Set export file status to Created (via `jira-export-latest.md`):
+
+```markdown
+**Status:** Created
+**Root Key:** PROJ-123
+```
+
+## Step 7: Report (new simplified format)
+
+```
+Jira Issues Created
+
+Track:   [track_id] - [title]
+Project: [PROJ]
+Mode:    {default → 1 Story | --epic → 1 Epic + 1-3 Stories}
+
+Created:
+- {Story | Epic}: PROJ-123 - [Track title]
+  (All phases and tasks are inside the Story description)
+
+Bugs (from Bug Hunt) — always created as separate issues:
+- Bug: PROJ-131 - [Critical] Correctness: Off-by-one error in pagination   (linked to PROJ-123)
+- Bug: PROJ-132 - [High] ...
+
+Total: 1 root issue + B bugs
+Label: "draft" applied to all issues
+
+Updated:
+- plan.md (added root Jira key)
+- jira-export-latest.md (marked as created)
+```
+
+## Error Handling (create)
+
+**MCP call fails:**
+```
+Failed to create [issue type]: [error message]
+
+Partial creation:
+- {Story | Epic}: PROJ-123 (created)
+- Mid-level 1: PROJ-124 (created)
+  - Leaf 1.1: PROJ-125 (created)
+  - Leaf 1.2: FAILED - [error]
+- Mid-level 2: (skipped)
+
+Fix the issue and run `draft jira create` again.
+Already-created issues will be detected by keys in jira-export-latest.md.
+```
+
+**Export has existing keys:** skip items that already have keys; only create items without keys. Report "Skipped Mid-level 1 (already exists: PROJ-124)". Still create leaves if mid-level exists but leaves don't have keys.
+
+**Project not configured:** see Step 4b.
+
+**plan.md phases don't match export:** warn "Export has N mid-level issues but plan has M phases. Proceeding with export structure." Create based on export.
+
+
+---
+
+# Subcommand: review
+
+See [review.md](review.md) for the full epic/story/bug/sub-task qualification pipeline. The router delegates to that file when the user invokes `draft jira review <JIRA_ID>`.
+
+The review subcommand:
+- Accepts any Jira issue ID (epic, story, bug, sub-task) and adapts its depth to the issue type.
+- Runs a 7-phase pipeline: prerequisites → epic/story collection → document/test-plan synthesis → code change collection (Gerrit/GitHub/GitLab) → context synthesis → quality analysis (deep-review + bughunt + coverage) → test gap analysis → report.
+- Produces `draft/jira-review/<JIRA_ID>/qualification-report.md` and (if gaps exist) `remediation-plan.md`.
+- Verdict: QUALIFIED / PARTIALLY QUALIFIED / NOT QUALIFIED.
+
+---
+shared: jira:review
+applies_to: draft jira review <JIRA_ID>
+---
+
+# Jira Review Pipeline
+
+Qualify any Jira ticket — Epic, Story, Bug, or Sub-task — by running a mandatory pipeline: collect Jira data, fetch documents (design doc, test plan), gather code changes (Gerrit/GitHub/GitLab), audit quality via Draft commands, analyze test coverage, and produce a gap-analysis report with qualification verdict.
+
+**Input:** `$ARGUMENTS` = Jira ID (e.g., `ENG-446236`, `PROJ-1234`).
+
+**Invoked via:** `draft jira review <JIRA_ID>`. The router in [SKILL.md](SKILL.md) dispatches here.
+
+## Red Flags — STOP if you're:
+
+- Skipping Phase 0 prerequisites — MCP servers and `draft/` context are **required**.
+- Treating `context.md` as the final report — it's intermediate input for quality analysis.
+- Running `draft:deep-review` or `draft:bughunt` without `draft/` context existing.
+- Reporting a verdict without synthesizing deep-review AND bughunt AND test gap findings.
+- Ignoring unresolved stories or stories without code changes.
+- Skipping document collection — design docs and test plans are qualification inputs.
+- Generating the report via `draft:new-track` — write the report **directly** using the inline templates.
+- Omitting YAML metadata headers from generated files — every file in `draft/` requires them.
+
+---
+
+## Issue Type Adaptation
+
+This pipeline runs against any Jira ticket. Behavior adapts based on `issuetype` fetched in Phase 0:
+
+| Issue Type | Phase 1 Fan-Out | Scope | Verdict Wording |
+|------------|----------------|-------|-----------------|
+| **Epic** | Yes — discover child stories via `Epic Link` / `parent` JQL | Multi-story qualification | "All code stories resolved" |
+| **Story** | No — treat the story itself as the only "story" record | Single-story qualification | "Story resolved" |
+| **Bug** | No — treat the bug itself as the only "story" record | Single-bug qualification (fix code changes, regression test) | "Bug resolved with regression test" |
+| **Sub-task** | No — fetch parent for context, but qualify the sub-task scope | Sub-task qualification (note parent in report) | "Sub-task resolved" |
+| **Task** (non-code) | No fan-out, no code analysis | Minimal report explaining qualification doesn't apply to non-code tasks | "Non-code task — qualification N/A" |
+
+Throughout the rest of this document, "story" means "child story (epic mode) OR self (non-epic mode)" — the data model is the same.
+
+---
+
+## Pipeline Overview
+
+```
+Phase 0: Prerequisites & MCP Discovery       ← fail-fast, verify ALL MCPs, branch on issuetype
+Phase 1: Issue & Story Collection             (Jira MCP) — fan-out for Epic, self-only otherwise
+Phase 2: Document Collection & Synthesis      (WebFetch / configured MCPs)
+Phase 3: Code Change Collection               (Gerrit/GitHub/GitLab MCP)
+Phase 4: Context Synthesis                    (generate context.md)
+Phase 5: Quality Analysis                     (draft:deep-review, draft:bughunt, draft:coverage)
+Phase 6: Test Gap Analysis                    (TestRail + coverage + acceptance criteria)
+Phase 7: Report Generation                    (qualification-report.md + remediation-plan.md)
+```
+
+Every phase is mandatory. Each consumes output from previous phases.
+
+---
+
+## File Metadata Convention
+
+**Every generated file** under `draft/jira-review/<JIRA_ID>/` must include this YAML frontmatter:
+
+```yaml
+---
+project: "{PROJECT_NAME}"
+jira_id: "{JIRA_ID}"
+issue_type: "{Epic | Story | Bug | Sub-task | Task}"
+generated_by: "draft:jira:review"
+generated_at: "{ISO_TIMESTAMP}"
+phase: "{phase number that generated this file}"
+mcp_servers:
+  jira: true
+  code_review: "{gerrit|github|gitlab|none}"
+  testrail: {true|false}
+previous_run: "{path to previous qualification-report.md or null}"
+---
+```
+
+Git state (branch, commit, dirty, synced_to_commit) is read from `draft/metadata.json` — include a human-readable summary table in the report body but do not embed git fields in frontmatter.
+
+Gather git metadata at pipeline start from `draft/metadata.json`:
+```bash
+python3 -c "import json; d=json.load(open('draft/metadata.json')); print(d['git']['branch'], d['git']['commit_short'], d['synced_to_commit'])"
+```
+Fallback if `draft/metadata.json` absent:
+```bash
+git branch --show-current
+git rev-parse HEAD
+git rev-parse --short HEAD
+git log -1 --format="%ci"
+git status --porcelain | head -1
+```
+
+---
+
+## Phase 0: Prerequisites & MCP Discovery
+
+### 0.1 Validate Input
+
+Parse `$ARGUMENTS` as a Jira issue key:
+- If matches `<PROJECT>-<NUMBER>` (e.g., `ENG-446236`, `PROJ-1234`): use as-is.
+- If numeric-only (e.g., `446236`): prompt user for project prefix — do NOT assume.
+- If invalid format: **STOP** with usage example.
+
+### 0.2 MCP Server Verification
+
+Verify all required servers upfront:
+
+| Server | Required? | Verification Call | On Failure |
+|--------|-----------|-------------------|------------|
+| Jira MCP | **Required** | `get_issue(key=<JIRA_ID>, prune_mode="minimal")` | **STOP**: "Jira MCP required." |
+| Code Review MCP | **Required** | See detection table below | **DEGRADE**: skip Phase 3 code review checks, cap verdict at PARTIALLY QUALIFIED |
+| TestRail MCP | Optional | Check if TestRail tools exist in environment | **DEGRADE**: flag as gap |
+| Other MCPs | Optional | Discovered per-URL in Phase 2 | **DEGRADE**: fall back to WebFetch |
+
+**Code Review MCP Detection** — try in order, use the first that responds:
+
+| MCP | Detection Call | Confirms |
+|-----|---------------|----------|
+| Gerrit MCP | `get_change_details("1", options=[])` — expect error, confirms server responds | Gerrit code review |
+| GitHub MCP | Check for GitHub tools (e.g., `get_pull_request`) in environment | GitHub PRs |
+| GitLab MCP | Check for GitLab tools (e.g., `get_merge_request`) in environment | GitLab MRs |
+
+Record the detected Code Review MCP type — Phase 3 adapts its calls accordingly. If none detected, Phase 3 collects file changes from Jira comments and direct codebase access only (no review quality metrics).
+
+### 0.3 Draft Context Verification
+
+The working directory **must** have Draft context. `draft:deep-review`, `draft:bughunt`, and `draft:coverage` depend on it.
+
+```
+IF draft/.ai-context.md AND draft/architecture.md exist:
+  → Use existing context
+  → Read synced_to_commit from draft/metadata.json (fallback: draft/.ai-context.md YAML frontmatter for pre-migration installs)
+  → Compare to current HEAD: git log --oneline <synced_to_commit>..HEAD -- . ':!draft/'
+  → If >20 commits since sync: warn "Draft context may be stale — consider draft:init refresh"
+
+ELSE:
+  → Run draft:init to establish full project context
+  → Wait for init to complete before proceeding — this is blocking
+```
+
+### 0.4 Issue Type Detection & Branching
+
+After validating input and verifying MCPs, fetch the issue's type:
+
+```
+get_issue(key=<JIRA_ID>, prune_mode="minimal")
+  → record issue_type, parent (for sub-tasks)
+```
+
+Branch based on `issue_type`:
+- **Epic** → enable Phase 1.3 fan-out (collect child stories).
+- **Story / Bug** → skip Phase 1.3 fan-out; treat self as the only story record.
+- **Sub-task** → skip Phase 1.3 fan-out; treat self as the only story record; fetch parent for context.
+- **Task** → if labels/description suggest non-code (documentation, design, config, process), produce minimal report at Phase 7 (skip code-analysis phases). Otherwise treat as Story.
+
+Announce: "Reviewing {issue_type} `<JIRA_ID>` — {fan-out enabled | self-only scope}"
+
+### 0.5 Check for Previous Runs
+
+```bash
+ls draft/jira-review/<JIRA_ID>/qualification-report.md 2>/dev/null
+```
+
+If a previous run exists:
+- Note its `generated_at` timestamp for delta comparison in Phase 7.
+- Do NOT delete — the new run overwrites.
+
+### 0.6 Create Output Directory
+
+```bash
+mkdir -p draft/jira-review/<JIRA_ID>
+```
+
+Announce: "Starting Jira Review Pipeline for `<JIRA_ID>`"
+
+---
+
+## Phase 1: Issue & Story Collection
+
+### 1.1 Issue Metadata
+
+```
+get_issue(key=<JIRA_ID>, prune_mode="full")
+get_issue_description(issue_key=<JIRA_ID>)
+get_issue_comments(issue_key=<JIRA_ID>, prune_mode="default")
+```
+
+From the full issue, extract and store: key, summary, status, assignee, priority, type, created, updated, labels, components, fix versions.
+
+For **Sub-task** type, also fetch the parent:
+```
+get_issue(key=<PARENT_KEY>, prune_mode="minimal")
+```
+Record parent key and summary — included in the report for context, not qualified itself.
+
+### 1.2 Extract Artifact Links
+
+Scan issue description, custom fields, and comments for:
+
+| Artifact | URL Patterns | Jira Field Names to Check |
+|----------|-------------|---------------------------|
+| Design Doc | `docs.google.com`, `confluence`, `sharepoint`, `notion`, `*.docx` attachments | "Design Doc Link", "Design Document", "Design Spec" |
+| Test Plan | `testrail`, `confluence/test`, `testplan` | "Test Plan Link", "QA Plan", "Test Plan", "Validation Plan" |
+| TestRail Results | TestRail URLs, embedded pass/fail data | "TestRail: Results", "Test Results", "QA Results" |
+
+Also check:
+- `get_linked_issues(issue_key=<JIRA_ID>)` for documentation-type tickets.
+- Jira attachments (design docs uploaded directly to the issue).
+
+For each artifact: record URL, type, and hold for Phase 2.
+
+### 1.3 Story Discovery (Epic only)
+
+**Skip this step for Story / Bug / Sub-task / Task** — the issue itself is the single "story" record. Proceed to 1.4 with `stories = [self]`.
+
+For **Epic**:
+
+```
+get_issues(jql="\"Epic Link\" = <JIRA_ID>", max_results=100, prune_mode="default")
+```
+
+**Pagination:** If `truncated: true`, increase `max_results` or make follow-up calls. Do not silently drop stories.
+
+**Fallbacks** (try in order, stop when results found):
+1. `get_issues(jql="parent = <JIRA_ID>", max_results=100)` — Jira Cloud uses `parent` instead of `Epic Link`.
+2. `get_linked_issues(issue_key=<JIRA_ID>, relationship_type="epic child")`.
+3. `get_linked_issues(issue_key=<JIRA_ID>)` — all links, filter child/subtask types.
+
+If all return zero: flag "no stories found", produce minimal report.
+
+### 1.4 Story Enrichment
+
+Per story (or per the single self-record for non-Epic):
+```
+get_issue(key=<STORY_ID>, prune_mode="default")
+get_issue_comments(issue_key=<STORY_ID>, prune_mode="default")
+```
+
+Collect: key, summary, status, type, assignee, priority, created, updated, labels.
+Extract from description: acceptance criteria (numbered list).
+Extract from comments: code-review URLs / change IDs (see Phase 3.1 for patterns).
+Extract from fields: "TestRail: Results" if present.
+
+### 1.5 Sub-Task Collection
+
+Per story, check for sub-tasks:
+```
+get_linked_issues(issue_key=<STORY_ID>, relationship_type="subtask")
+```
+
+Or parse the `subtasks` field from `get_issue(key=<STORY_ID>, prune_mode="full")`.
+
+For each sub-task:
+- Collect its code-review links from comments (same extraction as stories).
+- Roll up sub-task code changes into the parent story's change set.
+- Do NOT treat sub-tasks as independent stories for gap analysis.
+
+### 1.6 Story Classification
+
+| Classification | Criteria | Code Changes Expected? |
+|----------------|----------|--------------------------|
+| Code-deliverable | Default for Story/Bug types | Yes |
+| Non-code | Type=Task AND (labels contain "documentation"/"design"/"config-only"/"process" OR description states no code change) | No |
+| Excluded | Status ∈ {Won't Do, Duplicate, Won't Fix, Cancelled}; or explicitly moved to different epic | No — excluded from gap analysis |
+
+### 1.7 Verify Resolution
+
+Check each code-deliverable story status:
+
+| Status Category | Statuses | Flag |
+|-----------------|----------|------|
+| Resolved | Resolved, Done, Closed | None — passing |
+| In Progress | In Progress, In Review, In QA | "IN PROGRESS — partial implementation, verify code changes" |
+| Unresolved | Open, New, To Do, Reopened, Backlog | "UNRESOLVED — gap" |
+| Blocked | Blocked, Impediment | "BLOCKED — escalation needed" |
+
+Additional flags:
+- No description or acceptance criteria → "INCOMPLETE SPEC — gap".
+- Code-deliverable + no code-review links in comments → "NO CODE CHANGES — verify in Phase 3".
+
+---
+
+## Phase 2: Document Collection & Synthesis
+
+### 2.1 Design Document
+
+**Access strategy** (try in order, stop on first success — local-first):
+
+1. **Local Draft artifacts (preferred):** For each story, check whether the corresponding track has `draft/tracks/<track_id>/hld.md` (and `lld.md`). When present, treat these as the canonical design doc for that story. Story → track mapping comes from spec.md frontmatter `track_id` or from a comment on the Jira story linking to the track. Multiple stories can share one HLD.
+2. Google Doc + Google Drive MCP available → use MCP.
+3. Confluence page + Confluence MCP available → use MCP.
+4. WebFetch with the URL.
+5. Jira attachment → download via Jira MCP if supported.
+6. All fail → record URL + "could not access" + flag as process gap.
+
+**If content retrieved from local Draft artifacts**, synthesis pulls directly:
+- §Background → Goals and scope.
+- §High Level Design (Architecture, Key Design Decisions, Alternatives Considered) → Architecture / design decisions, key trade-offs.
+- §Detailed Design → API changes.
+- LLD §Data Model → data model changes.
+- §Checklist → Non-functional requirements (Performance, Scale, Security, Resiliency, Multi-tenancy).
+- §Approvals signed/unsigned → process compliance signal.
+
+**If content retrieved from external doc**, synthesize and write to `draft/jira-review/<JIRA_ID>/design-doc-synthesis.md` (with metadata header):
+- Goals and scope.
+- Architecture / design decisions.
+- API changes, data model changes.
+- Key trade-offs and alternatives considered.
+- Non-functional requirements (performance, security, scalability).
+
+**Process gap signals** to flag:
+- Track exists in `draft/tracks/` but no `hld.md` AND no external design doc — qualification gap.
+- HLD exists but Approvals table fully unsigned — review-process gap (track was implemented without sign-off).
+- HLD `synced_to_commit` is older than the latest merged code change for the track — drift gap (design and code diverged).
+
+### 2.2 Test Plan & TestRail Data
+
+**Test Plan document** — same access strategy as 2.1. Synthesize test strategy and coverage goals.
+
+**TestRail integration** (if TestRail MCP available):
+- Extract test suite/run IDs from: Test Plan URL path segments, Jira "TestRail: Results" field, or story-level TestRail references.
+- Fetch: test case ID, title, status (passed/failed/blocked/untested), mapped story.
+- Fetch: test run results, pass rate summary.
+
+**If TestRail MCP not available:**
+- WebFetch on TestRail URLs.
+- Parse "TestRail: Results" Jira field for embedded data (pass/fail counts, test case references).
+
+**Write to** `draft/jira-review/<JIRA_ID>/test-data-synthesis.md` (with metadata header):
+- Total test cases with pass/fail/blocked/untested counts.
+- Test cases mapped to specific stories.
+- Stories without test cases (test gaps).
+
+---
+
+## Phase 3: Code Change Collection
+
+### 3.1 Extract Code-Review Change IDs
+
+From story and sub-task comments (Phase 1.4, 1.5), extract code-review identifiers. Patterns depend on the MCP detected in Phase 0.2:
+
+**Gerrit patterns:**
+
+| Pattern | Example | Extract |
+|---------|---------|---------|
+| Full Gerrit URL | `https://gerrit.example.com/c/project/+/12345` | `12345` |
+| Legacy Gerrit URL | `https://gerrit.example.com/#/c/12345/` | `12345` |
+| Short Gerrit URL | `https://gerrit.example.com/12345` | `12345` |
+| Change-Id in text | `Change-Id: I8473b95a1f...` | `I8473b95a1f...` |
+| Gerrit link markdown | `[Gerrit](https://gerrit.example.com/c/project/+/12345)` | `12345` |
+
+**GitHub patterns:**
+
+| Pattern | Example | Extract |
+|---------|---------|---------|
+| Full PR URL | `https://github.com/<org>/<repo>/pull/123` | `123` (with repo) |
+| Short PR ref | `#123` (when issue references repo via Jira project mapping) | `123` |
+
+**GitLab patterns:**
+
+| Pattern | Example | Extract |
+|---------|---------|---------|
+| Full MR URL | `https://gitlab.com/<org>/<repo>/-/merge_requests/45` | `45` (with repo) |
+
+**Extraction approach:** scan comment bodies for URLs containing the configured code-review host domain. Extract numeric IDs. Also scan for `Change-Id:` patterns in commit-formatted comments.
+
+Group result: `{STORY_ID: [change_id_1, change_id_2, ...]}`. Include sub-task changes rolled up under the parent story.
+
+### 3.2 Code-Review MCP Per Change
+
+For each change ID (Gerrit example shown; adapt calls for GitHub/GitLab):
+
+```
+get_change_details(change_id, options=["ALL_REVISIONS", "MESSAGES", "REVIEWERS"])
+  → status (NEW/MERGED/ABANDONED), owner, reviewers, labels, branch,
+    insertions/deletions, patchset count (_number from revisions)
+
+list_change_files(change_id, revision_id="current")
+  → file paths, status (ADDED/MODIFIED/DELETED/RENAMED), lines_inserted, lines_deleted
+
+get_commit_message(change_id, revision_id="current")
+  → subject, body, author {name, email, date}, committer {name, email, date}
+
+list_change_comments(change_id)
+  → per-file comments with: message, author, unresolved (boolean), patch_set
+```
+
+For GitHub/GitLab the equivalents are `get_pull_request`, `list_pr_files`, `get_pr_commits`, `list_pr_review_comments` and analogous calls.
+
+### 3.3 Verification Checks
+
+Per code change, evaluate:
+
+| Check | Pass | Fail (= gap) | Severity |
+|-------|------|---------------|----------|
+| Change status | MERGED | NEW → "not merged"; ABANDONED → "abandoned" | Critical |
+| Code-Review approval | +2 (Gerrit) / Approved (GitHub/GitLab) | None, or -1/-2 / Changes Requested | High |
+| Verified / CI label | +1 / Green | Missing or red | High |
+| Unresolved comments | Zero | Count > 0 | Medium |
+| Patchset count | Informational | >5 = risk signal (note, not auto-fail) | Low |
+
+### 3.4 Consolidated Change Set
+
+After all stories + sub-tasks processed:
+
+- **Deduplicated file list** grouped by top-level module/directory, with per-file change status (ADDED/MODIFIED/DELETED).
+- **All code changes** with story attribution (one change may map to multiple stories via sub-tasks).
+- **Unique authors** and **unique reviewers**.
+- **Review quality summary**: total changes, count MERGED with approval, count without approval, count with unresolved comments, average patchset count.
+- **Scope metrics**: total files changed, total insertions, total deletions.
+- **Test file classification**: classify every file in the change set as **test** or **production**:
+
+  | Language | Test File Patterns |
+  |----------|--------------------|
+  | Go | `*_test.go` |
+  | Python | `test_*.py`, `*_test.py`, files under `tests/` |
+  | Java/Kotlin | `*Test.java`, `*Tests.java`, `*Spec.kt`, files under `src/test/` |
+  | JavaScript/TypeScript | `*.test.ts`, `*.spec.ts`, `*.test.js`, `*.spec.js`, files under `__tests__/` |
+  | C/C++ | `*_test.cc`, `*_test.cpp`, `*_unittest.cc`, files under `test/` or `tests/` |
+  | Rust | `#[cfg(test)]` modules, files under `tests/` |
+  | General | Files under directories named `test/`, `tests/`, `testing/`, `spec/` |
+
+  Also check `draft/tech-stack.md` for project-specific test conventions that override defaults.
+
+  Per story, record:
+  - Count of production files changed.
+  - Count of test files changed.
+  - **Test file ratio**: test files / total files (0% = no tests shipped with code).
+
+### 3.5 Issue-Level Changes (Epic mode only)
+
+Extract code-review links from **issue-level comments** (Phase 1.1). These are changes referencing the epic directly, not a specific story. Reconcile with per-story results — flag any issue-level changes not attributed to a story.
+
+### 3.6 No Changes for Code Story
+
+If a code-deliverable story has **no code changes** (including sub-tasks):
+- Check issue-level changes for commit messages mentioning the story ID.
+- If still none: flag "implementation gap — no code changes found".
+
+---
+
+## Phase 4: Context Synthesis
+
+Generate `draft/jira-review/<JIRA_ID>/context.md` (with metadata header) combining all data from Phases 1-3.
+
+### Context Document Structure
+
+```markdown
+# Jira Review Context: <JIRA_ID> — <Summary>
+
+## Pipeline Execution
+| Field | Value |
+|-------|-------|
+| Qualification Date | <ISO timestamp> |
+| Issue Type | <Epic | Story | Bug | Sub-task | Task> |
+| Scope | <fan-out | self-only> |
+| Git Branch | <branch> |
+| Git Commit | <short SHA> |
+| Jira MCP | Available |
+| Code Review MCP | <gerrit|github|gitlab|none> |
+| TestRail MCP | Available / Not Available |
+| Previous Run | <timestamp or "First run"> |
+
+## Issue Metadata
+| Field | Value |
+|-------|-------|
+| Jira ID | <JIRA_ID> |
+| Issue Type | <type> |
+| Parent | <parent key + summary, if sub-task> |
+| Summary | <summary> |
+| Status | <status> |
+| Assignee | <name> |
+| Priority | <priority> |
+| Created | <date> |
+| Updated | <date> |
+| Labels | <labels> |
+| Components | <components> |
+
+## Artifacts
+| Artifact | URL | Access Method | Accessible | Synthesis File |
+|----------|-----|---------------|------------|----------------|
+| Design Doc | <URL or "Not found"> | <MCP name / WebFetch / N/A> | Yes / No | design-doc-synthesis.md |
+| Test Plan | <URL or "Not found"> | <method> | Yes / No | test-data-synthesis.md |
+| TestRail | <URL or field data> | <method> | Yes / No | test-data-synthesis.md |
+
+## Design Document Synthesis
+(Inline from design-doc-synthesis.md: goals, architecture, API changes, trade-offs.
+ If not accessible: "Design doc not accessible — <URL>. Flagged as process gap.")
+
+## Test Plan Summary
+(Inline from test-data-synthesis.md: strategy, coverage goals.
+ TestRail summary if available:)
+
+| Metric | Count |
+|--------|-------|
+| Total Test Cases | <N> |
+| Passed | <N> |
+| Failed | <N> |
+| Blocked | <N> |
+| Untested | <N> |
+
+## WH Analysis
+
+### What — Goal and Scope
+(What problem, what deliverable, what scope boundary — from description + design doc)
+
+### Why — Motivation and Business Need
+(Why needed, why now, business impact if not done — from description + comments)
+
+### Who — People
+| Role | Names |
+|------|-------|
+| Issue Owner | <name> |
+| Story Assignees | <names> |
+| Code Authors | <names from code review> |
+| Code Reviewers | <names from code review> |
+
+### When — Timeline
+| Milestone | Date |
+|-----------|------|
+| Issue Created | <date> |
+| First Story Resolved | <date> |
+| Last Story Resolved | <date> |
+| First Code Change Merged | <date> |
+| Last Code Change Merged | <date> |
+
+### Where — Codebase Impact
+(Files grouped by module from consolidated change set:)
+```
+module_a/ (N files)
+  - file1.cc (MODIFIED)
+  - file2.h (ADDED)
+module_b/ (N files)
+  - file3.py (MODIFIED)
+```
+
+### How — Technical Approach
+(Per-module: 2-3 sentences summarizing what the code changes do. Derived from commit
+ subjects and design doc, not just "files were changed".)
+
+## Stories Status
+| # | Story ID | Summary | Type | Classification | Status | Assignee | Code Changes | Sub-Tasks | Tests | Resolved |
+|----|----------|---------|------|----------------|--------|----------|--------------|-----------|-------|----------|
+| 1 | <ID> | <summary> | Story | Code | Done | <name> | 3 | 1 | 5 | Yes |
+| 2 | <ID> | <summary> | Bug | Code | In Progress | <name> | 1 | 0 | 0 | No |
+
+**Totals**: <N> stories, <M> resolved, <K> in progress, <J> code-deliverable,
+<L> with code changes, <P> with test cases
+
+### Story Classification Summary
+| Classification | Count | Description |
+|----------------|-------|-------------|
+| Code-deliverable | <N> | Stories/Bugs with expected code changes |
+| Non-code | <N> | Tasks: documentation, design, config, process |
+| Excluded | <N> | Won't Do, Duplicate, moved to other epic |
+
+### Unresolved Stories
+(Each unresolved code-deliverable story: ID, summary, current status, why it matters)
+
+### In Progress Stories
+(Each in-progress code-deliverable story: ID, summary, code change status, what remains)
+
+### Stories Without Code Changes
+(Each code-deliverable story with no code changes. Note: expected for non-code, gap for code)
+
+### Stories Without Test Cases
+(Stories with no TestRail test cases mapped)
+```
+
+### Per-Story Detail
+
+For each story, include under `## Per-Story Detail`:
+
+```markdown
+### <STORY_ID>: <Summary>
+
+#### Story Info
+| Field | Value |
+|-------|-------|
+| Type | Story / Bug / Task |
+| Classification | Code / Non-code / Excluded |
+| Status | <status> |
+| Assignee | <name> |
+| Priority | <priority> |
+| Created | <date> |
+| Updated | <date> |
+| Sub-Tasks | <count> |
+
+#### Acceptance Criteria
+1. <criterion from description>
+2. <criterion from description>
+
+#### Story Learnings
+```
+
+### Learnings Narrative Per Story
+
+For **bug-fix stories** (5 sections):
+1. **What was the issue** — symptoms, scope, observables, impact. Generalize using patterns rather than raw ticket IDs.
+2. **RCA** — primary cause, contributing factors. Incorporate code-review insights from `list_change_comments` if relevant.
+3. **Resolution** — fix type, change ID, branch, merge status, who reviewed. Reference patchset count.
+4. **Journey** — timeline: triage → investigation → fix → review iterations → merge → verification.
+5. **Learnings** — technical, operational, process takeaways. Test gaps.
+
+For **feature stories** (5 sections):
+1. **What was the requirement** — goal, user need, scope, acceptance criteria. Cross-reference design doc synthesis.
+2. **Technical approach** — design decisions, patterns, integration points.
+3. **Implementation** — key files from `list_change_files`, change scope (insertions/deletions).
+4. **Journey** — dev timeline, patchset iteration count, review feedback themes, testing.
+5. **Learnings** — reusable patterns, pitfalls, test coverage observations.
+
+**Data sources:**
+
+| Section | Primary | Supporting |
+|---------|---------|-----------|
+| What/requirement | `get_issue_description` | Design doc synthesis |
+| RCA/approach | Pinned Jira comments, `get_linked_issues` | `list_change_comments` |
+| Resolution/implementation | `list_change_files`, `get_commit_message` | Jira resolution field |
+| Journey | Jira comments + code-review patchset history | TestRail execution timeline |
+| Learnings | Derived from all above | Reviewer feedback, test gaps |
+
+### Per-Story Detail (continued)
+
+```markdown
+#### Story Code Changes
+| # | Change ID | Subject | Author | Branch | Status | Approval | Files | +Lines | -Lines |
+|----|-----------|---------|--------|--------|--------|----------|-------|--------|--------|
+| 1 | <ID> | <subject> | <name> | <branch> | MERGED | +2 | 5 | 120 | 30 |
+
+Files changed:
+  - path/to/file (MODIFIED, +10 -5)
+  - path/to/new_file (ADDED, +50)
+
+Review quality:
+  - Reviewers: <names>
+  - Unresolved comments: <count>
+  - Patchset iterations: <count>
+
+#### Story Sub-Task Changes
+(If sub-tasks exist: same code change table, rolled up from sub-tasks)
+
+#### Story Test Cases (if TestRail available)
+| Test Case ID | Title | Status | Last Run |
+|-------------|-------|--------|----------|
+| TC-1001 | <title> | Passed | <date> |
+```
+
+### Consolidated Changes
+
+```markdown
+## Consolidated Changes
+
+### All Files Changed
+| Module | File | Status | Stories | Insertions | Deletions |
+|--------|------|--------|---------|------------|-----------|
+| module_a | file1.cc | MODIFIED | ENG-111, ENG-222 | 45 | 12 |
+
+### All Code Changes (Chronological)
+| # | Change ID | Subject | Author | Date | Story | Branch | Status | Approval | Link |
+|----|-----------|---------|--------|------|-------|--------|--------|----------|------|
+
+### All Authors and Reviewers
+| Role | Name | Story Count | Change Count |
+|------|------|-------------|-------------|
+
+### Review Quality Summary
+| Metric | Value |
+|--------|-------|
+| Total Code Changes | <N> |
+| MERGED with Approval | <N> |
+| Without Approval | <N> |
+| With Unresolved Comments | <N> |
+| Average Patchset Count | <N> |
+
+## Preliminary Gap Indicators
+| Gap Type | Count | IDs |
+|----------|-------|-----|
+| Unresolved code stories | <N> | <IDs> |
+| In Progress code stories | <N> | <IDs> |
+| Code stories without code changes | <N> | <IDs> |
+| Code changes NOT MERGED | <N> | <change IDs> |
+| Changes without approval | <N> | <change IDs> |
+| Changes with unresolved comments | <N> | <change IDs> |
+| Missing design doc | Yes/No | |
+| Missing test plan | Yes/No | |
+| Stories without test cases | <N> | <IDs> |
+```
+
+---
+
+## Phase 5: Quality Analysis
+
+All three commands use the `draft/` context established in Phase 0.
+
+### 5.1 draft deep-review
+
+Run per changed module. Module selection follows deep-review's own priority:
+1. Check `draft/.ai-context.md` for `## Modules` or `## Module Catalog` — match against modules from the consolidated change set.
+2. If no module catalog: use top-level directories from the consolidated file list.
+3. Run once per affected module:
+
+```
+draft:deep-review <module-name-or-directory>
+```
+
+**Output**: `draft/deep-review-reports/<module-name>.md` (deep-review manages its own output path).
+
+**Reads**: `draft/.ai-context.md`, `draft/product.md`, `draft/tech-stack.md`.
+
+Produces per-module: ACID compliance, resilience, observability, configuration assessment with per-finding severity and file:line references.
+
+### 5.2 draft bughunt
+
+Run scoped to specific file paths from the consolidated change set.
+
+**Invocation protocol:** bughunt prompts for scope type when invoked. Pre-answer the prompt:
+1. Select **"Specific paths"** when bughunt asks for scope.
+2. Supply the consolidated file list from Phase 3.4 as the target paths.
+3. If bughunt asks for track context, respond: "No track — running as part of draft jira review pipeline".
+
+```
+draft bughunt
+→ (scope prompt) → "Specific paths"
+→ (paths prompt) → <consolidated file list from Phase 3.4>
+```
+
+**Output**: `draft/bughunt-report-latest.md` (bughunt manages its own output path).
+
+**Reads**: `draft/.ai-context.md`, `draft/tech-stack.md`, `draft/product.md`, `draft/workflow.md`.
+
+Produces: severity-ranked bug list (Critical/High/Medium/Low) with code evidence, data flow traces, and optional regression tests.
+
+### 5.3 draft coverage
+
+Run with explicit path argument per changed module:
+
+```
+draft coverage <module-directory>
+```
+
+Coverage reads `coverage_target` from `draft/workflow.md` (default: **95%** if absent).
+
+**Track requirement workaround:** `draft coverage` expects an active track and writes to `draft/tracks/<id>/coverage-report.md`. Since `jira review` does not create a track:
+1. Coverage will look for an active track from `draft/tracks.md` — if none exists, it will warn.
+2. Capture coverage output directly from the tool's console/response text.
+3. Record the coverage percentages, gap analysis, and uncovered files in the review context document (Phase 4).
+4. Reference coverage results by captured output, not by file path.
+
+**If no test framework is detected:** coverage will report this. Record "No test framework detected" in the report — this itself is a gap finding.
+
+### 5.4 Partial Completion Handling
+
+If any Phase 5 command fails:
+- Record which commands completed and which failed.
+- Continue with remaining commands — do NOT abort the pipeline.
+- In Phase 7, note failed analyses: "draft:coverage — FAILED: no test framework detected" etc.
+- Verdict must account for missing data: if bughunt failed, verdict cannot be QUALIFIED (insufficient evidence).
+
+---
+
+## Phase 6: Test Gap Analysis & Test Suggestions
+
+Testing is a **first-class qualification signal**. This phase combines codebase test discovery, coverage analysis, and bughunt findings to identify every gap — then produces actionable, framework-specific test suggestions.
+
+### 6.1 Codebase Test Discovery
+
+For each changed **production** file from the consolidated change set (Phase 3.4):
+
+1. **Find companion test files** in the codebase using conventions from `draft/tech-stack.md` and the patterns in Phase 3.4.
+   - Example: `src/handler.go` → look for `src/handler_test.go`.
+   - Example: `src/utils/parser.ts` → look for `src/utils/parser.test.ts`, `src/utils/parser.spec.ts`, `src/utils/__tests__/parser.test.ts`.
+
+2. **If companion test file exists:** read it. Record:
+   - Number of test functions/cases.
+   - What behaviors are tested (function names, describe blocks, test names).
+   - Whether changed functions/methods have corresponding test cases.
+   - Last modified date (via code-review or git log) — stale tests are a signal.
+
+3. **If no companion test file exists:** flag `"NO TEST FILE — <production_file>"`.
+
+4. **Cross-module test files:** some tests live in separate directories (e.g., `integration_tests/`, `e2e/`). Scan for test files that import or reference changed production files.
+
+Build a **test inventory** per story:
+
+| Production File | Companion Test File | Test Functions | Changed Functions Covered | Gap |
+|----------------|--------------------|--------------:|:-------------------------:|-----|
+| src/handler.go | src/handler_test.go | 8 | 3/5 | 2 uncovered |
+| src/parser.go | — | — | — | No test file |
+
+### 6.2 Test Presence in Code Changes
+
+From Phase 3.4 test file classification:
+
+| Signal | Meaning |
+|--------|---------|
+| Story ships test files + production files | Developer tested their changes — positive |
+| Story ships only production files, companion tests exist unchanged | Developer modified code but didn't update tests — **stale test risk** |
+| Story ships only production files, no companion tests in codebase | No tests at all — **critical gap** |
+| Story ships only test files | Test-only change (backfill, refactor) — positive signal |
+
+Per story, assign a **Test Shipping Status**:
+- **TESTED**: code changes include test files covering the production changes.
+- **PARTIALLY TESTED**: some production files have companion tests (unchanged or in different changes).
+- **UNTESTED**: no test files shipped, no companion tests in codebase.
+- **TEST BACKFILL**: test-only changes (positive).
+
+### 6.3 Acceptance Criteria → Test Mapping
+
+Per code-deliverable story:
+1. Extract acceptance criteria (from Phase 1.4).
+2. Map to **codebase tests** discovered in 6.1 (test function names that exercise the criterion).
+3. Map to **TestRail test cases** (from Phase 2.2, if available) — if TestRail unavailable, leave column blank and weight codebase tests + coverage higher.
+4. Map to **bughunt findings** that exercise the same code path.
+5. Identify criteria with **no test coverage at all** — these are the highest-priority gaps.
+
+**Without TestRail:** AC → test mapping relies entirely on codebase test discovery (6.1) and coverage data (5.3). This is still valid — many enterprise teams have comprehensive unit/integration tests that never appear in TestRail. The TestRail column becomes N/A in all tables.
+
+| # | Story | Acceptance Criterion | Codebase Tests | TestRail Cases | Bughunt Overlap | Status |
+|----|-------|---------------------|:--------------:|:--------------:|:---------------:|--------|
+| 1 | ENG-111 | "User can reset password" | 2 tests | TC-1001 | — | Covered |
+| 2 | ENG-111 | "Email sent within 30s" | 0 | — | — | **GAP** |
+
+### 6.4 Code Coverage Gap Identification
+
+From draft:coverage (Phase 5.3) and codebase discovery (6.1):
+
+1. **Changed files below coverage target** (from `draft/workflow.md`, default 95%).
+2. **Newly ADDED files** (status: ADDED) with zero or no test coverage.
+3. **Critical modules** flagged by deep-review that also have low coverage — highest severity.
+4. **Production files with no companion test file** at all in the codebase (from 6.1).
+5. **Changed functions without test coverage** — map specific function/method changes (from code-review diff) to test function inventory.
+
+### 6.5 Regression Tests from Bughunt Findings
+
+For **each Critical and High severity finding** from draft:bughunt (Phase 5.2):
+
+1. Identify the vulnerable code path and entry points.
+2. Determine what input/state triggers the bug.
+3. Design a regression test that:
+   - Reproduces the exact scenario that would trigger the bug.
+   - Asserts the correct behavior after the fix.
+   - Includes negative cases (malformed input, boundary values, race conditions).
+
+This ensures bugs found by bughunt don't ship — and if they're already in code, they get caught on the next change.
+
+### 6.6 Test Suggestions
+
+Read `draft/tech-stack.md` for: test framework, assertion library, mocking patterns, test directory conventions.
+Read `draft/workflow.md` for: TDD preferences, coverage targets, test execution commands.
+Read `draft/.ai-context.md` for: existing test patterns, module boundaries, data flows.
+
+Generate **framework-specific, copy-pasteable test suggestions** for every identified gap.
+
+#### Unit Tests — for uncovered production code
+
+For each production file/function without adequate test coverage:
+
+```
+Test:     <descriptive_test_function_name>
+Type:     Unit
+Priority: Critical / High / Medium
+Story:    <STORY_ID>
+Gap:      <what's untested — specific function, branch, error path>
+File:     <target test file path — companion location>
+Tests:    <what behavior/scenario this validates>
+Why:      <which gap from 6.1/6.3/6.4 this closes>
+
+Sketch:
+```<language>
+<actual test function using project's framework, assertion library, and conventions>
+<include setup/teardown if needed>
+<test the specific changed function with meaningful assertions>
+```
+```
+
+**Focus areas** (in priority order):
+1. Changed functions with zero test coverage.
+2. Error handling paths — every error return/throw in changed code needs a test.
+3. Boundary conditions — nil/null, empty, max values, off-by-one.
+4. Concurrency paths flagged by deep-review (race conditions, deadlocks).
+5. Input validation — changed code that processes external input.
+
+#### Regression Tests — for bughunt findings
+
+For each Critical/High bughunt finding (from 6.5):
+
+```
+Test:     regression_<bug_description>
+Type:     Regression
+Priority: Critical (matches bughunt severity)
+Story:    <STORY_ID>
+Bug:      <bughunt finding reference>
+File:     <target test file path>
+Tests:    <reproduces the exact bug scenario>
+Why:      Prevents regression of <bughunt finding>
+
+Sketch:
+```<language>
+<test that sets up the vulnerable state>
+<triggers the code path that had the bug>
+<asserts correct behavior — the bug does NOT manifest>
+```
+```
+
+#### Integration Tests — for cross-module changes
+
+When code changes span multiple modules (from Phase 3.4 consolidated change set):
+
+```
+Test:     integration_<module_a>_<module_b>_<scenario>
+Type:     Integration
+Priority: High
+Stories:  <STORY_IDs that touch both modules>
+File:     <integration test directory>/test_<scenario>.<ext>
+Tests:    <interaction between modules — data flow, API contract, event handling>
+Why:      Cross-module changes risk breaking integration points
+
+Sketch:
+```<language>
+<set up both modules with test fixtures>
+<exercise the integration point changed by the issue>
+<assert end-to-end behavior across module boundary>
+```
+```
+
+**Trigger conditions** for integration test suggestions:
+- Stories whose code changes touch files in 2+ modules.
+- Changes to interface/API boundary files identified in `draft/.ai-context.md`.
+- Data model changes that propagate across modules.
+- Event/message producer-consumer pairs where both sides changed.
+
+### 6.7 Test Adequacy Score
+
+Compute a composite score from all discovery and analysis:
+
+| Metric | Value | Weight | Score |
+|--------|-------|--------|-------|
+| Stories with test files in code changes | X/Y | 25% | |
+| Production files with companion test files | X/Y | 20% | |
+| Acceptance criteria with test coverage | X/Y | 20% | |
+| Code coverage vs target | X% vs Y% | 15% | |
+| Bughunt Critical/High with regression tests | X/Y | 10% | |
+| New files (ADDED) with test coverage | X/Y | 10% | |
+
+**Test Adequacy = weighted sum (0-100%)**
+
+| Rating | Range | Meaning |
+|--------|-------|---------|
+| **Strong** | ≥80% | Tests ship with code, high coverage, gaps are minor |
+| **Adequate** | 60-79% | Most code tested, some gaps in new/changed code |
+| **Weak** | 40-59% | Significant test gaps — many stories without tests |
+| **Critical Gap** | <40% | Insufficient testing — blocks qualification |
+
+---
+
+## Phase 7: Report Generation
+
+Generate outputs **directly** to `draft/jira-review/<JIRA_ID>/`. Do NOT use `draft:new-track`.
+
+### 7.1 Verdict Logic
+
+The verdict criteria are the same regardless of issue type — for single-story scopes (Story/Bug/Sub-task) the "all code stories" criterion collapses to "the single story is resolved" (N=1).
+
+| Verdict | Criteria |
+|---------|----------|
+| **QUALIFIED** | All code stories ∈ {Resolved, Done, Closed} + all code changes MERGED with Approval + zero Critical/High bugs + design doc accessible (local hld.md preferred, external fallback) + HLD Approvals table signed for tracks with `criticality ≥ standard` + test plan accessible + zero unresolved review comments on critical changes + coverage at target + Test Adequacy ≥80% (Strong) |
+| **PARTIALLY QUALIFIED** | Minor gaps: Medium bugs only, non-critical artifacts missing, 1-2 stories In Progress with merged changes, some unresolved comments, coverage below target but >70%, Test Adequacy 40-79% (Adequate/Weak) |
+| **NOT QUALIFIED** | Any: unresolved code stories with no changes, code changes not merged, Critical bugs, missing design doc AND test plan, requirements not traced to code, critical module FAIL in deep-review, Phase 5 commands failed, Test Adequacy <40% (Critical Gap) |
+
+**If Phase 5 partially failed:** verdict cannot exceed PARTIALLY QUALIFIED due to insufficient evidence.
+
+**Non-code Task verdict:** for non-code Task issue types (Phase 0.4 branch), Phase 5–7 do not apply. Report records type as `Non-code Task — qualification N/A` and stops after Phase 2 (artifact collection).
+
+### 7.2 Qualification Report
+
+Write `draft/jira-review/<JIRA_ID>/qualification-report.md` (with metadata header):
+
+```markdown
+# Jira Review Report: <JIRA_ID> — <Summary>
+
+## Qualification Verdict
+
+| Field | Value |
+|-------|-------|
+| Verdict | QUALIFIED / PARTIALLY QUALIFIED / NOT QUALIFIED |
+| Date | <ISO timestamp> |
+| Issue | <JIRA_ID> — <Summary> |
+| Issue Type | <Epic | Story | Bug | Sub-task | Task> |
+| Pipeline | Jira → Documents → Code Review → deep-review → bughunt → coverage → gap analysis |
+| MCP Servers | Jira (yes), Code Review (<type> yes/no), TestRail (yes/no) |
+| Git State | <branch> @ <short SHA> |
+| Previous Run | <date or "First qualification"> |
+
+### Verdict Criteria Checklist
+
+| # | Criterion | Status | Source | Detail |
+|----|-----------|--------|--------|--------|
+| 1 | All code stories resolved | PASS/FAIL | Jira | <N>/<M> resolved |
+| 2 | All code changes MERGED | PASS/FAIL | Code Review | <N>/<M> merged |
+| 3 | Approval on all changes | PASS/FAIL | Code Review | <N> without approval |
+| 4 | No unresolved review comments | PASS/FAIL | Code Review | <N> unresolved |
+| 5 | No Critical/High bugs | PASS/FAIL | bughunt | <N> Critical, <M> High |
+| 6 | Module quality | PASS/FAIL | deep-review | <N> modules FAIL |
+| 7 | Test coverage at target | PASS/FAIL | coverage | <X>% vs <Y>% target |
+| 8 | Test adequacy | PASS/FAIL | Phase 6 | <X>% — <Rating> |
+| 9 | Design doc accessible | PASS/FAIL | Phase 2 | <status> |
+| 10 | Test plan accessible | PASS/FAIL | Phase 2 | <status> |
+
+## Executive Summary
+(2-3 paragraphs: what the issue aimed to achieve, what was delivered, qualification status
+ and key findings. Reference design doc synthesis where applicable.)
+
+## Requirements Traceability Matrix
+| # | Requirement | Story | Code Changes | Key Files | Deep-Review | Bughunt | Tests | Status |
+|----|-------------|-------|--------------|-----------|-------------|---------|-------|--------|
+| 1 | <text> | ENG-111 | 12345, 12346 | file.cc | PASS | Clean | 3 pass | Covered |
+| 2 | <text> | ENG-222 | — | — | — | — | 0 | Gap |
+
+Coverage: <X>/<Y> requirements traced to code changes (<Z>%)
+
+## WH Summary
+(What achieved, Why matters, Who contributed, When delivered, Where landed, How implemented
+ — full tables as specified in Phase 4 context document)
+
+## Design Document Summary
+| Field | Value |
+|-------|-------|
+| URL | <URL or "Not found"> |
+| Accessible | Yes / No |
+| Access Method | <MCP name / WebFetch / N/A> |
+
+Key Findings: (goals, architecture decisions, API changes, trade-offs — from synthesis)
+
+## Quality Assessment (from draft:deep-review)
+| Module | ACID | Resilience | Observability | Config | Verdict |
+|--------|------|------------|---------------|--------|---------|
+| <name> | PASS | PASS | ISSUE | PASS | CONDITIONAL PASS |
+
+### Critical Findings
+(Each Critical/Important issue: file:line, description, recommended fix)
+
+## Bug Assessment (from draft:bughunt)
+| Severity | Count |
+|----------|-------|
+| Critical | <N> |
+| High | <N> |
+| Medium | <N> |
+| Low | <N> |
+
+### Critical/High Bugs
+(Each: location file:line, issue, impact, suggested fix, confidence level)
+
+### Bug Distribution by Module
+| Module | Critical | High | Medium | Low |
+|--------|----------|------|--------|-----|
+
+## Code Review Quality
+| Metric | Value |
+|--------|-------|
+| Total Code Changes | <N> |
+| MERGED with Approval | <N> |
+| Without Approval | <N> |
+| With Unresolved Comments | <N> |
+| Average Patchset Count | <N.N> |
+| Changes >5 Patchsets | <N> |
+
+### Unresolved Review Comments
+| Change ID | Story | File | Comment | Author |
+|-----------|-------|------|---------|--------|
+
+### Unreviewed Changes
+| Change ID | Story | Subject | Author | Status |
+|-----------|-------|---------|--------|--------|
+
+## Test Assessment
+
+### Test Adequacy Score
+| Metric | Value | Weight | Score |
+|--------|-------|--------|-------|
+| Stories with test files in code changes | X/Y | 25% | |
+| Production files with companion test files | X/Y | 20% | |
+| Acceptance criteria with test coverage | X/Y | 20% | |
+| Code coverage vs target | X% vs Y% | 15% | |
+| Bughunt Critical/High with regression tests | X/Y | 10% | |
+| New files (ADDED) with test coverage | X/Y | 10% | |
+| **Test Adequacy** | | | **X% — <Rating>** |
+
+### Test Shipping Status by Story
+| Story ID | Summary | Code-Change Test Files | Companion Tests | Test Shipping Status |
+|----------|---------|:----------------------:|:---------------:|---------------------|
+| <ID> | <summary> | 2 | 5 | TESTED |
+| <ID> | <summary> | 0 | 0 | UNTESTED |
+
+### Code Coverage (from draft:coverage)
+| Module | Line Coverage | Target | Status |
+|--------|-------------|--------|--------|
+| <module> | <X>% | <Y>% | PASS / BELOW TARGET |
+
+### Codebase Test Inventory
+| Production File | Companion Test File | Test Functions | Changed Functions Covered | Gap |
+|----------------|--------------------|--------------:|:-------------------------:|-----|
+| src/handler.go | src/handler_test.go | 8 | 3/5 | 2 uncovered |
+| src/parser.go | — | — | — | No test file |
+
+### TestRail Results (if available)
+| Metric | Count |
+|--------|-------|
+| Total Test Cases | <N> |
+| Passed | <N> |
+| Failed | <N> |
+| Blocked | <N> |
+| Untested | <N> |
+| Pass Rate | <X>% |
+
+## Test Gap Analysis
+
+### Untested Acceptance Criteria
+| # | Story | Acceptance Criterion | Codebase Tests | TestRail Cases | Status |
+|----|-------|---------------------|:--------------:|:--------------:|--------|
+| 1 | <ID> | <criterion> | 0 | — | **GAP** |
+
+### Production Files Without Tests
+| # | File | Change Type | Story | Module | Lines Changed |
+|----|------|-------------|-------|--------|--------------|
+| 1 | src/parser.go | ADDED | <ID> | module_a | +250 |
+
+### Stale Tests (code changed, tests not updated)
+| # | Production File | Test File | Last Test Update | Production Changed In |
+|----|----------------|-----------|------------------|----------------------|
+| 1 | src/handler.go | src/handler_test.go | 6 months ago | Change 12345 |
+
+## Suggested Tests
+
+### Unit Tests
+| # | Story | Test Name | Priority | Target File | Gap Closed |
+|----|-------|-----------|----------|-------------|------------|
+| 1 | <ID> | <descriptive_name> | Critical | <test_file_path> | <which gap> |
+
+(Each with framework-specific code sketch below the table)
+
+### Regression Tests (from bughunt findings)
+| # | Bughunt Finding | Severity | Story | Test Name | Target File |
+|----|----------------|----------|-------|-----------|-------------|
+| 1 | <finding ref> | Critical | <ID> | regression_<desc> | <test_file_path> |
+
+(Each with code sketch that reproduces the vulnerable scenario and asserts correct behavior)
+
+### Integration Tests
+| # | Stories | Modules | Test Name | Target File |
+|----|---------|---------|-----------|-------------|
+| 1 | <IDs> | mod_a ↔ mod_b | integration_<scenario> | <test_file_path> |
+
+(Each with code sketch testing the cross-module interaction)
+
+### Test Suggestion Summary
+| Type | Count | Critical | High | Medium |
+|------|------:|:--------:|:----:|:------:|
+| Unit | <N> | <N> | <N> | <N> |
+| Regression | <N> | <N> | <N> | <N> |
+| Integration | <N> | <N> | <N> | <N> |
+| **Total** | **<N>** | **<N>** | **<N>** | **<N>** |
+
+## Gap Analysis
+
+### Implementation Gaps
+| # | Gap | Story | Severity | Detail |
+|----|-----|-------|----------|--------|
+| 1 | Requirement not traced to code | <ID> | High | <detail> |
+| 2 | Code story without code changes | <ID> | High | <detail> |
+| 3 | Code change not MERGED | <change> | Critical | <detail> |
+
+### Quality Gaps
+| # | Source | Severity | Finding | Location |
+|----|--------|----------|---------|----------|
+
+### Process Gaps
+| # | Gap | Detail |
+|----|-----|--------|
+| 1 | Unresolved stories | <count>: <IDs> |
+| 2 | In Progress stories | <count>: <IDs> |
+| 3 | Missing design doc | <status> |
+| 4 | Missing test plan | <status> |
+| 5 | Unreviewed changes | <count>: <change IDs> |
+| 6 | Unresolved review comments | <count>: <change IDs> |
+| 7 | Stories without tests | <count>: <IDs> |
+| 8 | Failed quality analyses | <which Phase 5 commands failed> |
+
+## Artifacts
+| Artifact | Location | Status |
+|----------|----------|--------|
+| Design Doc | <URL> | Accessible / Not found |
+| Test Plan | <URL> | Accessible / Not found |
+| Design Doc Synthesis | draft/jira-review/<JIRA_ID>/design-doc-synthesis.md | Generated / N/A |
+| Test Data Synthesis | draft/jira-review/<JIRA_ID>/test-data-synthesis.md | Generated / N/A |
+| Context Document | draft/jira-review/<JIRA_ID>/context.md | Generated |
+| Deep Review Reports | draft/deep-review-reports/ | Generated / Failed |
+| Bughunt Report | draft/bughunt-report-latest.md | Generated / Failed |
+| Coverage Report | Per module | Generated / Failed / No framework |
+| Draft Architecture | draft/architecture.md | Pre-existing / Generated by init |
+
+## Recommendations
+### Must-Fix (blocks qualification)
+1. <item with file references and change IDs>
+
+### Should-Fix (improves qualification)
+1. <item>
+
+### Test Improvements
+1. <suggested test from Phase 6>
+
+### Nice-to-Have
+1. <item>
+
+## All Code Changes
+| # | Change ID | Subject | Author | Story | Branch | Status | Approval | Link |
+|----|-----------|---------|--------|-------|--------|--------|----------|------|
+
+Total: <N> changes across <M> stories
+
+## All Files Changed
+(Deduplicated, grouped by module:)
+```
+module_a/ (N files)
+  - file1.cc (MODIFIED, stories: ENG-111, ENG-222)
+  - file2.h (ADDED, stories: ENG-111)
+```
+Total: <N> files across <M> modules
+```
+
+### 7.3 Remediation Plan
+
+If verdict ≠ QUALIFIED, write `draft/jira-review/<JIRA_ID>/remediation-plan.md` (with metadata header):
+
+```markdown
+# Remediation Plan: <JIRA_ID> Qualification Gaps
+
+**Issue**: <JIRA_ID> — <Summary>
+**Issue Type**: <Epic | Story | Bug | Sub-task>
+**Verdict**: PARTIALLY QUALIFIED / NOT QUALIFIED
+**Date**: <ISO timestamp>
+
+## Phase 1: Critical Quality and Bug Issues
+- [ ] Fix <Critical bug description> in <file:line> (source: bughunt)
+- [ ] Fix <ACID violation> in <module> (source: deep-review)
+
+## Phase 2: Unresolved Stories and Unmerged Changes
+- [ ] Resolve <STORY_ID> — <summary> (status: <current>)
+- [ ] Merge code change <change_id> for <STORY_ID> (status: NEW)
+- [ ] Address <N> unresolved comments on change <change_id>
+
+## Phase 3: Missing Artifacts and Process Gaps
+- [ ] Create or link design document
+- [ ] Create or link test plan
+- [ ] Complete Approval for changes: <change IDs>
+
+## Phase 4: Test Coverage Gaps
+- [ ] Write test for: <untested acceptance criterion> (story: <ID>)
+- [ ] Add unit tests for <file> — currently at <X>% (target: <Y>%)
+- [ ] Create TestRail test cases for stories: <IDs without tests>
+```
+
+### 7.4 Delta from Previous Run
+
+If Phase 0.5 found a previous `qualification-report.md`, include at the end of the new report:
+
+```markdown
+## Delta from Previous Qualification
+
+| Metric | Previous (<date>) | Current | Change |
+|--------|-------------------|---------|--------|
+| Verdict | <old> | <new> | Improved / Unchanged / Regressed |
+| Unresolved Stories | <N> | <M> | <diff> |
+| Unmerged Changes | <N> | <M> | <diff> |
+| Critical/High Bugs | <N> | <M> | <diff> |
+| Test Coverage | <X>% | <Y>% | <diff> |
+| Process Gaps | <N> | <M> | <diff> |
+```
+
+---
+
+## Error Handling
+
+| Condition | Action |
+|-----------|--------|
+| Jira MCP unavailable | **STOP** — cannot proceed |
+| Code Review MCP unavailable | **DEGRADE** — skip Phase 3 code review checks, cap verdict at PARTIALLY QUALIFIED |
+| TestRail MCP unavailable | **DEGRADE** — skip TestRail, flag as gap |
+| Document URL inaccessible | **DEGRADE** — record URL, flag as process gap |
+| No stories found (Epic, all fallbacks) | Flag, produce minimal report |
+| Story not RESOLVED | Include in gaps, still collect code changes |
+| Story In Progress | Flag separately from Unresolved, collect available changes |
+| Code change not found | Flag per-story, continue with other changes |
+| No changes for code story | Flag "implementation gap" |
+| draft:init fails | **STOP** — context required for quality analysis |
+| draft/ exists but stale | Warn, proceed (note in report) |
+| draft:deep-review fails | **DEGRADE** — record failure, continue pipeline, cap verdict at PARTIALLY QUALIFIED |
+| draft:bughunt fails | **DEGRADE** — record failure, continue pipeline, cap verdict at PARTIALLY QUALIFIED |
+| draft:coverage fails / no framework | **DEGRADE** — record, flag "no coverage data" as gap |
+| 50+ stories (Epic) | Process in batches of 25, warn about duration |
+| Jira MCP rate limit / timeout | Back off with exponential delay, retry up to 3 times per call |
+| Numeric-only input | Prompt for project prefix — do NOT assume |
+| Issue type is Sub-task | Fetch parent for context, qualify sub-task scope, note parent in report |
+| Issue type is non-code Task | Skip Phase 3–6, produce minimal report explaining qualification N/A |
+
+---
+
+## Output Files Summary
+
+All generated artifacts and their locations:
+
+| File | Path | Phase |
+|------|------|-------|
+| Design Doc Synthesis | `draft/jira-review/<JIRA_ID>/design-doc-synthesis.md` | 2 |
+| Test Data Synthesis | `draft/jira-review/<JIRA_ID>/test-data-synthesis.md` | 2 |
+| Context Document | `draft/jira-review/<JIRA_ID>/context.md` | 4 |
+| Qualification Report | `draft/jira-review/<JIRA_ID>/qualification-report.md` | 7 |
+| Remediation Plan | `draft/jira-review/<JIRA_ID>/remediation-plan.md` | 7 (if gaps) |
+| Deep Review Reports | `draft/deep-review-reports/<module>.md` | 5 (managed by deep-review) |
+| Bughunt Report | `draft/bughunt-report-latest.md` | 5 (managed by bughunt) |
+| Coverage Reports | Per coverage command output | 5 (managed by coverage) |
+
+---
+
 ## Quick Review Command
 
 When user says "quick review" or "draft quick-review [file|pr <number>]":
@@ -10333,7 +12507,7 @@ For each item:
 
 ### Tier 2: Strategic Improvements (Priority > 2, Effort > 2)
 
-Items requiring dedicated effort. Create via `draft new-track` or feed into `draft jira-preview`.
+Items requiring dedicated effort. Create via `draft new-track` or route via `draft jira` (or `draft plan "tech debt remediation"`).
 
 For each item:
 - Scope and approach
@@ -10381,7 +12555,7 @@ Report structure:
 - **Offered by:** `draft new-track` (refactor tracks — scope the debt before planning)
 - **Suggested by:** `draft implement` (when TODO/FIXME detected at completion)
 - **Suggested by:** `draft deep-review` (architecture debt findings)
-- **Feeds into:** `draft jira-preview` (create remediation tickets from Tier 2 items)
+- **Feeds into:** `draft jira` (or `draft plan` for remediation tracks) (create remediation tickets from Tier 2 items)
 - **Feeds into:** `draft testing-strategy` (Test Debt findings inform test planning)
 - **Jira sync:** If ticket linked, attach report and post summary via `core/shared/jira-sync.md`
 
@@ -11375,814 +13549,6 @@ draft change track add-export-feature also require a progress indicator for expo
 
 ---
 
-## Jira Preview Command
-
-When user says "preview jira" or "draft jira-preview [track-id]":
-
-Generate a timestamped `jira-export-<timestamp>.md` (with `jira-export-latest.md` symlink) from the track's plan for review and editing before creating actual Jira issues.
-
-## Red Flags - STOP if you're:
-
-- Generating a preview without an approved plan.md
-- Assigning story points inconsistent with task count
-- Missing sub-tasks that exist in plan.md
-- Not including quality findings when review/bughunt reports exist
-- Overwriting a reviewed jira-export without warning the user
-
-**Plan first, then preview. Accuracy over speed.**
-
----
-
-## Standard File Metadata
-
-**The generated `jira-export-<timestamp>.md` MUST include the standard YAML frontmatter.** This enables traceability and sync verification.
-
-### Gathering Git Information
-
-Before generating the export file, run these commands to gather metadata:
-
-```bash
-# Project name (from manifest or directory)
-basename "$(pwd)"
-
-# Git branch
-git branch --show-current
-
-# Git remote tracking branch
-git rev-parse --abbrev-ref --symbolic-full-name @{upstream} 2>/dev/null || echo "none"
-
-# Git commit SHA (full)
-git rev-parse HEAD
-
-# Git commit SHA (short)
-git rev-parse --short HEAD
-
-# Git commit date
-git log -1 --format="%ci"
-
-# Git commit message (first line)
-git log -1 --format="%s"
-
-# Check for uncommitted changes
-git status --porcelain | head -1
-```
-
-### Metadata Template
-
-Insert this YAML frontmatter block at the **top of the timestamped `jira-export-<timestamp>.md`**:
-
-```yaml
----
-project: "{PROJECT_NAME}"
-module: "root"
-track_id: "{TRACK_ID}"
-generated_by: "draft:jira-preview"
-generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH or 'none'}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{FIRST_LINE_OF_COMMIT_MESSAGE}"
-  dirty: {true|false}
-synced_to_commit: "{FULL_SHA}"
----
-```
-
-> **Note**: `generated_by` uses `draft:command` format (not `draft command`) for cross-platform compatibility.
-
----
-
-## Mapping Structure
-
-| Draft Concept | Jira Entity |
-|---------------|-------------|
-| Track | Epic |
-| Phase | Story |
-| Task | Sub-task (under story) |
-
-## Step 1: Load Context
-
-1. **Capture git context first:**
-   ```bash
-   git branch --show-current    # Current branch name
-   git rev-parse --short HEAD   # Current commit hash
-   ```
-2. Find active track from `draft/tracks.md` (look for `[~] In Progress` or first `[ ]` track)
-3. If track ID provided as argument, use that instead
-4. Read the track's `plan.md` for phases and tasks
-5. Read the track's `metadata.json` for title and type
-6. Read the track's `spec.md` for epic description
-7. Check for quality reports:
-   - `draft/tracks/<id>/review-report-latest.md` — review findings (from `draft review`)
-   - `draft/tracks/<id>/bughunt-report-latest.md` — defect findings
-
-If no track found:
-- Tell user: "No track found. Run `draft new-track` to create one, or specify track ID."
-
-## Step 2: Parse Plan Structure
-
-Extract from `plan.md`:
-
-### Epic (from track)
-- **Summary:** Track title from metadata.json or first `# Plan:` heading
-- **Description:** Overview section from spec.md
-- **Type:** Feature (from metadata.json type: feature|bugfix|refactor)
-
-### Stories (from phases)
-For each `## Phase N: [Name]` section:
-- **Summary:** Phase name
-- **Goal:** Extract from `**Goal:**` line
-- **Verification:** Extract from `**Verification:**` line
-
-### Sub-tasks (from tasks)
-For each `- [ ] **Task N.M:**` within a phase:
-- **Summary:** Task description (text after `**Task N.M:**`)
-- **Parent:** The phase's story
-- **Status:** Map `[ ]` → To Do, `[x]` → Done, `[~]` → In Progress, `[!]` → Blocked
-
-### Story Points Calculation
-Count tasks per phase and assign points to the **story**:
-
-| Task Count | Story Points |
-|------------|--------------|
-| 1-2 tasks  | 1 point      |
-| 3-4 tasks  | 2 points     |
-| 5-6 tasks  | 3 points     |
-| 7+ tasks   | 5 points     |
-
-## Step 3: Extract Quality Findings (if reports exist)
-
-If `review-report-latest.md` or `bughunt-report-latest.md` exists in the track directory:
-
-### From `bughunt-report-latest.md`
-
-1. Parse findings by severity (Critical, High, Medium, Low)
-2. Extract **all sections** for each bug:
-   - **Location** — file path and line number
-   - **Confidence** — CONFIRMED, HIGH, or MEDIUM
-   - **Code Evidence** — the actual problematic code snippet
-   - **Data Flow Trace** — how data reaches the bug location
-   - **Issue** — precise technical description
-   - **Impact** — user-visible effect or system failure mode
-   - **Verification Done** — checklist of verification steps completed
-   - **Why Not a False Positive** — explicit reasoning
-   - **Fix** — minimal code change or mitigation
-   - **Regression Test** — test case that would catch this bug
-3. Group by severity for the export
-
-### From `review-report-latest.md`
-
-1. Parse findings from review report stages — Stage 1: Automated Validation (Architecture Conformance, Dead Code, Dependency Cycles, Security Scan, Performance), Stage 2: Spec Compliance, Stage 3: Code Quality (Architecture, Error Handling, Testing, Maintainability)
-2. Extract for each finding:
-   - **Severity** — Critical (✗) or Warning (⚠)
-   - **Category** — which validator produced it
-   - **Location** — file path and line number
-   - **Issue** — description of the violation
-   - **Risk/Impact** — what could go wrong
-   - **Fix** — recommended remediation
-3. Group by severity for the export
-
-**Critical/High findings** should be highlighted — consider suggesting additional stories or tasks to address them before the track is complete.
-
-## Step 4: Generate Export File
-
-Generate the timestamped filename and create the export file with symlink:
-
-```bash
-TIMESTAMP=$(date +%Y-%m-%dT%H%M)
-EXPORT_FILE="draft/tracks/<track_id>/jira-export-${TIMESTAMP}.md"
-SYMLINK="draft/tracks/<track_id>/jira-export-latest.md"
-```
-
-Create `${EXPORT_FILE}` and then create/update the symlink:
-
-```bash
-ln -sf "jira-export-${TIMESTAMP}.md" "${SYMLINK}"
-```
-
-File contents for `${EXPORT_FILE}`:
-
-```markdown
----
-project: "{PROJECT_NAME}"
-module: "root"
-track_id: "{TRACK_ID}"
-generated_by: "draft:jira-preview"
-generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{COMMIT_MESSAGE}"
-  dirty: {true|false}
-synced_to_commit: "{FULL_SHA}"
----
-
-# Jira Export: [Track Title]
-
-| Field | Value |
-|-------|-------|
-| Generated | {ISO_TIMESTAMP} |
-| Track ID | {TRACK_ID} |
-| Branch | {LOCAL_BRANCH} |
-| Commit | {SHORT_SHA} |
-| Status | Ready for review |
-
-> Edit this file to adjust story points, descriptions, or sub-tasks before running `draft jira-create`.
-
----
-
-## Epic
-
-**Summary:** [Track Title]
-**Issue Type:** Epic
-**Labels:** draft
-**Description:**
-{noformat}
-[Spec overview - first 2-3 paragraphs]
-
----
-🤖 Generated by Draft
-Branch: [branch-name] | Commit: [short-hash]
-{noformat}
-
----
-
-## Story 1: [Phase 1 Name]
-
-**Summary:** Phase 1: [Phase Name]
-**Issue Type:** Story
-**Story Points:** [calculated based on task count]
-**Labels:** draft
-**Epic Link:** (will be set on creation)
-
-**Description:**
-{noformat}
-h3. Goal
-[Phase goal]
-
-h3. Verification
-[Phase verification criteria]
-
----
-🤖 Generated by Draft
-Branch: [branch-name] | Commit: [short-hash]
-{noformat}
-
-### Sub-tasks
-
-| # | Summary | Status |
-|---|---------|--------|
-| 1.1 | [Task 1.1 description] | To Do |
-| 1.2 | [Task 1.2 description] | Done |
-| 1.3 | [Task 1.3 description] | To Do |
-
----
-
-## Story 2: [Phase 2 Name]
-
-**Summary:** Phase 2: [Phase Name]
-**Issue Type:** Story
-**Story Points:** [calculated]
-**Labels:** draft
-**Epic Link:** (will be set on creation)
-
-**Description:**
-{noformat}
-h3. Goal
-[Phase goal]
-
-h3. Verification
-[Phase verification criteria]
-
----
-🤖 Generated by Draft
-Branch: [branch-name] | Commit: [short-hash]
-{noformat}
-
-### Sub-tasks
-
-| # | Summary | Status |
-|---|---------|--------|
-| 2.1 | [Task 2.1 description] | To Do |
-| 2.2 | [Task 2.2 description] | To Do |
-
----
-
-[Continue for all phases...]
-
----
-
-## Quality Reports
-
-### Review Findings (informational)
-
-| Severity | Category | Location | Issue | Risk/Impact | Fix |
-|----------|----------|----------|-------|-------------|-----|
-| Critical | Security | src/auth.ts:45 | Hardcoded API key | Secret exposed in version control | Move to environment variable |
-| Warning | Architecture | src/utils.ts:12 | Layer boundary violation | UI importing from database layer | Use API service layer instead |
-
-> Review findings are from `draft review` and `draft bughunt`. Include in Epic description for awareness.
-> Critical findings should also be created as Bug issues (same as bughunt bugs) to ensure they are tracked and resolved.
-
----
-
-## Bug Issues (from Bug Hunt Report)
-
-Each bug from `bughunt-report-latest.md` becomes a separate **Bug** issue linked to the Epic.
-
-### Bug 1: [CRITICAL] Off-by-one error in pagination
-
-**Summary:** [Correctness] Off-by-one error in pagination
-**Issue Type:** Bug
-**Priority:** Highest
-**Labels:** draft
-**Epic Link:** (will be set on creation)
-
-**Description:**
-{noformat}
-h3. Location
-src/calc.ts:78
-
-h3. Confidence
-CONFIRMED
-
-h3. Code Evidence
-{code}
-// The actual problematic code from bughunt-report-latest.md
-{code}
-
-h3. Data Flow Trace
-[How data reaches this point: caller → caller → this function]
-
-h3. Issue
-[Full description from bughunt-report-latest.md]
-
-h3. Impact
-[User-visible or system failure mode]
-
-h3. Verification Done
-[Checklist of verification steps completed, e.g.:]
-- Traced code path from entry point
-- Checked .ai-context.md — not intentional
-- Verified framework doesn't handle this
-- No upstream guards found
-
-h3. Why Not a False Positive
-[Explicit reasoning from bughunt-report-latest.md]
-
-h3. Fix
-[Minimal code change or mitigation from report]
-
-h3. Regression Test
-[Test case from bughunt-report-latest.md, or "N/A" with reason]
-
----
-🤖 Generated by Draft (Bug Hunt)
-Branch: [branch-name] | Commit: [short-hash]
-{noformat}
-
----
-
-### Bug 2: [HIGH] Race condition in cache update
-
-**Summary:** [Concurrency] Race condition in cache update
-**Issue Type:** Bug
-**Priority:** High
-**Labels:** draft
-**Epic Link:** (will be set on creation)
-
-**Description:**
-{noformat}
-h3. Location
-src/api.ts:92
-
-h3. Confidence
-HIGH
-
-h3. Code Evidence
-{code}
-// The actual problematic code from bughunt-report-latest.md
-{code}
-
-h3. Data Flow Trace
-[How data reaches this point: caller → caller → this function]
-
-h3. Issue
-[Full description from bughunt-report-latest.md]
-
-h3. Impact
-[User-visible or system failure mode]
-
-h3. Verification Done
-[Checklist of verification steps completed]
-
-h3. Why Not a False Positive
-[Explicit reasoning from bughunt-report-latest.md]
-
-h3. Fix
-[Fix recommendation from report]
-
-h3. Regression Test
-[Test case from bughunt-report-latest.md, or "N/A" with reason]
-
----
-🤖 Generated by Draft (Bug Hunt)
-Branch: [branch-name] | Commit: [short-hash]
-{noformat}
-
----
-
-[Continue for all bugs from bughunt-report-latest.md...]
-
-> **Priority Mapping:** Critical → Highest, High → High, Medium → Medium, Low → Low
-> All bugs are linked to the Epic but are separate from Stories (phases).
-```
-
-## Step 5: Report
-
-```
-Jira Preview Generated
-
-Track: [track_id] - [title]
-Export: draft/tracks/<id>/jira-export-<timestamp>.md
-Symlink: draft/tracks/<id>/jira-export-latest.md
-
-Summary:
-- 1 epic
-- N stories (phases)
-- M sub-tasks (tasks)
-- P total story points
-- B bugs (from bughunt-report-latest.md)
-
-Breakdown:
-- Phase 1: [name] - X pts, Y tasks
-- Phase 2: [name] - X pts, Y tasks
-- Phase 3: [name] - X pts, Y tasks
-
-Bugs (if bughunt-report-latest.md exists):
-- X critical bugs
-- Y high bugs
-- Z medium/low bugs
-
-Next steps:
-1. Review and edit the export file via jira-export-latest.md (adjust points, descriptions, sub-tasks, bug priorities)
-2. Run `draft jira-create` to create issues in Jira
-```
-
-## Error Handling
-
-**If plan.md has no phases:**
-- Tell user: "No phases found in plan.md. Run `draft new-track` to generate a proper plan."
-
-**If spec.md missing:**
-- Use plan.md overview for epic description
-- Warn: "spec.md not found, using plan overview for epic description."
-
-**If jira-export-latest.md already exists:**
-- Check if the target file has been manually modified (look for user-added content not matching generated patterns — e.g., edited descriptions, added rows, changed story points from generated values)
-- If modifications detected, prompt user: "Existing jira-export appears to have manual edits. Overwrite? [y/N]"
-- If unmodified (matches generated patterns), proceed with regeneration (new timestamped file + updated symlink)
-
-**If phase has no tasks:**
-- Create story with 1 story point
-- Add note: "No sub-tasks defined for this phase"
-
----
-
-## Jira Create Command
-
-When user says "create jira" or "draft jira-create [track-id]":
-
-Create Jira epic, stories, and sub-tasks from `jira-export-latest.md` using MCP-Jira. If no export file exists, auto-generates one first.
-
-## Red Flags - STOP if you're:
-
-- Creating Jira issues without reviewing `jira-export-latest.md` first (run `draft jira-preview`)
-- Proceeding when MCP-Jira is not configured
-- Creating duplicate issues (check if jira-export-latest.md already has Jira keys)
-- Not verifying the target Jira project before creation
-- Skipping the export file update after issue creation
-
-**Preview before you create. Never create duplicates.**
-
----
-
-## Mapping Structure
-
-| Draft Concept | Jira Entity |
-|---------------|-------------|
-| Track | Epic |
-| Phase | Story |
-| Task | Sub-task (under story) |
-
-## Step 1: Load Context
-
-1. **Capture git context first:**
-   ```bash
-   git branch --show-current    # Current branch name
-   git rev-parse --short HEAD   # Current commit hash
-   ```
-2. Find active track from `draft/tracks.md` (look for `[~] In Progress` or first `[ ]` track)
-3. If track ID provided as argument, use that instead
-4. Check for `draft/tracks/<track_id>/jira-export-latest.md`
-
-If no track found:
-- Tell user: "No track found. Run `draft new-track` to create one, or specify track ID."
-
-## Step 2: Ensure Export Exists
-
-**If `jira-export-latest.md` exists:**
-- Read and parse the export file (follows symlink to timestamped file)
-- Proceed to Step 3
-
-**If `jira-export-latest.md` missing:**
-- Inform user: "No jira-export-latest.md found. Generating preview first..."
-- Execute `draft jira-preview` logic to generate it
-- Proceed to Step 3
-
-## Step 3: Check MCP-Jira Availability
-
-Attempt to detect MCP-Jira tools:
-1. List available MCP tools and search for Jira-related ones. Known tool name variants: `mcp_jira_create_issue`, `jira_createIssue`, `create_jira_issue`, `jira-create-issue`. Use whichever is available.
-2. If unavailable:
-   ```
-   MCP-Jira not configured.
-
-   To create issues:
-   1. Configure MCP-Jira server in your settings
-   2. Run `draft jira-create` again
-
-   Or manually import from:
-     draft/tracks/<id>/jira-export-latest.md
-   ```
-   - Stop execution
-
-## Step 4: Parse Export File
-
-Extract from `jira-export-latest.md`:
-
-### Epic
-- Summary (from `**Summary:**` line)
-- Description (from `{noformat}` block)
-- Issue Type: Epic
-
-### Stories
-For each `## Story N:` section:
-- Summary
-- Story Points (from `**Story Points:**` line)
-- Description (from `{noformat}` block)
-
-### Sub-tasks
-For each row in `### Sub-tasks` table:
-- Task number (e.g., 1.1, 1.2)
-- Summary
-- Status (To Do, Done, In Progress, Blocked)
-
-### Quality Findings (if present)
-If export contains `## Quality Reports` section:
-- Parse validation findings table (severity, category, location, issue, risk/impact, fix)
-- Parse bughunt bug issues with all sections (location, confidence, code evidence, data flow trace, issue, impact, verification done, why not a false positive, fix, regression test)
-- Extract all fields for each finding to populate Jira issue descriptions
-
-## Step 4b: Resolve Project Key
-
-Read `draft/workflow.md` and look for a `## Jira` section containing `Project Key: <KEY>`.
-
-- **If found:** Use that key.
-- **If not found:** Prompt the user: "No Jira project key configured. Enter your Jira project key (e.g., PROJ):"
-  After the user provides the key, append the following to `draft/workflow.md`:
-  ```markdown
-  ## Jira
-
-  Project Key: <KEY>
-  ```
-  This persists the key for all future `draft jira-create` and `draft jira-preview` invocations.
-
-### Validate Project Key
-
-Before creating issues, attempt to fetch project metadata via MCP to verify the project key exists. Fail fast with a clear error if invalid:
-
-```
-MCP call: get_project (or equivalent)
-- project: [project key]
-```
-
-If the project key is invalid or not found:
-- Error: "Jira project '[KEY]' not found. Verify the project key and try again."
-- Stop execution.
-
-## Step 5: Create Issues via MCP
-
-**Pin the symlink target:** At the start of this step, resolve the symlink to its actual timestamped file path (e.g., via `readlink -f jira-export-latest.md`). Use the resolved path for all subsequent writes in this step to prevent data loss if the symlink is updated mid-run.
-
-**Incremental persistence:** After creating each issue, immediately update the corresponding entry in the export file (via `jira-export-latest.md` symlink) with the Jira key. This ensures re-runs can skip already-created items even if the process fails mid-way.
-
-**Note:** Some Jira configurations do not allow setting status during creation. If status setting fails, create in default status and log a warning.
-
-### 5a. Create Epic
-```
-MCP call: create_issue
-- project: [from config or prompt]
-- issue_type: Epic
-- summary: [Epic summary]
-- description: [Epic description — MUST include signature, see jira-sync.md]
-- labels: ["draft"]
-```
-- Capture epic key (e.g., PROJ-123)
-- Report: "Created Epic: PROJ-123"
-
-### 5b. Create Stories (one per phase)
-For each story in export:
-```
-MCP call: create_issue
-- project: [same as epic]
-- issue_type: Story
-- summary: [Story summary]
-- description: [Story description — MUST include signature, see jira-sync.md]
-- story_points: [from export]
-- epic_link: [Epic key from step 5a]
-- labels: ["draft"]
-```
-- Capture story key (e.g., PROJ-124)
-- Report: "Created Story: PROJ-124 - Phase 1 (3 pts)"
-
-### 5c. Create Sub-tasks (one per task)
-For each sub-task under the story:
-```
-MCP call: create_issue
-- project: [same as epic]
-- issue_type: Sub-task
-- parent: [Story key from step 5b]
-- summary: [Task summary, e.g., "Task 1.1: Extract logging utilities"]
-- status: [Map from export: To Do, In Progress, Done]
-- labels: ["draft"]
-```
-- Capture sub-task key (e.g., PROJ-125)
-- Report: "  - Sub-task: PROJ-125 - Task 1.1"
-
-### 5d. Create Bug Issues (from Bug Hunt Report)
-
-For **each bug** in the `## Bug Issues` section of jira-export-latest.md, create a separate Bug issue:
-
-```
-MCP call: create_issue
-- project: [same as epic]
-- issue_type: Bug
-- summary: [Category] [Brief issue description]
-- description: {noformat}
-  h3. Location
-  [file:line]
-
-  h3. Confidence
-  [CONFIRMED | HIGH | MEDIUM]
-
-  h3. Code Evidence
-  {code}
-  [The actual problematic code snippet from bughunt-report-latest.md]
-  {code}
-
-  h3. Data Flow Trace
-  [How data reaches this point: caller → caller → this function]
-
-  h3. Issue
-  [Full issue description]
-
-  h3. Impact
-  [User-visible or system failure mode]
-
-  h3. Verification Done
-  [Checklist of verification steps completed, e.g.:]
-  - Traced code path from entry point
-  - Checked .ai-context.md — not intentional
-  - Verified framework doesn't handle this
-  - No upstream guards found
-
-  h3. Why Not a False Positive
-  [Explicit reasoning from bughunt-report-latest.md]
-
-  h3. Fix
-  [Minimal code change or mitigation from report]
-
-  h3. Regression Test
-  [Test case from bughunt-report-latest.md, or "N/A" with reason]
-
-  ---
-  🤖 Generated by Draft (Bug Hunt)
-  Branch: [branch-name] | Commit: [short-hash]
-  {noformat}
-- epic_link: [Epic key from step 5a]
-- priority: [Map from severity]
-- labels: ["draft"]
-```
-
-**Priority Mapping:**
-| Severity | Jira Priority |
-|----------|---------------|
-| Critical | Highest |
-| High | High |
-| Medium | Medium |
-| Low | Low |
-
-- Capture bug key (e.g., PROJ-131)
-- Report: "- Bug: PROJ-131 - [Critical] Correctness: Off-by-one error"
-
-**All bugs from bughunt-report-latest.md get their own Bug issue.** They are linked to the Epic but separate from Stories (phases). This keeps implementation work (Stories/Sub-tasks) distinct from defect tracking (Bugs).
-
-## Step 6: Finalize Tracking
-
-The export file (via `jira-export-latest.md`) has already been updated incrementally during Step 5. Now update `plan.md` with the Jira keys:
-
-1. **Update plan.md:**
-   Add Jira keys to phase headers and tasks:
-   ```markdown
-   ## Phase 1: Setup [PROJ-124]
-   ...
-   - [x] **Task 1.1:** Extract logging utilities [PROJ-125]
-   - [x] **Task 1.2:** Extract security utilities [PROJ-126]
-   ```
-
-2. **Set export file status to Created (in the timestamped file via jira-export-latest.md):**
-   ```markdown
-   **Status:** Created
-   **Epic Key:** PROJ-123
-   ```
-
-## Step 7: Report
-
-```
-Jira Issues Created
-
-Track: [track_id] - [title]
-Project: [PROJ]
-
-Created:
-- Epic: PROJ-123 - [Track title]
-- Story: PROJ-124 - Phase 1: [name] (3 pts)
-  - Sub-task: PROJ-125 - Task 1.1
-  - Sub-task: PROJ-126 - Task 1.2
-  - Sub-task: PROJ-127 - Task 1.3
-- Story: PROJ-128 - Phase 2: [name] (5 pts)
-  - Sub-task: PROJ-129 - Task 2.1
-  - Sub-task: PROJ-130 - Task 2.2
-  [...]
-
-Bugs (from Bug Hunt):
-- Bug: PROJ-131 - [Critical] Correctness: Off-by-one error in pagination
-- Bug: PROJ-132 - [High] Concurrency: Race condition in cache update
-- Bug: PROJ-133 - [Medium] Security: Missing input validation
-
-Total: 1 epic, N stories, M sub-tasks, B bugs, P story points
-Label: 'draft' applied to all issues
-
-Updated:
-- plan.md (added issue keys to phases and tasks)
-- jira-export-latest.md (marked as created with keys)
-```
-
-## Error Handling
-
-**If MCP call fails:**
-```
-Failed to create [Epic/Story/Sub-task]: [error message]
-
-Partial creation:
-- Epic: PROJ-123 (created)
-- Story 1: PROJ-124 (created)
-  - Sub-task 1.1: PROJ-125 (created)
-  - Sub-task 1.2: FAILED - [error]
-- Story 2: (skipped)
-
-Fix the issue and run `draft jira-create` again.
-Already-created issues will be detected by keys in jira-export-latest.md.
-```
-
-**If export has existing keys:**
-- Skip items that already have Jira keys
-- Only create items without keys
-- Report: "Skipped Story 1 (already exists: PROJ-124)"
-- Still create sub-tasks if story exists but sub-tasks don't have keys
-
-**If project not configured:**
-- No `## Jira` section with `Project Key:` found in `draft/workflow.md`
-- Prompt user: "No Jira project key configured. Enter your Jira project key (e.g., PROJ):"
-- Save to `draft/workflow.md` under a `## Jira` section as `Project Key: <KEY>`
-
-**If plan.md phases don't match export:**
-- Warn: "Export has N stories but plan has M phases. Proceeding with export structure."
-- Create based on export (user may have manually edited it)
-
-**If sub-task creation not supported:**
-- Some Jira configurations may not allow sub-tasks
-- Fall back to adding tasks as checklist items in story description
-- Warn: "Sub-tasks not supported in this project. Tasks added to story description."
-
----
-
 ## Tour Command
 
 When user says "tour" or "draft tour":
@@ -12474,8 +13840,7 @@ Draft solves this through **Context-Driven Development**: structured documents t
   - [draft revert](#draftrevert--git-aware-rollback)
   - [draft decompose](#draftdecompose--module-decomposition)
   - [draft coverage](#draftcoverage--code-coverage-report)
-  - [draft jira-preview](#draftjira-preview--preview-jira-issues)
-  - [draft jira-create](#draftjira-create--create-jira-issues)
+  - [draft jira](#draftjira--unified-jira-integration)
   - [draft adr](#draftadr--architecture-decision-records)
   - [draft deep-review](#draftdeep-review--module-lifecycle-audit)
   - [draft bughunt](#draftbughunt--exhaustive-bug-discovery)
@@ -12564,7 +13929,7 @@ graph TD
     N["draft bughunt"] -.->|"Quality check"| E
     O["draft review"] -.->|"At track end"| G
     P["draft adr"] -.->|"Document decisions"| B
-    Q["draft jira-preview"] -.->|"Export to Jira"| B
+    Q["draft jira"] -.->|"Jira integration"| B
     R["draft deep-review"] -.->|"Audit module"| E
 ```
 
@@ -12630,7 +13995,7 @@ Draft's artifacts are designed for team collaboration through standard git workf
 1. **Project context** — Tech lead runs `draft init`. Team reviews `product.md`, `tech-stack.md`, and `workflow.md` via PR. Product managers review vision without reading code. Engineers review technical choices without context-switching into implementation.
 2. **Spec & plan** — Lead runs `draft new-track`. Team reviews `spec.md` (requirements, acceptance criteria) and `plan.md` (phased task breakdown, dependencies) via PR. Disagreements surface as markdown comments — resolved by editing a paragraph, not rewriting a module.
 3. **Architecture** — Lead runs `draft decompose`. Team reviews `architecture.md` (derived human-readable guide with module boundaries, API surfaces, dependency graph, implementation order) via PR. Senior engineers validate architecture without touching the codebase. The machine-optimized `.ai-context.md` is the source of truth.
-4. **Work distribution** — Lead runs `draft jira-preview` and `draft jira-create`. Epics, stories, and sub-tasks are created from the approved plan. Individual team members pick up Jira stories and implement — with or without `draft implement`.
+4. **Work distribution** — Lead runs `draft jira` (preview/create). Work is pushed to Jira. Individual team members pick up stories and implement — with or without `draft implement`.
 5. **Implementation** — Only after all documents are merged does coding start. Every developer has full context: what to build (`spec.md`), in what order (`plan.md`), with what boundaries (`.ai-context.md` / `architecture.md`).
 
 **Why this works:** The CLI is single-user, but the artifacts it produces are the collaboration layer. Draft handles planning and decomposition. Git handles review. Jira handles distribution. Changing a sentence in `spec.md` takes seconds. Changing an architectural decision after 2,000 lines of code takes days.
@@ -13129,31 +14494,15 @@ Target: 95%+ line coverage (configurable in `workflow.md`).
 
 ---
 
-### `draft jira-preview` — Preview Jira Issues
+### `draft jira` — Unified Jira Integration
 
-Generates a `jira-export.md` file from the track's plan for review before creating Jira issues.
+Single entry point for Jira workflows via subcommands:
 
-#### Mapping
+- `preview` (default): Generate editable export from track plan (supports `--epic` for richer hierarchy).
+- `create`: Push issues to Jira via MCP (supports `--epic`).
+- `review <JIRA-ID>`: Full qualification review of any existing Jira ticket using Draft's analysis tools (delegates to the review pipeline in `skills/jira/references/review.md`).
 
-| Draft Concept | Jira Entity |
-|---------------|-------------|
-| Track | Epic |
-| Phase | Story |
-| Task | Sub-task |
-
-Story points are auto-calculated from task count per phase — see the formula in the Jira Integration section below.
-
-The export file is editable — adjust points, descriptions, or sub-tasks before running `draft jira-create`.
-
----
-
-### `draft jira-create` — Create Jira Issues
-
-Creates Jira epic, stories, and sub-tasks from `jira-export.md` via MCP-Jira integration. Auto-generates the export file if missing.
-
-Creates issues in order: Epic → Stories (one per phase) → Sub-tasks (one per task). Updates plan.md and jira-export.md with Jira issue keys after creation.
-
-Requires MCP-Jira server configuration and `draft/jira.md` with project key.
+All work items live inside the root issue description by default. Use the unified router in normal usage.
 
 ---
 
@@ -13450,11 +14799,9 @@ draft coverage → coverage report → CHECKPOINT
 
 ## Jira Integration (Optional)
 
-Sync tracks to Jira with a two-step workflow:
+Sync tracks to Jira via the unified router:
 
-1. **Preview** (`draft jira-preview`) - Generate `jira-export.md` with epic and stories
-2. **Review** - Adjust story points, descriptions, acceptance criteria as needed
-3. **Create** (`draft jira-create`) - Push to Jira via MCP server
+`draft jira preview` → review/edit export → `draft jira create`
 
 Story points are auto-calculated from task count:
 - 1-2 tasks = 1 point
@@ -13718,6 +15065,41 @@ If `draft/.ai-profile.md` exists, **always** read it first. This ultra-compact f
 - **Always loaded** regardless of task complexity
 - **Purpose**: Enables simple tasks (quick edits, config changes, small fixes) without loading full context
 - **Fallback**: If `.ai-profile.md` does not exist, proceed to Layer 1
+
+### Layer 0.5: Plugin Guardrails (Selective Loading)
+
+Layer 0.5 files live in the Draft plugin (`core/guardrails/`) and provide numbered, versioned baseline rules. **Project-level `draft/guardrails.md` always takes precedence** — if a project rule conflicts with a plugin rule, the project rule wins. See `core/guardrails/README.md` for vocabulary and full precedence order. (Portable improvement merged per manifest §2.1.)
+
+| File | Rules | Scope |
+|------|-------|-------|
+| `core/guardrails/README.md` | (index) | Vocabulary, ID prefixes, precedence rules |
+| `core/guardrails/code-quality.md` | CQ-001…CQ-012 | Code authoring, naming, error messages, structure |
+| `core/guardrails/design-norms.md` | DN-001…DN-010 | HLD/LLD depth split, diagrams, traceability, secrets |
+| `core/guardrails/review-checks.md` | RC-001…RC-015 | Cross-cutting review baseline (security, tests, observability) |
+| `core/guardrails/security.md` | SEC-01…SEC-10 | Hard security red lines + reasoning chain |
+| `core/guardrails/secure-patterns.md` | (cross-cites SEC) | Per-language enforcement of SEC rules |
+| `core/guardrails/dependency-triage.md` | RC-014 | Third-party dependency vulnerability handling |
+| `core/guardrails/language-standards.md` | Per-stack sections | Language-specific style, safety, test standards |
+| `core/guardrails.md` *(existing)* | G1…G8 | C++ systems guardrails — always enforced for C++ code (conditioned on language signals for public language-agnostic use) |
+
+#### Selective Loading Matrix (binding)
+
+This matrix is the **single source of truth** for which Layer 0.5 files load per command. Skills MUST honor it — over-loading is a Red Flag (see red-flags.md) and costs tokens per invocation.
+
+| Command type | Commands | Guardrails loaded |
+|---|---|---|
+| **Read-only** | `draft status`, `draft standup`, `draft tour`, `draft index`, `draft coverage` | **none** |
+| **Spec / Plan** | `draft new-track`, `draft decompose`, `draft adr`, `draft testing-strategy`, `draft documentation` | `design-norms.md` only (architecture-shaped rules) |
+| **Code-touching (generation)** | `draft implement`, `draft debug`, `draft change`, `draft revert` | `code-quality.md` + `security.md` + `secure-patterns.md` + `language-standards.md` (detected stack) |
+| **Review** | `draft review`, `draft quick-review`, `draft deep-review`, `draft assist-review`, `draft bughunt`, `draft tech-debt` | `review-checks.md` + `security.md` + `language-standards.md` (detected stack); deep-review also loads `code-quality.md` + `design-norms.md` |
+| **Deploy** | `draft deploy-checklist`, `draft incident-response` | `security.md` + `dependency-triage.md` |
+| **Pattern / Meta** | `draft learn`, `draft init` | `code-quality.md` + `security.md` (baseline only — pattern discovery uses project-level guardrails as primary signal) |
+
+**Sensitive-task escalation:** Even when the matrix says "none" or a narrow set, code-touching tasks whose title/spec mentions authentication, authorization, login, token, session, password, SQL, database query, subprocess, exec, crypto, encryption, hash, file upload, or external API input MUST additionally load `security.md` + `secure-patterns.md` and treat `[SEC-*]` violations as Critical.
+
+**Citation requirement:** When a rule is enforced or violated, cite the ID inline — `[SEC-03]`, `[CQ-007]`, `[RC-012]`, `[DN-004]`.
+
+**Fallback**: If `core/guardrails/` files are not present (older plugin installation), skip gracefully — no degradation.
 
 ### Layer 1: Base Context Files
 
@@ -14927,47 +16309,56 @@ Use the no-`--symbol` form for direct injection. Use `--symbol` forms when you n
 
 Note: `draft/graph/module-deps.mermaid` and `draft/graph/proto-map.mermaid` are static files written only during a full graph build (`graph --repo`). Running `--query --mode mermaid` reads the current JSONL and is always current — prefer it over the static files.
 
-## Finding the Graph Binary
+## Finding the Graph Binary (Binary Preference + Usage Report)
 
-The graph binary ships with the draft plugin. Detect it at runtime using the breadcrumb file written by `install.sh`, then fallback to known paths:
+**Preference order** (native first for performance/fidelity):
+1. `graph` (and `graph-clang`) on `$PATH` — allows system-wide or user native installs to take precedence.
+2. Bundled arch-specific native under the Draft plugin tree: `graph/bin/<arch>/graph` (and `graph-clang`), where `<arch>` is `linux-amd64`, `darwin-arm64`, etc. (resolved from `uname`).
+3. Legacy Node wrapper: `graph/bin/graph` (preserved for dual-mode and environments without native binaries).
+
+The canonical resolver is `scripts/tools/verify-graph-binary.sh` (see its `--json --verbose --strict` modes). It:
+- Implements the exact order above.
+- Probes liveness (`--help` / `--version`).
+- Locates the optional `graph-clang` companion using sibling/PATH/bundled rules.
+- On success, optionally writes `draft/.graph-binary-report.json` — the **usage report contract** consumed by status, hygiene, and `graph-usage-report` tooling for auditing which binary (and clang) was active during an init/refresh.
+
+Skills and wrappers should prefer:
+```bash
+# Preferred (new skeleton)
+GRAPH_INFO="$(scripts/tools/verify-graph-binary.sh --repo . --json 2>/dev/null || true)"
+GRAPH_BIN="$(echo "$GRAPH_INFO" | grep -o '"graph_bin":"[^"]*"' | cut -d'"' -f4 || true)"
+# Fallback to legacy inline detection only if verify script absent (keeps all prior behavior working)
+```
+
+When the verify script (or equivalent) is unavailable, the legacy detection still functions unchanged for backward compatibility.
 
 ```bash
+# Legacy inline detection (still supported; PATH now checked early)
 GRAPH_BIN=""
-
-# Method 1: .draft-install-path breadcrumb (written by install.sh)
-for breadcrumb in \
-    "$HOME/.cursor/plugins/local/draft/.draft-install-path" \
-    "$HOME/.claude-plugin/../.draft-install-path" \
-    ; do
-    if [ -f "$breadcrumb" ]; then
-        PLUGIN_ROOT="$(cat "$breadcrumb")"
-        if [ -x "$PLUGIN_ROOT/graph/bin/graph" ]; then
-            GRAPH_BIN="$PLUGIN_ROOT/graph/bin/graph"
-            break
-        fi
-    fi
-done
-
-# Method 2: search common install paths
-if [ -z "$GRAPH_BIN" ]; then
-    for candidate in \
-        "$HOME/.cursor/plugins/local/draft/graph/bin/graph" \
-        "$HOME/.claude/plugins/draft/graph/bin/graph" \
-        "graph/bin/graph" \
-        ; do
-        # "graph/bin/graph" only resolves when CWD is the plugin root
-        if [ -x "$candidate" ]; then
-            GRAPH_BIN="$candidate"
-            break
-        fi
-    done
-fi
-
-# Method 3: check PATH
+# 1. PATH (native preference)
 if [ -z "$GRAPH_BIN" ]; then
     GRAPH_BIN="$(command -v graph 2>/dev/null || true)"
 fi
+# 2. Bundled arch-specific (graph/bin/<arch>/graph) via breadcrumb or known paths
+if [ -z "$GRAPH_BIN" ]; then
+    # ... (arch resolution + $PLUGIN_ROOT/graph/bin/$ARCH/graph) ...
+fi
+# 3. Legacy graph/bin/graph
+if [ -z "$GRAPH_BIN" ]; then
+    # breadcrumb + common paths to graph/bin/graph (Node)
+fi
 ```
+
+`install.sh` writes the `.draft-install-path` breadcrumb so bundled resolution works after marketplace install.
+
+See `graph/bin/README.md` for the exact layout, Git LFS requirements, and placeholder rules. The Node `src/` and `dist/bundle.cjs` remain intact.
+
+## Usage Report Contract
+
+After successful detection:
+- `draft/.graph-binary-report.json` contains: `detected_at`, `graph_bin`, `graph_clang_bin`, `source` ("path"|"bundled:<arch>"|"legacy"), `arch`, `status`.
+- This enables later tools (e.g. `check-graph-usage-report.sh`) to surface "you are using the fast native binary on darwin-arm64 with graph-clang" or warn on legacy-only in large C++ codebases.
+- The report is a derived artifact (safe to gitignore or prune); it is regenerated on each graph-using command that calls the verifier.
 
 ## Building the Graph
 
@@ -15438,6 +16829,361 @@ vs single-agent baseline:
 Savings at XL tier: ~50% fewer tokens, ~55% faster wall clock
 Depth vs single-agent: equivalent (readers read the same source; synthesis composes from prose)
 ```
+
+</core-file>
+
+---
+
+## core/shared/context-verify.md
+
+<core-file path="core/shared/context-verify.md">
+
+---
+shared: context-verify
+applies_to: all skills that load Draft project context
+---
+
+# Verify Draft Context (Shared Subroutine)
+
+Single-source `Verify Draft Context` subroutine. Replaces the duplicated 3–4 line blocks that appeared in skills that load project context.
+
+Referenced by: every skill that starts with a `Verify Draft Context` step.
+
+## Procedure
+
+1. **Probe the draft directory:**
+
+   ```bash
+   ls draft/ 2>/dev/null
+   ```
+
+2. **Branch on result:**
+
+   | Result | Action |
+   |---|---|
+   | Directory exists | Proceed to step 3. |
+   | Directory missing AND skill requires context (`draft learn`, `draft deep-review`, `draft tech-debt`, `draft implement`) | **STOP** — print `No Draft context found. Run draft init first.` and exit. |
+   | Directory missing AND skill is context-optional (`draft debug`, `draft quick-review`, `draft bughunt`, `draft deploy-checklist`, `draft documentation`, `draft testing-strategy`) | Proceed with reduced-context mode; record `draft_context: absent` in the report header. |
+
+3. **Load context** by following [draft-context-loading.md](draft-context-loading.md). Honor the **selective guardrail matrix** in that file's Layer 0.5 — do not load all guardrails just because they are available.
+
+## Usage in SKILL.md
+
+Replace the existing 3–4 line `Verify Draft Context` block with a single reference:
+
+```md
+### Verify Draft Context
+
+See [core/shared/context-verify.md](../../core/shared/context-verify.md). This skill is <required | optional> with respect to `draft/`.
+```
+
+This keeps each skill explicit about whether draft context is required, while centralizing the probe-and-branch logic.
+
+## Why This Exists
+
+Duplicating the same `ls draft/ 2>/dev/null` snippet across skills costs tokens per duplicate after frontmatter and surrounding prose. Factoring removes the duplication without changing semantics.
+
+</core-file>
+
+---
+
+## core/shared/discovery-schema.md
+
+<core-file path="core/shared/discovery-schema.md">
+
+# Discovery Artifact Schema
+
+> Schema for the `discovery.md` artifact produced by discovery flows (as part of
+> new-track). The artifact captures the AI's pre-spec code-spike
+> findings as a first-class output.
+
+## Why this is first-class
+
+Pre-2.0, code-spike findings were buried in "Conversation Log" sections of
+`spec.md` or scattered across context-references rows. Reviewers could not
+tell whether the AI had actually read the code or had inferred structure
+from titles. `discovery.md` makes the spike output auditable, machine-
+verifiable (via citation verifiers), and load-bearing for downstream specs.
+
+## Required sections (each carries `<!-- REQUIRED -->`)
+
+1. **Hotspots** — code locations the spec must address.
+2. **Mode selection** — flags / feature gates / env switches governing the
+   current code path.
+3. **Open Questions** — load-bearing unknowns that must close before spec
+   freeze.
+4. **References** — flat list of files and functions touched in the spike.
+
+## Hotspots table — required columns
+
+| Column | Notes |
+|---|---|
+| Step | Short label for the operation observed |
+| Location | `path/to/file.ext:LINE` (verifier-resolvable) |
+| Behavior | What the spec must explain or improve (1 line) |
+
+Minimum row count: 3 (configurable via `metadata.json:hygiene_budget.discovery_min_hotspots`).
+If the spike genuinely found nothing, the row count may be 0 but the
+**Open Questions** section must contain a `_NONE_FOUND_ — <one-line
+justification>` line. The validator rejects an empty discovery without
+that justification.
+
+## Mode selection table — required columns
+
+| Column | Notes |
+|---|---|
+| Switch | flag, gate, env var, or build option |
+| Location | `path/to/file.ext:LINE` |
+| Notes | what behavior the switch toggles |
+
+## Open Questions
+
+Each question begins with `Q<N>:` and is a single line. Each MUST close
+into one of:
+
+- a decision merged into `spec.md` (preferred),
+- an explicit deferral with a follow-up track ID, or
+- a `_NONE_FOUND_` annotation explaining why the question is moot.
+
+A `discovery.md` whose Open Questions list is left dangling fails the
+hygiene validator.
+
+## References
+
+A flat bullet list of files and functions:
+
+- `path/to/file.ext` — `Function` / `Class::Method` — one-line role
+- `path/to/other.ext` — `Function2` — …
+
+Functions named here are exempt from citation drift unless they also
+appear with line numbers elsewhere.
+
+## Renaming / archiving
+
+Discovery is created once per track at spec time. Subsequent
+decompose runs DO NOT regenerate `discovery.md` — its job is to
+capture the moment in time when the spec was written, anchored to
+`metadata.json:synced_to_commit`. Re-running discovery is a deliberate
+re-spike; the previous file should be renamed `discovery-<isodate>.md`
+and the new one inherits the slot.
+
+</core-file>
+
+---
+
+## core/shared/graph-usage-report.md
+
+<core-file path="core/shared/graph-usage-report.md">
+
+---
+shared: graph-usage-report
+applies_to: quality + init + graph skills
+---
+
+# graph-usage-report (Foundations Stub)
+
+Portable generalized stub per manifest §2.1. Full content will be expanded in later agent tranche or manual follow-up.
+
+See verification-gates.md and template-hygiene.md for usage contracts.
+
+</core-file>
+
+---
+
+## core/shared/parallel-fanout.md
+
+<core-file path="core/shared/parallel-fanout.md">
+
+---
+shared: parallel-fanout
+applies_to: quality + init + graph skills
+---
+
+# parallel-fanout (Foundations Stub)
+
+Portable generalized stub per manifest §2.1. Full content will be expanded in later agent tranche or manual follow-up.
+
+See verification-gates.md and template-hygiene.md for usage contracts.
+
+</core-file>
+
+---
+
+## core/shared/red-flags.md
+
+<core-file path="core/shared/red-flags.md">
+
+---
+shared: red-flags
+applies_to: all code-touching skills
+---
+
+# Shared Red Flags
+
+Cross-skill red flags that any code-touching skill must enforce. Skills include their own skill-specific red flags **in addition to** the universal block below. The graph-first red flags are non-negotiable — they protect correctness against premature `grep`/`find` fallbacks that miss structural truth.
+
+Referenced by: `draft decompose`, `draft implement`, `draft review`, `draft deep-review`, `draft quick-review`, `draft bughunt`, `draft debug`, `draft learn`, `draft tech-debt`, `draft deploy-checklist`, `draft new-track`.
+
+## Universal Red Flags (STOP if any apply)
+
+- **Ran `grep`/`find`/`rg` for symbol or file discovery before consulting the graph** (when `draft/graph/schema.yaml` exists).
+- **Read more than 50 lines of source before consulting `draft/graph/hotspots.jsonl`** to know whether the file is a hotspot.
+- **Omitted the Graph Usage Report footer** from the final output (see [graph-query.md](graph-query.md) §Mandatory Lookup Contract).
+- **Used a `grep` fallback without an explicit graph-miss statement** in the form: `Graph returned no match for <X>; falling back to grep.`
+- **Loaded full Layer 0.5 guardrails when the command type does not require them** (see selective-loading matrix in [draft-context-loading.md](draft-context-loading.md) §Layer 0.5).
+- **Marked a task complete without verification evidence** (test run, build output, lint output — pasted, not summarized).
+- **Made up file paths or line numbers** instead of reading the file (`file_path:line_number` references must resolve).
+
+## Ground-Truth Red Flags (STOP if any apply)
+
+These enforce [graph-query.md](graph-query.md) §Ground-Truth Discipline. Graph identifies candidates; Read confirms them. Shipping unread claims is the dominant correctness failure mode observed in Draft output.
+
+- **Wrote a `path:line` / `func()` / `symbol` reference into a deliverable without opening the file in this run.** Graph hit ≠ Read. (G1)
+- **Declared something in-scope or out-of-scope without Reading at least one file in that path.** Module names from `module-graph.jsonl` are a candidate set, not proof that the candidate contains the named cost. (G2)
+- **Shipped `Citation: TBD` / `Path: TBD` / `Symbol: TBD` on a row whose Status is `Modified` or `Existing`.** TBD is reserved for `Status: New` rows with a planned path filled in. (G3)
+- **Claimed code behavior (writes / blocks / loops / fails / is the only path) from graph metadata alone.** Fan-in / fan-out / complexity scores are necessary signal, not sufficient evidence. (G4)
+- **Promoted a spec / generated an HLD or LLD / closed a review without checking that the in-scope file set covers every cost term in the problem statement.** Silent scope narrowing that excludes the named cost is the highest-impact failure class. (G5)
+- **Treated a graph query result as the terminal answer.** Graph is the index; the source files are the territory. Every claim that survives to a deliverable needs at least one Read behind it.
+
+When in doubt, prefer "not yet validated against source" over an unbacked assertion. A flagged uncertainty is reviewable; a confident wrong claim is not.
+
+## Graph-First Lookup Order (non-negotiable)
+
+1. **Graph artifacts first** — `draft/graph/module-graph.jsonl`, `draft/graph/hotspots.jsonl`, `draft/graph/modules/<name>.jsonl`, `draft/graph/proto-index.jsonl`, `draft/graph/{go,python,ts,c,call}-index.jsonl`.
+2. **Generated context second** — `draft/.ai-context.md`, relevant `draft/architecture.md` slices, track-level `hld.md`/`lld.md`.
+3. **Source file reads third** — only narrowed targets identified via graph or generated context.
+4. **Filesystem `grep`/`find` last** — only after a graph miss, with the explicit fallback sentence above.
+
+Using a lower tier before a higher tier is a **Red Flag** and must be reported in the skill's Graph Usage Report (justification required).
+
+## How to Extend
+
+Skill-specific red flags live in the skill's `SKILL.md` under `## Red Flags - STOP if you're:`. Skills should not duplicate the universal block above — instead they reference this file:
+
+```markdown
+## Red Flags - STOP if you're:
+
+See [shared red flags](../../core/shared/red-flags.md) — applies to all code-touching skills.
+
+Skill-specific:
+- <skill-specific red flag>
+- <skill-specific red flag>
+```
+
+This keeps boilerplate centralized while leaving room for skill-specific guardrails.
+
+</core-file>
+
+---
+
+## core/shared/template-contract.md
+
+<core-file path="core/shared/template-contract.md">
+
+---
+shared: template-contract
+applies_to: quality + init + graph skills
+---
+
+# template-contract (Foundations Stub)
+
+Portable generalized stub per manifest §2.1. Full content will be expanded in later agent tranche or manual follow-up.
+
+See verification-gates.md and template-hygiene.md for usage contracts.
+
+</core-file>
+
+---
+
+## core/shared/template-hygiene.md
+
+<core-file path="core/shared/template-hygiene.md">
+
+---
+shared: template-hygiene
+applies_to: quality + init + graph skills
+---
+
+# template-hygiene (Foundations Stub)
+
+Portable generalized stub per manifest §2.1. Full content will be expanded in later agent tranche or manual follow-up.
+
+See verification-gates.md and template-hygiene.md for usage contracts.
+
+</core-file>
+
+---
+
+## core/shared/tool-resolver.md
+
+<core-file path="core/shared/tool-resolver.md">
+
+---
+shared: tool-resolver
+applies_to: quality + init + graph skills
+---
+
+# tool-resolver (Foundations Stub)
+
+Portable generalized stub per manifest §2.1. Full content will be expanded in later agent tranche or manual follow-up.
+
+See verification-gates.md and template-hygiene.md for usage contracts.
+
+</core-file>
+
+---
+
+## core/shared/verification-gates.md
+
+<core-file path="core/shared/verification-gates.md">
+
+# Verification Gates
+
+> Shared block defining the validator chain every track passes through
+> before promoting status. Imported by quality and implementation flows
+> that gate on artifact correctness.
+
+## The chain
+
+Run in this order. Single non-zero exit aborts the chain.
+
+| Step | Tool | What it checks |
+|------|------|----------------|
+| 1 | `scripts/tools/check-track-hygiene.sh` | status parity, author resolution, approver placeholders, TBD budget vs `metadata.json:status`, plan staleness vs HLD/LLD |
+| 2 | `scripts/tools/verify-citations.sh` | every `path:line` resolves against `metadata.json:synced_to_commit` (±tolerance) |
+| 3 | `scripts/tools/verify-doc-anchors.sh` | `§X.Y` references and `<doc>.md#anchor` links resolve |
+| 4 | `scripts/tools/check-graph-usage-report.sh` | Graph Usage Report footer present and well-formed |
+| 5 | `scripts/tools/check-scope-conflicts.sh` | no overlap with adjacent tracks under same scope tags |
+| 6 | `scripts/tools/diff-templates-vs-tracks.sh` | no drift between track and current template schema |
+
+## Output convention
+
+Each tool emits:
+
+- exit code 0/1 (clean / violations)
+- text mode by default; `--json` for machine-readable
+- one line per violation: `[<kind>] <track>/<file>:<line> — <detail>`
+
+## Result persistence
+
+After the chain runs, persist the outcome to `metadata.json:pre_deploy_status`:
+
+- `unrun` — chain has never executed against this track
+- `passing` — last run exited 0
+- `failing` — last run exited 1; details in CI log
+- `bypassed` — explicit override; requires `bypass_reason` in metadata
+
+`draft deploy-checklist` reads this field and refuses to deploy a track
+whose `pre_deploy_status != passing`.
+
+## When to invoke
+
+- `draft deploy-checklist` — mandatory before any production deploy.
+- `draft implement` — at the end of each phase before flipping
+  `phases.completed`.
+- `draft decompose` — after rewriting `plan.md`, to catch plan-staleness
+  immediately.
+- CI hook — gate every merge that touches `tracks/**`.
 
 </core-file>
 
@@ -18255,7 +20001,7 @@ If task exceeds 5 iterations:
 - [x] git + GitHub Pull Requests
 
 ### MCP Auto-Connect (optional)
-- [ ] Jira MCP — for ticket linking via `draft jira-preview` / `draft jira-create`
+- [ ] Jira MCP — for ticket linking via `draft jira` (preview / create / review)
 - [ ] Confluence MCP — for design-doc and runbook lookups
 
 > **How to configure:** Check the MCP boxes above to enable optional integrations. See `core/shared/vcs-commands.md` for git command conventions used across skills.
@@ -18529,6 +20275,40 @@ synced_to_commit: "{FULL_SHA}"
     "computed_at": "<ISO 8601 timestamp>"
   }
 }
+
+</core-file>
+
+---
+
+## core/templates/ai-context-export.md
+
+<core-file path="core/templates/ai-context-export.md">
+
+---
+name: ai-context-export
+description: Foundations stub — will be expanded with export / summary logic
+---
+
+# ai-context-export (Draft Foundations)
+
+Portable stub. Content generalized from proven internal patterns.
+
+</core-file>
+
+---
+
+## core/templates/session-summary.md
+
+<core-file path="core/templates/session-summary.md">
+
+---
+name: session-summary
+description: Foundations stub — will be expanded with export / summary logic
+---
+
+# session-summary (Draft Foundations)
+
+Portable stub. Content generalized from proven internal patterns.
 
 </core-file>
 
@@ -20939,6 +22719,141 @@ Before any push or PR creation, skills run the project's test/lint commands as d
 - `make build` or framework-specific build — type-check / compile
 
 If `workflow.md` does not specify gates, skills detect the test framework via `scripts/tools/detect-test-framework.sh` and use sensible defaults.
+
+</core-file>
+
+---
+
+## core/guardrails.md
+
+<core-file path="core/guardrails.md">
+
+# Guardrails — Baseline Ruleset
+
+> **See also:** [`core/guardrails/README.md`](guardrails/README.md) for the full rule reference (SEC/CQ/DN/RC IDs) and precedence. This file contains the generalized systems programming guardrails and is loaded for C/C++ projects when language signals indicate. For other languages, see `core/guardrails/language-standards.md`. Generalized for public Draft (language-agnostic where possible) per manifest §2.1.
+
+Mandatory baseline guardrails for quality commands. All quality commands (`draft bughunt`, `draft review`, `draft deep-review`, `draft quick-review`, `draft implement`, `draft debug`, `draft assist-review`) **must** enforce these rules where applicable. Violations are always flagged — no exceptions.
+
+These guardrails are pre-seeded into every project's `draft/guardrails.md` by `draft init` and loaded at runtime via `core/shared/draft-context-loading.md` Layer 0.5.
+
+**Source:** Generalized from proven internal systems guidelines.
+
+---
+
+## G1 — Object Lifecycle & Memory Safety (C++ example; opt-in for other stacks via language-standards)
+
+### G1.1: No temporary strings in Printf-style trace APIs
+
+Passing `.c_str()` of a temporary to `Printf`-style APIs that store format arguments by reference creates a dangling pointer. The temporary is destroyed at the end of the statement; the stored pointer becomes invalid.
+
+- **Wrong:** `mem_tracer_->Printf("Bug: %s", my_proto->ShortDebugString().c_str());`
+- **Fix:** Use `Print(StringPrintf(...))` when arguments include short-lived `.c_str()` pointers.
+
+(Additional G rules generalized/conditioned; full list in language-standards.md for non-C++ and the plugin guardrails sub-system.)
+
+</core-file>
+
+---
+
+## core/guardrails/README.md
+
+<core-file path="core/guardrails/README.md">
+
+# Guardrails — README (Foundations Stub)
+
+Generalized public Draft baseline. Full ruleset ported from internal systems in subsequent work.
+See core/guardrails.md for entry point and loading rules.
+
+</core-file>
+
+---
+
+## core/guardrails/security.md
+
+<core-file path="core/guardrails/security.md">
+
+# Guardrails — security (Foundations Stub)
+
+Generalized public Draft baseline. Full ruleset ported from internal systems in subsequent work.
+See core/guardrails.md for entry point and loading rules.
+
+</core-file>
+
+---
+
+## core/guardrails/code-quality.md
+
+<core-file path="core/guardrails/code-quality.md">
+
+# Guardrails — code-quality (Foundations Stub)
+
+Generalized public Draft baseline. Full ruleset ported from internal systems in subsequent work.
+See core/guardrails.md for entry point and loading rules.
+
+</core-file>
+
+---
+
+## core/guardrails/design-norms.md
+
+<core-file path="core/guardrails/design-norms.md">
+
+# Guardrails — design-norms (Foundations Stub)
+
+Generalized public Draft baseline. Full ruleset ported from internal systems in subsequent work.
+See core/guardrails.md for entry point and loading rules.
+
+</core-file>
+
+---
+
+## core/guardrails/review-checks.md
+
+<core-file path="core/guardrails/review-checks.md">
+
+# Guardrails — review-checks (Foundations Stub)
+
+Generalized public Draft baseline. Full ruleset ported from internal systems in subsequent work.
+See core/guardrails.md for entry point and loading rules.
+
+</core-file>
+
+---
+
+## core/guardrails/secure-patterns.md
+
+<core-file path="core/guardrails/secure-patterns.md">
+
+# Guardrails — secure-patterns (Foundations Stub)
+
+Generalized public Draft baseline. Full ruleset ported from internal systems in subsequent work.
+See core/guardrails.md for entry point and loading rules.
+
+</core-file>
+
+---
+
+## core/guardrails/dependency-triage.md
+
+<core-file path="core/guardrails/dependency-triage.md">
+
+# Guardrails — dependency-triage (Foundations Stub)
+
+Generalized public Draft baseline. Full ruleset ported from internal systems in subsequent work.
+See core/guardrails.md for entry point and loading rules.
+
+</core-file>
+
+---
+
+## core/guardrails/language-standards.md
+
+<core-file path="core/guardrails/language-standards.md">
+
+# Guardrails — language-standards (Foundations Stub)
+
+Generalized public Draft baseline. Full ruleset ported from internal systems in subsequent work.
+See core/guardrails.md for entry point and loading rules.
 
 </core-file>
 

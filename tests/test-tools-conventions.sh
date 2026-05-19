@@ -29,6 +29,8 @@ fi
 
 for tool in "${TOOLS[@]}"; do
     [[ -z "$tool" ]] && continue
+    # Skip non-script config (skill-caps.conf is supporting, not a tool script)
+    [[ "$tool" == *.conf ]] && continue
     full_path="$TOOLS_DIR/$tool"
     echo "## $tool"
 
