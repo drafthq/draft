@@ -1,7 +1,7 @@
 'use strict';
 
-const fs             = require('fs');
-const path           = require('path');
+const fs = require('fs');
+const path = require('path');
 const { spawnSync } = require('child_process');
 const { walkFiles, countLines, warn, detectUniversalCtags } = require('./util');
 
@@ -30,9 +30,9 @@ const CTAGS_EXTS = new Set([
  * Emits: kind: 'ctags-sym' records into per-module JSONL only
  * (no global index — coverage is opportunistic).
  *
- * @param {string}              repo
- * @param {RegExp[]}            excludeRes   pre-compiled exclude patterns
- * @param {Map<string,string[]>|null} allFiles   pre-collected file map, or null to walk
+ * @param {string} repo
+ * @param {RegExp[]} excludeRes pre-compiled exclude patterns
+ * @param {Map<string,string[]>|null} allFiles pre-collected file map, or null to walk
  */
 function buildCtagsIndex(repo, excludeRes = [], allFiles = null) {
   const bin = detectUniversalCtags();
@@ -49,8 +49,8 @@ function buildCtagsIndex(repo, excludeRes = [], allFiles = null) {
   // Batch by module to limit individual ctags invocations
   const byModule = new Map();
   for (const f of files) {
-    const rel    = path.relative(repo, f);
-    const parts  = rel.split(path.sep);
+    const rel = path.relative(repo, f);
+    const parts = rel.split(path.sep);
     const module = parts.length > 1 ? parts[0] : '__root__';
     if (!byModule.has(module)) byModule.set(module, []);
     byModule.get(module).push({ f, rel });
@@ -60,11 +60,11 @@ function buildCtagsIndex(repo, excludeRes = [], allFiles = null) {
     // Process up to 100 files per batch
     const BATCH = 100;
     for (let i = 0; i < entries.length; i += BATCH) {
-      const batch   = entries.slice(i, i + BATCH);
+      const batch = entries.slice(i, i + BATCH);
       // Pre-build O(1) lookup for tag.path → batch entry. ctags can emit either
       // the path we passed in or its resolved form, so index by both.
       const batchByPath = new Map();
-      const linesCache  = new Map(); // avoid re-reading the same file per tag
+      const linesCache = new Map(); // avoid re-reading the same file per tag
       for (const e of batch) {
         batchByPath.set(e.f, e);
         const resolved = path.resolve(e.f);
@@ -83,20 +83,20 @@ function buildCtagsIndex(repo, excludeRes = [], allFiles = null) {
             // Only index meaningful symbol kinds
             if (!isIndexableKind(tag.kind)) continue;
             const entryMatch = tag.path ? batchByPath.get(tag.path) : null;
-            const relPath    = entryMatch ? entryMatch.rel : path.relative(repo, tag.path || '');
-            let totalLines   = 0;
+            const relPath = entryMatch ? entryMatch.rel : path.relative(repo, tag.path || '');
+            let totalLines = 0;
             if (entryMatch) {
               if (!linesCache.has(entryMatch.f)) linesCache.set(entryMatch.f, countLines(entryMatch.f));
               totalLines = linesCache.get(entryMatch.f);
             }
             symbols.push({
-              name:      tag.name,
-              file:      relPath,
+              name: tag.name,
+              file: relPath,
               module,
-              line:      tag.line || 1,
-              lines:     totalLines,
+              line: tag.line || 1,
+              lines: totalLines,
               ctagsKind: normalizeCtagsKind(tag.kind),
-              language:  tag.language ? tag.language.toLowerCase() : 'unknown',
+              language: tag.language ? tag.language.toLowerCase() : 'unknown',
             });
           } catch (_) {}
         }

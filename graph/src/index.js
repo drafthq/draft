@@ -1,19 +1,19 @@
 #!/usr/bin/env node
 'use strict';
 
-const path   = require('path');
-const fs     = require('fs');
+const path = require('path');
+const fs = require('fs');
 const crypto = require('crypto');
 
-const { buildIncludeGraph }  = require('./extractor-includes');
-const { buildProtoIndex }    = require('./extractor-proto');
-const { buildGoIndex }       = require('./extractor-go');
-const { buildPythonIndex }   = require('./extractor-python');
-const { buildTsIndex }       = require('./extractor-ts');
-const { buildCIndex }        = require('./extractor-c');
-const { buildCtagsIndex }    = require('./extractor-ctags');
-const { writeGraph }         = require('./writer');
-const { detectModules }      = require('./modules');
+const { buildIncludeGraph } = require('./extractor-includes');
+const { buildProtoIndex } = require('./extractor-proto');
+const { buildGoIndex } = require('./extractor-go');
+const { buildPythonIndex } = require('./extractor-python');
+const { buildTsIndex } = require('./extractor-ts');
+const { buildCIndex } = require('./extractor-c');
+const { buildCtagsIndex } = require('./extractor-ctags');
+const { writeGraph } = require('./writer');
+const { detectModules } = require('./modules');
 const { log, warn, done, die, parseArgs, compileExcludes, collectAllFiles } = require('./util');
 
 // =============================================================================
@@ -31,23 +31,23 @@ Usage:
   graph --repo <path> --query --file <path> --mode impact
 
 Options:
-  --repo        <path>     Repository root to analyze (required)
-  --out         <dir>      Output directory (default: <repo>/draft/graph)
-  --exclude     <pattern>  Additional exclusion glob (repeatable)
-  --incremental            Skip unchanged modules (uses hashes.json for diffing)
-  --query                  Query mode (reads existing graph, does not rebuild)
-  --symbol      <name>     Symbol to query (use with --query)
-  --file        <path>     File to query (use with --query)
-  --mode        <mode>     Query mode: callers|impact|hotspots|modules|cycles|mermaid
-  --help                   Show this help
+  --repo <path> Repository root to analyze (required)
+  --out <dir> Output directory (default: <repo>/draft/graph)
+  --exclude <pattern> Additional exclusion glob (repeatable)
+  --incremental Skip unchanged modules (uses hashes.json for diffing)
+  --query Query mode (reads existing graph, does not rebuild)
+  --symbol <name> Symbol to query (use with --query)
+  --file <path> File to query (use with --query)
+  --mode <mode> Query mode: callers|impact|hotspots|modules|cycles|mermaid
+  --help Show this help
 `);
   process.exit(0);
 }
 
-const REPO      = path.resolve(args.repo || args._[0]);
+const REPO = path.resolve(args.repo || args._[0]);
 const FINAL_OUT = path.resolve(args.out || path.join(REPO, 'draft', 'graph'));
 // All output goes to a temp dir first; swapped atomically to FINAL_OUT on success.
-const TEMP_OUT  = FINAL_OUT + '.tmp-' + process.pid;
+const TEMP_OUT = FINAL_OUT + '.tmp-' + process.pid;
 
 if (!fs.existsSync(REPO)) die(`Repo path does not exist: ${REPO}`);
 
@@ -98,9 +98,9 @@ const excludeRes = compileExcludes(excludePatterns);
  * Hashes sorted file contents so order changes don't invalidate the cache.
  */
 function computeModuleHash(modPath) {
-  const hash  = crypto.createHash('sha256');
+  const hash = crypto.createHash('sha256');
   const files = [];
-  const walk  = (dir) => {
+  const walk = (dir) => {
     let entries;
     try { entries = fs.readdirSync(dir, { withFileTypes: true }); }
     catch (_) { return; }
@@ -138,11 +138,11 @@ function saveHashes(modules) {
 
 async function main() {
   log(`Analyzing: ${REPO}`);
-  log(`Output:    ${FINAL_OUT}`);
+  log(`Output: ${FINAL_OUT}`);
 
   // Clean up orphaned temp/backup dirs from previous crashed runs.
   const parentDir = path.dirname(FINAL_OUT);
-  const baseName  = path.basename(FINAL_OUT);
+  const baseName = path.basename(FINAL_OUT);
   try {
     for (const entry of fs.readdirSync(parentDir, { withFileTypes: true })) {
       if (!entry.isDirectory()) continue;
@@ -161,13 +161,13 @@ async function main() {
 
   // ── Incremental: load existing hashes ─────────────────────────────────────
   const prevHashes = INCREMENTAL ? loadHashes().modules : {};
-  const newHashes  = {};
+  const newHashes = {};
   const skipModules = new Set();
 
   // ── Phase 1/5: detect modules (top-level dirs with source files) ─────────
-  log('Phase 1/5  Detecting modules...');
+  log('Phase 1/5 Detecting modules...');
   const modules = detectModules(REPO, excludePatterns);
-  log(`           Found ${modules.length} modules`);
+  log(` Found ${modules.length} modules`);
 
   if (INCREMENTAL) {
     for (const mod of modules) {
@@ -178,43 +178,43 @@ async function main() {
       }
     }
     const skipped = skipModules.size;
-    if (skipped > 0) log(`           Incremental: skipping ${skipped} unchanged module(s)`);
+    if (skipped > 0) log(` Incremental: skipping ${skipped} unchanged module(s)`);
   }
 
   // ── Phase 2/5: C++ include graph ──────────────────────────────────────────
-  log('Phase 2/5  Building C++ include graph...');
+  log('Phase 2/5 Building C++ include graph...');
   const includeGraph = buildIncludeGraph(REPO, modules, excludeRes, allFiles);
-  log(`           ${includeGraph.nodes.length} file nodes, ${includeGraph.edges.length} include edges`);
-  log(`           ${includeGraph.moduleEdges.length} inter-module edges`);
+  log(` ${includeGraph.nodes.length} file nodes, ${includeGraph.edges.length} include edges`);
+  log(` ${includeGraph.moduleEdges.length} inter-module edges`);
 
   // ── Phase 3/5: Proto index ────────────────────────────────────────────────
-  log('Phase 3/5  Parsing proto definitions...');
+  log('Phase 3/5 Parsing proto definitions...');
   const protoIndex = buildProtoIndex(REPO, excludeRes, allFiles);
-  log(`           ${protoIndex.services.length} services, ${protoIndex.rpcs.length} RPCs, ${protoIndex.messages.length} messages, ${protoIndex.enums.length} enums`);
+  log(` ${protoIndex.services.length} services, ${protoIndex.rpcs.length} RPCs, ${protoIndex.messages.length} messages, ${protoIndex.enums.length} enums`);
 
   // ── Phases 4/5: Go / Python / TS / C++ in parallel ───────────────────────
-  log('Phases 4/5  Indexing Go / Python / TS / C++ in parallel...');
+  log('Phases 4/5 Indexing Go / Python / TS / C++ in parallel...');
   const [goIndex, pythonIndex, tsIndex, cIndex] = await Promise.all([
     buildGoIndex(REPO, excludeRes, allFiles),
     buildPythonIndex(REPO, excludeRes, allFiles),
     buildTsIndex(REPO, excludeRes, allFiles),
     buildCIndex(REPO, excludeRes, allFiles),
   ]);
-  log(`           Go: ${goIndex.functions.length} functions, ${goIndex.calls.length} calls`);
-  log(`           Python: ${pythonIndex.functions.length} functions, ${pythonIndex.calls.length} calls`);
-  log(`           TS/JS: ${tsIndex.functions.length} functions, ${tsIndex.calls.length} calls`);
-  log(`           C/C++: ${cIndex.functions.length} functions, ${cIndex.calls.length} calls`);
+  log(` Go: ${goIndex.functions.length} functions, ${goIndex.calls.length} calls`);
+  log(` Python: ${pythonIndex.functions.length} functions, ${pythonIndex.calls.length} calls`);
+  log(` TS/JS: ${tsIndex.functions.length} functions, ${tsIndex.calls.length} calls`);
+  log(` C/C++: ${cIndex.functions.length} functions, ${cIndex.calls.length} calls`);
 
   // ── Phase 5/5: ctags fallback for remaining languages ─────────────────────
-  log('Phase 5/5  Running ctags for unsupported languages...');
+  log('Phase 5/5 Running ctags for unsupported languages...');
   const ctagsIndex = buildCtagsIndex(REPO, excludeRes, allFiles);
-  log(`           ${ctagsIndex.symbols.length} symbols (Java/Rust/Ruby/Swift/etc.)`);
+  log(` ${ctagsIndex.symbols.length} symbols (Java/Rust/Ruby/Swift/etc.)`);
 
   // ── Write output ──────────────────────────────────────────────────────────
   log('Writing graph files...');
   const stats = writeGraph({
-    out:         TEMP_OUT,
-    existingOut: FINAL_OUT,  // for incremental: copy unchanged module files from here
+    out: TEMP_OUT,
+    existingOut: FINAL_OUT, // for incremental: copy unchanged module files from here
     repo: REPO,
     modules,
     includeGraph,
@@ -249,15 +249,15 @@ async function main() {
                      tsIndex.calls.length + cIndex.calls.length;
   console.log('');
   done('Graph build complete');
-  console.log(`  module-graph.jsonl   ${stats.moduleEdges} edges`);
-  console.log(`  proto-index.jsonl    ${stats.rpcs} RPCs`);
-  console.log(`  hotspots.jsonl       ${stats.hotspots} files`);
-  if (stats.tsFunctions > 0)   console.log(`  ts-index.jsonl       ${stats.tsFunctions} functions, ${stats.tsClasses} classes`);
-  if (stats.cFunctions > 0)    console.log(`  c-index.jsonl        ${stats.cFunctions} functions, ${stats.cTypes} types`);
-  if (stats.ctagsSymbols > 0)  console.log(`  ctags symbols        ${stats.ctagsSymbols}`);
-  if (totalCalls > 0)          console.log(`  call-index.jsonl     ${totalCalls} call edges`);
-  console.log(`  modules/             ${stats.moduleFiles} files`);
-  console.log(`  Total output:        ${stats.totalSizeKB}KB`);
+  console.log(` module-graph.jsonl ${stats.moduleEdges} edges`);
+  console.log(` proto-index.jsonl ${stats.rpcs} RPCs`);
+  console.log(` hotspots.jsonl ${stats.hotspots} files`);
+  if (stats.tsFunctions > 0) console.log(` ts-index.jsonl ${stats.tsFunctions} functions, ${stats.tsClasses} classes`);
+  if (stats.cFunctions > 0) console.log(` c-index.jsonl ${stats.cFunctions} functions, ${stats.cTypes} types`);
+  if (stats.ctagsSymbols > 0) console.log(` ctags symbols ${stats.ctagsSymbols}`);
+  if (totalCalls > 0) console.log(` call-index.jsonl ${totalCalls} call edges`);
+  console.log(` modules/ ${stats.moduleFiles} files`);
+  console.log(` Total output: ${stats.totalSizeKB}KB`);
   console.log('');
 }
 

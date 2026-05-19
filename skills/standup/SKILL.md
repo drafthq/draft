@@ -1,11 +1,11 @@
 ---
 name: standup
-description: "Generate standup summary from git history, track progress, and optional Jira/GitHub PR activity. Read-only — makes no changes to the codebase. Use when the user asks for 'a standup', 'daily summary', 'standup notes', or says 'what did I do yesterday', 'summarize my week'."
+description: Generate standup summary from git history, track progress, and Jira/GitHub activity. Read-only — makes no changes to the codebase.
 ---
 
 # Standup
 
-Generate a standup summary from recent development activity. This is a **read-only** skill — it makes no changes to the codebase or track files.
+You are generating a standup summary from recent development activity. This is a **read-only** skill — it makes no changes to the codebase or track files.
 
 ## Red Flags — STOP if you're:
 
@@ -25,8 +25,8 @@ Generate a standup summary from recent development activity. This is a **read-on
 Before starting, capture the current git state:
 
 ```bash
-git branch --show-current    # Current branch name
-git rev-parse --short HEAD   # Current commit hash
+git branch --show-current # Current branch name
+git rev-parse --short HEAD # Current commit hash
 ```
 
 Store this for context. The standup reflects activity up to this specific commit.
@@ -51,14 +51,23 @@ Check for arguments:
 
 ### Source 1: Git History
 
+**Preferred:** invoke `parse-git-log.sh` — it parses conventional commits into structured JSONL `{sha,type,scope,track_id,subject,author,timestamp,files_changed}`, eliminating ambiguity in `type(track-id): subject` parsing. Resolve via the canonical tool resolver (see [core/shared/tool-resolver.md](../../core/shared/tool-resolver.md)):
+
 ```bash
-# Last 24 hours by default (adjust with args)
-git log --oneline --since="24 hours ago" --author="$(git config user.name)"
-git log --since="24 hours ago" --author="$(git config user.name)" --format="%h %s" --no-merges
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+if [ -x "$DRAFT_TOOLS/parse-git-log.sh" ]; then
+  bash "$DRAFT_TOOLS/parse-git-log.sh" --since "24 hours ago" --author "$(git config user.name)"
+else
+  # Fallback: raw git log
+  git log --oneline --since="24 hours ago" --author="$(git config user.name)"
+  git log --since="24 hours ago" --author="$(git config user.name)" --format="%h %s" --no-merges
+fi
 ```
 
 Parse commit messages for:
-- Track IDs (from `type(track-id): description` convention)
+- Track IDs (from `type(track-id): description` convention — already extracted as `track_id` in JSONL)
 - Task completions
 - Bug fixes
 - Feature additions
@@ -69,6 +78,10 @@ Read `draft/tracks.md` for active tracks:
 - Current status and phase
 - Tasks completed since last standup
 - Blockers (tasks marked `[!]`)
+- Scope (`metadata.json:scope_includes` / `scope_excludes`) — mention when
+  two active tracks share a scope tag; surfaced by
+  `scripts/tools/check-scope-conflicts.sh`. Schema:
+  [core/shared/template-contract.md](../../core/shared/template-contract.md).
 
 For each active track, read `plan.md` to determine:
 - Tasks completed (count `[x]` with recent commit SHAs)
@@ -82,12 +95,26 @@ If Jira MCP is available:
 - Check for new comments or assignments
 - Pull sprint board status
 
-### Source 4: GitHub PR Activity (if MCP / `gh` CLI available)
+### Source 4: GitHub Activity (if MCP available)
 
-If GitHub MCP or the `gh` CLI is available:
-- Query open PRs authored by user (`gh pr list --author @me`)
-- Check for new review comments received (`gh pr view <num> --comments`)
-- Query recently merged PRs (`gh pr list --state merged --author @me`)
+If GitHub MCP is available:
+- Query open reviews authored by user
+- Check for new review comments received
+- Query recently merged changes
+
+### Source 5: Skill Metrics (if `~/.draft/metrics.jsonl` exists)
+
+```bash
+tail -50 ~/.draft/metrics.jsonl 2>/dev/null
+```
+
+If the file exists and has records in the standup period, enrich the standup with skill activity:
+- **implement** records: count tasks completed, note TDD pass/fail rate
+- **review** records: note reviews run and their verdicts
+- **bughunt** records: note bug hunts run and critical counts
+- Include a brief "AI-Assisted Activity" line in the standup: `AI tools used: implement (N tasks), review (N times), bughunt (N hunts)`
+
+If the file does not exist or has no records in the period, skip silently — this source is always optional.
 
 ## Step 3: Generate Standup
 
@@ -102,7 +129,7 @@ Format using the standard Yesterday/Today/Blockers structure:
 ### Completed
 - [{track-id}] {task description} ({commit SHA})
 - [{track-id}] {task description} ({commit SHA})
-- Reviewed: {PR number} (if applicable)
+- Reviewed: {GitHub change ID / PR} (if applicable)
 
 ### Planned
 - [{track-id}] Next task: {description} (from plan.md)
@@ -146,11 +173,11 @@ Include the report header table immediately after frontmatter:
 
 - **References:** `core/agents/ops.md` for operational context awareness
 - **Reads from:** `/draft:status` data (tracks.md, plan.md, metadata.json)
-- **MCP integrations:** Jira MCP (ticket status), GitHub MCP / `gh` CLI (PR activity)
+- **MCP integrations:** Jira MCP (ticket status), GitHub MCP (review activity)
 - **No downstream dispatch** — this is a terminal, read-only skill
 
 ## Error Handling
 
 **If no git history:** "No git commits found for {period}. Is this the right repository?"
 **If no draft context:** Generate standup from git history only. Note: "Richer standups available after `/draft:init`."
-**If no MCP available:** Skip Jira/PR sections, generate from local data only.
+**If no MCP available:** Skip Jira/GitHub sections, generate from local data only.

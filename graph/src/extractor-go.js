@@ -1,6 +1,6 @@
 'use strict';
 
-const fs   = require('fs');
+const fs = require('fs');
 const path = require('path');
 const { walkFiles, countLinesFromContent, warn, initTreeSitter, walkNodeEnterLeave } = require('./util');
 
@@ -15,13 +15,13 @@ const { walkFiles, countLinesFromContent, warn, initTreeSitter, walkNodeEnterLea
  * gracefully if WASM load fails.
  *
  * Extracts:
- *   functions  — top-level func declarations + receiver methods
- *   types      — struct, interface, type alias definitions
- *   imports    — package-level imports for cross-file edge detection
+ * functions — top-level func declarations + receiver methods
+ * types — struct, interface, type alias definitions
+ * imports — package-level imports for cross-file edge detection
  *
- * @param {string}              repo
- * @param {RegExp[]}            excludeRes   pre-compiled exclude patterns
- * @param {Map<string,string[]>|null} allFiles   pre-collected file map, or null to walk
+ * @param {string} repo
+ * @param {RegExp[]} excludeRes pre-compiled exclude patterns
+ * @param {Map<string,string[]>|null} allFiles pre-collected file map, or null to walk
  */
 async function buildGoIndex(repo, excludeRes = [], allFiles = null) {
   const goFiles = allFiles
@@ -29,9 +29,9 @@ async function buildGoIndex(repo, excludeRes = [], allFiles = null) {
     : walkFiles(repo, ['.go'], excludeRes);
 
   const functions = [];
-  const types     = [];
-  const imports   = [];
-  const calls     = [];
+  const types = [];
+  const imports = [];
+  const calls = [];
 
   if (goFiles.length === 0) {
     return { functions, types, imports, calls };
@@ -41,8 +41,8 @@ async function buildGoIndex(repo, excludeRes = [], allFiles = null) {
   const tsAvailable = await tryLoadTreeSitter();
 
   for (const f of goFiles) {
-    const rel    = path.relative(repo, f);
-    const parts  = rel.split(path.sep);
+    const rel = path.relative(repo, f);
+    const parts = rel.split(path.sep);
     const module = parts.length > 1 ? parts[0] : '__root__';
 
     let content;
@@ -76,25 +76,23 @@ function parseGoRegex(content, filePath, module, totalLines, functions, types, i
   let inImportBlock = false;
 
   for (let i = 0; i < lines.length; i++) {
-    const line    = lines[i];
+    const line = lines[i];
     const trimmed = line.trim();
-    const lineNo  = i + 1;
+    const lineNo = i + 1;
 
-    // Skip line comments and clear in-block comment continuations. Bare `*`
-    // alone (often used in /* ... */ blocks but never as Go code) is dropped;
-    // `*Foo` (pointer types) is preserved.
-    if (trimmed.startsWith('//') || trimmed === '*' || trimmed.startsWith('* ')) continue;
+    // Skip comments
+    if (trimmed.startsWith('//') || trimmed.startsWith('*')) continue;
 
     // ── func declaration ────────────────────────────────────────────────────
     // Matches:
-    //   func Name(...) ...
-    //   func (r *Receiver) Name(...) ...
+    // func Name(...) ...
+    // func (r *Receiver) Name(...) ...
     const funcMatch = trimmed.match(
       /^func\s+(?:\([^)]*\)\s+)?(\w+)\s*\(/
     );
     if (funcMatch) {
       const receiverMatch = trimmed.match(/^func\s+\(([^)]*)\)\s+(\w+)/);
-      const name     = receiverMatch ? receiverMatch[2] : funcMatch[1];
+      const name = receiverMatch ? receiverMatch[2] : funcMatch[1];
       const receiver = receiverMatch
         ? receiverMatch[1].trim().replace(/^\*/, '').split(/\s+/).pop()
         : null;
@@ -103,33 +101,33 @@ function parseGoRegex(content, filePath, module, totalLines, functions, types, i
         name,
         receiver,
         qualified: receiver ? `${receiver}.${name}` : name,
-        file:      filePath,
+        file: filePath,
         module,
-        package:   pkg,
-        line:      lineNo,
-        lines:     totalLines,
+        package: pkg,
+        line: lineNo,
+        lines: totalLines,
       });
       continue;
     }
 
     // ── type declaration ────────────────────────────────────────────────────
     // Matches:
-    //   type Foo struct { ... }
-    //   type Bar interface { ... }
-    //   type Baz = SomeType
+    // type Foo struct { ... }
+    // type Bar interface { ... }
+    // type Baz = SomeType
     const typeMatch = trimmed.match(/^type\s+(\w+)\s+(struct|interface|=|\w)/);
     if (typeMatch) {
-      const kind = typeMatch[2] === 'struct'    ? 'struct'
+      const kind = typeMatch[2] === 'struct' ? 'struct'
                  : typeMatch[2] === 'interface' ? 'interface'
-                 : typeMatch[2] === '='         ? 'alias'
+                 : typeMatch[2] === '=' ? 'alias'
                  : 'type';
       types.push({
-        name:    typeMatch[1],
+        name: typeMatch[1],
         kind,
-        file:    filePath,
+        file: filePath,
         module,
         package: pkg,
-        line:    lineNo,
+        line: lineNo,
       });
       continue;
     }
@@ -151,20 +149,20 @@ function parseGoRegex(content, filePath, module, totalLines, functions, types, i
       const importMatch = trimmed.match(/^(?:\w+\s+)?"([^"]+)"/);
       if (importMatch) {
         imports.push({
-          path:   importMatch[1],
-          file:   filePath,
+          path: importMatch[1],
+          file: filePath,
           module,
         });
       }
       continue;
     }
 
-    // Single-line import: import "path"  or  import alias "path"
+    // Single-line import: import "path" or import alias "path"
     const singleImport = trimmed.match(/^import\s+(?:\w+\s+)?"([^"]+)"/);
     if (singleImport) {
       imports.push({
-        path:   singleImport[1],
-        file:   filePath,
+        path: singleImport[1],
+        file: filePath,
         module,
       });
     }
@@ -211,8 +209,8 @@ function parseGoTreeSitter(content, filePath, module, totalLines, functions, typ
   }
 
   try {
-    const tree  = _parser.parse(content);
-    const root  = tree.rootNode;
+    const tree = _parser.parse(content);
+    const root = tree.rootNode;
 
     let pkg = '__unknown__';
     const pkgNode = root.children.find(n => n.type === 'package_clause');
@@ -228,13 +226,13 @@ function parseGoTreeSitter(content, filePath, module, totalLines, functions, typ
         case 'method_declaration': {
           const nameNode = node.childForFieldName('name');
           const recvNode = node.childForFieldName('receiver');
-          const name     = nameNode ? nameNode.text : '__anon__';
-          let receiver   = null;
+          const name = nameNode ? nameNode.text : '__anon__';
+          let receiver = null;
 
           if (recvNode) {
             // receiver: (r *TypeName) → extract TypeName
             const txt = recvNode.text.replace(/^\(|\)$/g, '').trim();
-            const m   = txt.match(/\*?(\w+)$/);
+            const m = txt.match(/\*?(\w+)$/);
             if (m) receiver = m[1];
           }
 
@@ -242,11 +240,11 @@ function parseGoTreeSitter(content, filePath, module, totalLines, functions, typ
             name,
             receiver,
             qualified: receiver ? `${receiver}.${name}` : name,
-            file:      filePath,
+            file: filePath,
             module,
-            package:   pkg,
-            line:      node.startPosition.row + 1,
-            lines:     totalLines,
+            package: pkg,
+            line: node.startPosition.row + 1,
+            lines: totalLines,
           });
           break;
         }
@@ -258,20 +256,20 @@ function parseGoTreeSitter(content, filePath, module, totalLines, functions, typ
             const typeNode = spec.childForFieldName('type');
             if (!nameNode) continue;
 
-            const isAlias  = spec.children.some(n => n.type === '=');
-            const kind = isAlias                                        ? 'alias'
-                       : !typeNode                                      ? 'type'
-                       : typeNode.type === 'struct_type'                ? 'struct'
-                       : typeNode.type === 'interface_type'             ? 'interface'
+            const isAlias = spec.children.some(n => n.type === '=');
+            const kind = isAlias ? 'alias'
+                       : !typeNode ? 'type'
+                       : typeNode.type === 'struct_type' ? 'struct'
+                       : typeNode.type === 'interface_type' ? 'interface'
                        : 'type';
 
             types.push({
-              name:    nameNode.text,
+              name: nameNode.text,
               kind,
-              file:    filePath,
+              file: filePath,
               module,
               package: pkg,
-              line:    spec.startPosition.row + 1,
+              line: spec.startPosition.row + 1,
             });
           }
           break;
@@ -281,8 +279,8 @@ function parseGoTreeSitter(content, filePath, module, totalLines, functions, typ
           const pathNode = node.childForFieldName('path');
           if (pathNode) {
             imports.push({
-              path:   pathNode.text.replace(/"/g, ''),
-              file:   filePath,
+              path: pathNode.text.replace(/"/g, ''),
+              file: filePath,
               module,
             });
           }
@@ -302,7 +300,7 @@ function parseGoTreeSitter(content, filePath, module, totalLines, functions, typ
         if (node.type === 'call_expression' && funcStack.length > 0) {
           const enclosing = funcStack[funcStack.length - 1];
           // function field: identifier or selector_expression (obj.Method)
-          const funcNode  = node.childForFieldName('function') || node.child(0);
+          const funcNode = node.childForFieldName('function') || node.child(0);
           let callee = null;
           // direct: bare identifier (no receiver collapsing). inferred: selector_expression
           // collapses obj.Foo and bar.Foo to "Foo" — same name, different functions.
@@ -317,12 +315,12 @@ function parseGoTreeSitter(content, filePath, module, totalLines, functions, typ
           }
           if (callee && callee !== enclosing) {
             calls.push({
-              kind:     'go-call',
-              from:     enclosing,
-              to:       callee,
+              kind: 'go-call',
+              from: enclosing,
+              to: callee,
               fromFile: filePath,
               module,
-              line:     node.startPosition.row + 1,
+              line: node.startPosition.row + 1,
               resolved: false,
               confidence,
             });

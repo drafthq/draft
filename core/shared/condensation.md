@@ -32,13 +32,13 @@ Compute tier from `draft/graph/schema.yaml` after graph build:
   F = stats.go_functions + stats.py_functions
   P = stats.proto_rpcs
 
-| Tier | Label  | Condition                              | Budget        |
+| Tier | Label | Condition | Budget |
 |------|--------|----------------------------------------|---------------|
-| 1    | micro  | M≤5 AND F≤50 AND P≤10                 | 100–180 lines |
-| 2    | small  | M≤15 AND F≤300 AND P≤30               | 180–280 lines |
-| 3    | medium | M≤40 AND F≤1000 AND P≤100             | 280–400 lines |
-| 4    | large  | M≤100 AND F≤5000 AND P≤500            | 400–600 lines |
-| 5    | XL     | M>100 OR F>5000 OR P>500              | 600–900 lines |
+| 1 | micro | M≤5 AND F≤50 AND P≤10 | 100–180 lines |
+| 2 | small | M≤15 AND F≤300 AND P≤30 | 180–280 lines |
+| 3 | medium | M≤40 AND F≤1000 AND P≤100 | 280–400 lines |
+| 4 | large | M≤100 AND F≤5000 AND P≤500 | 400–600 lines |
+| 5 | XL | M>100 OR F>5000 OR P>500 | 600–900 lines |
 
 If `schema.yaml` does not exist: default to tier 2 (180–280 lines).
 
@@ -53,7 +53,9 @@ Read the full contents of `draft/architecture.md`. Extract the YAML frontmatter 
 
 #### Step 2: Write YAML Frontmatter
 
-Start `draft/.ai-context.md` with an updated YAML frontmatter block. Copy all `git.*` and `synced_to_commit` fields from `architecture.md`. Set:
+Start `draft/.ai-context.md` with a stable frontmatter block. Git state is centralized in `draft/metadata.json` — do NOT copy `git.*` or `synced_to_commit` from `architecture.md` into this file. Set:
+- `project`: from `architecture.md` frontmatter
+- `module`: from `architecture.md` frontmatter (usually `root`)
 - `generated_by`: the calling command (e.g., `draft:init`, `draft:implement`)
 - `generated_at`: current ISO 8601 timestamp
 
@@ -105,7 +107,7 @@ If `draft/graph/schema.yaml` exists, generate these three sections from graph JS
 **GRAPH:MODULE-HOTSPOTS** (tier ≥ 3 only):
 - Read `draft/graph/hotspots.jsonl`, group records by `module` field
 - For each module: take top 3 files by score (lines + fanIn×50), format as indented lines under the module name
-- Format: `{module}:  {file}|{lines}L|fanIn:{N}` with subsequent files indented to align
+- Format: `{module}: {file}|{lines}L|fanIn:{N}` with subsequent files indented to align
 - Order modules by their highest-scoring file, descending
 - Omit modules with no hotspot entries; omit entire section for tier 1–2 (covered by global GRAPH:HOTSPOTS)
 
@@ -169,6 +171,19 @@ Before writing `draft/.ai-context.md`, verify:
 #### Step 7: Write Output
 
 Write the completed content to `draft/.ai-context.md`.
+
+#### Step 8: Normalise Whitespace
+
+After writing both output files, strip trailing whitespace and blank lines at EOF to prevent GitHub upload failures. Resolve the script via the canonical tool resolver (see [tool-resolver.md](tool-resolver.md)):
+
+```bash
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+[ -x "$DRAFT_TOOLS/fix-whitespace.sh" ] && bash "$DRAFT_TOOLS/fix-whitespace.sh" draft/architecture.md draft/.ai-context.md draft/.ai-profile.md 2>/dev/null || true
+```
+
+This is idempotent — run it unconditionally.
 
 ### Example Transformation
 

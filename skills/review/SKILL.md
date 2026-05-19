@@ -1,14 +1,27 @@
 ---
 name: review
-description: "Orchestrates multi-file code reviews at track level (against spec.md acceptance criteria) or project level (uncommitted changes, file patterns, commit ranges). Runs three stages: automated validation, spec compliance, and code quality. Optionally integrates bughunt. Use when the user asks for a code review, PR review, wants to check code quality, or validate changes against requirements."
+description: "Canonical review parent command. Runs the default three-stage review for tracks or project changes, and routes to quick-review, bughunt, deep-review, or assist-review when the user asks for explicit review depth or when the review context justifies escalation."
 ---
 
 # Code Review
 
-Conduct a code review using Draft's Context-Driven Development methodology.
+You are conducting a code review using Draft's Context-Driven Development methodology.
+
+## MANDATORY GRAPH LOOKUP (read before any review stage)
+
+When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Stage 1 (Automated Validation) **starts from the graph**:
+
+1. Run blast-radius assessment from `draft/graph/hotspots.jsonl` and `draft/graph/module-graph.jsonl` (see Stage 1).
+2. For each changed file with non-trivial diff size, run `graph --query --file <path> --mode impact` to obtain the affected module set deterministically.
+3. For each public symbol modified, run `graph --query --symbol <name> --mode callers` to enumerate downstream callers before judging breaking-change severity.
+
+Filesystem `grep` is reserved for source-text scans (string literals, log messages, regex matches in code) — not for discovering modules, files, or callers when the graph can answer.
 
 ## Red Flags - STOP if you're:
 
+See [shared red flags](../../core/shared/red-flags.md) — applies to all code-touching skills.
+
+Skill-specific:
 - Reviewing without reading the track's spec.md and plan.md first
 - Reporting findings without reading the actual code
 - Skipping spec compliance stage and jumping to code quality
@@ -21,12 +34,26 @@ Conduct a code review using Draft's Context-Driven Development methodology.
 
 ## Overview
 
-This command orchestrates code review workflows at two levels:
+This command is the **canonical review parent**.
+
+It orchestrates review workflows at two levels:
 - **Track-level:** Review against spec.md and plan.md (three-stage: automated validation, spec compliance, code quality)
 - **Project-level:** Review arbitrary changes (automated validation + code quality)
 
-Optionally integrates `/draft:bughunt` for finding logic errors and writing regression tests.
-Note: Automated static validation (OWASP secrets, dead code, dependency cycles, N+1 patterns) is natively built into Phase 1 of this review.
+Specialist review workflows remain available:
+
+- `/draft:quick-review`
+- `/draft:bughunt`
+- `/draft:deep-review`
+- `/draft:assist-review`
+
+`/draft:review` should remove the burden of choosing among them when the right depth is obvious from user intent or track state.
+
+Important semantic note:
+
+- `/draft:impact` is **not** a review-depth mode in the current product. It measures project/track delivery telemetry, not code-change review depth. Do not route `/draft:review` to `/draft:impact`.
+
+Automated static validation (OWASP secrets, dead code, dependency cycles, N+1 patterns) is natively built into Stage 1 of this review.
 
 ---
 
@@ -36,7 +63,13 @@ Extract and validate command arguments from user input.
 
 ### Supported Arguments
 
-**Scope specifiers (mutually exclusive):**
+**Explicit review modes:**
+- `quick` - Route to `/draft:quick-review`
+- `bughunt` - Route to `/draft:bughunt`
+- `deep` - Route to `/draft:deep-review`
+- `assist` - Route to `/draft:assist-review`
+
+**Scope specifiers (mutually exclusive for baseline review):**
 - `track <id|name>` - Review specific track (exact ID or fuzzy name match)
 - `project` - Review uncommitted changes (`git diff HEAD`)
 - `files <pattern>` - Review specific file pattern (e.g., `src/**/*.ts`)
@@ -44,21 +77,50 @@ Extract and validate command arguments from user input.
 
 **Quality integration modifiers:**
 - `with-bughunt` - Include `/draft:bughunt` results
-- `full` - Include bughunt results
+- `with-assist` - Include `/draft:assist-review` summary
+- `full` - Enable all sensible add-ons for the selected scope (`with-bughunt`, `with-assist`, and any justified deep-review escalation)
 
 ### Validation Rules
 
-1. **Scope requirement:** At least one scope specifier OR no arguments (auto-detect track)
-2. **Mutual exclusivity:** Only one of `track`, `project`, `files`, `commits`
-3. **Modifier normalization:** If `full` is present, enable `with-bughunt`, discarding redundant individual modifiers. No error — silently normalize.
+1. **Mode exclusivity:** At most one explicit mode among `quick`, `bughunt`, `deep`, `assist`
+2. **Scope requirement:** At least one scope specifier OR no arguments (auto-detect track/project)
+3. **Scope exclusivity:** Only one of `track`, `project`, `files`, `commits`
+4. **Modifier normalization:** If `full` is present, enable `with-bughunt` and `with-assist`. Do not silently force `deep`; deep-review is module-scoped and must still satisfy escalation rules.
 
 ### Default Behavior
 
 If no arguments provided:
 - Auto-detect active `[~]` In Progress track from `draft/tracks.md`
 - If no `[~]` track, find first `[ ]` Pending track
-- Display: `Auto-detected track: <id> - <name> [<status>]` and proceed
-- If no tracks available, error: "No tracks found. Run `/draft:new-track` to create one."
+- If track found: display `Auto-detected track: <id> - <name> [<status>]` and proceed
+- If no track is found but the repo has local changes: default to project-level review of current changes
+- If no track and no changes: error "No review scope found. Specify a track, files, commit range, or create changes to review."
+
+---
+
+## Step 1.5: Route Explicit Modes Before Baseline Review
+
+If the user explicitly invoked a specialist mode, route directly.
+
+### Explicit Mode Routing
+
+- `/draft:review quick ...` → follow `/draft:quick-review`
+- `/draft:review bughunt ...` → follow `/draft:bughunt`
+- `/draft:review deep ...` → follow `/draft:deep-review`
+- `/draft:review assist ...` → follow `/draft:assist-review`
+
+When routing, preserve any scope that can be mapped sensibly.
+
+Examples:
+
+- `/draft:review quick files "src/**/*.ts"` → quick review of those files
+- `/draft:review bughunt track payments-refactor` → bughunt scoped to that track
+- `/draft:review deep auth` → deep-review of the `auth` module
+- `/draft:review assist track add-user-auth` → reviewer-assist summary for that track
+
+Explicit mode always wins over automatic escalation.
+
+If no explicit mode is present, continue with the baseline `/draft:review` workflow below.
 
 ---
 
@@ -115,6 +177,11 @@ Once track is resolved:
    - Extract: Summary, Requirements, Acceptance Criteria, Non-Goals
    - Store for Stage 1 compliance checks
 
+2.5. **Read hld.md and lld.md (when present):**
+   - `draft/tracks/<id>/hld.md` — extract §High-Level Design / Architecture, §Detailed Design (per-component subsections), §Dependencies, §Checklist (Performance/Scale/Security/Resiliency/Multi-tenancy/Upgrade/Cost), §Approvals
+   - `draft/tracks/<id>/lld.md` — extract §Classes and Interfaces (signatures, invariants), §Data Model (schemas, migrations), §Error Handling, §Observability metrics
+   - Store for HLD/LLD compliance pass (Stage 1.5 below)
+
 3. **Read plan.md:**
    - Load `draft/tracks/<id>/plan.md`
    - Extract commit SHAs from completed `[x]` task lines only. Match pattern: 7+ character hex strings in parentheses, regex `\(([a-f0-9]{7,})\)`. Example: `- [x] **Task 1.1:** Description (7a7dc85)`. Collect SHAs in order of appearance; deduplicate keeping first occurrence.
@@ -139,7 +206,7 @@ Once track is resolved:
 
 ### Project-Level Review
 
-**Trigger:** `project`, `files <pattern>`, or `commits <range>` argument
+**Trigger:** `project`, `files <pattern>`, `commits <range>` argument, or no active track with local changes
 
 #### 2.3: Project Scope Detection
 
@@ -175,6 +242,67 @@ For project-level reviews (no track context):
 2. **Note limitations:**
    - No spec.md → Skip Stage 1 (spec compliance)
    - Run Stage 2 (code quality) only
+
+---
+
+## Step 2.5: Choose Baseline Review Depth
+
+After scope is resolved, decide whether baseline `/draft:review` should proceed as the full three-stage review or should delegate to a specialist by default.
+
+### Routing Heuristics for Bare `/draft:review`
+
+1. **Tiny ad-hoc scope with no track context**  
+   If scope is project/files/commits and the diff is small, prefer `/draft:quick-review`.
+
+   Good signals:
+   - single file or very small file set
+   - no spec/plan context available
+   - user asks for a sanity check rather than a formal gate
+
+2. **Track-complete or handoff review**  
+   If the review is track-scoped and the output is likely for another reviewer or approver, attach `/draft:assist-review` unless the user explicitly opted out.
+
+   Good signals:
+   - all tasks completed
+   - upload / PR / handoff language
+   - `full` or `with-assist` modifier present
+
+3. **High defect-risk changes**  
+   If the diff touches high-risk surfaces, attach `/draft:bughunt`.
+
+   Good signals:
+   - auth, payments, persistence, concurrency, migrations, public API boundaries
+   - hotspot / high-fanIn files
+   - weak or missing tests
+   - `full` or `with-bughunt` modifier present
+
+4. **Single-module structural risk**  
+   If the review scope maps cleanly to one high-risk module, attach `/draft:deep-review`.
+
+   Good signals:
+   - single module or service dominates the diff
+   - structural or resilience-sensitive changes
+   - high blast radius plus concurrency / durability / resiliency concerns
+
+   If the diff spans many modules, do **not** auto-run multiple deep reviews. Instead, finish baseline review and recommend targeted deep-review follow-ups for the highest-risk modules.
+
+### Mandatory Baseline Behavior
+
+Even when no specialist command is attached:
+
+- always compute and report blast radius / hotspot impact from graph data when available
+- always explain which specialist workflows were auto-invoked and why
+
+Example:
+
+```text
+Running /draft:review
+- baseline three-stage review
+- bughunt attached because auth and persistence paths changed
+- assist-review attached because this is a completed track handoff
+```
+
+If the heuristic selects `/draft:quick-review` instead of baseline review, route there directly and stop this workflow.
 
 ---
 
@@ -232,26 +360,42 @@ Apply a three-stage review process (merging static validation and semantic revie
 
 **Goal:** Detect structural, security, and performance issues using fast, objective searches across the diff.
 
+Load plugin guardrails before scanning: `core/guardrails/review-checks.md` (RC-###), `core/guardrails/security.md` (SEC-##), and the relevant `core/guardrails/language-standards.md` section for the detected stack. `draft/guardrails.md` project rules take precedence on any conflict.
+
+**Hard red line violations (SEC-01…SEC-10) are always Critical and block review approval.** If the violation has a `// SECURITY-OVERRIDE: <ticket> <justification>` annotation, downgrade to Important and record the ticket in the report.
+
+**Read-before-report gate (Ground-Truth Discipline G1):** Static checks (grep, scanner output) identify *candidate* findings. Every candidate that survives to the final review report must be backed by an actual Read of the cited file in this session. A grep hit on `dangerouslySetInnerHTML` is a candidate; only after opening the file and checking surrounding context (sanitiser? test/mock file? feature flag?) does it become a reported finding. Filing findings directly from grep output is the dominant false-positive source in review skills — do not do it.
+
 For the files changed in the diff, perform static checks using `grep` or similar tools:
-1. **Architecture Conformance:** Search for pattern violations documented in `draft/.ai-context.md`. (e.g. `import * from 'database'` in a React component).
-2. **Dead Code:** Check for newly exported functions/classes in the diff that have 0 references across the codebase.
-3. **Dependency Cycles:** Trace the import chains for new imports to ensure no circular dependencies (e.g., A → B → C → A) are introduced.
-4. **Graph Boundary Check** (if `draft/graph/module-graph.jsonl` exists):
+
+- **Blast Radius Assessment** (if `draft/graph/hotspots.jsonl` or `draft/graph/module-graph.jsonl` exists):
+   - List all changed files from the diff
+   - For each changed file, check if it appears in `hotspots.jsonl` — if yes, record its `fanIn` value
+   - Classify: files with fanIn in the top 20% of the hotspots list = **HIGH IMPACT**; top 21–50% = **MEDIUM**; below 50% or not in list = **STANDARD**
+   - For any file in a HIGH or MEDIUM module, check `module-graph.jsonl` for its reverse-edge count (how many modules import this module)
+   - Include a `Blast Radius` line in the Stage 1 report summary: `Blast Radius: HIGH | MEDIUM | STANDARD — <N> changed files affect high-fanIn modules: [file list]`
+   - If any changed file is HIGH IMPACT: escalate Stage 3 thoroughness (check all callers of changed functions) and note this in the report header
+- **Architecture Conformance:** Search for pattern violations documented in `draft/.ai-context.md`. (e.g. `import * from 'database'` in a React component).
+- **Dead Code:** Check for newly exported functions/classes in the diff that have 0 references across the codebase.
+- **Dependency Cycles:** Trace the import chains for new imports to ensure no circular dependencies (e.g., A → B → C → A) are introduced.
+- **Graph Boundary Check** (if `draft/graph/module-graph.jsonl` exists) `[RC-013]`:
    - For each changed file, identify its module from the graph
    - Check if any new cross-module includes were added in the diff
    - Verify they follow the established dependency direction from `module-graph.jsonl` edges
    - Flag reverse-direction dependencies (module A now depends on module B, but only B→A existed before) as "Potential architecture violation — new dependency direction"
    - Check if changes introduce files in modules listed in graph cycles — flag as higher risk
-4. **Security Scan (OWASP):** Scan the diff for:
-   - Hardcoded secrets and API keys
-   - SQL injection risks (string concatenation in queries)
-   - XSS vulnerabilities (`innerHTML` or raw DOM insertion)
-5. **Performance Anti-patterns:** Scan the diff for:
+- **Security Scan** `[RC-001, RC-002, RC-003, RC-011]`:
+   - Hardcoded secrets and API keys `[RC-001]`
+   - SQL injection risks (string concatenation in queries) `[RC-002]`
+   - XSS vulnerabilities (`innerHTML` or raw DOM insertion) `[RC-011]`
+   - Missing input validation at new entry points `[RC-003]`
+- **Dependency Manifest Check** `[RC-014]`: If diff modifies `package.json`, `requirements.txt`, `go.mod`, `Cargo.toml`, `pom.xml`, or `build.gradle`, run the project's configured dependency vulnerability scanner (from `draft/tech-stack.md`) or recommend `npm audit` / `pip-audit` / `cargo audit` as appropriate. Include results in Stage 1 findings.
+- **Performance Anti-patterns:** Scan the diff for:
    - N+1 database queries (loops containing queries)
    - Blocking synchronous I/O within async functions
    - Unbounded queries lacking pagination
 
-6. **Context-Specific Checks:** Identify the primary domain of changed files and apply domain-specific checks:
+- **Context-Specific Checks:** Identify the primary domain of changed files and apply domain-specific checks:
 
    - **Crypto/Security changes** (files matching `auth`, `crypto`, `security`, `token`, `password`, `hash`, `encrypt`):
      - [ ] Timing-safe comparisons used (no `==` for secret comparison)
@@ -263,11 +407,11 @@ For the files changed in the diff, perform static checks using `grep` or similar
      - [ ] Index coverage for new queries
      - [ ] Constraint preservation (foreign keys, unique constraints)
      - [ ] Zero-downtime migration safety (no table locks on large tables)
-   - **API Endpoint changes** (files matching `controller`, `handler`, `route`, `endpoint`, `resolver`):
-     - [ ] Backward compatibility of public signatures (no breaking param changes)
-     - [ ] Input validation present for all new parameters
+   - **API Endpoint changes** (files matching `controller`, `handler`, `route`, `endpoint`, `resolver`) `[RC-005, RC-012]`:
+     - [ ] Backward compatibility of public signatures (no breaking param changes) `[RC-012]`
+     - [ ] Input validation present for all new parameters `[RC-003]`
      - [ ] Rate limiting configured for new endpoints
-     - [ ] Authentication/authorization checks in place
+     - [ ] Authentication/authorization checks in place `[RC-005]`
    - **Configuration changes** (files matching `config`, `env`, `settings`):
      - [ ] No secrets exposed in plaintext
      - [ ] Validation at startup for required config values
@@ -277,14 +421,14 @@ For the files changed in the diff, perform static checks using `grep` or similar
      - [ ] Accessibility present (ARIA attributes, keyboard navigation)
      - [ ] Performance impact considered (bundle size, render cycles)
 
-7. **Breaking Change Detection:** Check for public API changes in the diff:
-   - [ ] Exported function/method signatures unchanged (no added required params, no changed return types)
-   - [ ] No removed or renamed exported symbols
-   - [ ] Error types and error codes unchanged
-   - [ ] Serialization format preserved (JSON field names, protobuf field numbers)
-   - Flag as **CRITICAL** if breaking change found with no deprecation period or version bump
+- **Breaking Change Detection** `[RC-012]`: Check for public API changes in the diff:
+    - [ ] Exported function/method signatures unchanged (no added required params, no changed return types)
+    - [ ] No removed or renamed exported symbols
+    - [ ] Error types and error codes unchanged
+    - [ ] Serialization format preserved (JSON field names, protobuf field numbers)
+    - Flag as **CRITICAL** if breaking change found with no deprecation period or version bump
 
-8. **Threat Model (STRIDE):** For new endpoints or data mutations, check:
+- **Threat Model (STRIDE):** For new endpoints or data mutations, check:
    - **S**poofing: Can the caller's identity be faked? (authentication check)
    - **T**ampering: Can request data be modified in transit? (integrity check)
    - **R**epudiation: Are actions logged for audit? (logging check)
@@ -308,7 +452,7 @@ After completing Stage 1, recommend appropriate static analysis tools based on t
 | Go | gosec, staticcheck |
 | Rust | `cargo clippy`, `cargo audit` |
 | C/C++ | Clang Static Analyzer, cppcheck |
-| Multi-language | Semgrep (https://semgrep.dev/), CodeQL (https://codeql.github.com/) |
+| Multi-language | Semgrep (https://semgrep.dev/), CodeQL (semantic code analysis) |
 
 References: Meta Infer for CI integration patterns, Google Error Prone for compile-time analysis.
 
@@ -342,6 +486,42 @@ For each criterion in `spec.md`:
 - **PASS WITH NOTES:** All requirements met but minor gaps in acceptance criteria verification → Proceed to Stage 3 with notes
 - **FAIL:** ANY requirement missing OR ANY acceptance criterion not met → List gaps, report, and stop (no Stage 3)
 
+### Stage 2.5: HLD/LLD Compliance (Track-Level Only, when hld.md exists)
+
+**Skip if no `hld.md`** — fall through to Stage 3.
+
+#### 2.5.1: HLD §Approvals signed
+
+- [ ] All required approver rows have a Date populated (per `/draft:upload` Step 3.1 logic)
+- [ ] If HLD was modified after the latest signed Date → flag as Critical "HLD modified after sign-off — re-circulate"
+
+#### 2.5.2: HLD §Detailed Design coverage
+
+For every component subsection in HLD §Detailed Design:
+- [ ] Files listed in the component diff actually exist at the cited `path:line`
+- [ ] Each component's `Whitebox requirements addressed` list is non-empty
+
+#### 2.5.3: HLD §Checklist populated
+
+For `criticality ∈ {high, mission-critical}` (frontmatter):
+- [ ] §Performance, §Scale, §Security, §Resiliency, §Multi-tenancy, §Upgrade, §Cost are populated (not still "<Describe...>" placeholders)
+
+#### 2.5.4: Code-vs-HLD drift
+
+- [ ] Diff introduces no new modules absent from HLD §Detailed Design
+- [ ] Diff introduces no new cross-module dependencies absent from HLD §Dependencies
+- [ ] Diff respects HLD §Key Design Decisions (e.g., decision says "single-writer" → no new shared-write paths in code)
+
+#### 2.5.5: LLD compliance (when lld.md exists)
+
+- [ ] Public API additions in diff are reflected in LLD §Classes and Interfaces
+- [ ] Schema/data-model changes in diff are reflected in LLD §Data Model with migration path
+- [ ] Diff respects LLD invariants (thread safety, idempotency, ordering)
+
+**Verdict:**
+- PASS → Stage 3
+- FAIL → list HLD/LLD gaps with severity Critical (drift) or Important (incomplete sections), then Stage 3
+
 ### Stage 3: Code Quality
 
 **Run for both track-level (if Stage 2 passes) and project-level reviews**
@@ -373,22 +553,24 @@ Analyze semantic code quality across four dimensions:
 
 For each flagged function, report: file path, function name, estimated complexity, and recommended action (split, extract, simplify).
 
-#### Adversarial Pass (When Zero Findings)
+#### Adversarial Pass (mandatory when Stage 3 yields zero findings)
 
-If Stage 3 produces zero findings across all four dimensions, do NOT accept "clean" without one more look. Ask these 7 questions explicitly:
+If Stage 3 produces zero findings across all four dimensions, do NOT accept "clean" without this gate. This pass is **mandatory**, not optional — a "zero findings" verdict that did not complete it is incomplete and must be flagged in the report.
 
-1. **Error paths** — Is every error/exception handled? Are any failure modes silently swallowed?
-2. **Edge cases** — Are there boundary conditions (empty input, max values, concurrent access) not covered by tests?
-3. **Implicit assumptions** — Does code assume inputs are always valid, services always up, or state always consistent?
-4. **Future brittleness** — Is anything hardcoded that will break on scale or config change?
-5. **Missing coverage** — Is there behavior that should be tested but isn't?
-6. **Guardrails** — Do any changes violate learned anti-patterns from `guardrails.md`?
-7. **Invariants** — Do any changes violate critical invariants documented in `.ai-context.md`?
+Answer each of the 7 questions explicitly with `file:line` evidence (not "looks fine"):
 
-If still zero after this pass, document it explicitly in the review report:
-> "Adversarial pass completed. Zero findings confirmed: [one sentence per question explaining why each is clean]"
+1. **Error paths** — Is every error/exception handled? Are any failure modes silently swallowed? Quote the handler or note its absence.
+2. **Edge cases** — Are there boundary conditions (empty input, max values, concurrent access) not covered by tests? Cite tests or note coverage gap.
+3. **Implicit assumptions** — Does code assume inputs are always valid, services always up, or state always consistent? Quote the assumption site.
+4. **Future brittleness** — Is anything hardcoded that will break on scale or config change? Cite the constant or flag.
+5. **Missing coverage** — Is there behavior that should be tested but isn't? Name the behavior and the missing test.
+6. **Guardrails** — Do any changes violate learned anti-patterns from `guardrails.md`? Cite the rule.
+7. **Invariants** — Do any changes violate critical invariants documented in `.ai-context.md`? Cite the invariant.
 
-This prevents lazy LGTM verdicts. It only adds work when a reviewer claims "nothing to find."
+Document the pass in the review report:
+> "Adversarial pass: 7/7 answered with evidence. [one line per question with `file:line` or 'N/A — <reason>']."
+
+A review verdict of "clean / LGTM" without this filled-in block is non-conforming and must not be emitted. Skipping the pass is a [Ground-Truth Red Flag](../../core/shared/red-flags.md) G4 violation (claim about absence-of-issues from incomplete examination).
 
 ### Issue Classification
 
@@ -406,16 +588,18 @@ Classify all findings by severity:
 
 **Issue format:**
 ```markdown
-- [ ] [File:line] Description of issue
+- [ ] [File:line] Description of issue `[RC-### or CQ-### or SEC-## if applicable]`
   - **Impact:** [what breaks/degrades]
   - **Suggested fix:** [how to address]
 ```
 
+Cite the most specific guardrail rule ID that applies. If no numbered rule covers the finding, omit the citation — the finding is still valid.
+
 ---
 
-## Step 5: Run Quality Tools (Optional)
+## Step 5: Run Specialist Integrations (Optional / Heuristic)
 
-If `with-bughunt` or `full` modifier is set, integrate bug hunting.
+Run the specialist workflows selected explicitly or by the Step 2.5 heuristics.
 
 ### 5.1: Run Bughunt
 
@@ -431,16 +615,42 @@ If `with-bughunt` or `full` modifier is set, integrate bug hunting.
 
 Parse output from `draft/tracks/<id>/bughunt-report-latest.md` or `draft/bughunt-report-latest.md`
 
-### 5.2: Aggregate Findings
+### 5.2: Run Assist Review
+
+If `with-assist`, `full`, or handoff heuristics selected assist-review:
+
+- run `/draft:assist-review` for the same track context
+- extract:
+  - intent summary
+  - structural edits
+  - HLD/LLD drift flags
+  - suggested review order
+
+Append this as a dedicated section in the final review report rather than merging it into bug findings.
+
+### 5.3: Run Deep Review
+
+If deep-review escalation is justified and the scope maps to one dominant module:
+
+- run `/draft:deep-review <module>`
+- extract critical and important findings relevant to the current diff
+- include a short `Deep Review Escalation` section in the report
+
+If deep-review is recommended but not auto-run:
+
+- add a `Next Actions` row pointing to `/draft:review deep <module>` or `/draft:deep-review <module>`
+
+### 5.4: Aggregate Findings
 
 Merge findings from:
 1. Reviewer agent (Stage 1, 2, 3)
 2. Bughunt results (if run)
+3. Deep-review findings relevant to the current diff (if run)
 
 **Deduplication:**
 - Two findings are duplicates if they reference the **same file and line number**
 - Severity ordering: **Critical > Important > Minor**
-- On duplicate: keep the finding with highest severity; merge tool attribution as "Found by: reviewer, bughunt"
+- On duplicate: keep the finding with highest severity; merge tool attribution as "Found by: reviewer, bughunt, deep-review" as applicable
 - If same severity from different tools: merge into single finding, combine descriptions
 
 ---
@@ -478,10 +688,12 @@ ln -sf review-report-<timestamp>.md draft/tracks/<id>/review-report-latest.md
 
 **Status:** PASS / FAIL
 
+- **Blast Radius:** HIGH | MEDIUM | STANDARD — [list hotspot files if HIGH/MEDIUM]
 - **Architecture Conformance:** PASS/FAIL
 - **Dead Code:** N found
 - **Dependency Cycles:** PASS/FAIL
 - **Security Scan:** N issues found
+- **Dependency Vulnerabilities:** N Critical / N High (or "Clean" if scanner found none)
 - **Performance:** N anti-patterns detected
 
 [If FAIL: List critical structural issues and stop here]
@@ -550,7 +762,7 @@ ln -sf review-report-<timestamp>.md draft/tracks/<id>/review-report-latest.md
 ## Recommendations
 
 [If incomplete tasks found]
-⚠️  **Warning:** This track has N incomplete tasks. Consider completing all tasks before marking track as done.
+⚠️ **Warning:** This track has N incomplete tasks. Consider completing all tasks before marking track as done.
 
 [If no critical issues]
 ✅ **No blocking issues found.** This track is ready to merge.
@@ -671,14 +883,63 @@ Next: Fix gaps and run /draft:review again.
 
 ## Error Handling
 
-| Condition | Message |
-|-----------|---------|
-| No `draft/` directory | "Draft not initialized. Run `/draft:init`." |
-| No tracks in `draft/tracks.md` | "No tracks found. Run `/draft:new-track`." |
-| Track not found | Show closest matches by edit distance, suggest `/draft:status` |
-| Multiple track matches | Display numbered list, prompt selection |
-| Invalid git range | Show git error, suggest verifying with `git log` |
-| No commit SHAs in plan.md | Suggest manual range or `/draft:review project` |
+### Missing Draft Directory
+
+```
+Error: Draft not initialized.
+Run /draft:init to set up Context-Driven Development.
+```
+
+### No Tracks Found
+
+```
+Error: No tracks found in draft/tracks.md
+Run /draft:new-track to create your first track.
+```
+
+### Track Not Found
+
+```
+Error: Track 'xyz' not found.
+
+Did you mean:
+1. add-review-command
+2. enterprise-readiness
+
+Use exact track ID or run /draft:status to see all tracks.
+```
+
+### Ambiguous Match
+
+```
+Multiple tracks match 'review':
+1. add-review-command - Add /draft:review Command [~]
+2. review-architecture-md - Review architecture.md [x]
+
+Select track (1-2):
+```
+
+### Invalid Git Range
+
+```
+Error: Invalid commit range 'main...feature'
+Git error: fatal: ambiguous argument 'feature': unknown revision
+
+Verify the range exists:
+  git log main...feature
+```
+
+### Missing Commits in Plan
+
+```
+⚠️ Warning: No commit SHAs found in plan.md
+
+Cannot determine commit range for review.
+
+Options:
+1. Manually specify range: /draft:review track <id> commits <range>
+2. Review uncommitted changes: /draft:review project
+```
 
 ---
 
@@ -743,7 +1004,40 @@ After generating the review report, execute the pattern learning phase from `cor
 /draft:review track my-feature with-bughunt
 ```
 
+### Explicit quick review via parent
+```bash
+/draft:review quick files "src/**/*.ts"
+```
+
+### Explicit deep review via parent
+```bash
+/draft:review deep auth
+```
+
+### Explicit assist review via parent
+```bash
+/draft:review assist track my-feature
+```
+
 ---
+
+## Report Closing: Next Actions (REQUIRED)
+
+Every review report must end with a `## Next Actions` section listing the smallest set of follow-ups in execution order. Use this exact shape:
+
+```markdown
+## Next Actions
+
+| # | Action | Owner | Blocker? | Skill / Command |
+|---|---|---|---|---|
+| 1 | <imperative one-liner> | <author\|reviewer\|TBD> | yes/no | `/draft:<skill> <args>` or `n/a` |
+```
+
+Rules:
+- Critical findings produce blocker rows (`Blocker? = yes`); proceeding to merge is forbidden until cleared.
+- Each action is imperative ("Add CSRF token to /api/transfer"), not a restatement of the finding.
+- Suggest the Draft follow-up when one applies (`/draft:debug`, `/draft:regression`, `/draft:tech-debt`, `/draft:bughunt`, `/draft:adr`). Otherwise put `n/a`.
+- Cap at 7 actions; if more remain, add a final row pointing at the full report.
 
 ## Cross-Skill Dispatch
 
@@ -776,3 +1070,44 @@ After review completion, based on findings:
 If Jira ticket linked, sync via `core/shared/jira-sync.md`:
 - Attach `review-report-latest.md` to ticket
 - Post comment: "[draft] review-complete: {PASS/FAIL}. {n} findings: {critical} critical, {suggestions} suggestions."
+
+## Mandatory Self-Check (before final verdict)
+
+Before printing the final verdict, internally verify and report:
+
+1. **Graph files queried** — which JSONL files were loaded (e.g. `module-graph.jsonl, hotspots.jsonl, call-index.jsonl`) plus any live `graph --query` invocations (impact, callers, cycles).
+2. **Layer 1 files deliberately skipped** — list any context sections skipped as irrelevant to the diff under review.
+3. **Filesystem grep fallback justification** — for every `grep`/`find` run, state the concept it searched for. Source-text scans (string literals, regex matches in code) are exempt — they are not symbol/file discovery.
+
+If `draft/graph/schema.yaml` does not exist, set `Graph files queried: NONE` and use justification `graph data unavailable`.
+
+## Graph Usage Report (append to review report)
+
+Emit the canonical footer from [core/shared/graph-usage-report.md](../../core/shared/graph-usage-report.md) §Canonical footer. The lint hook `scripts/tools/check-graph-usage-report.sh` validates the section on save.
+## Skill Telemetry
+
+As the last step after saving the review report, emit a metrics record. Best-effort — never block.
+
+**Payload fields:**
+```json
+{
+  "skill": "review",
+  "track_id": "<track_id or null>",
+  "stage_reached": "stage1|stage2|stage3",
+  "verdict": "PASS|PASS_WITH_NOTES|NEEDS_CHANGES|FAIL",
+  "critical_count": <N>,
+  "important_count": <N>,
+  "blast_radius": "HIGH|MEDIUM|STANDARD",
+  "graph_queries": <N>,
+  "fallback_grep_count": <N>
+}
+```
+
+**Emit call:**
+```bash
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+[ -x "$DRAFT_TOOLS/emit-skill-metrics.sh" ] && bash "$DRAFT_TOOLS/emit-skill-metrics.sh" \
+  '{"skill":"review","track_id":"<id_or_null>","stage_reached":"<stage>","verdict":"<v>","critical_count":<N>,"important_count":<N>,"blast_radius":"<br>","graph_queries":<N>,"fallback_grep_count":<N>}'
+```

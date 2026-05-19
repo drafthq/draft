@@ -1,6 +1,6 @@
 'use strict';
 
-const fs   = require('fs');
+const fs = require('fs');
 const path = require('path');
 const { writeJsonl, dirSizeKB } = require('./util');
 const { generateModuleDeps, generateProtoMap } = require('./mermaid');
@@ -9,41 +9,41 @@ const { generateModuleDeps, generateProtoMap } = require('./mermaid');
  * Write all graph output files.
  *
  * Output structure:
- *   graph/
- *   ├── schema.yaml              — metadata + config
- *   ├── module-graph.jsonl       — inter-module dependency edges (always load)
- *   ├── proto-index.jsonl        — all proto services/rpcs/messages (always load)
- *   ├── hotspots.jsonl           — top 50 files by complexity (always load)
- *   ├── go-index.jsonl           — Go symbols + call edges
- *   ├── python-index.jsonl       — Python symbols + call edges
- *   ├── ts-index.jsonl           — TypeScript/JS symbols + call edges
- *   ├── c-index.jsonl            — C/C++ symbols + call edges
- *   ├── call-index.jsonl         — all intra-file call edges across all languages
- *   └── modules/
- *       ├── <name>.jsonl         — per-module file graph (load on demand)
- *       └── ...
+ * graph/
+ * ├── schema.yaml — metadata + config
+ * ├── module-graph.jsonl — inter-module dependency edges (always load)
+ * ├── proto-index.jsonl — all proto services/rpcs/messages (always load)
+ * ├── hotspots.jsonl — top 50 files by complexity (always load)
+ * ├── go-index.jsonl — Go symbols + call edges
+ * ├── python-index.jsonl — Python symbols + call edges
+ * ├── ts-index.jsonl — TypeScript/JS symbols + call edges
+ * ├── c-index.jsonl — C/C++ symbols + call edges
+ * ├── call-index.jsonl — all intra-file call edges across all languages
+ * └── modules/
+ * ├── <name>.jsonl — per-module file graph (load on demand)
+ * └── ...
  *
  * @param {{ out, repo, modules, includeGraph, protoIndex, goIndex, pythonIndex,
- *           tsIndex, cIndex, ctagsIndex, skipModules }} opts
+ * tsIndex, cIndex, ctagsIndex, skipModules }} opts
  * @returns {{ moduleEdges, rpcs, hotspots, moduleFiles, totalSizeKB,
- *             tsFunctions, tsClasses, cFunctions, cTypes, ctagsSymbols }}
+ * tsFunctions, tsClasses, cFunctions, cTypes, ctagsSymbols }}
  */
 function writeGraph({ out, existingOut = out, repo, modules, includeGraph, protoIndex,
-                      goIndex     = { functions: [], types: [], imports: [], calls: [] },
+                      goIndex = { functions: [], types: [], imports: [], calls: [] },
                       pythonIndex = { functions: [], classes: [], imports: [], calls: [] },
-                      tsIndex     = { functions: [], classes: [], imports: [], calls: [] },
-                      cIndex      = { functions: [], types: [], calls: [] },
-                      ctagsIndex  = { symbols: [] },
+                      tsIndex = { functions: [], classes: [], imports: [], calls: [] },
+                      cIndex = { functions: [], types: [], calls: [] },
+                      ctagsIndex = { symbols: [] },
                       skipModules = new Set() }) {
   const modulesDir = path.join(out, 'modules');
   fs.mkdirSync(modulesDir, { recursive: true });
 
   // ── 1. module-graph.jsonl ─────────────────────────────────────────────────
   const moduleNodes = modules.map(m => ({
-    id:     m.name,
-    type:   'module',
+    id: m.name,
+    type: 'module',
     sizeKB: m.sizeKB,
-    files:  m.files,
+    files: m.files,
   }));
 
   const moduleNames = new Set(modules.map(m => m.name));
@@ -68,14 +68,7 @@ function writeGraph({ out, existingOut = out, repo, modules, includeGraph, proto
   for (const imp of (tsIndex.imports || [])) {
     const srcModule = imp.module;
     if (!srcModule || !imp.from) continue;
-    let importPath = imp.from;
-    // Resolve relative paths against the importing file's directory so that
-    // `../../shared/foo` from `a/b/c.ts` correctly maps to `shared/foo`.
-    if (importPath.startsWith('./') || importPath.startsWith('../')) {
-      const baseDir = imp.file ? path.posix.dirname(imp.file.split(path.sep).join('/')) : srcModule;
-      importPath = path.posix.normalize(path.posix.join(baseDir, importPath));
-    }
-    const segments = importPath.split('/').filter(s => s && s !== '.');
+    const segments = imp.from.replace(/^\.\.?\//, '').split('/');
     let matched = null;
     for (let len = segments.length; len >= 1; len--) {
       const candidate = segments.slice(0, len).join('/');
@@ -118,9 +111,9 @@ function writeGraph({ out, existingOut = out, repo, modules, includeGraph, proto
   // ── 2. proto-index.jsonl ──────────────────────────────────────────────────
   const protoRecords = [
     ...protoIndex.services.map(s => ({ kind: 'service', ...s })),
-    ...protoIndex.rpcs.map(r     => ({ kind: 'rpc',     ...r })),
+    ...protoIndex.rpcs.map(r => ({ kind: 'rpc', ...r })),
     ...protoIndex.messages.map(m => ({ kind: 'message', ...m })),
-    ...protoIndex.enums.map(e    => ({ kind: 'enum',    ...e })),
+    ...protoIndex.enums.map(e => ({ kind: 'enum', ...e })),
   ];
   writeJsonl(path.join(out, 'proto-index.jsonl'), protoRecords);
 
@@ -164,13 +157,13 @@ function writeGraph({ out, existingOut = out, repo, modules, includeGraph, proto
     if (!cFileMap.has(t.file)) cFileMap.set(t.file, { lines: 0, module: t.module });
   }
 
-  const syntheticGoNodes  = Array.from(goFileMap.entries())
+  const syntheticGoNodes = Array.from(goFileMap.entries())
     .map(([file, { lines, module }]) => ({ id: file, lines, module, fanIn: 0 }));
-  const syntheticPyNodes  = Array.from(pyFileMap.entries())
+  const syntheticPyNodes = Array.from(pyFileMap.entries())
     .map(([file, { lines, module }]) => ({ id: file, lines, module, fanIn: 0 }));
-  const syntheticTsNodes  = Array.from(tsFileMap.entries())
+  const syntheticTsNodes = Array.from(tsFileMap.entries())
     .map(([file, { lines, module }]) => ({ id: file, lines, module, fanIn: 0 }));
-  const syntheticCNodes   = Array.from(cFileMap.entries())
+  const syntheticCNodes = Array.from(cFileMap.entries())
     .map(([file, { lines, module }]) => ({ id: file, lines, module, fanIn: 0 }));
 
   const allFileNodes = [
@@ -184,8 +177,8 @@ function writeGraph({ out, existingOut = out, repo, modules, includeGraph, proto
   const hotspots = allFileNodes
     .map(n => ({
       ...n,
-      fanIn:  fanInMap.get(n.id) || 0,
-      score:  n.lines + (fanInMap.get(n.id) || 0) * 50,
+      fanIn: fanInMap.get(n.id) || 0,
+      score: n.lines + (fanInMap.get(n.id) || 0) * 50,
     }))
     .sort((a, b) => b.score - a.score)
     .slice(0, 50)
@@ -196,10 +189,10 @@ function writeGraph({ out, existingOut = out, repo, modules, includeGraph, proto
   // ── 4. go-index.jsonl ─────────────────────────────────────────────────────
   if (goIndex.functions.length > 0 || goIndex.types.length > 0) {
     const goRecords = [
-      ...goIndex.functions.map(f => ({ kind: 'func',    ...f })),
-      ...goIndex.types.map(t     => ({ kind: 'type',    ...t })),
-      ...goIndex.imports.map(i   => ({ kind: 'import',  ...i })),
-      ...goIndex.calls.map(c     => ({ ...c })),
+      ...goIndex.functions.map(f => ({ kind: 'func', ...f })),
+      ...goIndex.types.map(t => ({ kind: 'type', ...t })),
+      ...goIndex.imports.map(i => ({ kind: 'import', ...i })),
+      ...goIndex.calls.map(c => ({ ...c })),
     ];
     writeJsonl(path.join(out, 'go-index.jsonl'), goRecords);
   }
@@ -207,10 +200,10 @@ function writeGraph({ out, existingOut = out, repo, modules, includeGraph, proto
   // ── 5. python-index.jsonl ──────────────────────────────────────────────────
   if (pythonIndex.functions.length > 0 || pythonIndex.classes.length > 0) {
     const pyRecords = [
-      ...pythonIndex.functions.map(f => ({ kind: 'func',   ...f })),
-      ...pythonIndex.classes.map(c   => ({ kind: 'class',  ...c })),
-      ...pythonIndex.imports.map(i   => ({ kind: 'import', ...i })),
-      ...pythonIndex.calls.map(c     => ({ ...c })),
+      ...pythonIndex.functions.map(f => ({ kind: 'func', ...f })),
+      ...pythonIndex.classes.map(c => ({ kind: 'class', ...c })),
+      ...pythonIndex.imports.map(i => ({ kind: 'import', ...i })),
+      ...pythonIndex.calls.map(c => ({ ...c })),
     ];
     writeJsonl(path.join(out, 'python-index.jsonl'), pyRecords);
   }
@@ -218,10 +211,10 @@ function writeGraph({ out, existingOut = out, repo, modules, includeGraph, proto
   // ── 6. ts-index.jsonl ─────────────────────────────────────────────────────
   if (tsIndex.functions.length > 0 || tsIndex.classes.length > 0) {
     const tsRecords = [
-      ...tsIndex.functions.map(f => ({ kind: 'ts-func',   ...f })),
-      ...tsIndex.classes.map(c   => ({ kind: 'ts-class',  ...c })),
+      ...tsIndex.functions.map(f => ({ kind: 'ts-func', ...f })),
+      ...tsIndex.classes.map(c => ({ kind: 'ts-class', ...c })),
       ...(tsIndex.imports || []).map(i => ({ kind: 'ts-import', ...i })),
-      ...tsIndex.calls.map(c     => ({ ...c })),
+      ...tsIndex.calls.map(c => ({ ...c })),
     ];
     writeJsonl(path.join(out, 'ts-index.jsonl'), tsRecords);
   }
@@ -229,9 +222,9 @@ function writeGraph({ out, existingOut = out, repo, modules, includeGraph, proto
   // ── 7. c-index.jsonl ──────────────────────────────────────────────────────
   if (cIndex.functions.length > 0 || cIndex.types.length > 0) {
     const cRecords = [
-      ...cIndex.functions.map(f => ({ kind: 'c-func',  ...f })),
-      ...cIndex.types.map(t     => ({ kind: 'c-type',  ...t })),
-      ...cIndex.calls.map(c     => ({ ...c })),
+      ...cIndex.functions.map(f => ({ kind: 'c-func', ...f })),
+      ...cIndex.types.map(t => ({ kind: 'c-type', ...t })),
+      ...cIndex.calls.map(c => ({ ...c })),
     ];
     writeJsonl(path.join(out, 'c-index.jsonl'), cRecords);
   }
@@ -251,7 +244,7 @@ function writeGraph({ out, existingOut = out, repo, modules, includeGraph, proto
   const edgesByModule = new Map();
   for (const edge of includeGraph.edges) {
     const srcParts = edge.source.split('/');
-    const mod      = srcParts.length > 1 ? srcParts[0] : '__root__';
+    const mod = srcParts.length > 1 ? srcParts[0] : '__root__';
     if (!edgesByModule.has(mod)) edgesByModule.set(mod, []);
     edgesByModule.get(mod).push(edge);
   }
@@ -325,7 +318,7 @@ function writeGraph({ out, existingOut = out, repo, modules, includeGraph, proto
     if (skipModules.has(mod.name)) {
       // Copy unchanged module file from the committed output dir (existingOut) into the
       // temp write dir (out). Without this, incremental builds would miss unchanged modules.
-      const srcPath  = path.join(existingOut, 'modules', `${mod.name}.jsonl`);
+      const srcPath = path.join(existingOut, 'modules', `${mod.name}.jsonl`);
       const destPath = path.join(modulesDir, `${mod.name}.jsonl`);
       if (fs.existsSync(srcPath)) {
         fs.copyFileSync(srcPath, destPath);
@@ -336,10 +329,10 @@ function writeGraph({ out, existingOut = out, repo, modules, includeGraph, proto
 
     const modNodes = includeGraph.nodes.filter(n => n.module === mod.name);
     const modEdges = edgesByModule.get(mod.name) || [];
-    const goData   = goByModule.get(mod.name)  || { functions: [], types: [], calls: [] };
-    const pyData   = pyByModule.get(mod.name)  || { functions: [], classes: [], calls: [] };
-    const tsData   = tsByModule.get(mod.name)  || { functions: [], classes: [], calls: [] };
-    const cData    = cByModule.get(mod.name)   || { functions: [], types: [], calls: [] };
+    const goData = goByModule.get(mod.name) || { functions: [], types: [], calls: [] };
+    const pyData = pyByModule.get(mod.name) || { functions: [], classes: [], calls: [] };
+    const tsData = tsByModule.get(mod.name) || { functions: [], classes: [], calls: [] };
+    const cData = cByModule.get(mod.name) || { functions: [], types: [], calls: [] };
     const ctagsSym = ctagsByModule.get(mod.name) || [];
 
     const modNodeIds = new Set(modNodes.map(n => n.id));
@@ -348,27 +341,27 @@ function writeGraph({ out, existingOut = out, repo, modules, includeGraph, proto
 
     const records = [
       { kind: 'module', name: mod.name, sizeKB: mod.sizeKB, files: mod.files },
-      ...modNodes.map(n       => ({ kind: 'file',          ...n })),
-      ...intraEdges.map(e     => ({ kind: 'include',       ...e })),
-      ...crossEdges.map(e     => ({ kind: 'cross-include', ...e })),
+      ...modNodes.map(n => ({ kind: 'file', ...n })),
+      ...intraEdges.map(e => ({ kind: 'include', ...e })),
+      ...crossEdges.map(e => ({ kind: 'cross-include', ...e })),
       // Go
-      ...goData.functions.map(f => ({ kind: 'go-func',   ...f })),
-      ...goData.types.map(t     => ({ kind: 'go-type',   ...t })),
-      ...goData.calls.map(c     => ({ ...c })),
+      ...goData.functions.map(f => ({ kind: 'go-func', ...f })),
+      ...goData.types.map(t => ({ kind: 'go-type', ...t })),
+      ...goData.calls.map(c => ({ ...c })),
       // Python
-      ...pyData.functions.map(f => ({ kind: 'py-func',   ...f })),
-      ...pyData.classes.map(c   => ({ kind: 'py-class',  ...c })),
-      ...pyData.calls.map(c     => ({ ...c })),
+      ...pyData.functions.map(f => ({ kind: 'py-func', ...f })),
+      ...pyData.classes.map(c => ({ kind: 'py-class', ...c })),
+      ...pyData.calls.map(c => ({ ...c })),
       // TypeScript/JS
-      ...tsData.functions.map(f => ({ kind: 'ts-func',   ...f })),
-      ...tsData.classes.map(c   => ({ kind: 'ts-class',  ...c })),
-      ...tsData.calls.map(c     => ({ ...c })),
+      ...tsData.functions.map(f => ({ kind: 'ts-func', ...f })),
+      ...tsData.classes.map(c => ({ kind: 'ts-class', ...c })),
+      ...tsData.calls.map(c => ({ ...c })),
       // C/C++
-      ...cData.functions.map(f  => ({ kind: 'c-func',    ...f })),
-      ...cData.types.map(t      => ({ kind: 'c-type',    ...t })),
-      ...cData.calls.map(c      => ({ ...c })),
+      ...cData.functions.map(f => ({ kind: 'c-func', ...f })),
+      ...cData.types.map(t => ({ kind: 'c-type', ...t })),
+      ...cData.calls.map(c => ({ ...c })),
       // ctags fallback (Java, Rust, etc.)
-      ...ctagsSym.map(s         => ({ kind: 'ctags-sym', ...s })),
+      ...ctagsSym.map(s => ({ kind: 'ctags-sym', ...s })),
     ];
 
     if (records.length > 1) {
@@ -378,7 +371,7 @@ function writeGraph({ out, existingOut = out, repo, modules, includeGraph, proto
   }
 
   // ── 10. Mermaid diagrams ───────────────────────────────────────────────────
-  const depsDiagram  = generateModuleDeps(out, { records: moduleGraphRecords });
+  const depsDiagram = generateModuleDeps(out, { records: moduleGraphRecords });
   const protoDiagram = generateProtoMap(out, { records: protoRecords });
 
   if (depsDiagram.mermaid) {
@@ -397,15 +390,15 @@ function writeGraph({ out, existingOut = out, repo, modules, includeGraph, proto
   const totalSizeKB = dirSizeKB(out);
 
   return {
-    moduleEdges:  allModuleEdges.length,
-    rpcs:         protoIndex.rpcs.length,
-    hotspots:     hotspots.length,
-    moduleFiles:  moduleFilesCount,
+    moduleEdges: allModuleEdges.length,
+    rpcs: protoIndex.rpcs.length,
+    hotspots: hotspots.length,
+    moduleFiles: moduleFilesCount,
     totalSizeKB,
-    tsFunctions:  tsIndex.functions.length,
-    tsClasses:    tsIndex.classes.length,
-    cFunctions:   cIndex.functions.length,
-    cTypes:       cIndex.types.length,
+    tsFunctions: tsIndex.functions.length,
+    tsClasses: tsIndex.classes.length,
+    cFunctions: cIndex.functions.length,
+    cTypes: cIndex.types.length,
     ctagsSymbols: ctagsIndex.symbols.length,
   };
 }
@@ -425,44 +418,44 @@ function buildFanInMap(edges) {
 function generateSchema(repo, modules, includeGraph, allModuleEdges, protoIndex,
                         goIndex, pythonIndex, tsIndex, cIndex, ctagsIndex, allCalls) {
   const repoName = path.basename(repo);
-  const now      = new Date().toISOString().replace('T', ' ').slice(0, 19);
+  const now = new Date().toISOString().replace('T', ' ').slice(0, 19);
 
   const modList = modules
-    .map(m => `  ${m.name}:  # ${m.sizeKB}KB, ${m.files.cc}cc ${m.files.h}h ${m.files.go}go ${m.files.ts}ts ${m.files.py}py`)
+    .map(m => ` ${m.name}: # ${m.sizeKB}KB, ${m.files.cc}cc ${m.files.h}h ${m.files.go}go ${m.files.ts}ts ${m.files.py}py`)
     .join('\n');
 
-  const tsFuncs   = tsIndex.functions.length;
+  const tsFuncs = tsIndex.functions.length;
   const tsClasses = tsIndex.classes.length;
-  const cFuncs    = cIndex.functions.length;
-  const cTypes    = cIndex.types.length;
+  const cFuncs = cIndex.functions.length;
+  const cTypes = cIndex.types.length;
   const totalCalls = allCalls.length;
 
   return `# draft/graph/schema.yaml
 # Auto-generated by graph — do not edit manually
 # Re-generate with: graph --repo <path>
 
-repo:      ${repoName}
+repo: ${repoName}
 generated: ${now}
-version:   2
+version: 2
 
 stats:
-  modules:       ${modules.length}
-  file_nodes:    ${includeGraph.nodes.length}
+  modules: ${modules.length}
+  file_nodes: ${includeGraph.nodes.length}
   include_edges: ${includeGraph.edges.length}
-  module_edges:  ${allModuleEdges.length}
+  module_edges: ${allModuleEdges.length}
   proto_services: ${protoIndex.services.length}
-  proto_rpcs:    ${protoIndex.rpcs.length}
-  proto_enums:   ${protoIndex.enums.length}
-  go_functions:  ${goIndex.functions.length}
-  go_types:      ${goIndex.types.length}
-  py_functions:  ${pythonIndex.functions.length}
-  py_classes:    ${pythonIndex.classes.length}
-  ts_functions:  ${tsFuncs}
-  ts_classes:    ${tsClasses}
-  c_functions:   ${cFuncs}
-  c_types:       ${cTypes}
+  proto_rpcs: ${protoIndex.rpcs.length}
+  proto_enums: ${protoIndex.enums.length}
+  go_functions: ${goIndex.functions.length}
+  go_types: ${goIndex.types.length}
+  py_functions: ${pythonIndex.functions.length}
+  py_classes: ${pythonIndex.classes.length}
+  ts_functions: ${tsFuncs}
+  ts_classes: ${tsClasses}
+  c_functions: ${cFuncs}
+  c_types: ${cTypes}
   ctags_symbols: ${ctagsIndex.symbols.length}
-  call_edges:    ${totalCalls}
+  call_edges: ${totalCalls}
 
 indexers:
   cpp:

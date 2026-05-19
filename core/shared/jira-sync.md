@@ -2,7 +2,7 @@
 
 Standard procedure for syncing Draft artifacts to Jira tickets via MCP. All skills that produce markdown artifacts follow this protocol to keep Jira updated.
 
-Referenced by: `/draft:init`, `/draft:new-track`, `/draft:implement`, `/draft:review`, `/draft:quick-review`, `/draft:bughunt`, `/draft:debug`, `/draft:incident-response`, `/draft:tech-debt`, `/draft:deploy-checklist`, `/draft:documentation`
+Referenced by: `/draft:init`, `/draft:new-track`, `/draft:implement`, `/draft:review`, `/draft:quick-review`, `/draft:upload`, `/draft:bughunt`, `/draft:debug`, `/draft:incident-response`, `/draft:tech-debt`, `/draft:deploy-checklist`, `/draft:documentation`
 
 ## Prerequisites
 
@@ -112,6 +112,7 @@ Attachment: rca.md
 | `/draft:review` completes | `review-report-latest.md` | Attach + comment: "Review {PASS/FAIL}. {n} findings" |
 | `/draft:implement` completes | `plan.md` (updated) | Comment: "Implementation complete. {n} tasks done" |
 | `/draft:bughunt` completes | `bughunt-report-latest.md` | Attach + comment: "Bughunt found {n} issues" |
+| `/draft:upload` completes | — | Comment: "Code uploaded for review. {URL}" |
 | `/draft:deploy-checklist` completes | `deploy-checklist.md` | Attach + comment: "Deploy checklist generated" |
 | `/draft:incident-response` completes | `incident-*.md` | Attach + comment: "Incident report updated" |
 

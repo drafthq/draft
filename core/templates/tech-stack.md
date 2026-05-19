@@ -3,15 +3,6 @@ project: "{PROJECT_NAME}"
 module: "root"
 generated_by: "draft:init"
 generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{COMMIT_MESSAGE}"
-  dirty: false
-synced_to_commit: "{FULL_SHA}"
 ---
 
 # Tech Stack

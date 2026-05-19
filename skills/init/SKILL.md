@@ -196,6 +196,17 @@ synced_to_commit: "a1b2c3d4e5f6789012345678901234567890abcd"
 
 Check for arguments:
 - `refresh`: Update existing context without full re-init
+- `index`: Route to `/draft:index`
+- `discover`: Route to `/draft:discover`
+
+### Route Explicit Modes Before Initialization
+
+If the user explicitly invoked a specialist mode, route directly:
+
+- `/draft:init index` → follow `/draft:index`
+- `/draft:init discover` → follow `/draft:discover`
+
+Explicit mode always wins. Do not perform standard initialization if an explicit mode is requested.
 
 ### Standard Init Check
 
@@ -236,8 +247,8 @@ Check for monorepo indicators:
 - `packages/`, `apps/`, `services/` directories with independent manifests
 
 If monorepo detected:
-- Announce: "Detected monorepo structure. Consider using `/draft:index` at root level to aggregate service context, or run `/draft:init` within individual service directories."
-- Ask user to confirm: initialize here (single service) or abort (use /draft:index instead)
+- Announce: "Detected monorepo structure. Consider using `/draft:init index` at root level to aggregate service context, or run `/draft:init` within individual service directories."
+- Ask user to confirm: initialize here (single service) or abort (use /draft:init index instead)
 
 ### Migration Detection
 

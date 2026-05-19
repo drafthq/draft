@@ -9,7 +9,7 @@
 # - Required fields present in plugin.json
 #
 # Usage:
-#   ./tests/test-plugin-manifest.sh
+# ./tests/test-plugin-manifest.sh
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -87,12 +87,12 @@ if [[ -f "$PLUGIN_JSON" ]]; then
     # author.name and license are optional for internal forks
     PLUGIN_AUTHOR=$(json_get "$PLUGIN_JSON" ".author.name")
     if [[ -n "$PLUGIN_AUTHOR" && "$PLUGIN_AUTHOR" != "null" ]]; then
-        echo "  INFO: plugin.json has 'author.name' field: $PLUGIN_AUTHOR"
+        echo " INFO: plugin.json has 'author.name' field: $PLUGIN_AUTHOR"
     fi
 
     PLUGIN_LICENSE=$(json_get "$PLUGIN_JSON" ".license")
     if [[ -n "$PLUGIN_LICENSE" && "$PLUGIN_LICENSE" != "null" ]]; then
-        echo "  INFO: plugin.json has 'license' field: $PLUGIN_LICENSE"
+        echo " INFO: plugin.json has 'license' field: $PLUGIN_LICENSE"
     fi
 fi
 
@@ -109,13 +109,13 @@ if [[ -f "$MARKETPLACE_JSON" ]]; then
     if [[ -f "$PLUGIN_JSON" ]]; then
         PLUGIN_VERSION=$(json_get "$PLUGIN_JSON" ".version")
         MARKETPLACE_VERSION=$(json_get "$MARKETPLACE_JSON" ".plugins.[0].version")
-        echo "  plugin.json version: $PLUGIN_VERSION"
-        echo "  marketplace.json version: $MARKETPLACE_VERSION"
+        echo " plugin.json version: $PLUGIN_VERSION"
+        echo " marketplace.json version: $MARKETPLACE_VERSION"
         assert "Versions match between plugin.json and marketplace.json" \
             "$([[ "$PLUGIN_VERSION" == "$MARKETPLACE_VERSION" ]] && echo true || echo false)"
     fi
 else
-    echo "  INFO: marketplace.json not present (optional for internal forks)"
+    echo " INFO: marketplace.json not present (optional for internal forks)"
 fi
 
 # --- Plugin name matches skills directory ---
@@ -137,7 +137,7 @@ ALL_ON_DISK=true
 for order_skill in "${SKILL_ORDER[@]}"; do
     expected_file="$SKILLS_DIR/$order_skill/SKILL.md"
     if [[ ! -f "$expected_file" ]]; then
-        echo "  MISSING on disk: skills/$order_skill/SKILL.md"
+        echo " MISSING on disk: skills/$order_skill/SKILL.md"
         ALL_ON_DISK=false
     fi
 done
@@ -157,7 +157,7 @@ if [[ -f "$PLUGIN_JSON" && -f "$MARKETPLACE_JSON" ]]; then
     assert "marketplace.json plugin name matches plugin.json name" \
         "$([[ "$PLUGIN_NAME" == "$MARKETPLACE_PLUGIN_NAME" ]] && echo true || echo false)"
 else
-    echo "  INFO: Skipped (marketplace.json not present)"
+    echo " INFO: Skipped (marketplace.json not present)"
 fi
 
 # --- Summary ---

@@ -7,7 +7,7 @@
 # - No orphan files under scripts/tools/ (everything there must be registered)
 #
 # Usage:
-#   ./tests/test-tools-registered.sh
+# ./tests/test-tools-registered.sh
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -29,12 +29,12 @@ for tool in "${TOOLS[@]}"; do
     [[ -z "$tool" ]] && continue
     full_path="$TOOLS_DIR/$tool"
     if [[ ! -f "$full_path" ]]; then
-        echo "  MISSING: $full_path"
+        echo " MISSING: $full_path"
         ALL_OK=false
         continue
     fi
     if [[ ! -x "$full_path" ]]; then
-        echo "  NOT EXECUTABLE: $full_path"
+        echo " NOT EXECUTABLE: $full_path"
         ALL_OK=false
     fi
 done
@@ -48,11 +48,18 @@ if [[ -d "$TOOLS_DIR" ]]; then
     while IFS= read -r -d '' file; do
         rel_path="${file#"$TOOLS_DIR/"}"
         # Files starting with "_" are internal helpers, not invocable tools.
+<<<<<<< HEAD
         # .conf files are supporting config (e.g. skill-caps.conf), not tools.
         local base
         base="$(basename "$rel_path")"
         [[ "$base" == _* ]] && continue
         [[ "$base" == *.conf ]] && continue
+=======
+        [[ "$(basename "$rel_path")" == _* ]] && continue
+        # Only check executable scripts; config/data files (e.g. *.conf) are
+        # adjacent inputs to tools, not tools themselves.
+        [[ "$rel_path" == *.sh ]] || continue
+>>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         found=false
         for tool in "${TOOLS[@]}"; do
             if [[ "$rel_path" == "$tool" ]]; then
@@ -61,7 +68,7 @@ if [[ -d "$TOOLS_DIR" ]]; then
             fi
         done
         if [[ "$found" == false ]]; then
-            echo "  ORPHAN: $rel_path (on disk but not in TOOLS)"
+            echo " ORPHAN: $rel_path (on disk but not in TOOLS)"
             ALL_REGISTERED=false
         fi
     done < <(find "$TOOLS_DIR" -type f -print0 | sort -z)

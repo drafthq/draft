@@ -5,10 +5,10 @@
 # count severity markers in the report body.
 #
 # Output: JSON array of records:
-#   {path, report_type, track_id, generated_at, severity:{critical,high,medium,low,info}}
+# {path, report_type, track_id, generated_at, severity:{critical,high,medium,low,info}}
 #
 # Usage:
-#   scripts/tools/parse-reports.sh [--root DIR]
+# scripts/tools/parse-reports.sh [--root DIR]
 #
 # Exit codes: 0 OK (even if no reports), 1 invocation error.
 set -euo pipefail
@@ -26,8 +26,8 @@ Usage:
   scripts/tools/parse-reports.sh [--root DIR]
 
 Flags:
-  --root DIR   Directory to scan for *-report-*.md (default: cwd).
-  --help       Show this help.
+  --root DIR Directory to scan for *-report-*.md (default: cwd).
+  --help Show this help.
 
 Output: JSON array of {path, report_type, track_id, generated_at, severity}.
 EOF
@@ -99,7 +99,7 @@ while IFS= read -r -d '' file; do
     rel="${file#"$ROOT/"}"
 
     if $first; then first=false; else printf ','; fi
-    printf '\n  {"path":"%s","report_type":"%s","track_id":%s,"generated_at":"%s","severity":{"critical":%s,"high":%s,"medium":%s,"low":%s,"info":%s}}' \
+    printf '\n {"path":"%s","report_type":"%s","track_id":%s,"generated_at":"%s","severity":{"critical":%s,"high":%s,"medium":%s,"low":%s,"info":%s}}' \
         "$(json_escape "$rel")" \
         "$(json_escape "$report_type")" \
         "$([[ -n "$track_id" ]] && echo "\"$(json_escape "$track_id")\"" || echo "null")" \

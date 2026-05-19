@@ -7,7 +7,7 @@
 # - SKILL_ORDER has no duplicate entries
 #
 # Usage:
-#   ./tests/test-skill-order.sh
+# ./tests/test-skill-order.sh
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -53,7 +53,7 @@ for disk_skill in "${DISK_SKILLS[@]}"; do
     done
     
     if [[ "$found_in_order" == false ]]; then
-        echo "  MISSING from SKILL_ORDER: $disk_skill"
+        echo " MISSING from SKILL_ORDER: $disk_skill"
         ALL_DISK_IN_ORDER=false
     fi
 done
@@ -65,7 +65,7 @@ echo "## SKILL_ORDER entries exist on disk"
 ALL_ORDER_ON_DISK=true
 for order_skill in "${SKILL_ORDER[@]}"; do
     if [[ ! -d "$SKILLS_DIR/$order_skill" ]] || [[ ! -f "$SKILLS_DIR/$order_skill/SKILL.md" ]]; then
-        echo "  MISSING on disk: $order_skill"
+        echo " MISSING on disk: $order_skill"
         ALL_ORDER_ON_DISK=false
     fi
 done

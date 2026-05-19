@@ -1,22 +1,22 @@
 'use strict';
 
-const fs   = require('fs');
+const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
 // =============================================================================
 // LOGGING
 // =============================================================================
-const CYAN  = '\x1b[36m';
+const CYAN = '\x1b[36m';
 const GREEN = '\x1b[32m';
 const YELLOW= '\x1b[33m';
-const RED   = '\x1b[31m';
-const NC    = '\x1b[0m';
+const RED = '\x1b[31m';
+const NC = '\x1b[0m';
 
-const log  = (msg) => console.log(`${CYAN}[graph]${NC} ${msg}`);
+const log = (msg) => console.log(`${CYAN}[graph]${NC} ${msg}`);
 const done = (msg) => console.log(`${GREEN}[done]${NC} ${msg}`);
 const warn = (msg) => console.error(`${YELLOW}[warn]${NC} ${msg}`);
-const die  = (msg) => { console.error(`${RED}[error]${NC} ${msg}`); process.exit(1); };
+const die = (msg) => { console.error(`${RED}[error]${NC} ${msg}`); process.exit(1); };
 
 // =============================================================================
 // ARG PARSER — minimal, no dependencies
@@ -29,7 +29,7 @@ function parseArgs(argv) {
       const key = a.slice(2);
       const next = argv[i + 1];
       if (!next || next.startsWith('--')) {
-        args[key] = true;               // boolean flag
+        args[key] = true; // boolean flag
       } else {
         // support repeatable args as array
         if (args[key] !== undefined) {
@@ -59,20 +59,20 @@ const SKIP_ARTIFACT_DIRS = new Set(['node_modules', 'dist', 'build', 'out']);
  * Skips symlinks, hidden dirs, node_modules, and common build artifact dirs.
  *
  * Exclude patterns are tested against paths relative to `root` (defaults to
- * `dir`).  This means the glob `*​/test/*` requires a parent component before
+ * `dir`). This means the glob `*​/test/*` requires a parent component before
  * "test/", so a top-level `test/` module is NOT excluded while nested
  * `icebox/test/` subdirectories still are.
  *
- * @param {string}   dir
- * @param {string[]} extensions   e.g. ['.cc', '.h']
- * @param {RegExp[]} excludeRes   compiled exclude patterns
- * @param {string}   [root]       root directory for computing relative exclude paths
+ * @param {string} dir
+ * @param {string[]} extensions e.g. ['.cc', '.h']
+ * @param {RegExp[]} excludeRes compiled exclude patterns
+ * @param {string} [root] root directory for computing relative exclude paths
  * @returns {string[]}
  */
 function walkFiles(dir, extensions, excludeRes = [], root = null) {
   const resolveRoot = root || dir;
   const results = [];
-  const extSet  = new Set(extensions);
+  const extSet = new Set(extensions);
 
   function walk(current) {
     let entries;
@@ -82,16 +82,16 @@ function walkFiles(dir, extensions, excludeRes = [], root = null) {
     for (const entry of entries) {
       if (entry.name.startsWith('.')) continue;
       const full = path.join(current, entry.name);
-      const rel  = path.relative(resolveRoot, full);
+      const rel = path.relative(resolveRoot, full);
 
       if (entry.isSymbolicLink()) continue;
 
       if (entry.isDirectory()) {
         if (SKIP_ARTIFACT_DIRS.has(entry.name)) continue;
-        if (shouldExclude(rel, excludeRes))     continue;
+        if (shouldExclude(rel, excludeRes)) continue;
         walk(full);
       } else if (entry.isFile()) {
-        if (shouldExclude(rel, excludeRes))  continue;
+        if (shouldExclude(rel, excludeRes)) continue;
         if (extSet.size === 0 || extSet.has(path.extname(entry.name))) {
           results.push(full);
         }
@@ -117,12 +117,12 @@ const ALL_SOURCE_EXTS = new Set([
  * Returns a Map keyed by extension (e.g. '.go' → ['/abs/path/foo.go', ...]).
  * Callers use allFiles.get('.go') instead of calling walkFiles per language.
  *
- * @param {string}   repo
- * @param {RegExp[]} excludeRes   pre-compiled exclude patterns
+ * @param {string} repo
+ * @param {RegExp[]} excludeRes pre-compiled exclude patterns
  * @returns {Map<string, string[]>}
  */
 function collectAllFiles(repo, excludeRes = []) {
-  const map   = new Map();
+  const map = new Map();
   const files = walkFiles(repo, [...ALL_SOURCE_EXTS], excludeRes);
   for (const f of files) {
     const ext = path.extname(f);
@@ -143,9 +143,7 @@ function compileExcludes(patterns) {
       .replace(/\*\*/g, '<<<GLOBSTAR>>>')
       .replace(/\*/g, '[^/]*')
       .replace(/<<<GLOBSTAR>>>/g, '.*');
-    // Anchor to full-string match so `*.pem` doesn't match `foo.pem.txt` and
-    // `*/test/*` doesn't match `/usr/contest/foo`.
-    return new RegExp('^' + escaped + '$');
+    return new RegExp(escaped);
   });
 }
 
@@ -199,7 +197,7 @@ function writeJsonl(filePath, records) {
   // Stream records directly to disk — avoids building a full lines[] array
   // in memory, which matters for large indexes (100k+ symbols).
   let count = 0;
-  const fd  = fs.openSync(filePath, 'w');
+  const fd = fs.openSync(filePath, 'w');
   try {
     for (const r of records) {
       let line;
@@ -228,7 +226,7 @@ let _treeSitterParser = undefined; // undefined = not yet attempted; false = fai
  * Initialize web-tree-sitter once, shared across all language extractors.
  * Subsequent calls return the cached result immediately — no redundant WASM init.
  *
- * @returns {Promise<Function|null>}  The Parser class, or null if unavailable.
+ * @returns {Promise<Function|null>} The Parser class, or null if unavailable.
  */
 async function initTreeSitter() {
   if (_treeSitterParser !== undefined) return _treeSitterParser || null;
@@ -248,8 +246,8 @@ async function initTreeSitter() {
 // =============================================================================
 function countLines(filePath) {
   try {
-    const buf  = fs.readFileSync(filePath);
-    let count  = 0;
+    const buf = fs.readFileSync(filePath);
+    let count = 0;
     for (let i = 0; i < buf.length; i++) {
       if (buf[i] === 10) count++; // \n
     }
@@ -262,8 +260,8 @@ function countLines(filePath) {
 /** Count lines from an in-memory buffer/string without re-reading from disk. */
 function countLinesFromContent(content) {
   if (!content) return 0;
-  // Mirrors countLines(): counts \n bytes only. Files without a trailing
-  // newline therefore report N-1 lines, matching the on-disk implementation.
+  // +1 matches the old countLines (which counted \n chars); trailing newline
+  // already contributes. Keeping the semantic of countLines for compatibility.
   let count = 0;
   for (let i = 0; i < content.length; i++) {
     if (content.charCodeAt(i) === 10) count++;
@@ -303,8 +301,8 @@ const C_CPP_EXTS_LIST = ['.c', '.h', '.cc', '.cpp', '.cxx', '.hpp', '.hxx', '.h+
 // Returns the ctags binary path if universal-ctags is available, else null.
 // Exuberant-ctags is rejected — it does not support --output-format=json, and
 // calling it with that flag silently produces empty output per file.
-let _ctagsBinCache   = null;
-let _ctagsChecked    = false;
+let _ctagsBinCache = null;
+let _ctagsChecked = false;
 function detectUniversalCtags() {
   if (_ctagsChecked) return _ctagsBinCache;
   _ctagsChecked = true;

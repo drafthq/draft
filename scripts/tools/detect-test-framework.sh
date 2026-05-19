@@ -4,15 +4,15 @@
 # Output: JSON {languages:[{language, framework, runner_command, test_globs, config_file}]}
 #
 # Detection rules (first match per language wins):
-#   python → pytest (pytest.ini | pyproject.toml has "[tool.pytest.ini_options]")
-#                 | unittest (has tests but no pytest config)
-#   go → go test (go.mod + any *_test.go)
-#   javascript/typescript → vitest | jest | mocha (by package.json scripts / devDependencies)
-#   rust → cargo test (Cargo.toml + tests/)
-#   shell → plain bash (tests/ dir has test-*.sh)
+# python → pytest (pytest.ini | pyproject.toml has "[tool.pytest.ini_options]")
+# | unittest (has tests but no pytest config)
+# go → go test (go.mod + any *_test.go)
+# javascript/typescript → vitest | jest | mocha (by package.json scripts / devDependencies)
+# rust → cargo test (Cargo.toml + tests/)
+# shell → plain bash (tests/ dir has test-*.sh)
 #
 # Usage:
-#   scripts/tools/detect-test-framework.sh [--root DIR]
+# scripts/tools/detect-test-framework.sh [--root DIR]
 #
 # Exit codes: 0 (always; empty languages array is valid output).
 set -euo pipefail
@@ -30,8 +30,8 @@ Usage:
   scripts/tools/detect-test-framework.sh [--root DIR]
 
 Flags:
-  --root DIR   Repository root (default: cwd).
-  --help       Show this help.
+  --root DIR Repository root (default: cwd).
+  --help Show this help.
 
 Output: JSON {languages:[{language, framework, runner_command, test_globs, config_file}]}
 EOF
@@ -51,6 +51,8 @@ if [[ ! -d "$ROOT" ]]; then
 fi
 
 cd "$ROOT"
+
+RESULTS=()
 
 emit_lang() {
     local language="$1" framework="$2" runner="$3" globs="$4" config="$5"
@@ -98,13 +100,11 @@ fi
 if [[ -f package.json ]]; then
     PKG_JSON="$(<package.json)"
     JS_FRAMEWORK=""
-    # Match dependency-key patterns only ("foo": "...") so that descriptions /
-    # keywords / titles containing the framework name don't yield false positives.
-    if echo "$PKG_JSON" | grep -qE '"vitest"[[:space:]]*:[[:space:]]*"'; then
+    if [[ "$PKG_JSON" == *'"vitest"'* ]]; then
         JS_FRAMEWORK="vitest"
-    elif echo "$PKG_JSON" | grep -qE '"jest"[[:space:]]*:[[:space:]]*"'; then
+    elif [[ "$PKG_JSON" == *'"jest"'* ]]; then
         JS_FRAMEWORK="jest"
-    elif echo "$PKG_JSON" | grep -qE '"mocha"[[:space:]]*:[[:space:]]*"'; then
+    elif [[ "$PKG_JSON" == *'"mocha"'* ]]; then
         JS_FRAMEWORK="mocha"
     fi
     if [[ -n "$JS_FRAMEWORK" ]]; then
@@ -130,7 +130,7 @@ fi
 # Assemble
 printf '{"languages":['
 first=true
-for r in "${RESULTS[@]}"; do
+for r in ${RESULTS[@]+"${RESULTS[@]}"}; do
     if $first; then first=false; else printf ','; fi
     printf '%s' "$r"
 done
