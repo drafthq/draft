@@ -14,7 +14,7 @@ echo ""
 FIXTURE="$(mktemp -d)"
 trap 'rm -rf "$FIXTURE"' EXIT
 
-# --- Test 1: fallback when nothing present (no PATH graph, no bundled, no legacy) ---
+# --- Test 1: fallback when nothing present (no PATH graph, no bundled native) ---
 set +e
 out="$("$TOOL" --repo "$FIXTURE" --json 2>/dev/null)"
 rc=$?
@@ -26,54 +26,55 @@ else
     assert "JSON reports unavailable" "false"
 fi
 
-# --- Test 2: legacy path detection (create a fake legacy wrapper in fixture) ---
-mkdir -p "$FIXTURE/graph/bin"
-cat > "$FIXTURE/graph/bin/graph" <<'LEG'
+# --- Test 2: bundled arch-specific native detection ---
+ARCH=$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
+mkdir -p "$FIXTURE/graph/bin/$ARCH"
+cat > "$FIXTURE/graph/bin/$ARCH/graph" <<'NAT'
 #!/bin/sh
-echo "graph v0-legacy-node (test)"
+echo "graph v1-native (test)"
 exit 0
-LEG
-chmod +x "$FIXTURE/graph/bin/graph"
+NAT
+chmod +x "$FIXTURE/graph/bin/$ARCH/graph"
 
 set +e
 out="$("$TOOL" --repo "$FIXTURE" --json 2>/dev/null)"
 rc=$?
 set -e
-assert "Legacy present → exit 0" "$([[ "$rc" == "0" ]] && echo true || echo false)"
-if echo "$out" | grep -q '"source":"legacy"'; then
-    assert "Source reports legacy" "true"
+assert "Bundled native present → exit 0" "$([[ "$rc" == "0" ]] && echo true || echo false)"
+if echo "$out" | grep -q '"source":"bundled'; then
+    assert "Source reports bundled" "true"
 else
-    assert "Source reports legacy" "false"
+    assert "Source reports bundled" "false"
 fi
 
-# --- Test 3: usage report side-effect (draft/ dir created + .graph-binary-report.json) ---
+# --- Test 3: usage report side-effect ---
 if [[ -f "$FIXTURE/draft/.graph-binary-report.json" ]]; then
     assert "Usage report JSON written" "true"
-    if grep -q '"source":"legacy"' "$FIXTURE/draft/.graph-binary-report.json"; then
-        assert "Report contains source=legacy" "true"
+    if grep -q '"source":"bundled' "$FIXTURE/draft/.graph-binary-report.json"; then
+        assert "Report contains source=bundled" "true"
     else
-        assert "Report contains source=legacy" "false"
+        assert "Report contains source=bundled" "false"
     fi
 else
-    assert "Usage report JSON written (may be skipped outside draft context)" "true"   # lenient for skeleton
+    assert "Usage report JSON written (may be skipped outside draft context)" "true"
 fi
 
-# --- Test 4: --strict with only legacy rejects ---
+# --- Test 4: --strict with a binary present succeeds (native-only world) ---
 set +e
 "$TOOL" --repo "$FIXTURE" --strict --json >/dev/null 2>&1
 rc=$?
 set -e
-assert "Strict + legacy-only → exit 2" "$([[ "$rc" == "2" ]] && echo true || echo false)"
+assert "Strict + native present → exit 0" "$([[ "$rc" == "0" ]] && echo true || echo false)"
 
-# --- Test 5: verbose human output contains preference language ---
+# --- Test 5: verbose output mentions selection ---
 set +e
 vout="$("$TOOL" --repo "$FIXTURE" --verbose 2>&1)"
 rc=$?
 set -e
-if echo "$vout" | grep -qi 'legacy\|preference\|bundled'; then
-    assert "Verbose mentions selection / legacy" "true"
+if echo "$vout" | grep -qi 'bundled\|PATH\|graph binary'; then
+    assert "Verbose mentions selection" "true"
 else
-    assert "Verbose mentions selection / legacy" "false"
+    assert "Verbose mentions selection" "false"
 fi
 
 echo ""

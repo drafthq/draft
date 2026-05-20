@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 # scripts/build-graph-binaries.sh
 #
-# Generalized build/stage script for Draft graph native binaries (Rust core + optional graph-clang).
-# Dual-mode friendly: does not touch or require removal of graph/src/ or dist/bundle.cjs.
+# Generalized build/stage script for Draft graph native binaries (Aether graph + optional graph-clang).
 #
-# This script prepares the multi-arch layout under graph/bin/<arch>/ for packaging.
-# It contains no internal company paths, no hard-coded forks, and uses only Draft terminology.
+# Prepares the multi-arch layout under graph/bin/<arch>/ for packaging.
+# Native-only (JS graph engine removed).
 #
 # Usage (run from Draft root):
 #   ./scripts/build-graph-binaries.sh [options]
@@ -13,22 +12,16 @@
 # Options:
 #   --targets "linux-amd64 darwin-arm64 ..."   Space-separated list (default: common 4)
 #   --out-dir <path>                           Output base (default: graph/bin)
-#   --from <dir>                               Copy prebuilt binaries from here (e.g. a release dir)
+#   --from <dir>                               Copy prebuilt binaries from here (e.g. ../aether/dist)
 #   --draft-root <path>                        Draft checkout root (default: dirname of script)
 #   --help                                     Show this message
 #
-# Environment (optional, for when Rust sources co-located or in PATH):
-#   DRAFT_GRAPH_RUST_SRC   Path to the Rust graph crate (if cargo build desired here)
+# Environment (optional):
+#   DRAFT_GRAPH_RUST_SRC   Path to the graph crate source if you want in-tree cargo build
 #   CARGO, RUSTUP, CROSS   Toolchain overrides
 #
-# The script is intentionally lightweight for the skeleton phase:
-# - Creates arch directories + README copy
-# - If --from supplied, copies matching graph / graph-clang into each arch dir
-# - Otherwise emits placeholder scripts (real binaries come from external build or CI release)
-# - Leaves Node legacy wrapper and sources untouched
-#
-# Later: integrate with cross-rs or official Rust cross-compilation for actual `cargo build --target`.
-# See graph/bin/README.md, Makefile:graph-binaries, verify-graph-binary.sh, install/package.sh
+# Creates arch directories and either copies real binaries or leaves placeholders.
+# See graph/bin/README.md and scripts/tools/verify-graph-binary.sh.
 
 set -euo pipefail
 
@@ -155,4 +148,4 @@ done
 echo
 echo "Staging complete. Run 'make verify-graph' or scripts/tools/verify-graph-binary.sh to validate."
 echo "Remember: add arch binaries to Git LFS (see graph/bin/README.md)."
-echo "Node sources under graph/src/ and graph/bin/graph (wrapper) remain for dual-mode."
+echo "Native binaries only — JS graph removed."

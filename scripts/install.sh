@@ -5,7 +5,7 @@
 # Public Draft install-time bootstrap (skeleton for Phase 3/4 packaging).
 # - Writes .draft-install-path breadcrumb for reliable plugin root discovery
 # - Ensures Git LFS objects for native graph binaries are materialized
-# - Verifies graph binary (native or legacy) using the new verifier
+# - Verifies graph native binary using the verifier (PATH > bundled arch)
 # - Safe for marketplace / git clone / tarball installs
 # - Produces only draft/ artifacts; Draft-only language throughout
 #
@@ -35,7 +35,7 @@ Draft install bootstrap (skeleton)
   --help           This message
 
 After a successful run, any Draft invocation can locate the bundled graph via the breadcrumb.
-Native binaries (if present in graph/bin/<arch>/) will be preferred over the legacy Node wrapper.
+Native binaries (graph/bin/<arch>/graph) are used when present. No legacy Node component.
 EOF
 }
 
@@ -78,12 +78,12 @@ fi
 # 3. Verify graph binary selection (uses new preference + writes usage report if in a draft context)
 if [[ $DO_VERIFY -eq 1 ]]; then
   if [[ -x "$DRAFT_ROOT/scripts/tools/verify-graph-binary.sh" ]]; then
-    echo "Verifying graph binary (PATH > bundled > legacy)..."
+    echo "Verifying graph binary (PATH > bundled arch)..."
     "$DRAFT_ROOT/scripts/tools/verify-graph-binary.sh" --repo "$DRAFT_ROOT" --verbose || {
-      echo "  (verify reported non-zero; native may be absent — legacy still functional)"
+      echo "  (verify reported non-zero; native binary may be absent — graph features will degrade gracefully)"
     }
   else
-    echo "  verify-graph-binary.sh not present — skipping (legacy detection will be used at runtime)"
+    echo "  verify-graph-binary.sh not present — skipping (graph features will be unavailable until binary is installed)"
   fi
 fi
 
