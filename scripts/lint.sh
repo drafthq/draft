@@ -32,7 +32,7 @@ echo ""
 # Markdownlint
 if command -v markdownlint &> /dev/null; then
     echo "[*] Running markdownlint..."
-    if ! markdownlint "**/*.md" --ignore "node_modules" --ignore "draft.tmp" --ignore "draft/tracks" --ignore "integrations" --ignore "graph/node_modules"; then
+    if ! markdownlint "**/*.md" --ignore "node_modules" --ignore "draft.tmp" --ignore "draft/tracks" --ignore "integrations"; then
         echo "✗ Markdownlint found issues."
         exit_code=1
     else

@@ -18,7 +18,7 @@
 #   ./scripts/package.sh --version 0.1.0-skel
 #   ./scripts/package.sh --out /tmp/draft-pkg --tarball
 #
-# The resulting tree contains graph/bin/ with legacy + arch placeholders (or real LFS natives),
+# The resulting tree contains graph/bin/ with arch-specific native binaries (or LFS placeholders),
 # all skills, core/, scripts/, Makefile, etc. — exactly what a consumer needs.
 
 set -euo pipefail
@@ -119,7 +119,7 @@ rsync -a --delete \
 cat > "$OUT_DIR/draft/version.txt" <<EOF
 Draft packaged: $(date -Iseconds)
 Version: $VERSION
-Graph mode: dual (native preferred when present in graph/bin/<arch>)
+Graph engine: native (graph/bin/<arch>/graph + optional graph-clang)
 See graph/bin/README.md for binary details and LFS.
 EOF
 
@@ -134,6 +134,6 @@ fi
 echo
 echo "Packaging complete."
 echo "Packaged tree: $OUT_DIR"
-echo "  Contains: full skills/, core/, graph/ (dual), scripts/ (incl. new graph tools), Makefile targets"
+echo "  Contains: full skills/, core/, graph/ (native binaries), scripts/, Makefile targets"
 echo "  LFS + binary layout respected per graph/bin/README.md"
 echo "Ready for release or vendor use. Run the packaged tree's make test to validate."

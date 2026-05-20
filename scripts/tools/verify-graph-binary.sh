@@ -1,22 +1,18 @@
 #!/usr/bin/env bash
-# verify-graph-binary.sh — validate and select the best Draft graph binary (native preferred).
+# verify-graph-binary.sh — validate and select the Draft graph native binary.
 #
-# Implements the documented preference order for Phase 3 binary adoption skeleton:
-#   1. graph on $PATH (native or override)
-#   2. Bundled arch-specific under plugin graph/bin/<arch>/
-#   3. Legacy graph/bin/graph (Node wrapper)
+# Preference order:
+#   1. graph on $PATH
+#   2. Bundled arch-specific under graph/bin/<arch>/
 #
-# Also probes for companion graph-clang in corresponding locations.
-# Emits a machine-readable report (or human with --verbose).
-# Exit: 0 = usable binary found (and verified), 1 = invocation error, 2 = no usable binary (graceful).
+# Probes for optional companion graph-clang.
+# Emits JSON or human report. Exit 0 = found+usable, 2 = none (graceful for skills).
 #
 # Usage:
 #   scripts/tools/verify-graph-binary.sh [--repo <dir>] [--plugin-root <dir>] [--json] [--verbose] [--strict]
 #
-# --strict : fail (exit 2) if only legacy Node binary is present (for CI gates later)
-# Integrates with: Makefile verify-graph, install/package flows, init graph detection.
-#
-# Draft-only. No internal paths. Respects dual-mode (Node still works).
+# --strict : fail (exit 2) when no binary at all (for release/CI gates)
+# Integrates with install/package and skills/init graph step.
 
 set -euo pipefail
 
@@ -32,23 +28,22 @@ STRICT=0
 
 usage() {
   cat <<'EOF'
-verify-graph-binary.sh — Draft graph binary resolver + verifier (native preference)
+verify-graph-binary.sh — Draft native graph binary resolver + verifier
 
-Detects and validates graph (and graph-clang) following:
-  PATH > bundled <arch> > legacy Node
+Preference: PATH > bundled graph/bin/<arch>/
 
 Options:
   --repo DIR         Repo root for context (default .)
-  --plugin-root DIR  Explicit Draft plugin install root (overrides breadcrumb search)
-  --json             Emit JSON report to stdout
-  --verbose          Human-readable progress + decisions
-  --strict           Exit 2 if no native binary (only legacy or nothing)
+  --plugin-root DIR  Explicit Draft plugin install root
+  --json             Emit JSON report
+  --verbose          Human progress
+  --strict           Exit 2 if no binary found at all
   --help             This message
 
 Exit codes:
-  0  Usable graph binary located and basic --help succeeded
-  1  Bad arguments or internal error
-  2  No usable graph binary (or strict mode rejected legacy-only)
+  0  Usable binary found and responsive to --help/--version
+  1  Bad args
+  2  No binary located
 EOF
 }
 
@@ -148,23 +143,7 @@ if [[ -z "$GRAPH_BIN" ]]; then
   done
 fi
 
-# --- Preference 3: Legacy Node wrapper (graph/bin/graph) ---
-if [[ -z "$GRAPH_BIN" ]]; then
-  for pr in "${local_roots[@]:-}" "$REPO" "$SCRIPT_DIR/../.."; do
-    legacy="$pr/graph/bin/graph"
-    if [[ -x "$legacy" ]]; then
-      # Legacy always "works" for basic probe (node may be slow but present)
-      if "$legacy" --help >/dev/null 2>&1 || true; then   # node wrapper accepts
-        GRAPH_BIN="$legacy"
-        SOURCE="legacy"
-        log "Falling back to legacy Node: $GRAPH_BIN"
-        break
-      fi
-    fi
-  done
-fi
-
-# Companion search for legacy / PATH case (same-dir or PATH sibling)
+# Companion search for PATH or bundled case (sibling dir or PATH)
 if [[ -n "$GRAPH_BIN" && -z "$GRAPH_CLANG_BIN" ]]; then
   # Same directory as GRAPH_BIN
   dir_of_graph="$(dirname "$GRAPH_BIN")"
@@ -184,10 +163,10 @@ fi
 # --- Verification & Report ---
 if [[ -z "$GRAPH_BIN" ]]; then
   if [[ $EMIT_JSON -eq 1 ]]; then
-    echo '{"status":"unavailable","graph_bin":null,"graph_clang_bin":null,"source":null,"arch":"'"$ARCH"'","message":"No graph binary found in PATH, bundled, or legacy locations"}'
+    echo '{"status":"unavailable","graph_bin":null,"graph_clang_bin":null,"source":null,"arch":"'"$ARCH"'","message":"No graph binary found in PATH or bundled graph/bin/<arch>/"}'
   else
-    echo "ERROR: No Draft graph binary located (tried PATH, graph/bin/$ARCH/, legacy graph/bin/graph)." >&2
-    echo "        Install native binary or ensure legacy graph/bin/graph is executable." >&2
+    echo "ERROR: No Draft graph binary located (tried PATH and graph/bin/$ARCH/)." >&2
+    echo "        Install native binary or ensure it is on PATH." >&2
   fi
   exit 2
 fi
@@ -201,18 +180,18 @@ if ! "$GRAPH_BIN" --help >/dev/null 2>&1 && ! "$GRAPH_BIN" --version >/dev/null 
   exit 2
 fi
 
-# Strict mode: reject if SOURCE == legacy
-if [[ $STRICT -eq 1 && "$SOURCE" == "legacy" ]]; then
+# Strict mode: simply require that we found something
+if [[ $STRICT -eq 1 && -z "$GRAPH_BIN" ]]; then
   if [[ $EMIT_JSON -eq 1 ]]; then
-    echo '{"status":"legacy-only","graph_bin":"'"$GRAPH_BIN"'","graph_clang_bin":"'"${GRAPH_CLANG_BIN:-}"'","source":"'"$SOURCE"'","arch":"'"$ARCH"'","message":"strict mode: legacy Node binary rejected"}'
+    echo '{"status":"none","graph_bin":null,"graph_clang_bin":null,"source":null,"arch":"'"$ARCH"'","message":"strict mode: no graph binary found"}'
   else
-    echo "STRICT: Only legacy Node graph found at $GRAPH_BIN — native required." >&2
+    echo "STRICT: No graph binary found (native required)." >&2
   fi
   exit 2
 fi
 
 status="ok"
-[[ "$SOURCE" == "legacy" ]] && status="ok-legacy"
+SOURCE="${SOURCE:-bundled}"
 
 report() {
   local g="$1" c="$2" s="$3" a="$4" st="$5"

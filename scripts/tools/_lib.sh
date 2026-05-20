@@ -35,45 +35,58 @@ get_yaml_field() {
     ' "$file"
 }
 
-# Locate the `graph` binary (Draft knowledge graph CLI). Sets GRAPH_BIN
-# globally; returns 0 if found, 1 otherwise. Search order:
-# 1. Plugin install breadcrumb files
-# 2. `graph` on $PATH
-# 3. <repo>/graph/bin/graph
-# 4. <tool-repo>/graph/bin/graph (self-hosted in draft repo)
+# Locate the `graph` binary (Draft knowledge graph CLI, native only).
+# Sets GRAPH_BIN globally; returns 0 if found, 1 otherwise.
+# Preference: PATH > bundled graph/bin/<arch>/graph under known roots.
 find_graph_bin() {
     local repo_abs="$1"
     local self_repo="$2"
     GRAPH_BIN=""
+    GRAPH_CLANG_BIN=""
 
-    local breadcrumb
-    for breadcrumb in \
-        "$HOME/.cursor/plugins/local/draft/.draft-install-path" \
-        "$HOME/.claude-plugin/../.draft-install-path"; do
-        if [[ -f "$breadcrumb" ]]; then
-            local candidate
-            candidate="$(cat "$breadcrumb")/graph/bin/graph"
-            if [[ -x "$candidate" ]]; then
-                GRAPH_BIN="$candidate"
-                return 0
-            fi
-        fi
-    done
+    # Resolve arch for vendored layout (linux-amd64, darwin-arm64, ...)
+    local os arch norm
+    os=$(uname -s | tr '[:upper:]' '[:lower:]')
+    arch=$(uname -m)
+    case "$arch" in
+        x86_64|amd64) norm="amd64" ;;
+        aarch64|arm64) norm="arm64" ;;
+        *) norm="$arch" ;;
+    esac
+    local ARCH="${os}-${norm}"
 
+    # 1. PATH (highest)
     if command -v graph >/dev/null 2>&1; then
         GRAPH_BIN="graph"
+        if command -v graph-clang >/dev/null 2>&1; then
+            GRAPH_CLANG_BIN="graph-clang"
+        fi
         return 0
     fi
 
-    if [[ -n "$repo_abs" && -x "$repo_abs/graph/bin/graph" ]]; then
-        GRAPH_BIN="$repo_abs/graph/bin/graph"
-        return 0
-    fi
+    # 2. Breadcrumb + common roots, looking for arch-specific native
+    local roots=()
+    for bc in \
+        "$HOME/.cursor/plugins/local/draft/.draft-install-path" \
+        "$HOME/.claude-plugin/../.draft-install-path" \
+        "$HOME/.claude/plugins/draft/.draft-install-path"; do
+        if [[ -f "$bc" ]]; then
+            local pr; pr="$(cat "$bc" 2>/dev/null || true)"
+            [[ -n "$pr" && -d "$pr" ]] && roots+=("$pr")
+        fi
+    done
+    [[ -n "$repo_abs" && -d "$repo_abs" ]] && roots+=("$repo_abs")
+    [[ -n "$self_repo" && -d "$self_repo" ]] && roots+=("$self_repo")
 
-    if [[ -n "$self_repo" && -x "$self_repo/graph/bin/graph" ]]; then
-        GRAPH_BIN="$self_repo/graph/bin/graph"
-        return 0
-    fi
+    for pr in "${roots[@]}"; do
+        local cand="$pr/graph/bin/$ARCH/graph"
+        if [[ -x "$cand" ]]; then
+            GRAPH_BIN="$cand"
+            local clang_cand="$pr/graph/bin/$ARCH/graph-clang"
+            [[ -x "$clang_cand" ]] && GRAPH_CLANG_BIN="$clang_cand"
+            return 0
+        fi
+    done
 
     return 1
 }

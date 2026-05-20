@@ -1,75 +1,60 @@
 # Graph Binary Distribution (Draft)
 
-Draft supports a **dual-mode graph engine** during the binary adoption transition (Phase 3 skeleton).
+The Draft knowledge graph engine is a **native binary** (Aether graph) with an optional `graph-clang` companion for high-fidelity C/C++ extraction.
 
-- Legacy: `graph` (this directory) — Node.js wrapper around `../dist/bundle.cjs` (tree-sitter WASM). Preserved; not deleted.
-- Native (new): High-performance Rust `graph` binary with optional `graph-clang` companion for superior C/C++ extraction fidelity.
+No JavaScript/Node component remains. The legacy `graph/bin/graph` shim and `graph/src/` tree have been removed.
 
 ## Layout
 
 ```
 graph/bin/
-├── graph                 # Legacy Node wrapper (#!/usr/bin/env node; always kept for fallback)
-├── README.md             # This file
+├── README.md
 ├── linux-amd64/
-│   ├── graph             # Placeholder for native `graph` (real binary tracked via Git LFS)
-│   └── graph-clang       # Optional high-fidelity C/C++ companion (LFS)
-├── linux-arm64/
-│   ├── graph
-│   └── graph-clang
+│   ├── graph          # Native graph binary (LFS-tracked when real)
+│   └── graph-clang    # Optional C/C++ companion (LFS)
 ├── darwin-arm64/
 │   ├── graph
 │   └── graph-clang
-├── darwin-x86_64/
-│   └── ...
-└── (windows-amd64/ etc. as needed)
+└── (linux-arm64/, darwin-x86_64/, windows-amd64/ ... as released)
 ```
 
-Placeholders in arch dirs are small text files or symlinks until replaced by release artifacts. Real prebuilts are produced by `scripts/build-graph-binaries.sh` and vendored here for plugin distribution.
+Placeholders under each arch directory are zero-byte files or small markers until real release artifacts are staged by `scripts/build-graph-binaries.sh` (or copied from the Aether build tree).
 
-## Binary Preference Order (Detection Logic)
+## Binary Preference Order
 
-All consumers (skills/init graph section, core/shared/graph-query.md, tools) use this order:
+Detection (used by `skills/init/SKILL.md`, `scripts/tools/verify-graph-binary.sh`, and `scripts/tools/_lib.sh`):
 
-1. **PATH first** — `command -v graph` (and `graph-clang`). Preferred for native installs or user-provided binaries. Verified executable and responsive to `--help`.
-2. **Bundled arch-specific** — Relative to plugin root (via .draft-install-path breadcrumb or known paths):
-   `graph/bin/<os>-<arch>/graph` and sibling `graph-clang` (os/arch normalized from uname: linux-amd64, darwin-arm64, etc.).
-3. **Legacy Node** — `graph/bin/graph` (the wrapper present today).
+1. **PATH first** — `command -v graph` (and `graph-clang`). Highest priority for developer installs and CI.
+2. **Bundled arch-specific** — Relative to the Draft plugin or repo:
+   - `graph/bin/<os>-<arch>/graph` (and sibling `graph-clang`)
+   - Arch is normalized: `linux-amd64`, `darwin-arm64`, `linux-arm64`, etc.
 
-If a preferred candidate is missing or fails basic exec check, fall through with clear log messages (e.g., "Preferring PATH graph: /usr/local/bin/graph", "No native graph-clang found; using ctags fallback if needed", "Falling back to legacy Node graph").
+`graph-clang` is always discovered as a sibling of the chosen `graph` binary.
 
-`graph-clang` is discovered relative to chosen `graph` (same dir or PATH sibling or `graph/bin/<arch>/graph-clang`).
+If neither is present, graph features silently degrade (skills record `Graph files queried: NONE — graph data unavailable`).
 
-## Git LFS for Binaries
+## Git LFS
 
-Native binaries (>10MB) must be stored via Git LFS to keep the repo clone light.
-
-Add to repository root `.gitattributes`:
+Large native binaries are stored via Git LFS:
 
 ```
 graph/bin/*/graph filter=lfs diff=lfs merge=lfs -text
 graph/bin/*/graph-clang filter=lfs diff=lfs merge=lfs -text
-graph/bin/linux-amd64/graph filter=lfs diff=lfs merge=lfs -text
-# ... repeat for each arch as populated
 ```
 
-**Install-time requirements** (handled or documented by `scripts/install.sh` and `scripts/package.sh`):
+`scripts/install.sh` and `scripts/package.sh` perform `git lfs pull` (or materialize from tarball) during install.
 
-- `git lfs install`
-- After clone or extract: `git lfs pull` (or the package tarball includes the resolved LFS objects)
-- The `package.sh` produces a self-contained `draft/` tree or tarball with LFS objects materialized.
+## Building / Staging Binaries
 
-See:
-- `scripts/build-graph-binaries.sh` — generalized builder/stager (no internal paths; emits to graph/bin/<arch>/)
-- `scripts/tools/verify-graph-binary.sh` — runtime check + arch selection helper
-- `Makefile` targets: `graph-binaries`, `verify-graph`
-- `scripts/install.sh`, `scripts/package.sh` — packaging entrypoints that respect LFS and produce Draft artifacts only
+Use `scripts/build-graph-binaries.sh` (from the Aether build outputs) to populate `graph/bin/<arch>/` for a release.
 
-## Transition Notes
+See also:
+- `scripts/tools/verify-graph-binary.sh` — runtime resolver + arch selection
+- `skills/init/SKILL.md` (Step 1.4) — the actual invocation during project initialization
 
-- Existing Node `src/`, `dist/`, `build.js`, `analyze-repo.sh` remain untouched.
-- Detection and wrappers keep full backward compat: if no native present, legacy path is used exactly as before.
-- Later phases may promote native to default or remove Node after validation.
-- All messages and paths use "Draft" terminology and `/draft:` commands.
+## Query / Output Contract
 
-This skeleton enables future prebuilt shipping while preserving the working graph today.
+The CLI surface (`graph --repo`, `graph --query --mode ...`) and the `draft/graph/*.jsonl` schema are stable and documented in:
+
+- `graph/README.md`
+- `core/shared/graph-query.md` (mandatory lookup contract for all skills)
