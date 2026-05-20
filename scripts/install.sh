@@ -14,7 +14,7 @@
 #   ./scripts/install.sh --prefix /opt/draft
 #
 # The script is idempotent and never mutates user projects.
-# See graph/bin/README.md for LFS + layout details.
+# See bin/README.md for LFS + layout details (bin/<arch>/ is canonical).
 # Called (or emulated) by IDE plugin installers and by package.sh consumers.
 
 set -euo pipefail
@@ -35,7 +35,7 @@ Draft install bootstrap (skeleton)
   --help           This message
 
 After a successful run, any Draft invocation can locate the bundled graph via the breadcrumb.
-Native binaries (graph/bin/<arch>/graph) are used when present. No legacy Node component.
+Native binaries (bin/<arch>/graph canonical; graph/bin/ legacy transition) are used when present.
 EOF
 }
 
@@ -63,12 +63,12 @@ BREADCRUMB="$PREFIX/.draft-install-path"
 echo "$DRAFT_ROOT" > "$BREADCRUMB"
 echo "Wrote breadcrumb: $BREADCRUMB → $DRAFT_ROOT"
 
-# 2. Git LFS (respect instructions in graph/bin/README.md)
+# 2. Git LFS (respect instructions in bin/README.md for canonical layout)
 if [[ $DO_LFS -eq 1 ]]; then
   if command -v git-lfs >/dev/null 2>&1; then
     echo "Ensuring Git LFS objects for graph binaries..."
     (cd "$DRAFT_ROOT" && git lfs install --local 2>/dev/null || true)
-    (cd "$DRAFT_ROOT" && git lfs pull --include="graph/bin/**/graph*" 2>/dev/null || echo "  (LFS pull skipped or partial — binaries may be placeholders until real artifacts added)")
+    (cd "$DRAFT_ROOT" && git lfs pull --include="bin/**/graph*" 2>/dev/null || echo "  (LFS pull skipped or partial — binaries may be placeholders until real artifacts added)")
   else
     echo "  git-lfs not found in PATH — native binaries (if LFS-tracked) will be missing placeholders."
     echo "  Install git-lfs and re-run with git lfs pull, or use a tarball that already contains the objects."
@@ -91,7 +91,7 @@ fi
 echo
 echo "Install bootstrap complete for Draft."
 echo "  - Breadcrumb ready for IDE/plugin detection"
-echo "  - graph/bin/ layout + LFS respected (see graph/bin/README.md)"
+echo "  - bin/<arch>/ layout (canonical) + legacy graph/bin/ supported; LFS respected (see bin/README.md)"
 echo "  - Next: run 'make build' then 'make lint' or invoke /draft:init in a project"
 echo "  - Native graph binaries (when added) will be auto-preferred for best performance"
 =======

@@ -18,7 +18,7 @@
 #   ./scripts/package.sh --version 0.1.0-skel
 #   ./scripts/package.sh --out /tmp/draft-pkg --tarball
 #
-# The resulting tree contains graph/bin/ with arch-specific native binaries (or LFS placeholders),
+# The resulting tree contains bin/<arch>/ (canonical) or graph/bin/ with arch-specific native binaries (or LFS placeholders),
 # all skills, core/, scripts/, Makefile, etc. — exactly what a consumer needs.
 
 set -euo pipefail
@@ -79,11 +79,11 @@ else
 fi
 
 # 2. LFS materialization (critical for real binaries)
-echo "Materializing LFS objects for graph/bin/* (if tracked)..."
+echo "Materializing LFS objects for bin/**/graph* (canonical) + graph/bin/** (legacy) if tracked..."
 if command -v git-lfs >/dev/null 2>&1; then
-  (cd "$DRAFT_ROOT" && git lfs pull --include="graph/bin/**" 2>/dev/null || true)
+  (cd "$DRAFT_ROOT" && git lfs pull --include="bin/**/graph* graph/bin/**" 2>/dev/null || true)
 else
-  echo "  git-lfs absent — packaged tree will contain placeholder scripts only (see graph/bin/README.md)"
+  echo "  git-lfs absent — packaged tree will contain placeholder scripts only (see bin/README.md)"
 fi
 
 # 3. Optional full build + lint (public hygiene)
@@ -119,8 +119,8 @@ rsync -a --delete \
 cat > "$OUT_DIR/draft/version.txt" <<EOF
 Draft packaged: $(date -Iseconds)
 Version: $VERSION
-Graph engine: native (graph/bin/<arch>/graph + optional graph-clang)
-See graph/bin/README.md for binary details and LFS.
+Graph engine: native (bin/<arch>/graph canonical + optional graph-clang; legacy graph/bin/ supported)
+See bin/README.md for binary details and LFS.
 EOF
 
 # 7. Tarball (optional)
@@ -134,6 +134,6 @@ fi
 echo
 echo "Packaging complete."
 echo "Packaged tree: $OUT_DIR"
-echo "  Contains: full skills/, core/, graph/ (native binaries), scripts/, Makefile targets"
-echo "  LFS + binary layout respected per graph/bin/README.md"
+echo "  Contains: full skills/, core/, bin/<arch>/ (native graph binaries), scripts/, Makefile targets"
+echo "  LFS + binary layout respected per bin/README.md (bin/<arch>/ canonical)"
 echo "Ready for release or vendor use. Run the packaged tree's make test to validate."

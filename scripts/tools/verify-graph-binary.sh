@@ -3,7 +3,8 @@
 #
 # Preference order:
 #   1. graph on $PATH
-#   2. Bundled arch-specific under graph/bin/<arch>/
+#   2. Bundled arch-specific under bin/<arch>/ (canonical layout)
+#   3. Legacy: graph/bin/<arch>/ (transition support)
 #
 # Probes for optional companion graph-clang.
 # Emits JSON or human report. Exit 0 = found+usable, 2 = none (graceful for skills).
@@ -30,7 +31,7 @@ usage() {
   cat <<'EOF'
 verify-graph-binary.sh — Draft native graph binary resolver + verifier
 
-Preference: PATH > bundled graph/bin/<arch>/
+Preference: PATH > bundled bin/<arch>/ > legacy graph/bin/<arch>/
 
 Options:
   --repo DIR         Repo root for context (default .)
@@ -105,6 +106,8 @@ if command -v graph >/dev/null 2>&1; then
 fi
 
 # --- Preference 2: Bundled arch-specific (if no PATH or to prefer bundled? PATH wins per charter) ---
+# Canonical: bin/<arch>/graph under plugin/repo root (correct layout).
+# Legacy fallback: graph/bin/<arch>/graph for transition.
 if [[ -z "$GRAPH_BIN" ]]; then
   # Determine plugin root candidates
   local_roots=()
@@ -125,21 +128,24 @@ if [[ -z "$GRAPH_BIN" ]]; then
   local_roots+=("$REPO" "$SCRIPT_DIR/../..")
 
   for pr in "${local_roots[@]}"; do
-    bundled="$pr/graph/bin/$ARCH/graph"
-    if [[ -x "$bundled" ]]; then
-      if "$bundled" --help >/dev/null 2>&1 || "$bundled" --version >/dev/null 2>&1; then
-        GRAPH_BIN="$bundled"
-        SOURCE="bundled:$ARCH"
-        log "Found bundled native: $GRAPH_BIN"
-        # companion
-        clang_cand="$pr/graph/bin/$ARCH/graph-clang"
-        if [[ -x "$clang_cand" ]]; then
-          GRAPH_CLANG_BIN="$clang_cand"
-          log "Found bundled graph-clang: $GRAPH_CLANG_BIN"
+    # Try canonical bin/<arch>/ first (correct location shipped in repo)
+    for base in "bin" "graph/bin"; do
+      bundled="$pr/$base/$ARCH/graph"
+      if [[ -x "$bundled" ]]; then
+        if "$bundled" --help >/dev/null 2>&1 || "$bundled" --version >/dev/null 2>&1; then
+          GRAPH_BIN="$bundled"
+          SOURCE="bundled:$ARCH"
+          log "Found bundled native: $GRAPH_BIN (via $base)"
+          # companion (sibling in same arch dir)
+          clang_cand="$pr/$base/$ARCH/graph-clang"
+          if [[ -x "$clang_cand" ]]; then
+            GRAPH_CLANG_BIN="$clang_cand"
+            log "Found bundled graph-clang: $GRAPH_CLANG_BIN"
+          fi
+          break 2
         fi
-        break
       fi
-    fi
+    done
   done
 fi
 
@@ -163,9 +169,9 @@ fi
 # --- Verification & Report ---
 if [[ -z "$GRAPH_BIN" ]]; then
   if [[ $EMIT_JSON -eq 1 ]]; then
-    echo '{"status":"unavailable","graph_bin":null,"graph_clang_bin":null,"source":null,"arch":"'"$ARCH"'","message":"No graph binary found in PATH or bundled graph/bin/<arch>/"}'
+    echo '{"status":"unavailable","graph_bin":null,"graph_clang_bin":null,"source":null,"arch":"'"$ARCH"'","message":"No graph binary found in PATH or bundled bin/<arch>/ (or legacy graph/bin/)"}'
   else
-    echo "ERROR: No Draft graph binary located (tried PATH and graph/bin/$ARCH/)." >&2
+    echo "ERROR: No Draft graph binary located (tried PATH and bin/$ARCH/ or graph/bin/$ARCH/)." >&2
     echo "        Install native binary or ensure it is on PATH." >&2
   fi
   exit 2
@@ -185,7 +191,7 @@ if [[ $STRICT -eq 1 && -z "$GRAPH_BIN" ]]; then
   if [[ $EMIT_JSON -eq 1 ]]; then
     echo '{"status":"none","graph_bin":null,"graph_clang_bin":null,"source":null,"arch":"'"$ARCH"'","message":"strict mode: no graph binary found"}'
   else
-    echo "STRICT: No graph binary found (native required)." >&2
+    echo "STRICT: No graph binary found (native required; looked in bin/<arch>/ and graph/bin/<arch/>)." >&2
   fi
   exit 2
 fi

@@ -15,6 +15,12 @@ FIXTURE="$(mktemp -d)"
 trap 'rm -rf "$FIXTURE"' EXIT
 
 # --- Test 1: fallback when nothing present (no PATH graph, no bundled native) ---
+# Hide real repo binaries during this test so the "absent" path is exercised (verifier always probes SCRIPT_DIR parent)
+REAL_BIN_DIR=""
+if [[ -d "$ROOT_DIR/bin" ]]; then
+    REAL_BIN_DIR="$(mktemp -d)"
+    mv "$ROOT_DIR/bin" "$REAL_BIN_DIR/bin-hidden" 2>/dev/null || true
+fi
 set +e
 out="$("$TOOL" --repo "$FIXTURE" --json 2>/dev/null)"
 rc=$?
@@ -25,16 +31,21 @@ if echo "$out" | grep -q '"status":"unavailable"'; then
 else
     assert "JSON reports unavailable" "false"
 fi
+# Restore real binaries
+if [[ -n "$REAL_BIN_DIR" && -d "$REAL_BIN_DIR/bin-hidden" ]]; then
+    mv "$REAL_BIN_DIR/bin-hidden" "$ROOT_DIR/bin" 2>/dev/null || true
+    rmdir "$REAL_BIN_DIR" 2>/dev/null || true
+fi
 
 # --- Test 2: bundled arch-specific native detection ---
 ARCH=$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
-mkdir -p "$FIXTURE/graph/bin/$ARCH"
-cat > "$FIXTURE/graph/bin/$ARCH/graph" <<'NAT'
+mkdir -p "$FIXTURE/bin/$ARCH"
+cat > "$FIXTURE/bin/$ARCH/graph" <<'NAT'
 #!/bin/sh
 echo "graph v1-native (test)"
 exit 0
 NAT
-chmod +x "$FIXTURE/graph/bin/$ARCH/graph"
+chmod +x "$FIXTURE/bin/$ARCH/graph"
 
 set +e
 out="$("$TOOL" --repo "$FIXTURE" --json 2>/dev/null)"
