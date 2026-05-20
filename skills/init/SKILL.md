@@ -451,7 +451,14 @@ If **Greenfield**: skip to Step 2 (Product Definition).
 
 ### 1. Detect and run graph binary
 
-**Native binary only** (Aether graph): Prefer `graph` from PATH, then vendored `graph/bin/<arch>/graph` (and sibling `graph-clang` for C++ fidelity). The legacy Node wrapper has been removed. Graceful degradation when no binary is present.
+**Native binary only** (Aether graph): 
+
+- First choice: `graph` found on `$PATH` (via `command -v graph`)
+- Second choice: vendored binary under `graph/bin/<arch>/graph` where `<arch>` is computed from `uname` to match one of the directories that actually exist (e.g. `darwin-arm64`, `linux-amd64`, `linux-arm64`).
+
+The AI **must** correctly figure out the architecture string so it picks the right pre-copied binary from the directories shown by the user (`graph/bin/darwin-arm64/...` and `graph/bin/linux-amd64/...`).
+
+The legacy Node wrapper has been removed. Graceful degradation when no binary is present.
 
 ```bash
 GRAPH_BIN=""
@@ -479,12 +486,25 @@ if [ -z "$GRAPH_BIN" ]; then
 fi
 
 if [ -z "$GRAPH_BIN" ]; then
-    ARCH="$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')"
+    # Compute architecture directory name that matches what exists under graph/bin/
+    # Supported layout examples: darwin-arm64, linux-amd64, linux-arm64, darwin-x86_64
+    os=$(uname -s | tr '[:upper:]' '[:lower:]')
+    machine=$(uname -m)
+    case "$machine" in
+        x86_64|amd64)   arch="amd64" ;;
+        arm64|aarch64)  arch="arm64" ;;
+        *)              arch="$machine" ;;
+    esac
+    ARCH="${os}-${arch}"
+
+    echo "Resolved arch for bundled graph: $ARCH (from uname: $os + $machine)"
+
     for root in \
         "$HOME/.cursor/plugins/local/draft" \
         "$HOME/.claude-plugin/.." \
         "." \
-        "$HOME/.claude/plugins/draft"; do
+        "$HOME/.claude/plugins/draft" \
+        "$HOME/.claude/plugins/local/draft"; do
         cand="$root/graph/bin/$ARCH/graph"
         if [ -x "$cand" ]; then
             GRAPH_BIN="$cand"
@@ -494,6 +514,30 @@ if [ -z "$GRAPH_BIN" ]; then
             break
         fi
     done
+
+    # If the exact ARCH dir didn't exist, try to pick any available arch dir as last resort
+    if [ -z "$GRAPH_BIN" ]; then
+        for root in \
+            "$HOME/.cursor/plugins/local/draft" \
+            "$HOME/.claude-plugin/.." \
+            "." \
+            "$HOME/.claude/plugins/draft"; do
+            if [ -d "$root/graph/bin" ]; then
+                for d in "$root/graph/bin"/*/; do
+                    [ -d "$d" ] || continue
+                    cand="$d/graph"
+                    if [ -x "$cand" ]; then
+                        GRAPH_BIN="$cand"
+                        ARCH=$(basename "$d")
+                        echo "Falling back to first available bundled graph: $GRAPH_BIN (arch=$ARCH)"
+                        clang_cand="$d/graph-clang"
+                        [ -x "$clang_cand" ] && GRAPH_CLANG_BIN="$clang_cand"
+                        break 2
+                    fi
+                done
+            fi
+        done
+    fi
 fi
 
 # Execute
