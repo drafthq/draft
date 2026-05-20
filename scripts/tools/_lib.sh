@@ -88,5 +88,22 @@ find_graph_bin() {
         fi
     done
 
+    # Last resort: pick the first executable graph binary under any arch dir
+    for pr in "${roots[@]}"; do
+        if [[ -d "$pr/graph/bin" ]]; then
+            for d in "$pr/graph/bin"/*/; do
+                [[ -d "$d" ]] || continue
+                local cand="$d/graph"
+                if [[ -x "$cand" ]]; then
+                    GRAPH_BIN="$cand"
+                    GRAPH_CLANG_BIN=""
+                    local clang_cand="$d/graph-clang"
+                    [[ -x "$clang_cand" ]] && GRAPH_CLANG_BIN="$clang_cand"
+                    return 0
+                fi
+            done
+        fi
+    done
+
     return 1
 }
