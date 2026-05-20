@@ -3,7 +3,7 @@
 #
 # Generalized build/stage script for Draft graph native binaries (Aether graph + optional graph-clang).
 #
-# Prepares the multi-arch layout under graph/bin/<arch>/ for packaging.
+# Prepares the multi-arch layout under bin/<arch>/ (canonical) for packaging.
 # Native-only (JS graph engine removed).
 #
 # Usage (run from Draft root):
@@ -11,7 +11,7 @@
 #
 # Options:
 #   --targets "linux-amd64 darwin-arm64 ..."   Space-separated list (default: common 4)
-#   --out-dir <path>                           Output base (default: graph/bin)
+#   --out-dir <path>                           Output base (default: bin)
 #   --from <dir>                               Copy prebuilt binaries from here (e.g. ../aether/dist)
 #   --draft-root <path>                        Draft checkout root (default: dirname of script)
 #   --help                                     Show this message
@@ -21,14 +21,14 @@
 #   CARGO, RUSTUP, CROSS   Toolchain overrides
 #
 # Creates arch directories and either copies real binaries or leaves placeholders.
-# See graph/bin/README.md and scripts/tools/verify-graph-binary.sh.
+# See bin/README.md and scripts/tools/verify-graph-binary.sh.
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DEFAULT_DRAFT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 DRAFT_ROOT="$DEFAULT_DRAFT_ROOT"
-OUT_BASE="graph/bin"
+OUT_BASE="bin"
 TARGETS="linux-amd64 linux-arm64 darwin-arm64 darwin-x86_64"
 FROM_DIR=""
 DO_HELP=0
@@ -37,12 +37,12 @@ usage() {
   cat <<'EOF'
 Draft graph binary staging (skeleton)
 
-Prepares graph/bin/<arch>/{graph,graph-clang} layout for distribution.
-Keeps full legacy Node support; adds native binary slots.
+Prepares bin/<arch>/{graph,graph-clang} layout (canonical) for distribution.
+Legacy graph/bin/<arch> also supported by detectors for transition.
 
 Options:
   --targets LIST     (default: linux-amd64 linux-arm64 darwin-arm64 darwin-x86_64)
-  --out-dir DIR      (default: graph/bin relative to --draft-root)
+  --out-dir DIR      (default: bin relative to --draft-root)
   --from DIR         Copy graph+graph-clang from this dir into each arch (for release packaging)
   --draft-root PATH  Draft repository root (autodetected)
   --help             This help
@@ -80,13 +80,9 @@ echo "  Targets    : $TARGETS"
 [[ -n "$FROM_DIR" ]] && echo "  Source from: $FROM_DIR"
 echo
 
-# Ensure the legacy wrapper and README are present (they are under source control)
-if [[ ! -f "$OUT_DIR/graph" ]]; then
+# Note: for bin/ layout there is no top-level wrapper; arch dirs only (per bin/README.md)
+if [[ "$OUT_BASE" == "graph/bin" && ! -f "$OUT_DIR/graph" ]]; then
   echo "WARNING: legacy graph/bin/graph wrapper missing — this script does not create it."
-fi
-if [[ ! -f "$OUT_DIR/README.md" ]]; then
-  echo "Copying README.md into output (if missing in worktree)..."
-  cp -n "$OUT_DIR/README.md" "$OUT_DIR/README.md" 2>/dev/null || true
 fi
 
 normalize_arch() {
@@ -125,7 +121,7 @@ for t in $TARGETS; do
       cat > "$arch_dir/graph" <<'PH'
 #!/bin/sh
 # Placeholder — replaced by real native binary during packaging / release.
-# See graph/bin/README.md for LFS, build, and detection details.
+# See bin/README.md for LFS, build, and detection details.
 echo "Draft native graph placeholder for $t (replace via build-graph-binaries.sh --from or CI)" >&2
 exit 42
 PH
@@ -147,5 +143,5 @@ done
 
 echo
 echo "Staging complete. Run 'make verify-graph' or scripts/tools/verify-graph-binary.sh to validate."
-echo "Remember: add arch binaries to Git LFS (see graph/bin/README.md)."
+echo "Remember: add arch binaries to Git LFS (see bin/README.md)."
 echo "Native binaries only — JS graph removed."

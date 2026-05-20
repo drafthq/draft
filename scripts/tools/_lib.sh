@@ -37,7 +37,7 @@ get_yaml_field() {
 
 # Locate the `graph` binary (Draft knowledge graph CLI, native only).
 # Sets GRAPH_BIN globally; returns 0 if found, 1 otherwise.
-# Preference: PATH > bundled graph/bin/<arch>/graph under known roots.
+# Preference: PATH > bundled bin/<arch>/graph (canonical) > legacy graph/bin/<arch>/ under known roots.
 find_graph_bin() {
     local repo_abs="$1"
     local self_repo="$2"
@@ -64,7 +64,7 @@ find_graph_bin() {
         return 0
     fi
 
-    # 2. Breadcrumb + common roots, looking for arch-specific native
+    # 2. Breadcrumb + common roots, looking for arch-specific native (bin/ first = correct)
     local roots=()
     for bc in \
         "$HOME/.cursor/plugins/local/draft/.draft-install-path" \
@@ -79,30 +79,34 @@ find_graph_bin() {
     [[ -n "$self_repo" && -d "$self_repo" ]] && roots+=("$self_repo")
 
     for pr in "${roots[@]}"; do
-        local cand="$pr/graph/bin/$ARCH/graph"
-        if [[ -x "$cand" ]]; then
-            GRAPH_BIN="$cand"
-            local clang_cand="$pr/graph/bin/$ARCH/graph-clang"
-            [[ -x "$clang_cand" ]] && GRAPH_CLANG_BIN="$clang_cand"
-            return 0
-        fi
+        for base in bin graph/bin; do
+            local cand="$pr/$base/$ARCH/graph"
+            if [[ -x "$cand" ]]; then
+                GRAPH_BIN="$cand"
+                local clang_cand="$pr/$base/$ARCH/graph-clang"
+                [[ -x "$clang_cand" ]] && GRAPH_CLANG_BIN="$clang_cand"
+                return 0
+            fi
+        done
     done
 
-    # Last resort: pick the first executable graph binary under any arch dir
+    # Last resort: pick the first executable graph binary under any arch dir (bin/ or graph/bin)
     for pr in "${roots[@]}"; do
-        if [[ -d "$pr/graph/bin" ]]; then
-            for d in "$pr/graph/bin"/*/; do
-                [[ -d "$d" ]] || continue
-                local cand="$d/graph"
-                if [[ -x "$cand" ]]; then
-                    GRAPH_BIN="$cand"
-                    GRAPH_CLANG_BIN=""
-                    local clang_cand="$d/graph-clang"
-                    [[ -x "$clang_cand" ]] && GRAPH_CLANG_BIN="$clang_cand"
-                    return 0
-                fi
-            done
-        fi
+        for base in bin graph/bin; do
+            if [[ -d "$pr/$base" ]]; then
+                for d in "$pr/$base"/*/; do
+                    [[ -d "$d" ]] || continue
+                    local cand="$d/graph"
+                    if [[ -x "$cand" ]]; then
+                        GRAPH_BIN="$cand"
+                        GRAPH_CLANG_BIN=""
+                        local clang_cand="$d/graph-clang"
+                        [[ -x "$clang_cand" ]] && GRAPH_CLANG_BIN="$clang_cand"
+                        return 0
+                    fi
+                done
+            fi
+        done
     done
 
     return 1

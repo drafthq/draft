@@ -261,8 +261,8 @@ Note: `draft/graph/module-deps.mermaid` and `draft/graph/proto-map.mermaid` are 
 
 **Preference order** (native first for performance/fidelity):
 1. `graph` (and `graph-clang`) on `$PATH` — allows system-wide or user native installs to take precedence.
-2. Bundled arch-specific native under the Draft plugin tree: `graph/bin/<arch>/graph` (and `graph-clang`), where `<arch>` is `linux-amd64`, `darwin-arm64`, etc. (resolved from `uname`).
-3. Legacy Node wrapper: `graph/bin/graph` (preserved for dual-mode and environments without native binaries).
+2. Bundled arch-specific native under the Draft plugin tree: `bin/<arch>/graph` (and `graph-clang` — canonical correct layout), where `<arch>` is `linux-amd64`, `darwin-arm64`, etc. (resolved from `uname`).
+3. Legacy locations: `graph/bin/<arch>/graph` or flat `graph/bin/graph` (transition support only).
 
 The canonical resolver is `scripts/tools/verify-graph-binary.sh` (see its `--json --verbose --strict` modes). It:
 - Implements the exact order above.
@@ -287,19 +287,19 @@ GRAPH_BIN=""
 if [ -z "$GRAPH_BIN" ]; then
     GRAPH_BIN="$(command -v graph 2>/dev/null || true)"
 fi
-# 2. Bundled arch-specific (graph/bin/<arch>/graph) via breadcrumb or known paths
+# 2. Bundled arch-specific (bin/<arch>/graph canonical, or legacy graph/bin/<arch>/graph) via breadcrumb or known paths
 if [ -z "$GRAPH_BIN" ]; then
-    # ... (arch resolution + $PLUGIN_ROOT/graph/bin/$ARCH/graph) ...
+    # ... (arch resolution + $PLUGIN_ROOT/bin/$ARCH/graph or graph/bin/...) ...
 fi
-# 3. Legacy graph/bin/graph
+# 3. Legacy graph/bin/graph (Node era flat wrapper)
 if [ -z "$GRAPH_BIN" ]; then
-    # breadcrumb + common paths to graph/bin/graph (Node)
+    # breadcrumb + common paths to graph/bin/graph (Node) or transitional flat locations
 fi
 ```
 
 `install.sh` writes the `.draft-install-path` breadcrumb so bundled resolution works after marketplace install.
 
-See `graph/bin/README.md` for the exact layout, Git LFS requirements, and placeholder rules. The Node `src/` and `dist/bundle.cjs` remain intact.
+See `bin/README.md` for the exact (canonical bin/<arch>) layout, Git LFS requirements, and placeholder rules. Legacy Node wrapper references remain for historical context.
 
 ## Usage Report Contract
 

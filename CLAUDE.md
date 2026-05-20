@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Draft is a Claude Code plugin that implements Context-Driven Development methodology. It provides a two-tier command surface: 4 primary workflow commands (`/draft:init`, `/draft:new-track`, `/draft:implement`, `/draft:review`) plus 5 routers (`/draft:plan`, `/draft:ops`, `/draft:docs`, `/draft:discover`, `/draft:jira`) as the recommended public interface. 22 specialist commands are dispatched underneath the routers. The unified `/draft:jira` router supports `preview`, `create`, and the advanced `review <JIRA-ID>` qualification pipeline (deep-review + bughunt + coverage + test-gap analysis). Run `/draft` for the full intent map. Total surface: 31 skills.
 
-Draft also ships a **knowledge graph engine** under `graph/` (native Aether binary) and **14 deterministic shell helpers** under `scripts/tools/`. Skills are markdown (source of truth, processed by a bash build script into platform-specific integration files for Copilot and Gemini); the graph engine and shell helpers handle mechanical work that markdown can't.
+Draft also ships a **knowledge graph engine** under `bin/<arch>/` (native Aether binaries) + `scripts/tools/` (14 deterministic shell helpers). Skills are markdown (source of truth, processed by a bash build script into platform-specific integration files for Copilot and Gemini); the graph engine and shell helpers handle mechanical work that markdown can't.
 
 ## Build & Test Commands
 
@@ -67,7 +67,7 @@ The build script (`scripts/build-integrations.sh`) reads `SKILL_ORDER`, `CORE_FI
 - **`core/shared/`** — Shared procedures loaded by skills (context loading, git metadata, pattern learning, cross-skill dispatch, Jira sync, **graph queries**, **parallel analysis**, VCS commands)
 - **`core/agents/`** — Behavioral protocols for specialized agents (architect, debugger, planner, rca, reviewer, ops, writer)
 - **`core/templates/`** — 20 templates for files that `/draft:init` generates in user projects
-- **`graph/`** — Knowledge graph engine (native binary from Aether). Vendored under `graph/bin/<arch>/graph` (+ optional `graph-clang`). Output artifacts under `draft/graph/`. CLI and schema documented in `graph/README.md`.
+- **`bin/<arch>/`** — Knowledge graph engine native binaries (from Aether). `bin/<arch>/graph` (+ optional `graph-clang`). Output artifacts under `draft/graph/`. CLI and schema documented in `bin/README.md`. Legacy `graph/bin/` layout supported for transition.
 - **`scripts/tools/`** — 14 deterministic shell helpers (git-metadata, classify-files, hotspot-rank, cycle-detect, etc.). Skills call these for mechanical work.
 - **`scripts/lib.sh`** — Shared definitions sourced by build script: `SKILL_ORDER`, `CORE_FILES`, `TOOLS`.
 - **`web/`** — Static website deployed to GitHub Pages (`getdraft.dev`), deployed via `.github/workflows/pages.yml`. Includes the 23-chapter Draft Book under `web/book/`.

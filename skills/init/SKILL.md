@@ -454,9 +454,9 @@ If **Greenfield**: skip to Step 2 (Product Definition).
 **Native binary only** (Aether graph): 
 
 - First choice: `graph` found on `$PATH` (via `command -v graph`)
-- Second choice: vendored binary under `graph/bin/<arch>/graph` where `<arch>` is computed from `uname` to match one of the directories that actually exist (e.g. `darwin-arm64`, `linux-amd64`, `linux-arm64`).
+- Second choice: vendored binary under `bin/<arch>/graph` (canonical layout) or legacy `graph/bin/<arch>/graph` where `<arch>` is computed from `uname` to match one of the directories that actually exist (e.g. `darwin-arm64`, `linux-amd64`, `linux-arm64`).
 
-The AI **must** correctly figure out the architecture string so it picks the right pre-copied binary from the directories shown by the user (`graph/bin/darwin-arm64/...` and `graph/bin/linux-amd64/...`).
+The AI **must** correctly figure out the architecture string so it picks the right pre-copied binary from the directories present under the plugin root (`bin/darwin-arm64/...` etc).
 
 The legacy Node wrapper has been removed. Graceful degradation when no binary is present.
 
@@ -486,8 +486,9 @@ if [ -z "$GRAPH_BIN" ]; then
 fi
 
 if [ -z "$GRAPH_BIN" ]; then
-    # Compute architecture directory name that matches what exists under graph/bin/
+    # Compute architecture directory name that matches what exists under bin/<arch>/
     # Supported layout examples: darwin-arm64, linux-amd64, linux-arm64, darwin-x86_64
+    # Canonical layout is bin/<arch>/ (correct); graph/bin/<arch>/ supported for transition
     os=$(uname -s | tr '[:upper:]' '[:lower:]')
     machine=$(uname -m)
     case "$machine" in
@@ -505,14 +506,16 @@ if [ -z "$GRAPH_BIN" ]; then
         "." \
         "$HOME/.claude/plugins/draft" \
         "$HOME/.claude/plugins/local/draft"; do
-        cand="$root/graph/bin/$ARCH/graph"
-        if [ -x "$cand" ]; then
-            GRAPH_BIN="$cand"
-            echo "Using bundled native graph for $ARCH: $GRAPH_BIN"
-            clang_cand="$root/graph/bin/$ARCH/graph-clang"
-            [ -x "$clang_cand" ] && GRAPH_CLANG_BIN="$clang_cand"
-            break
-        fi
+        for base in bin graph/bin; do
+            cand="$root/$base/$ARCH/graph"
+            if [ -x "$cand" ]; then
+                GRAPH_BIN="$cand"
+                echo "Using bundled native graph for $ARCH: $GRAPH_BIN (via $base)"
+                clang_cand="$root/$base/$ARCH/graph-clang"
+                [ -x "$clang_cand" ] && GRAPH_CLANG_BIN="$clang_cand"
+                break 2
+            fi
+        done
     done
 
     # If the exact ARCH dir didn't exist, try to pick any available arch dir as last resort
@@ -522,20 +525,22 @@ if [ -z "$GRAPH_BIN" ]; then
             "$HOME/.claude-plugin/.." \
             "." \
             "$HOME/.claude/plugins/draft"; do
-            if [ -d "$root/graph/bin" ]; then
-                for d in "$root/graph/bin"/*/; do
-                    [ -d "$d" ] || continue
-                    cand="$d/graph"
-                    if [ -x "$cand" ]; then
-                        GRAPH_BIN="$cand"
-                        ARCH=$(basename "$d")
-                        echo "Falling back to first available bundled graph: $GRAPH_BIN (arch=$ARCH)"
-                        clang_cand="$d/graph-clang"
-                        [ -x "$clang_cand" ] && GRAPH_CLANG_BIN="$clang_cand"
-                        break 2
-                    fi
-                done
-            fi
+            for base in bin graph/bin; do
+                if [ -d "$root/$base" ]; then
+                    for d in "$root/$base"/*/; do
+                        [ -d "$d" ] || continue
+                        cand="$d/graph"
+                        if [ -x "$cand" ]; then
+                            GRAPH_BIN="$cand"
+                            ARCH=$(basename "$d")
+                            echo "Falling back to first available bundled graph: $GRAPH_BIN (arch=$ARCH)"
+                            clang_cand="$d/graph-clang"
+                            [ -x "$clang_cand" ] && GRAPH_CLANG_BIN="$clang_cand"
+                            break 3
+                        fi
+                    done
+                fi
+            done
         done
     fi
 fi
@@ -553,7 +558,7 @@ else
 fi
 ```
 
-See `core/shared/graph-query.md` and `graph/bin/README.md` for the query contract and binary layout. When a native binary (or `graph-clang`) is chosen, explicit selection messages are printed.
+See `core/shared/graph-query.md` and `bin/README.md` for the query contract and binary layout. When a native binary (or `graph-clang`) is chosen, explicit selection messages are printed.
 
 If the build succeeds, `draft/graph/` is populated and later steps consume the always-load artifacts + injection slots exactly as before.
 
