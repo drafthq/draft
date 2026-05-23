@@ -48,18 +48,10 @@ if [[ -d "$TOOLS_DIR" ]]; then
     while IFS= read -r -d '' file; do
         rel_path="${file#"$TOOLS_DIR/"}"
         # Files starting with "_" are internal helpers, not invocable tools.
-<<<<<<< HEAD
-        # .conf files are supporting config (e.g. skill-caps.conf), not tools.
-        local base
-        base="$(basename "$rel_path")"
-        [[ "$base" == _* ]] && continue
-        [[ "$base" == *.conf ]] && continue
-=======
-        [[ "$(basename "$rel_path")" == _* ]] && continue
         # Only check executable scripts; config/data files (e.g. *.conf) are
         # adjacent inputs to tools, not tools themselves.
+        [[ "$(basename "$rel_path")" == _* ]] && continue
         [[ "$rel_path" == *.sh ]] || continue
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         found=false
         for tool in "${TOOLS[@]}"; do
             if [[ "$rel_path" == "$tool" ]]; then

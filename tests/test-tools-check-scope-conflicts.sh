@@ -1,13 +1,3 @@
-#!/usr/bin/env bash
-<<<<<<< HEAD
-source tests/test-helpers.sh
-test_check_scope_conflicts_help() {
-  run_tool "scripts/tools/check-scope-conflicts.sh" --help
-  assert_contains "Foundations stub" "$OUTPUT"
-  pass
-}
-run_tests
-=======
 # Test suite for scripts/tools/check-scope-conflicts.sh
 set -euo pipefail
 
@@ -64,4 +54,3 @@ assert "Single track → exit 0" "$([[ "$rc" == "0" ]] && echo true || echo fals
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 exit "$FAIL"
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
