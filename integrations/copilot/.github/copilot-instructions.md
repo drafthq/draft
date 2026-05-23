@@ -17657,7 +17657,8 @@ Transform each `architecture.md` section into machine-optimized format using thi
 | Executive Summary | META | Extract key-value pairs only (type, lang, pattern, build, test, entry, config) |
 | Architecture Overview (Mermaid) | GRAPH:COMPONENTS | Convert Mermaid diagrams to tree notation using `├─` / `└─` |
 | Component Map | GRAPH:COMPONENTS | Merge into the same tree |
-| Data Flow (Mermaid) | GRAPH:DATAFLOW | Convert to `FLOW:{Name}` with arrow notation: `source --{type}--> sink` |
+| **Core Operational Flows, Lifecycles & State Machines** (§6) | **GRAPH:OPERATIONAL** + GRAPH:DATAFLOW | Highest fidelity requirement. Extract primary behavioral models (states, transitions, error/recovery paths) in compact structured form. |
+| Data Flow (Mermaid) | GRAPH:DATAFLOW | Convert to `FLOW:{Name}` with arrow notation (merge with OPERATIONAL where appropriate) |
 | External Dependencies | GRAPH:DEPENDENCIES | Convert to `A -[protocol]-> B` format |
 | Dependency Injection | WIRING | Extract mechanism + tokens/getters lists |
 | Critical Invariants | INVARIANTS | One line per invariant: `[CATEGORY] name: rule @file:line` |
