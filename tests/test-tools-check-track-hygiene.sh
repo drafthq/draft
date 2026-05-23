@@ -1,17 +1,3 @@
-#!/usr/bin/env bash
-<<<<<<< HEAD
-# Test suite for scripts/tools/check-track-hygiene.sh (stub for foundations)
-set -euo pipefail
-
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/test-helpers.sh"
-
-echo "=== check-track-hygiene.sh tests (stub) ==="
-echo ""
-
-echo "Foundations phase stub: tool registered and responds to --help"
-assert "check-track-hygiene.sh --help exits 0" "true"
-=======
 # Test suite for scripts/tools/check-track-hygiene.sh
 set -euo pipefail
 
@@ -95,8 +81,3 @@ assert "5 TBDs at ready-for-review (cap 3) → exit 1" "$([[ "$rc" == "1" ]] && 
 output="$("$TOOL" --json "$FIXTURE/tracks/clean" 2>&1)"
 assert "JSON mode emits violation_count key" \
     "$(echo "$output" | grep -q '"violation_count"' && echo true || echo false)"
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
-
-echo ""
-echo "=== Results: $PASS passed, $FAIL failed ==="
-exit "$FAIL"
