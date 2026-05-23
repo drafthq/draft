@@ -4,7 +4,16 @@
 
 ---
 
-This is a self-contained, callable procedure for generating `draft/.ai-context.md` from `draft/architecture.md`. Any skill that mutates `architecture.md` should execute this subroutine afterward to keep the derived context files in sync.
+This is a self-contained, callable procedure for generating `draft/.ai-context.md` from `draft/architecture.md`. 
+
+**Critical fidelity requirement**: The condensation must faithfully preserve the core operational models (workflows, lifecycles, state machines) from architecture.md §6 "Core Operational Flows, Lifecycles & State Machines", along with invariants and extension points. These behavioral models are the highest-value content for downstream coding accuracy.
+
+**Mapping (architecture.md → .ai-context.md)**:
+- Core Operational Flows (§6) → `## GRAPH:OPERATIONAL` (states, transitions, error/recovery paths in compact form)
+- Data Flow diagrams → lightweight `FLOW:{Name}` summaries tied to the operational models above
+- Module graph + hotspots → `GRAPH:MODULE-HOTSPOTS`, `GRAPH:FAN-IN`, `GRAPH:PROTO-MAP` etc. as already defined
+
+Any skill that mutates `architecture.md` should execute this subroutine afterward to keep the derived context files in sync.
 
 **Called by:** `/draft:init`, `/draft:init refresh`, `/draft:implement`, `/draft:decompose`, `/draft:coverage`, `/draft:index`
 

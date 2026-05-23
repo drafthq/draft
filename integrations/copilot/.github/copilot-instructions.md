@@ -139,7 +139,7 @@ Initialize a Draft project for Context-Driven Development.
 - **Producing copy-paste module descriptions** — if 3+ modules share identical Responsibilities or description text, you have NOT analyzed the source files
 - **Writing architecture.md below the tier minimum** for the detected codebase tier — compute tier from Step 1.4.5 graph metrics (M, F, P); falling below the tier minimum indicates incomplete analysis, not conciseness
 - **Writing sequence diagrams under 15 lines** of Mermaid code — shallow diagrams without alt/opt blocks, payloads, and error paths are useless
-- **Writing module deep-dives under 100 lines each** — a module with hundreds of source files cannot be described in a paragraph
+- **Writing module deep-dives that ignore the graph or lack a workflow/state diagram** — the graph is ground truth; every significant module must have at least one synthesized diagram showing its primary flow or lifecycle. Prose volume without diagram fidelity is a failure.
 - **Using "See X/" or "follow BUILD patterns"** as a substitute for reading actual source files and documenting real content
 - **Creating freeform sections** instead of the numbered 28-section template (e.g., "## Module deep-dive: X" instead of "## 7. Core Modules Deep Dive" with "#### 7.1 X" subsections) — the template structure is MANDATORY, graph data enriches it but does not replace it
 - **Capping sub-module depth** — sub-modules with 50+ files get the SAME analysis depth as top-level modules; there is NO page limit; a 100-page architecture.md for a large codebase is correct
@@ -159,7 +159,7 @@ Initialize a Draft project for Context-Driven Development.
 ## 3.  System Identity & Purpose
 ## 4.  Architecture Overview
 ## 5.  Component Map & Interactions
-## 6.  Data Flow — End to End
+## 6.  Core Operational Flows, Lifecycles & State Machines
 ## 7.  Core Modules Deep Dive
 ## 8.  Concurrency Model & Thread Safety
 ## 9.  Framework & Extension Points
@@ -192,6 +192,23 @@ Initialize a Draft project for Context-Driven Development.
 **Self-check before finalizing**: Run a mental grep for `## 1.` through `## 28.` in your output. Any gap = incomplete document. Return and fill it.
 
 > **If you are a subagent** executing this step via a delegation prompt: your prompt is a SUMMARY. The full 28-section structure above is the AUTHORITATIVE requirement. Do not infer section names from the summary — use the exact headings listed here.
+
+---
+
+## Graph Fidelity & Diagram-First Priority (MANDATORY)
+
+The knowledge graph in `draft/graph/` (module-graph.jsonl, hotspots.jsonl, proto-index.jsonl, per-module *.jsonl files, public API tables, and edge weights) is the **deterministic structural ground truth** for the system's actual architecture.
+
+**You are running inside a powerful agentic coding environment** (Cursor, Claude Code, Copilot, Windsurf, etc.) that maintains its own rich, continuously updated index of the entire codebase. **Use that indexed knowledge aggressively** in addition to the explicit graph data and direct source reads.
+
+**LLM role is faithful, high-fidelity synthesis** — not invention.
+
+- Every structural claim must be consistent with the graph records. Contradiction = failure.
+- **Diagrams are first-class deliverables.** For each major module or pipeline, produce at least one accurate Mermaid workflow, state, or sequence diagram.
+- **Accuracy and correctness > document length.** Short, precise synthesis + good diagrams is superior to long prose or file lists.
+- **Workflow and state focus.** Prioritize understanding primary control flows and state transitions so you can draw accurate diagrams.
+
+This rule takes precedence over older volume-oriented language in this file.
 
 ---
 
@@ -792,15 +809,15 @@ Perform a **one-time, exhaustive analysis** of the existing codebase. This is NO
 1. **LLM / AI-agent context** — enabling future code changes, Q&A, and onboarding without re-reading source files.
 2. **Engineer reference** — enabling debugging, extension, and operational understanding.
 
-### Exhaustive Analysis Mandate
+### Graph + Indexed Knowledge Fidelity Mandate
 
-**CRITICAL**: This analysis must be EXHAUSTIVE, not representative. Specifically:
-- **Read ALL relevant source files** — do not sample or skim
-- **Enumerate ALL implementations** — no "and others", "etc.", or "similar patterns"
-- **Generate REAL Mermaid diagrams** — every section calling for a diagram MUST have one
-- **Include ACTUAL code snippets** — from the codebase, not pseudocode
-- **Populate ALL tables** — with real data, not placeholders or examples
-- **Target: comprehensive coverage** — shorter output indicates incomplete analysis
+**CRITICAL**: The output must be **faithful to the deterministic graph and your environment's full indexed understanding** of the project. This is not "read every file" exhaustiveness — it is correctness and completeness of the *model*.
+
+- The knowledge graph (`draft/graph/`) + your agent/IDE's rich codebase index together form the authoritative view.
+- Use direct source reads strategically (hotspots, interfaces, key implementation paths) to validate, enrich, and draw accurate diagrams — not as a brute-force enumeration exercise.
+- **Prioritize synthesis of accurate workflow, state, sequence, and component diagrams** that make the graph's facts and the project's higher-level design immediately usable.
+- **Include real, verified code snippets and invariants** only where they add understanding not already visible in the graph or diagrams.
+- **Target: highest possible correctness** of the generated architecture model. A concise, diagram-rich document that an agent or engineer can trust is the goal. Volume without fidelity is noise.
 
 If the codebase is large (200+ files), focus on the module boundaries but still enumerate exhaustively within each module.
 
@@ -904,17 +921,21 @@ Spawn a **single synthesis agent** with the Synthesis Coordinator Prompt from `c
 - `{ARCHITECTURE_TEMPLATE_STRUCTURE}` — the 28-section outline from `core/templates/architecture.md`
 
 The synthesis agent:
-- Pastes reader deep-dives verbatim into Section 7 — does not rewrite them
-- Derives cross-cutting sections (component map, concurrency, error handling, invariants, extension points) from IR fields
-- Reads source directly for §6 Data Flow, §12 API, §14 Integration, §15 Invariants verification, §18 Patterns, §22 Config
-- Produces the full 28-section architecture.md
+- Integrates the reader outputs (now graph + one high-quality workflow/state diagram + minimal notes per module) into §7 with light editing only for consistency and cross-references.
+- Derives the true cross-cutting sections (§4 topology, §5 component map, §6 operational flows, §8 concurrency, §14 integration sequences, §15 invariants, etc.) by combining IR data, reader diagrams, and additional targeted source reads.
+- Aggressively uses its own full indexed project knowledge (from the host Cursor/Claude Code/Copilot environment) to improve accuracy of workflows, state machines, and higher-level design synthesis beyond what the static graph snapshot provides.
+- Produces a document whose primary value is faithful, visual, diagram-rich representation of the actual system design.
 
 **Source reading policy for synthesis agent (enforce in prompt):**
 ```
-Read source for: §6 Data Flow, §12 API Definitions, §14 Integration Points,
-                 §15 Critical Invariants (verification), §18 Design Patterns, §22 Configuration
+Read source (and aggressively use your full project index) for:
+- §6 Core Operational Flows — the most important system-level workflows, lifecycles, and state machines (this is the highest-ROI section for future coding accuracy)
+- §12 API / Interface surface
+- §14 Cross-module integration sequences
+- §15 Critical Invariants (verification against actual code)
+- §18 Key Design Patterns
 
-All other sections: compose from reader deep-dives (§7) and IR fields.
+All other sections: compose primarily from the graph + reader outputs + IR, with light additional reads only where needed for diagram accuracy.
 ```
 
 #### Phase 3: Parallel Finalization
@@ -998,28 +1019,28 @@ For each Ops/Handler directory:
 
 Do NOT batch all 20 modules into one write. Process them sequentially so each module and its sub-modules get dedicated analysis attention. **No upper limit on Pass 2 length** — it scales with codebase complexity. A 14-module C++ codebase with deep sub-module hierarchies may produce 5000+ lines in Pass 2 alone. That is correct and expected.
 
-#### Pass 2 Completion Gate — MANDATORY before Pass 3
+#### Pass 2 Completion Gate — Graph Fidelity + Diagram Check (MANDATORY before Pass 3)
 
-**YOU MUST PRODUCE THIS TABLE before writing a single line of Pass 3.** Do not skip, summarize, or defer it.
+**YOU MUST PRODUCE THIS VERIFICATION before writing Pass 3.** Do not skip it.
 
-For every module written in Pass 2, count the lines in its section and fill in this table:
+For every module that received a `#### 7.X` section, verify the following and record the result:
 
 ```
-## Pass 2 Completion Report
-| Module | Lines written | Sub-modules covered | PASS / FAIL |
-|--------|--------------|---------------------|-------------|
-| foo/bar | 142 | fill_processor, scheduler | PASS |
-| foo/baz | 38  | none                | FAIL — below 100 line minimum |
+## Pass 2 Graph Fidelity & Diagram Report
+| Module | Graph block present? | Workflow/State diagram present & accurate? | Synthesis contradicts graph? | PASS / FAIL |
+|--------|----------------------|--------------------------------------------|------------------------------|-------------|
+| foo/bar | Yes | Yes (stateDiagram of lifecycle) | No | PASS |
+| foo/baz | Yes | Partial (only dependency list) | No | FAIL — add one primary flow diagram |
 ```
 
-**Rules:**
-- PASS threshold: ≥ 100 lines for any module with < 200 source files; ≥ 150 lines for modules with 200+ source files
-- A FAIL row means you MUST expand that module's section NOW, before continuing
-- If any row shows FAIL: re-read additional source files for that module and expand until the line count passes
-- If all rows PASS: print "All modules pass. Proceeding to Pass 3." and continue
-- **Omitting this table is the same as failing the gate** — Pass 3 MUST NOT start without it
+**Rules (new priority):**
+- Every module that appears in `draft/graph/module-graph.jsonl` must have its deterministic `<!-- GRAPH:module-deep/... -->` block rendered.
+- Every architecturally significant module (top 20 by fan-in or any module with >1 clear internal boundary in the graph) must contain **at least one synthesized Mermaid workflow, state, or sequence diagram** that visualizes the dominant control/data flow derived from the graph + source reads.
+- Synthesis prose must not contradict the graph record for that module. If a discrepancy is discovered during source reading, it is noted explicitly; the graph remains the structural authority.
+- A FAIL row means you must add or correct the missing diagram (or remove the contradicting sentence) before proceeding. Re-reading source is allowed only to improve diagram accuracy or resolve a real contradiction.
+- **Passing the gate with a correct graph block + one good diagram + 40 words of synthesis is better than a 200-line prose dump that ignores the graph.**
 
-This gate exists because this skill requires exhaustive module coverage. Skipping modules or writing paragraph-level summaries is a violation of the Exhaustive Analysis Mandate, not an acceptable pragmatic trade-off.
+This gate enforces the new priority: the graph defines structure; diagrams make it usable; prose is minimal supporting narrative. The old 100-line volume targets are retired.
 
 #### Pass 3: Remaining Sections (Sections 8–28 + Appendices)
 
@@ -2069,7 +2090,7 @@ Generate `draft/architecture.md` — a comprehensive human-readable engineering 
 
 **Output format**:
 - Markdown report with Mermaid diagrams, tables, and code blocks
-- **Target length: comprehensive** — cover all 28 sections + 5 appendices exhaustively
+- **Target length: fidelity-first** — cover all 28 sections + 5 appendices with graph-grounded accuracy and diagram correctness. Prose volume is secondary to correctness; short sections that are faithful to the graph + diagrams are preferred over padded exhaustive text.
 - Include a **Table of Contents** with numbered sections
 - End the document with: `"End of analysis. Queries should reference the .ai-context.md file for token efficiency."`
 
@@ -2078,8 +2099,11 @@ Generate `draft/architecture.md` — a comprehensive human-readable engineering 
 - Do NOT create freeform/custom section names (e.g., "## Module deep-dive: X", "## Key architectural patterns")
 - Do NOT collapse multiple template sections into one
 - Do NOT skip section numbers — if a section does not apply, include the heading with "N/A — {reason}"
-- Graph data ENRICHES the template sections — it does not REPLACE the template structure
-- Sub-modules MUST receive the SAME depth of analysis as top-level modules — there is NO page limit; if the document reaches 100+ pages for a large codebase, that is correct and expected
+- The knowledge graph (`draft/graph/`) is the **deterministic ground truth** for structure (modules, dependencies, public surfaces, edges, hotspots). LLM synthesis exists to interpret the graph into actionable behavioral understanding — primarily through accurate diagrams — plus minimal narrative that does not contradict the graph.
+- **Diagrams over prose volume.** Prefer one correct workflow/state/sequence diagram per major module or operational model over long responsibility paragraphs. A 20-line Mermaid diagram that faithfully reflects real call paths and state transitions from the graph is more valuable for downstream code generation than 300 words of generic description.
+- **Accuracy and fidelity to graph + host index > historical length targets.** It is acceptable (and preferred) for sections to be short when the graph block + diagrams already convey the design.
+- **No contradiction with graph.** Any prose claim about module boundaries, dependencies, entry points, or public API must be consistent with the corresponding graph record. Discrepancies must be noted explicitly.
+- Sub-modules receive depth only when the graph shows clear internal boundaries (distinct public surface or high internal fan-in). Depth is bounded by observable graph structure, never by a desire for exhaustive enumeration.
 
 ### MANDATORY Header Format
 
@@ -2281,159 +2305,93 @@ Use ✓ for direct calls, ✓(RPC) for remote procedure calls, ✓(HTTP) for RES
 
 ---
 
-### 6. Data Flow — End to End
+### 6. Core Operational Flows, Lifecycles & State Machines
 
-**Expected length: 3-5 pages with 3-5 diagrams**
+> **Source:** llm-synthesis + graph (primary structural truth) + full project index from host environment  
+> **Required:** high+ (this is one of the highest-ROI sections for any downstream coding assistant)  
+> **Length:** 2–5 high-quality behavioral diagrams + minimal supporting prose  
+> **N/A when:** the system is trivial (single linear script with no meaningful state or branching) — write explicit N/A.  
+> **Verification:** diagram fidelity to graph + indexed understanding + citation-check
 
-**MANDATORY: Create SEPARATE Mermaid flowcharts** for each major data-flow path. Do NOT combine flows into one diagram.
+**Purpose**: This section captures the **real behavioral architecture** — the primary ways the system moves through time, state, and control flow. It is more valuable for correct code generation and modification than static component descriptions.
 
-#### 6.1 Primary Processing Pipeline
-**DIAGRAM REQUIRED**: Show the main request/job flow from entry to completion.
-```mermaid
-flowchart LR
-    A[Request Entry] --> B[Validation]
-    B --> C[Processing]
-    C --> D[Persistence]
-    D --> E[Response]
-```
-Annotate each arrow with the data type that moves between stages.
+The LLM **must** combine:
+- The deterministic knowledge graph (modules, edges, entry points, public surfaces, hotspots, call targets)
+- Its full indexed project understanding from the host Cursor / Claude Code / Copilot environment
+- Targeted source reads only for confirmation and detail
 
-#### 6.2 Variant Flows
-**DIAGRAM REQUIRED for each variant**: (e.g., sync vs async path, read vs write path, happy path vs error path).
+to identify and accurately diagram the most important operational models.
 
-#### 6.3 Multi-Phase Processing
-**DIAGRAM REQUIRED if applicable**: (e.g., map → reduce, extract → transform → load, request → queue → worker → result).
+### 6.1 Primary Operational Models (MANDATORY — 2 to 5 diagrams)
 
-#### 6.4 Output Delivery Pipeline
-**DIAGRAM REQUIRED**: Show how processed data reaches external targets (APIs, databases, files, queues).
+Synthesize the 2–5 most important operational views for the system. Typical candidates:
 
-#### 6.5 Safety / Consistency Mechanisms
-Document with diagram or prose: transactions, idempotency guards, version checks, distributed locks, retry boundaries.
+- The dominant request / job / user-action lifecycle (end-to-end, with decision points and error paths)
+- Main state machine(s) for stateful components or the overall system
+- Critical background / async / batch / worker pipelines
+- Startup / initialization / shutdown lifecycle (especially valuable for services and tooling)
+- For plugin / meta-tooling / agent platforms: the core execution or dispatch model (skill/command/agent lifecycle, frontmatter contract enforcement, generation/condensation pipeline, parallel analysis protocol, track/decompose/implement lifecycle, etc.)
 
-**Annotate ALL arrows with the data/message type that moves between stages.**
+Each diagram must be a **stateDiagram-v2**, **sequenceDiagram**, or detailed **flowchart** containing:
+- Real actor / state / stage names from the actual codebase
+- Labeled transitions using actual function, message, or event names where possible
+- `alt` / `opt` / `loop` / `critical` where branching, repetition, or error handling exists
+
+Prioritize **accuracy and usefulness for future code generation** over visual polish. A correct diagram of the real initialization sequence or request dispatch path is far more valuable than a generic "data flow" picture.
+
+### 6.2 Error & Recovery Paths
+
+For every primary flow above, explicitly surface (in prose or inside the diagrams) the main error classification, retry/backoff, circuit-breaker, fallback, and recovery behaviors.
+
+### 6.3 Cross-Cutting Concerns in Flows
+
+Only when material: authentication/authorization checkpoints, distributed transaction boundaries, observability hooks, rate limiting, idempotency, cancellation, or resource lifecycle rules that appear inside the operational models.
+
+**For plugin platforms and meta-tooling projects**: This section must include clear diagrams of the primary internal processes (initialization with graph gate, skill/agent/command dispatch and frontmatter enforcement, condensation + profile derivation, parallel reader→synthesis protocol, etc.). These diagrams document how the platform itself executes.
 
 ---
 
 ### 7. Core Modules Deep Dive
 
-**Expected length: NO UPPER LIMIT — scales with codebase complexity.**
-- A 14-module codebase with sub-modules may produce 50+ pages for Section 7 alone. That is correct.
-- A sub-module with 50+ files gets the SAME depth as a top-level module (full deep-dive template).
-- Every sub-module at every nesting level gets dedicated analysis — do NOT summarize to save space.
-- If the document reaches 100 pages, that is a sign of thoroughness, not a problem.
+> **Source:** graph (primary structural truth) + llm-synthesis (secondary, minimal)  
+> **Required:** always  
+> **Length:** Graph block + one high-signal workflow/state diagram + ≤80 words synthesis per module  
+> **N/A when:** never  
+> **Verification:** graph-fence fidelity + diagram correctness + citation-check
 
-For each major internal module (typically 5–20), provide a COMPLETE deep dive:
+**Core rule:** The graph is the source of truth for structure. LLM synthesis exists only to interpret the graph into actionable design understanding — primarily via one accurate workflow or state diagram per module — plus tiny supporting notes. The previous volume-oriented deep-dive expectations are superseded.
 
-#### Per-Module Template
+For each module emitted by `draft/graph/module-graph.jsonl` (and its per-module file records), produce a subsection whose **primary content** is the deterministic graph block followed by one synthesized behavioral diagram. Every module gets a slot; do not sample.
 
-```markdown
-#### 7.X {ModuleName}
+#### 7.{N} {module-name}
 
-**Role**: One-line description of what this module does.
+<!-- GRAPH:module-deep/{module-name}:START -->
+<!-- Rendered deterministic block: path, file count, public API list, fan-in/fan-out, hotspot score,
+     primary incoming/outgoing edges with weights, entry points if known. No LLM prose inside fence. -->
+<!-- GRAPH:module-deep/{module-name}:END -->
 
-**Source Files**:
-- `path/to/main.file` — primary implementation
-- `path/to/types.file` — type definitions
-- `path/to/utils.file` — helpers
+**Role** (≤25 words, derived strictly from graph role + primary source files read).
 
-**Sub-Module Structure** (for modules with sub-directories):
+**Primary Workflow / State** (MANDATORY — one diagram per module)
+Synthesize a single, accurate Mermaid diagram (`stateDiagram-v2`, `sequenceDiagram`, or `flowchart LR/TD` with clear stages) that captures the dominant control flow, data transformation pipeline, or lifecycle state machine for this module, grounded in the call graph / entry points / public surface from the graph record. Label transitions with the actual function or message names where possible. This diagram is more important than any prose.
 
-| Sub-Module | Path | Files | Role |
-|------------|------|-------|------|
-| `master` | `module/master/` | 45cc, 38h | Scheduling, job management, coordination |
-| `slave` | `module/slave/` | 32cc, 28h | Task execution, data movement |
-| `ops` | `module/master/ops/` | 60cc, 60h | Individual operation implementations |
-| (enumerate ALL immediate sub-directories with source files) | | | |
+**Public Surface** (from graph `public_api` + verified source). Enumerate only the highest-fan-in or architecturally significant symbols. Format: `symbol (kind) — path:line`. No exhaustive dump of every getter.
 
-> **MANDATORY (graph data)**: Before writing ANY module deep-dive, you MUST:
-> 1. **READ** `draft/graph/modules/{module}.jsonl` — extract sub-directory structure from file paths in the JSONL records. Group files by their immediate sub-directory (e.g., `icebox/master/ops/foo.cc` → sub-module `master/ops`) and count files per sub-module. This provides exhaustive sub-module enumeration.
-> 2. **READ** `draft/graph/hotspots.jsonl` — filter for files in this module to identify high-complexity, high-fanIn files that deserve explicit mention.
-> 3. **READ** at least 3 key source files for this module: the primary interface/header (e.g., `*_interface.h`), the main implementation file, and one representative operation/handler. For modules with 200+ files, read at least 5 source files.
-> 4. **ONLY THEN** write the module section. If graph data does not exist, perform equivalent manual scanning.
->
-> Skipping these reads produces copy-paste descriptions. Every module deep-dive MUST reflect actual source file content.
+**Design Notes** (≤80 words total). Only what the graph + one or two key source reads reveal about invariants, error boundaries, or concurrency that is not already visible in the graph block or the workflow diagram. Cite specific `path:line`.
 
-**Responsibilities**:
-1. First responsibility with detail
-2. Second responsibility with detail
-3. (list ALL, not just top 3)
+**Sub-modules / Subsystems**. Recurse **only** when the graph shows a clear internal boundary (distinct public surface or high internal fan-in). Each child follows the identical pattern (graph block + one workflow diagram + minimal notes). Depth is strictly bounded by observable graph structure, never by a desire for "completeness."
 
-**Key Operations / Methods**:
+**Anti-pattern:** Do not emit long "Responsibilities" paragraphs or exhaustive file lists. If the graph block + one workflow diagram already communicate the design, the synthesis may be two sentences. Accuracy and diagram correctness are the success criteria.
 
-| Op / Method | Signature | Description |
-|-------------|-----------|-------------|
-| `methodName` | `(input: Type) → ReturnType` | What it does |
-| (enumerate ALL public methods) | | |
+#### Sub-Module Guidance (when graph justifies recursion)
 
-**State Machine** (if stateful):
-[Mermaid stateDiagram-v2 here]
+When a module has clear internal structure visible in `draft/graph/module-graph.jsonl` or per-module file records:
+- Create `##### 7.X.Y {Parent}/{Child}` subsections only for children that have their own meaningful public surface or high internal fan-in.
+- Each sub-module subsection follows the same compact pattern: graph facts + **one mandatory workflow/state diagram** + ≤60 words Design Notes.
+- Do not descend further unless the child itself shows additional clear boundaries in the graph data.
+- For ops/handler directories that are primary extension points, a short numbered operation catalog is acceptable even if small.
 
-**Internal Architecture** (if complex):
-[Mermaid flowchart of subcomponents here]
-> For modules with sub-directories, show the sub-module relationships
-> as a flowchart (e.g., master → slave coordination, ops dispatch).
-
-**Notable Mechanisms**:
-- Caching: how and what is cached
-- Retry logic: policy and backoff
-- Connection pooling: pool size and management
-- (document ALL mechanisms, not just existence)
-
-**Error Handling**: How this module handles and propagates errors.
-
-**Thread Safety**: Single-threaded / thread-safe / requires external synchronization.
-```
-
-#### Sub-Module Depth Requirements
-
-**CRITICAL**: Do NOT stop at the top-level module. The per-module deep-dive template above applies **recursively** to significant sub-modules. A top-level module like `icebox/` (917 files) is really a system of sub-systems — `master/`, `slave/`, `client/`, `base/` — each of which is as large as a standalone module in a smaller project. Treating them as one-line table rows produces useless output.
-
-#### Tiered Sub-Module Analysis
-
-Apply the following tiers based on sub-module size (file count from graph data):
-
-| Sub-Module Size | Treatment | What to Produce |
-|----------------|-----------|-----------------|
-| **Large (50+ files)** | **Full deep-dive** — apply the SAME per-module template recursively | Role, source files, sub-sub-module table (if nested dirs), responsibilities, key operations table, state machine (if stateful), internal architecture diagram, notable mechanisms, error handling, thread safety |
-| **Medium (10–49 files)** | **Summary deep-dive** — abbreviated version of the template | Role (2-3 sentences), key operations table (5+ entries), notable mechanisms, one interface/header code snippet |
-| **Small (< 10 files)** | **Catalog entry** — one-line in parent's sub-module table | Path, file count, role description |
-| **Ops/Handler directories** | **Operation catalog** — regardless of size, enumerate ALL operations | Numbered table: operation name, source file, line count, one-line description |
-
-#### Mandatory Steps for Each Sub-Module
-
-1. **Enumerate immediate sub-directories** — list every sub-directory that contains source files, its file count, and a one-line role description
-2. **Classify each sub-directory by tier** — use file counts from graph data to determine Large / Medium / Small / Ops treatment
-3. **Apply the appropriate template for each tier** — Large sub-modules get their own `##### 7.X.Y {SubModuleName}` subsection with the full template; Medium sub-modules get a condensed subsection; Small sub-modules stay as table rows
-4. **Use graph data (MANDATORY when available)** — read `draft/graph/modules/{module}.jsonl` and group file records by sub-directory path to get exhaustive sub-module enumeration. This is not optional — graph data provides deterministic file lists that prevent incomplete enumeration
-5. **Document sub-module interfaces** — if sub-modules have distinct interfaces (e.g., `master/` vs `slave/`), describe their API boundary and interaction pattern
-6. **For ops/handler directories** — enumerate ALL operations in a numbered table regardless of directory size. These are the primary extension points engineers need to find.
-
-#### Per-Sub-Module Template (Large — 50+ files)
-
-Apply this template for each sub-module at the Large tier. Nest it under the parent module as `##### 7.X.Y`:
-
-```markdown
-##### 7.X.Y {ParentModule}/{SubModuleName}
-
-**Role**: What this sub-module does within the parent module.
-
-**Source Files** (key files — not exhaustive, see table for full list):
-- `path/to/interface.h` — public API
-- `path/to/impl.cc` — primary implementation
-- `path/to/types.h` — data types
-
-**Sub-Sub-Module Structure** (if nested directories exist):
-
-| Sub-Directory | Path | Files | Role |
-|---------------|------|-------|------|
-| `ops` | `module/submod/ops/` | 60cc, 60h | Operation implementations |
-| `test` | `module/submod/test/` | 25cc | Test suites |
-
-**Responsibilities**:
-1. {Unique responsibility 1 — what this sub-module does that its siblings don't}
-2. {Unique responsibility 2}
-3. {list ALL}
-
+**Never** produce the old exhaustive "Source Files + list ALL responsibilities + 5+ operations + full mechanisms" template unless the module is genuinely tiny and the extra detail adds unique value not visible in the graph + diagram. The graph + one excellent diagram is the required primary artifact.
 **Key Operations / Methods**:
 
 | Op / Method | Signature | Description |
@@ -2531,37 +2489,27 @@ stateDiagram-v2
     Completed --> [*]
 ```
 
-#### Section 7 Quality Gate (MANDATORY)
+#### Section 7 Graph Fidelity + Diagram Check (MANDATORY)
 
-After writing ALL module and sub-module deep-dives for Section 7, run these checks before proceeding to Section 8. **If any check fails, STOP and fix before continuing.**
+After writing Section 7, run these checks before proceeding. **If any check fails, STOP and fix.**
 
-**Check 1 — Minimum depth per top-level module:**
-Count the lines in each top-level module subsection (from `#### 7.X` to the next `#### 7.Y`). If ANY deep-dived module has fewer than 60 lines (or fewer than 150 lines for modules with 200+ files), the analysis is incomplete. Go back, read the module's source files, and expand.
+**Check 1 — Graph block present and faithful for every module:**
+Every top-level module from `draft/graph/module-graph.jsonl` has its `<!-- GRAPH:module-deep/...:START --> ... <!-- GRAPH:module-deep/...:END -->` fence rendered verbatim. No LLM prose inside the fence. No modules missing.
 
-**Check 2 — No duplicate descriptions (modules AND sub-modules):**
-Compare the Responsibilities and description text across ALL modules AND sub-modules. If 3 or more share more than 50% of their description text (e.g., identical sentences like "Implement subsystem ops, expose RPC stubs"), you have NOT analyzed the source files. For each duplicated entry:
-1. Read `draft/graph/modules/{module_name}.jsonl` to get its file list
-2. Read the module/sub-module's primary interface header and at least one implementation file
-3. Rewrite the description based on what it ACTUALLY does — what makes it UNIQUE from its siblings
+**Check 2 — One mandatory workflow/state diagram per module:**
+Every `#### 7.X` (and every `##### 7.X.Y` that the graph justified) contains exactly one high-signal `Primary Workflow / State` Mermaid diagram (`stateDiagram-v2`, `sequenceDiagram`, or clear `flowchart`). The diagram must reflect facts from the module's graph record (entry points, public symbols, call targets). Generic placeholder diagrams fail this check.
 
-**Check 3 — Sub-module tables present:**
-For every module with more than 50 source files (check file count from graph data), verify a Sub-Module Structure table exists listing immediate sub-directories with file counts and roles. If missing, read the module's graph JSONL and generate the table.
+**Check 3 — Role ≤25 words + Design Notes ≤80 words:**
+Role is one tight sentence. Design Notes are ≤80 words and cite specific `path:line` only for observations not already visible in the graph block or the diagram. Long prose paragraphs or "Responsibilities" lists fail this check.
 
-**Check 4 — Sub-module tiering applied:**
-For every sub-module listed in a Sub-Module Structure table, verify the correct tier treatment was applied:
-- Large sub-modules (50+ files): MUST have their own `##### 7.X.Y` subsection with the full deep-dive template (role, responsibilities, key ops, mechanisms, error handling)
-- Medium sub-modules (10-49 files): MUST have their own `##### 7.X.Y` subsection with summary (role, key ops table, one code snippet)
-- Ops/handler directories: MUST have a numbered operation catalog table enumerating ALL operations
-If any Large or Medium sub-module is missing its required subsection, generate it.
+**Check 4 — No contradiction with graph:**
+Any prose claim (dependencies, public surface, entry points, sub-module boundaries) must be consistent with the corresponding graph record. If source reading revealed behavior the graph did not capture, the discrepancy is noted explicitly rather than silently overriding the graph.
 
-**Check 5 — Key operations populated (modules AND sub-modules):**
-Each deep-dived module AND each Large/Medium sub-module MUST have a Key Operations / Methods table with at least 5 real entries (not placeholders). If a table has fewer than 5 entries, read additional source files.
+**Check 5 — No exhaustive file lists or volume padding:**
+The section does not lead with "Source Files:" tables or "enumerate ALL" language. If the graph + one diagram already communicate the design, extra prose is minimal. Historical line-count or "at least 5 operations" quotas are ignored.
 
-**Check 6 — Diagrams for complex modules:**
-Modules with more than 200 source files MUST have at least one internal architecture diagram (flowchart showing sub-module relationships and data flow between them). If missing, generate one from the sub-module dependency structure.
-
-**Check 7 — Operation catalogs complete:**
-For every ops/handler directory identified in sub-module tables, verify a numbered catalog exists enumerating ALL operations. Compare the count against graph data file counts. If the catalog has fewer entries than files in the directory, it is incomplete.
+**Check 6 — Sub-module recursion is graph-bounded:**
+Deeper `#####` subsections exist only where the graph data shows distinct internal public surface or high fan-in. No descent "because the module is large."
 
 ---
 
@@ -2637,11 +2585,11 @@ Table grouped by category:
 | Category | Implementations |
 |----------|-----------------|
 
-**Include ALL implementations found in the codebase — enumerate exhaustively.**
+Include architecturally significant implementations (high fan-in, core extension points, or primary execution paths). Exhaustive enumeration of every helper class is not required when the graph + operational diagrams already surface the important ones.
 
 #### 10.3 Sub-Module Operation Catalogs
 
-**CRITICAL**: For large modules with operation/handler sub-directories (e.g., `icebox/master/ops/`, `magneto/vmware/`, `blob_store/blob_ops/`), enumerate ALL operation classes:
+**When the graph identifies operation/handler directories as primary extension points**, provide a short numbered catalog of the key operations (focus on the highest-fan-in or most architecturally central ones; exhaustive listing of every internal helper is not required):
 
 ```markdown
 ##### 10.3.X {Module}/{SubModule} Operations
@@ -3284,14 +3232,14 @@ This table identifies which sections require the MOST depth and WHY. High-priori
 | 3 | System Identity & Purpose | Medium | No | The "why" — 2-3 paragraphs sufficient |
 | 4 | Architecture Overview | **HIGH** | **YES: flowchart TD** | Visual mental model — diagram is mandatory |
 | 5 | Component Map & Interactions | **HIGH** | **YES: flowchart + matrix** | Know what talks to what |
-| 6 | Data Flow — End to End | **HIGH** | **YES: multiple flowcharts** | Trace any request — separate diagram per major flow |
-| 7 | Core Modules Deep Dive | **HIGH** | **YES: stateDiagram per module + sub-module architecture** | Top 20 modules × full deep-dive each + recursive sub-module deep-dives (Large: full, Medium: summary, Ops: catalog) |
+| 6 | Core Operational Flows, Lifecycles & State Machines | **HIGHEST** | **YES: 2–5 high-fidelity behavioral diagrams (state/sequence/flow)** | The behavioral architecture that coding assistants need most for correct implementation and modification. Highest ROI section for downstream accuracy. |
+| 7 | Core Modules Deep Dive | High | **YES: one workflow/state diagram per module** | Graph block primary + one diagram per module + ≤80 words synthesis. Sub-modules only when graph shows clear boundaries. |
 | 3.3 | Initialization Sequence | **HIGH** | **YES: sequenceDiagram** | Startup failure diagnosis — init order, dependency gates, failure paths |
 | 8 | Concurrency Model | High | **YES: flowchart TD** | **Prevents wrong-executor bugs** in generated code — topology must be visible |
 | 9 | Framework & Extension Points | High | No | Understand the plugin architecture |
-| 10 | Full Catalog | **HIGH** | No | **Exhaustive enumeration** — no sampling |
+| 10 | Full Catalog of Implementations | Medium | No | Architecturally significant implementations and extension points (graph hotspots + public surfaces). Exhaustive helper enumeration not required. |
 | 11 | Secondary Subsystem (V2) | Medium | YES: flowchart | Only if V1/V2 split exists |
-| 12 | API & Interface Definitions | High | No | API surface — enumerate ALL endpoints |
+| 12 | API & Interface Definitions | High | No | Public API surface from graph + verified source (highest-fan-in symbols first) |
 | 13 | External Dependencies | High | No | ALL external services/libs |
 | 14 | Cross-Module Integration | **HIGH** | **YES: sequence diagrams** | 2-3 sequence diagrams mandatory |
 | 15 | Critical Invariants | **HIGH** | No | **Prevents dangerous changes** — 8-15 invariants |
@@ -17636,7 +17584,16 @@ After updating guardrails.md, append a brief learning summary to the end of the 
 
 ---
 
-This is a self-contained, callable procedure for generating `draft/.ai-context.md` from `draft/architecture.md`. Any skill that mutates `architecture.md` should execute this subroutine afterward to keep the derived context files in sync.
+This is a self-contained, callable procedure for generating `draft/.ai-context.md` from `draft/architecture.md`. 
+
+**Critical fidelity requirement**: The condensation must faithfully preserve the core operational models (workflows, lifecycles, state machines) from architecture.md §6 "Core Operational Flows, Lifecycles & State Machines", along with invariants and extension points. These behavioral models are the highest-value content for downstream coding accuracy.
+
+**Mapping (architecture.md → .ai-context.md)**:
+- Core Operational Flows (§6) → `## GRAPH:OPERATIONAL` (states, transitions, error/recovery paths in compact form)
+- Data Flow diagrams → lightweight `FLOW:{Name}` summaries tied to the operational models above
+- Module graph + hotspots → `GRAPH:MODULE-HOTSPOTS`, `GRAPH:FAN-IN`, `GRAPH:PROTO-MAP` etc. as already defined
+
+Any skill that mutates `architecture.md` should execute this subroutine afterward to keep the derived context files in sync.
 
 **Called by:** `draft init`, `draft init refresh`, `draft implement`, `draft decompose`, `draft coverage`, `draft index`
 
@@ -18666,101 +18623,57 @@ Output a JSON array after the "## IR" heading. Each element is one module:
 
 ## Deep-Dives
 
-For each module, write a full Markdown section under the "## Deep-Dives" heading:
+For each module, write a **graph-first, diagram-centric** Markdown section under the "## Deep-Dives" heading. The primary artifacts are the deterministic graph data and one synthesized workflow/state diagram. Prose is minimal supporting narrative.
 
 #### 7.X {ModuleName}
 
-**Role**: One-line description grounded in what you actually read.
+**Role** (≤25 words, derived from graph role + primary source).
 
-**Source Files**:
-- `path/to/file` — what this file does
+**Primary Workflow / State Diagram** (MANDATORY — highest value output)
+One accurate Mermaid diagram (stateDiagram-v2, sequenceDiagram, or flowchart) that visualizes the dominant control flow, lifecycle, or data transformation for this module, using facts from the graph (entry points, public surface, call targets, hotspots). This diagram is more important than any other text in the section.
 
-**Sub-Module Structure**:
-| Sub-Module | Path | Files | Role |
-|------------|------|-------|------|
-| `name` | `path/` | N | description |
+**Graph Summary** (from the module's graph record)
+- Fan-in / Fan-out, hotspot files, key public symbols (only the architecturally significant ones).
 
-**Responsibilities**:
-1. Concrete responsibility with detail from source
-2. (list ALL — no "etc.")
+**Design Notes** (≤60 words total)
+Only observations from source that add understanding *not already visible* in the graph block or the workflow diagram (e.g., a subtle invariant, error boundary, or concurrency rule). Cite `path:line`.
 
-**Key Operations / Methods**:
-| Op / Method | Signature | Description |
-|-------------|-----------|-------------|
-| `name` | `(input: Type) → ReturnType` | what it does |
+**Sub-modules / Internal Boundaries**
+Only when the graph shows clear internal structure with its own public surface or high internal fan-in. Each child follows the same pattern (graph facts + one workflow diagram + minimal notes).
 
-**State Machine** (if stateful):
-[Mermaid stateDiagram-v2]
-
-**Notable Mechanisms**:
-- Caching: describe policy from source
-- Retry: policy and backoff
-- (cover ALL non-trivial mechanisms)
-
-**Error Handling**: How this module handles and propagates errors.
-
-**Thread Safety**: Single-threaded / thread-safe / requires external synchronization.
+**Anti-patterns for this output:**
+- Do not start with "Source Files:" lists or exhaustive sub-directory tables.
+- Do not emit long "Responsibilities (1. 2. 3.)" paragraphs when the graph + diagram already communicate the design.
+- Short, precise synthesis + one excellent diagram is the goal. Volume is not a virtue.
 
 Then, for EACH sub-module within this module:
 
-##### 7.X.Y {ParentModule}/{SubModuleName} (if 50+ files — full deep-dive)
+##### 7.X.Y {ParentModule}/{SubModuleName} (if the graph shows a distinct boundary)
 
 **Role**: One-line description.
 
-**Source Files**:
-- `path/to/interface.h` — public API
-- `path/to/impl.cc` — primary implementation
+**Graph Summary** (from the module's graph record)
+- Fan-in / Fan-out, hotspot files, key public symbols (only the architecturally significant ones).
 
-**Sub-Sub-Module Structure** (if nested directories exist):
-| Sub-Directory | Path | Files | Role |
-|---------------|------|-------|------|
+**Design Notes** (≤60 words total)
+Only observations from source that add understanding *not already visible* in the graph block or the workflow diagram (e.g., a subtle invariant, error boundary, or concurrency rule). Cite `path:line`.
 
-**Responsibilities**:
-1. Concrete responsibility unique to this sub-module
-2. (list ALL)
+**Sub-modules / Internal Boundaries**
+Only when the graph shows clear internal structure with its own public surface or high internal fan-in. Each child follows the same pattern (graph facts + one workflow diagram + minimal notes).
 
-**Key Operations / Methods**:
-| Op / Method | Signature | Description |
-|-------------|-----------|-------------|
-| (at least 5 entries with real data) | | |
-
-**Interaction with Sibling Sub-Modules**:
-- Calls `sibling/` for {purpose}
-- Called by `sibling/` when {trigger}
-
-**State Machine** (if stateful): [Mermaid stateDiagram-v2]
-
-**Notable Mechanisms**: {specific to this sub-module}
-
-**Error Handling**: How errors propagate within this sub-module.
-
-##### 7.X.Y {ParentModule}/{SubModuleName} (if 10-49 files — summary)
-
-**Role**: 2-3 sentence description.
-
-**Key Operations**:
-| Op / Method | Source File | Description |
-|-------------|-------------|-------------|
-| (at least 5 entries) | | |
-
-**Key Interface** (code snippet from actual source, 10-20 lines)
-
-##### 7.X.Y {ParentModule}/{SubModuleName}/ops — Operation Catalog (for ops/handler dirs)
-
-| # | Operation | Source File | Lines | Description |
-|---|-----------|-------------|-------|-------------|
-| (enumerate ALL — no sampling) | | | | |
+**Anti-patterns for sub-modules:**
+- Do not produce long "Source Files + Responsibilities + 5+ operations" templates when the graph + one diagram suffice.
+- Recurse only on boundaries the graph itself makes visible.
 
 ---
 
 ## Constraints
 
 - IR: max 600 tokens per module; null unknown fields; never omit keys.
-- Deep-dive: minimum 150 lines per top-level module (250+ for modules with 200+ files). No upper limit.
-- Deep-dive prose MUST reflect actual source file content — not graph metadata alone.
-- Sub-modules with 50+ files MUST get their own ##### subsection with the SAME depth as top-level modules (role, source files, responsibilities, key ops table, state machine, mechanisms, error handling). There is NO page limit — produce as much content as the codebase warrants.
-- Sub-modules with 10-49 files MUST get a ##### subsection with summary (role, key ops table, code snippet).
-- Ops/handler directories MUST get a numbered catalog table enumerating ALL operations.
+- Deep-dive output per module is graph block + **one mandatory workflow/state diagram** + ≤60 words Design Notes. Volume is not the goal.
+- The diagram must be grounded in the module's graph record (entry points, public surface, call targets).
+- Sub-modules receive their own subsection **only** when the graph data shows a distinct public surface or high internal fan-in. No descent "because the module is large."
+- Ops/handler directories that are primary extension points may receive a short numbered catalog (focus on high-signal operations; exhaustive enumeration of every internal helper is not required).
 - Do NOT read files outside your assigned modules.
 - If a field is unknown in IR, use null or empty array.
 ```
@@ -18809,7 +18722,7 @@ Your output MUST follow the EXACT numbered section structure from {ARCHITECTURE_
 ## Source Reading Policy
 
 Read source files for these sections — IR and reader prose are insufficient:
-- §6 Data Flow — read entry-point and pipeline files to trace actual data movement
+- §6 Core Operational Flows — read entry points, stateful services, dispatchers, and generation pipelines to synthesize accurate state/sequence diagrams (use full host indexed knowledge)
 - §12 API Definitions — read route/handler files for endpoint enumeration
 - §14 Integration Points — read adapter/client files for external dependency detail
 - §15 Critical Invariants — verify invariants[] from IR against actual source assertions
@@ -18843,11 +18756,11 @@ MANDATORY output structure (in this exact order):
 6. ## 3. System Identity & Purpose
 7. ## 4. Architecture Overview (with 4.1 High-Level Topology diagram, 4.2 Process Lifecycle, 4.3 Initialization Sequence diagram, 4.4 Module Dependency Graph slot)
 8. ## 5. Component Map & Interactions (with 5.1 Orchestrator table, 5.2 DI Pattern, 5.3 Interaction Matrix)
-9. ## 6. Data Flow — End to End (3-5 SEPARATE diagrams, each 15+ lines of Mermaid)
-10. ## 7. Core Modules Deep Dive (reader deep-dives pasted verbatim — one #### per module, ##### per sub-module; sub-modules get SAME depth as modules)
+9. ## 6. Core Operational Flows, Lifecycles & State Machines (2–5 high-fidelity behavioral diagrams from graph + full indexed knowledge)
+10. ## 7. Core Modules Deep Dive (reader deep-dives pasted verbatim — one #### per module, ##### per sub-module only when graph shows clear boundary; graph block + one workflow/state diagram per module is primary)
 11. ## 8. Concurrency Model & Thread Safety (thread pool table, locking strategy, execution topology diagram)
 12. ## 9. Framework & Extension Points (plugin types table, registry mechanism, core interfaces with REAL code)
-13. ## 10. Full Catalog of Implementations (numbered tables — enumerate ALL, no sampling)
+13. ## 10. Full Catalog of Implementations (architecturally significant implementations and extension points surfaced by graph; no exhaustive enumeration requirement)
 14. ## 11–28: All remaining sections per template
 15. ## Appendix A–E: All appendices per template
 
@@ -20274,6 +20187,7 @@ generated_at: "{ISO_TIMESTAMP}"
 
 > Self-contained AI context. Budget: {TIER_MIN}–{TIER_MAX} lines (tier {N}: {LABEL}).
 > Graph metrics: M={modules} F={functions} P={proto_rpcs} E={include_edges}
+> Primary value: faithful structural graph + **core operational models** (workflows, lifecycles, state machines) derived from architecture.md §6.
 > This file must stand alone — no references to architecture.md or source files needed.
 
 | Field | Value |
@@ -20357,6 +20271,21 @@ None ✓
 
 > One line per RPC, grouped by service. Present only when proto_rpcs > 0. Omit entirely for non-proto codebases.
 
+## GRAPH:OPERATIONAL (Core Behavioral Models)
+
+**Primary Operational Models** (from architecture.md §6 — highest fidelity requirement):
+
+- **{Flow/Lifecycle Name 1}** (e.g. Request Lifecycle, Init Pipeline, Job Pipeline):
+  State1 --(event/func)--> State2 --(error path)--> ErrorState --> Recovery
+  (include key decision points, alt paths, and error recovery)
+
+- **{Flow/Lifecycle Name 2}**:
+  ...
+
+> For typical apps: main request flow + background processing + startup.
+> For plugin / meta-tooling platforms: init with graph gate, skill/agent dispatch + frontmatter enforcement, condensation, parallel analysis, etc.
+> Represent complex sequence/state diagrams in compact structured text. Preserve error paths and critical transitions.
+
 ## Dependency Injection / Wiring
 
 {One paragraph or bullets explaining how components find each other.}
@@ -20405,11 +20334,13 @@ interface {ServiceName} {
 |--------|------|---------|
 | `{table/topic/endpoint}` | {DB/Queue/API} | `{component1}`, `{component2}` |
 
-## Data Flow Summary
+## Data Flow Summary (tied to Operational Models above)
 
-**{FlowName}**: {Source} receives {input}, passes to {Processor} for {transformation}, persists via {Repository} to {Storage}, emits {Event} to {downstream}.
+**{FlowName}** (from GRAPH:OPERATIONAL): {concise description of one primary model, including main error/recovery path}.
 
-**{FlowName2}**: {Description of another major flow.}
+**{FlowName2}**: ...
+
+> This section should be a lightweight textual summary of the key models already detailed in GRAPH:OPERATIONAL. Do not duplicate — complement it.
 
 ## Error Handling & Failure Recovery
 
@@ -20556,6 +20487,10 @@ generated_at: "{ISO_TIMESTAMP}"
 ## NEVER
 {2-3 safety rules — things that must never happen}
 
+## Key Operational Models (from §6 / GRAPH:OPERATIONAL)
+- {Most critical flow 1 — one line}
+- {Most critical flow 2 (if space allows)}
+
 ## Active Tracks
 {List of active track IDs and one-line descriptions, or "none"}
 
@@ -20597,8 +20532,8 @@ verification:
 
 > Enterprise, mission-critical-grade engineering reference.
 > For token-optimized AI context, see `draft/.ai-context.md`.
-> Structure is fixed at 28 sections + 5 appendices. Graph data enriches — it does not replace — this structure.
-> This document is generation-disciplined: read the **Generation Contract** below before authoring any section.
+> The knowledge graph (`draft/graph/`) is the deterministic source of truth for modules, dependencies, APIs, and structure. LLM synthesis produces faithful workflow, state, and sequence diagrams plus minimal narrative that makes the graph's facts actionable. Accuracy and diagram correctness > prose volume.
+> Structure is fixed at 28 sections + 5 appendices. Read the **Generation Contract** (especially "Graph as Ground Truth") before authoring any section.
 
 | Field | Value |
 |-------|-------|
@@ -20626,6 +20561,20 @@ Every `##` heading carries a `Source:` marker. Author content only from that sou
 | `code-scan` | Deterministic scan (file tree, CODEOWNERS, OpenAPI, `.proto`, config parsers) | Scanner, not the LLM |
 | `user-input` | Captured during `draft:init` interview; never inferred from code | User, captured verbatim |
 | `llm-synthesis` | Narrative from reading code. Word budget is mandatory | LLM, bounded |
+
+### Graph as Ground Truth for System Design
+
+The knowledge graph produced by the `graph` binary (`draft/graph/module-graph.jsonl`, `proto-index.jsonl`, `hotspots.jsonl`, per-module file records, public API tables, and edge data) is the **authoritative, deterministic model** of the system's actual static architecture.
+
+When you (the LLM) are executing inside Cursor, Claude Code, Copilot, or a similar environment, you also possess a powerful, continuously updated semantic index of the entire project. Use that indexed knowledge to cross-validate the graph, discover higher-level workflows and design intent, and synthesize more accurate and useful diagrams and notes. The graph is structural truth; your index + direct reads provide the semantic and workflow layer. Both must be combined for maximum correctness.
+
+- **LLM role is synthesis, not invention.** The LLM must derive all claims about modules, dependencies, entry points, call relationships, data flows, and APIs from the graph or from direct source reads that are consistent with the graph.
+- **Diagrams over paragraphs.** Prefer Mermaid state machines, sequence diagrams, flowcharts, and component interaction diagrams that make the graph's facts (modules, weighted edges, hotspots, entry/exit points) immediately comprehensible. A correct 25-line sequence diagram that accurately reflects a real call path from the graph is more valuable than 300 words of prose.
+- **Accuracy > completeness of prose.** It is acceptable (and preferred) for narrative sections to be short when the graph + diagrams already convey the design. Do not pad with generic descriptions to reach historical line-count targets.
+- **No contradiction.** Any prose description of a module boundary, dependency, or public surface must not contradict the corresponding graph record. If source reading reveals behavior the graph did not capture, the graph slot still governs the structural truth; the discrepancy must be noted explicitly.
+- **Workflow and state focus.** For each major module or pipeline, synthesize at least one logical workflow or state transition diagram (stateDiagram-v2, sequenceDiagram, or flowchart with clear stages) that captures the primary control or data flow. These diagrams are first-class deliverables, not optional illustrations.
+
+The previous sentence "Graph data enriches — it does not replace — this structure" is superseded for structural facts: the graph *defines* the structural facts. Prose and additional diagrams *interpret and visualize* those facts.
 
 ### Absence is signal
 
@@ -20689,7 +20638,7 @@ Every `##` heading is immediately followed by:
 3. [System Identity & Purpose](#3-system-identity--purpose)
 4. [Architecture Overview](#4-architecture-overview)
 5. [Component Map & Interactions](#5-component-map--interactions)
-6. [Data Flow — End to End](#6-data-flow--end-to-end)
+6. [Core Operational Flows, Lifecycles & State Machines](#6-core-operational-flows-lifecycles--state-machines)
 7. [Core Modules Deep Dive](#7-core-modules-deep-dive)
 8. [Concurrency Model & Thread Safety](#8-concurrency-model--thread-safety)
 9. [Framework & Extension Points](#9-framework--extension-points)
@@ -20879,55 +20828,83 @@ A short table listing the interaction kinds present. Rendered from graph edge ta
 
 ---
 
-## 6. Data Flow — End to End
+## 6. Core Operational Flows, Lifecycles & State Machines
 
-> **Source:** llm-synthesis + graph
-> **Required:** standard+
-> **Length:** ≤500 words + 1–N diagrams (no minimum)
-> **N/A when:** criticality == low AND no external data ingress/egress
-> **Verification:** citation-check
+> **Source:** llm-synthesis + graph (primary structural truth) + full project index
+> **Required:** high+
+> **Length:** 2–5 high-quality diagrams + minimal supporting prose
+> **N/A when:** the system is trivial (single linear script with no meaningful state or branching) — write explicit N/A.
+> **Verification:** diagram fidelity to graph + indexed understanding + citation-check
 
-### 6.1 Primary Flow
+**Purpose**: This is one of the highest-value sections for any downstream coding assistant. It captures the **real behavioral architecture** — the primary ways the system moves through time and state.
 
-One Mermaid sequence diagram for the dominant request/job flow. Every actor named must map to a module in §5. Every arrow labeled with the call/message type.
+The LLM **must** use:
+- The deterministic knowledge graph (modules, edges, entry points, public surfaces, hotspots)
+- Its full indexed project understanding from the host environment (Cursor, Claude Code, etc.)
+- Targeted source reads for confirmation
 
-### 6.2 Flow Variants
+to identify and accurately diagram the **most important operational models** of the system.
 
-One diagram per variant that meaningfully differs (sync vs async, read vs write, happy vs error). Omit entirely if the system has only one flow — do not pad.
+### 6.1 Primary Operational Models (MANDATORY — 2 to 5 diagrams)
 
-### 6.3 Data Transformation Stages
+Synthesize the 2–5 most important operational views. These are usually:
 
-Table only if the system has explicit transformation stages (ETL, pipeline, compiler). Otherwise omit.
+- The dominant request / job / user-action lifecycle (end-to-end, with key decision points and error paths)
+- The main state machine(s) for stateful components or the overall system
+- Critical background / async / batch pipelines
+- Startup / initialization / shutdown lifecycle (especially valuable for services and tooling)
+- For plugin / meta-tooling / agent platforms: the core execution or dispatch model
 
-| Stage | Input Shape | Transform | Output Shape | Implementation `path:line` |
-|---|---|---|---|---|
+Each diagram should be a **stateDiagram-v2**, **sequenceDiagram**, or detailed **flowchart** with:
+- Real actor / state / stage names from the codebase
+- Labeled transitions with actual function, message, or event names where possible
+- alt / opt / loop where branching or repetition exists
+
+Prioritize **accuracy and usefulness for code generation** over visual beauty.
+
+### 6.2 Error & Recovery Paths
+
+For the primary flows above, explicitly call out or include in the diagrams the main error classification, retry, circuit-breaker, fallback, and recovery behaviors.
+
+### 6.3 Cross-Cutting Concerns in Flows
+
+Only if material: authentication/authorization checkpoints, distributed transaction boundaries, observability hooks, etc. inside the operational models.
+
+**For meta-tooling and plugin platforms**: This section must include clear diagrams of the primary internal processes (initialization pipeline, skill/agent dispatch and contract enforcement, generation pipelines, etc.).
 
 ---
 
 ## 7. Core Modules Deep Dive
 
-> **Source:** graph + llm-synthesis
+> **Source:** graph (primary) + llm-synthesis (secondary)
 > **Required:** always
-> **Length:** ≤300 words per module narrative; enumerate every module the graph emits
+> **Length:** Graph block + one high-signal workflow/state diagram + ≤120 words synthesis per module
 > **N/A when:** never
-> **Verification:** graph-fence per module + citation-check
+> **Verification:** graph-fence fidelity + diagram correctness + citation-check
 
-For each module returned by `draft/graph/module-graph.jsonl`, emit a subsection with identical structure. Do not sample. Do not summarize. Every module that exists in the graph gets a slot.
+**Core rule:** The graph is the source of truth for structure. LLM synthesis exists only to interpret the graph into actionable design understanding (primarily via diagrams).
+
+For each module emitted by `draft/graph/module-graph.jsonl` (and its per-module file records), produce a subsection whose primary content is the deterministic graph block. Every module gets a slot; do not sample.
 
 ### 7.{N} {module-name}
 
 <!-- GRAPH:module-deep/{module-name}:START -->
-<!-- Rendered deterministic block: path, file count, public API list, fan-in, fan-out,
-     hotspot score, primary deps. No LLM prose inside fence. -->
+<!-- Rendered deterministic block: path, file count, public API list, fan-in/fan-out, hotspot score,
+     primary incoming/outgoing edges with weights, entry points if known. No LLM prose inside fence. -->
 <!-- GRAPH:module-deep/{module-name}:END -->
 
-**Role** (≤40 words). What this module is responsible for.
+**Role** (≤25 words, derived strictly from graph role + primary source files read).
 
-**Public Surface**. Enumerate every exported symbol from the graph's `public_api` table for this module. Format: `symbol_name (kind) — path:line`. No sampling.
+**Primary Workflow / State** (MANDATORY — one diagram per module)
+Synthesize a single, accurate Mermaid diagram (stateDiagram-v2, sequenceDiagram, or flowchart LR/TD with clear stages) that captures the dominant control flow, data transformation pipeline, or lifecycle state machine for this module, grounded in the call graph / entry points / public surface from the graph record. Label transitions with the actual function or message names where possible. This diagram is more important than any prose.
 
-**Key Invariants** (cite §15 entries by number). If none apply, write `None.`
+**Public Surface** (from graph `public_api` + verified source). Enumerate only the highest-fan-in or architecturally significant symbols. Format: `symbol (kind) — path:line`. No exhaustive dump of every getter.
 
-**Sub-modules**. If the module has sub-directories with source files, recurse. Each sub-module gets the same structure at one heading level deeper. Depth is bounded by the graph, not by a page target.
+**Design Notes** (≤80 words total). Only what the graph + one or two key source reads reveal about invariants, error boundaries, or concurrency that is not already visible in the graph block or the workflow diagram. Cite specific `path:line`.
+
+**Sub-modules / Subsystems**. Recurse only when the graph shows a clear internal boundary (distinct sub-directories with their own public surface or high internal fan-in). Each child follows the identical pattern (graph block + one workflow diagram + minimal notes). Depth is strictly bounded by observable graph structure, never by a desire for "completeness."
+
+**Anti-pattern:** Do not emit long "Responsibilities" paragraphs or exhaustive file lists. If the graph block + workflow diagram already communicate the design, the synthesis may be two sentences. Accuracy and diagram correctness are the success criteria.
 
 ---
 

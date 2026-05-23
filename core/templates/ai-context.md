@@ -9,6 +9,7 @@ generated_at: "{ISO_TIMESTAMP}"
 
 > Self-contained AI context. Budget: {TIER_MIN}–{TIER_MAX} lines (tier {N}: {LABEL}).
 > Graph metrics: M={modules} F={functions} P={proto_rpcs} E={include_edges}
+> Primary value: faithful structural graph + **core operational models** (workflows, lifecycles, state machines) derived from architecture.md §6.
 > This file must stand alone — no references to architecture.md or source files needed.
 
 | Field | Value |
@@ -92,6 +93,21 @@ None ✓
 
 > One line per RPC, grouped by service. Present only when proto_rpcs > 0. Omit entirely for non-proto codebases.
 
+## GRAPH:OPERATIONAL (Core Behavioral Models)
+
+**Primary Operational Models** (from architecture.md §6 — highest fidelity requirement):
+
+- **{Flow/Lifecycle Name 1}** (e.g. Request Lifecycle, Init Pipeline, Job Pipeline):
+  State1 --(event/func)--> State2 --(error path)--> ErrorState --> Recovery
+  (include key decision points, alt paths, and error recovery)
+
+- **{Flow/Lifecycle Name 2}**:
+  ...
+
+> For typical apps: main request flow + background processing + startup.
+> For plugin / meta-tooling platforms: init with graph gate, skill/agent dispatch + frontmatter enforcement, condensation, parallel analysis, etc.
+> Represent complex sequence/state diagrams in compact structured text. Preserve error paths and critical transitions.
+
 ## Dependency Injection / Wiring
 
 {One paragraph or bullets explaining how components find each other.}
@@ -140,11 +156,13 @@ interface {ServiceName} {
 |--------|------|---------|
 | `{table/topic/endpoint}` | {DB/Queue/API} | `{component1}`, `{component2}` |
 
-## Data Flow Summary
+## Data Flow Summary (tied to Operational Models above)
 
-**{FlowName}**: {Source} receives {input}, passes to {Processor} for {transformation}, persists via {Repository} to {Storage}, emits {Event} to {downstream}.
+**{FlowName}** (from GRAPH:OPERATIONAL): {concise description of one primary model, including main error/recovery path}.
 
-**{FlowName2}**: {Description of another major flow.}
+**{FlowName2}**: ...
+
+> This section should be a lightweight textual summary of the key models already detailed in GRAPH:OPERATIONAL. Do not duplicate — complement it.
 
 ## Error Handling & Failure Recovery
 
