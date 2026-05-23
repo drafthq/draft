@@ -1,13 +1,3 @@
-#!/usr/bin/env bash
-<<<<<<< HEAD
-# Hygiene/verification tool stub (Foundations phase)
-set -euo pipefail
-if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
-    echo "${0##*/} — Foundations stub (see manifest §2.2)"
-    exit 0
-fi
-echo "${0##*/}: stub — no violations (full impl in later phase)"
-=======
 # check-skill-line-caps.sh
 #
 # Enforces per-skill line-count caps (WS-10 prompt-economy budget). Walks
@@ -31,6 +21,11 @@ echo "${0##*/}: stub — no violations (full impl in later phase)"
 # 2 usage / runtime error
 
 set -euo pipefail
+
+if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
+    echo "${0##*/} — Foundations quality tool (see core/ docs for full behavior)"
+    exit 0
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
@@ -134,5 +129,3 @@ emit() {
 emit
 
 if ((ENFORCE && over_count > 0)); then exit 1; fi
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
-exit 0

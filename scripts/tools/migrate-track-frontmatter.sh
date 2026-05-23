@@ -1,14 +1,3 @@
-#!/usr/bin/env bash
-<<<<<<< HEAD
-# Hygiene/verification tool stub (Foundations phase)
-set -euo pipefail
-if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
-    echo "${0##*/} — Foundations stub (see manifest §2.2)"
-    exit 0
-fi
-echo "${0##*/}: stub — no violations (full impl in later phase)"
-exit 0
-=======
 # migrate-track-frontmatter.sh
 #
 # Idempotent rewriter that migrates a pre-2.0 Draft track to the WS-8
@@ -36,6 +25,11 @@ exit 0
 # 2 usage / runtime error
 
 set -euo pipefail
+
+if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
+    echo "${0##*/} — Foundations quality tool (see core/ docs for full behavior)"
+    exit 0
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
@@ -242,4 +236,3 @@ for t in "${TRACK_DIRS[@]}"; do
     migrate_one_track "$t" || rc=$?
 done
 exit "$rc"
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c

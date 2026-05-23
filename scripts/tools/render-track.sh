@@ -1,14 +1,3 @@
-#!/usr/bin/env bash
-<<<<<<< HEAD
-# Hygiene/verification tool stub (Foundations phase)
-set -euo pipefail
-if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
-    echo "${0##*/} — Foundations stub (see manifest §2.2)"
-    exit 0
-fi
-echo "${0##*/}: stub — no violations (full impl in later phase)"
-exit 0
-=======
 # render-track.sh
 #
 # Render a Draft track's markdown set into a single HTML viewer artifact
@@ -26,6 +15,11 @@ exit 0
 # markdown-to-HTML render is used via awk. No external network calls.
 
 set -euo pipefail
+
+if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
+    echo "${0##*/} — Foundations quality tool (see core/ docs for full behavior)"
+    exit 0
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
@@ -140,4 +134,3 @@ else
     printf '%s' "$OUTPUT" > "$OUT_PATH"
     printf 'Wrote %s (%d bytes)\n' "$OUT_PATH" "${#OUTPUT}"
 fi
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c

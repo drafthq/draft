@@ -1,13 +1,3 @@
-#!/usr/bin/env bash
-<<<<<<< HEAD
-# Hygiene/verification tool stub (Foundations phase)
-set -euo pipefail
-if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
-    echo "${0##*/} — Foundations stub (see manifest §2.2)"
-    exit 0
-fi
-echo "${0##*/}: stub — no violations (full impl in later phase)"
-=======
 # emit-skill-metrics.sh — Append a NDJSON metrics record to ~/.draft/metrics.jsonl
 #
 # Usage: emit-skill-metrics.sh <json-payload>
@@ -17,6 +7,11 @@ echo "${0##*/}: stub — no violations (full impl in later phase)"
 # Concurrency: uses flock on the metrics file to prevent interleaved writes
 
 set -euo pipefail
+
+if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
+    echo "${0##*/} — Foundations quality tool (see core/ docs for full behavior)"
+    exit 0
+fi
 
 if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
   cat <<'EOF'
@@ -78,5 +73,3 @@ mkdir -p "${METRICS_DIR}" 2>/dev/null || exit 0
 
 ) 200>"${LOCK_FILE}" 2>/dev/null || true
 
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
-exit 0
