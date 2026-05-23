@@ -78,7 +78,11 @@ Initialize a Draft project for Context-Driven Development.
 
 The knowledge graph in `draft/graph/` (module-graph.jsonl, hotspots.jsonl, proto-index.jsonl, per-module *.jsonl files, public API tables, and edge weights) is the **deterministic structural ground truth** for the system's actual architecture.
 
-**You are running inside a powerful agentic coding environment** (Cursor, Claude Code, Copilot, Windsurf, etc.) that maintains its own rich, continuously updated index of the entire codebase. **Use that indexed knowledge aggressively** in addition to the explicit graph data and direct source reads.
+**You are running inside a powerful agentic coding environment** (Cursor, Claude Code, Copilot, Windsurf, etc.) that maintains its own rich, continuously updated index of the entire codebase. **Use that indexed knowledge aggressively** in addition to the explicit graph data and direct source reads. Your environment's index often captures higher-level intent, naming patterns, cross-file workflows, and architectural signals that the static graph may not fully express yet. Combine both sources:
+- Graph = authoritative modules, edges, public surfaces, hotspots, call relationships.
+- Your IDE/Agent index + full project understanding = semantic layer, workflow discovery, intent, and validation of the graph.
+
+Cross-validate: if your index suggests a workflow, lifecycle, or design pattern that the graph does not yet surface, read the relevant source to confirm and then synthesize an accurate diagram that reflects reality.
 
 **LLM role is faithful, high-fidelity synthesis** — not invention.
 

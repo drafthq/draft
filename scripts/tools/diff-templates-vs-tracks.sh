@@ -1,14 +1,3 @@
-#!/usr/bin/env bash
-<<<<<<< HEAD
-# Hygiene/verification tool stub (Foundations phase)
-set -euo pipefail
-if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
-    echo "${0##*/} — Foundations stub (see manifest §2.2)"
-    exit 0
-fi
-echo "${0##*/}: stub — no violations (full impl in later phase)"
-exit 0
-=======
 # diff-templates-vs-tracks.sh
 #
 # Surface tracks whose artifact set drifts from the current template schema.
@@ -35,6 +24,11 @@ exit 0
 # by the contract is also flagged.
 
 set -euo pipefail
+
+if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
+    echo "${0##*/} — Foundations quality tool (see core/ docs for full behavior)"
+    exit 0
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
@@ -176,4 +170,3 @@ emit_records() {
 emit_records
 
 ((drift_count == 0))
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c

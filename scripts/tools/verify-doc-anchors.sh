@@ -1,15 +1,10 @@
 #!/usr/bin/env bash
-<<<<<<< HEAD
-# Hygiene/verification tool stub (Foundations phase)
-set -euo pipefail
-if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
-    echo "${0##*/} — Foundations stub (see manifest §2.2)"
+# verify-doc-anchors.sh
+
+if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
+    echo "verify-doc-anchors.sh — verify cross-document § and #anchor references in tracks"
     exit 0
 fi
-echo "${0##*/}: stub — no violations (full impl in later phase)"
-exit 0
-=======
-# verify-doc-anchors.sh
 #
 # Verify cross-document references in a track:
 # - §X.Y or §X numbered-section references → target document must contain
@@ -31,6 +26,11 @@ exit 0
 # 2 usage / runtime error
 
 set -euo pipefail
+
+if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
+    echo "${0##*/} — Foundations quality tool (see core/ docs for full behavior)"
+    exit 0
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
@@ -211,4 +211,3 @@ emit() {
 emit
 
 ((violation_count == 0))
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c

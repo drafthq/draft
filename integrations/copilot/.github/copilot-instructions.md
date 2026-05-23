@@ -199,7 +199,11 @@ Initialize a Draft project for Context-Driven Development.
 
 The knowledge graph in `draft/graph/` (module-graph.jsonl, hotspots.jsonl, proto-index.jsonl, per-module *.jsonl files, public API tables, and edge weights) is the **deterministic structural ground truth** for the system's actual architecture.
 
-**You are running inside a powerful agentic coding environment** (Cursor, Claude Code, Copilot, Windsurf, etc.) that maintains its own rich, continuously updated index of the entire codebase. **Use that indexed knowledge aggressively** in addition to the explicit graph data and direct source reads.
+**You are running inside a powerful agentic coding environment** (Cursor, Claude Code, Copilot, Windsurf, etc.) that maintains its own rich, continuously updated index of the entire codebase. **Use that indexed knowledge aggressively** in addition to the explicit graph data and direct source reads. Your environment's index often captures higher-level intent, naming patterns, cross-file workflows, and architectural signals that the static graph may not fully express yet. Combine both sources:
+- Graph = authoritative modules, edges, public surfaces, hotspots, call relationships.
+- Your IDE/Agent index + full project understanding = semantic layer, workflow discovery, intent, and validation of the graph.
+
+Cross-validate: if your index suggests a workflow, lifecycle, or design pattern that the graph does not yet surface, read the relevant source to confirm and then synthesize an accurate diagram that reflects reality.
 
 **LLM role is faithful, high-fidelity synthesis** — not invention.
 
@@ -11960,9 +11964,9 @@ All generated artifacts and their locations:
 
 ---
 
-## Integrations Command
+## Integrations Router
 
-When user says "draft integrations":
+When user says "integrations", "integrations jira-preview", or "integrations jira-create":
 
 `draft integrations` is the **canonical integrations parent command**.
 
@@ -23807,6 +23811,801 @@ generated_at: "{ISO_TIMESTAMP}"
 
 **Regression test:**
 - [Description of regression test to write — pending developer approval]
+
+</core-file>
+
+---
+
+## core/templates/CHANGELOG.md
+
+<core-file path="core/templates/CHANGELOG.md">
+
+# Template Schema Changelog
+
+Semver-style change log for the schema defined by files under `core/templates/`.
+Tracks are generated from these templates by `skills/new-track`, `skills/decompose`,
+and downstream skills. Any change here is a contract change consumed by every
+downstream repo. Major bumps require a `scripts/tools/migrate-track-frontmatter.sh`
+migration path.
+
+## How template versions are referenced
+
+- `metadata.json` carries the optional field `template_version` (semver string).
+- Validators in `scripts/tools/` (hygiene, citations, anchors, scope-conflicts,
+  graph-usage-report) read this field and refuse to lint tracks whose
+  `template_version` major-bumps past the validator's known schema.
+
+## Shared blocks each template depends on
+
+| Template | Depends on (under `core/shared/`) |
+|---|---|
+| `spec.md` | `template-contract.md`, `template-hygiene.md`, `discovery-schema.md` (back-link), `verification-gates.md` |
+| `hld.md` | `template-contract.md`, `template-hygiene.md`, `graph-query.md`, `verification-gates.md` |
+| `lld.md` | `template-contract.md`, `template-hygiene.md`, `graph-query.md`, `verification-gates.md` |
+| `plan.md` | `template-contract.md`, `template-hygiene.md`, `verification-gates.md` |
+| `metadata.json` | `template-contract.md` (canonical schema for ephemeral fields) |
+| `discovery.md` | `discovery-schema.md` |
+
+Templates are markdown-only (and JSON for `metadata.json`). Viewer artifacts
+(HTML/PDF) are rendered on demand by `scripts/tools/render-track.sh` and are
+git-ignored at the track level. No HTML or PDF templates ship here.
+
+## Versions
+
+### 2.0.0 — Templates-as-contract baseline
+
+- **Breaking:** Introduces parseable sentinel placeholders (`_TBD_<field>_`,
+  `_PLACEHOLDER_<kind>_`). Silent placeholders such as `Author1`,
+  `xxx@example.com`, pre-checked `Status: [x] Complete` are forbidden.
+- **Breaking:** Introduces `<!-- REQUIRED -->` and `<!-- OPTIONAL -->` markers
+  next to authorable fields. Hygiene validator gates `ready-for-review` on the
+  required set being populated; optional fields may carry sentinels indefinitely.
+- **New:** `core/templates/discovery.md` becomes a first-class artifact.
+- **New:** `core/templates/CHANGELOG.md` (this file) and
+  `core/shared/template-contract.md` (narrative + field index).
+- **New:** Scope frontmatter — `scope_includes: []`, `scope_excludes: []`.
+  Lives on `spec.md` and mirrored into `metadata.json`.
+- **New:** Table columns required by WS-7 — `concurrency_model`,
+  `aggregate_resource_cap`, `derived_from`, `mitigation_test_id`, `test_id`,
+  `entry_gate_command`, `exit_gate_command`, `owner`, `flag_name`,
+  `cluster_feature_gate`, `kill_switch_test_id`, `runbook_link`,
+  `sunset_criteria`, `promote_to_adr`, `lock_acquired`, `reentrant`,
+  `fault_injection_site`.
+- **New:** `<!-- DECOMPOSE:REGENERATE START -->` / `<!-- ... END -->` markers
+  in `plan.md` so `draft:decompose` can rewrite phase tables without clobbering
+  manual notes outside the markers.
+- **New:** `<!-- META:<key> -->` directives in `spec.md`, `hld.md`, `lld.md`,
+  `plan.md` that pull ephemeral fields from `metadata.json` at render time.
+- **Breaking:** Ephemeral fields stripped from per-file YAML frontmatter —
+  `git.*`, `synced_to_commit`, `classification.*`, `status`. They live solely
+  in `metadata.json` from this version forward.
+- **Migration:** `scripts/tools/migrate-track-frontmatter.sh` rewrites pre-2.0
+  tracks in place (idempotent; emits `.bak`).
+- **Validators:** any commit touching `skills/**` or `scripts/tools/**` that
+  affects artifact schema must also touch `core/templates/**`, or carry
+  `[template-noop]` in the commit message.
+
+### 1.x.y — pre-baseline (historical)
+
+- See `git log -- core/templates/` for changes before 2.0.0. No formal version
+  tagging; downstream consumers relied on `generated_by` and `generated_at`
+  frontmatter only.
+
+</core-file>
+
+---
+
+## core/templates/discovery.md
+
+<core-file path="core/templates/discovery.md">
+
+---
+project: "{PROJECT_NAME}"
+module: "root"
+track_id: "{TRACK_ID}"
+generated_by: "draft:discover"
+generated_at: "{ISO_TIMESTAMP}"
+links:
+  spec: "./spec.md"
+  plan: "./plan.md"
+  hld: "./hld.md"
+  lld: "./lld.md"
+---
+
+# {TRACK_TITLE} — Discovery
+
+> Phase 0 (code spike). Captures the current-state code reading the AI
+> performed before the spec was written, anchored to
+> `metadata.json:synced_to_commit`. See
+> [core/shared/discovery-schema.md](../../core/shared/discovery-schema.md)
+> for the schema. Hygiene validator forbids empty hotspots without an
+> adjacent `_NONE_FOUND_` justification.
+
+**Status:** <!-- META:status --> <!-- REQUIRED -->
+
+---
+
+## Hotspots <!-- REQUIRED -->
+
+Code locations the spec must address. Each row cites `path:line` that
+verify-citations.sh resolves against the pinned commit.
+
+| Step | Location | Behavior |
+|------|----------|----------|
+| _TBD_hotspot_1_step_ | _TBD_hotspot_1_location_ | _TBD_hotspot_1_behavior_ |
+| _TBD_hotspot_2_step_ | _TBD_hotspot_2_location_ | _TBD_hotspot_2_behavior_ |
+| _TBD_hotspot_3_step_ | _TBD_hotspot_3_location_ | _TBD_hotspot_3_behavior_ |
+
+> If the spike found nothing: keep this table empty and add a
+> `_NONE_FOUND_ — <justification>` line below before saving.
+
+---
+
+## Mode Selection <!-- REQUIRED -->
+
+Flags, feature gates, environment switches that govern the current code
+path. Receivers of the spec use this to scope rollout planning.
+
+| Switch | Location | Notes |
+|--------|----------|-------|
+| _TBD_switch_1_name_ | _TBD_switch_1_location_ | _TBD_switch_1_notes_ |
+
+---
+
+## Open Questions <!-- REQUIRED -->
+
+Load-bearing unknowns that must close before spec freeze. Each question
+must resolve into a decision in `spec.md`, a deferral with a follow-up
+track ID, or `_NONE_FOUND_` with justification.
+
+- Q1: _TBD_question_1_
+- Q2: _TBD_question_2_
+
+---
+
+## References <!-- REQUIRED -->
+
+Flat list of files and functions touched in the spike. Files cited here
+without line numbers are exempt from drift checks (they document
+*familiarity*, not pinned facts).
+
+- _TBD_reference_1_path_ — _TBD_reference_1_symbol_ — _TBD_reference_1_role_
+- _TBD_reference_2_path_ — _TBD_reference_2_symbol_ — _TBD_reference_2_role_
+
+---
+
+## Conversation Log <!-- OPTIONAL -->
+
+> Free-form notes captured during the spike. Reviewers can skim this for
+> context the structured sections above don't carry. Not validator-checked.
+
+</core-file>
+
+---
+
+## core/templates/hld.md
+
+<core-file path="core/templates/hld.md">
+
+---
+project: "{PROJECT_NAME}"
+module: "root"
+track_id: "{TRACK_ID}"
+generated_by: "draft:decompose"
+generated_at: "{ISO_TIMESTAMP}"
+# Stable frontmatter only (WS-8). Ephemeral fields live in metadata.json
+# and render via <!-- META:<key> --> directives.
+links:
+  spec: "./spec.md"
+  plan: "./plan.md"
+  lld: "./lld.md"
+  project_architecture: "../../architecture.md"
+---
+
+# {TRACK_TITLE} — HLD
+
+**_TBD_author_** (_TBD_email_) <!-- REQUIRED -->
+
+**Status:** <!-- META:status --> <!-- REQUIRED -->
+
+> Track ID: `{TRACK_ID}` — generated by `draft:decompose`. Requirements live in [`./spec.md`](./spec.md); implementation tasks in [`./plan.md`](./plan.md); detailed design in [`./lld.md`](./lld.md). For project-wide architecture, see [`../../architecture.md`](../../architecture.md).
+
+## Scope <!-- OPTIONAL -->
+
+- **Includes:** <!-- META:scope_includes -->
+- **Excludes:** <!-- META:scope_excludes -->
+
+> Conflicts surfaced by `scripts/tools/check-scope-conflicts.sh`.
+
+---
+
+## Approvals
+
+> **Pre-fill:** Pulled from `spec.md` frontmatter `approvers.*`. Replace `{...}` with actual names; capture sign-off date and comments per row. Draft gates `git upload` on this table being populated for `criticality ∈ {high, mission-critical}` tracks.
+
+| Role | Approver | Date | Comments | <!-- REQUIRED for criticality ∈ {high, mission-critical} -->
+|------|----------|------|----------|
+| Technical Leads | _TBD_approver_tech_leads_ | _TBD_date_ | _TBD_comments_ |
+| Architecture Review Board | _TBD_approver_arb_ | _TBD_date_ | _TBD_comments_ |
+| Cloud Operations (For SaaS deployments) | _TBD_approver_cloudops_ | _TBD_date_ | _TBD_comments_ |
+| Quality Assurance (For on-prem services) | _TBD_approver_qa_ | _TBD_date_ | _TBD_comments_ |
+| Product Management | _TBD_approver_pm_ | _TBD_date_ | _TBD_comments_ |
+
+---
+
+## Table of Contents
+
+1. [Background](#background)
+2. [Requirements](#requirements)
+3. [High Level Design](#high-level-design)
+4. [Detailed Design](#detailed-design)
+5. [Dependencies](#dependencies)
+6. [Intellectual Property](#intellectual-property)
+7. [Checklist](#checklist)
+8. [Deployment](#deployment)
+9. [Observability](#observability)
+
+---
+
+## Background
+
+<Describe the background - current state, why>
+
+**Ideal Length:** ½ to 1 page
+
+> **Source:** auto-pulled from `spec.md` §Problem Statement and §Background & Why Now. Tighten as needed for HLD audience.
+
+---
+
+## Requirements
+
+> **Source:** [`./spec.md`](./spec.md) is the requirements scorecard. Do not duplicate content here — link to the spec sections.
+
+- **Blackbox (feature/service-level) requirements:** see [`./spec.md` §Requirements / Functional](./spec.md#requirements)
+- **Whitebox (technical, per-component) requirements:** see [`./lld.md` §Requirements](./lld.md#requirements)
+- **Acceptance Criteria:** see [`./spec.md` §Acceptance Criteria](./spec.md#acceptance-criteria)
+- **Non-Functional Requirements:** see [`./spec.md` §Requirements / Non-Functional](./spec.md#requirements)
+
+<If requirements warrant changes in UX or a new UX, include UX mock here>
+
+---
+
+## High Level Design
+
+### Architecture
+
+**Primary goal:** Explain various components and their interactions at a very high level
+
+<!-- GRAPH:track-component-diagram:START -->
+<!-- Rendered by draft:decompose Step 5a from track module set + integration edges.
+     Mermaid flowchart TD with three subgraphs: Track (modules in scope),
+     Existing (existing modules this track touches), External (DB/queue/3P APIs).
+     Edges labeled with transport (HTTP, RPC, queue, direct call) when non-obvious. -->
+<!-- GRAPH:track-component-diagram:END -->
+
+**Architecture narrative** (≤300 words). Explain how the blackbox requirements are translated into the architecture — name the architectural style (hexagonal / layered / pipeline / event-driven), justify from observable evidence, and call out the dominant interaction pattern (sync RPC, async event, batch).
+
+### UI Architecture Changes
+
+**Primary goal:** Explain UI changes necessary for the feature / service
+
+- Is it MFE based, or is factored into existing service UI?
+- Are there changes to the UI infra libraries, components?
+- Tradeoffs between implementing business logic in backend vs UI
+
+_If no UI changes: write `N/A — backend-only track.`_
+
+### Key Design Decisions
+
+<Discuss key design choices. This is a summary of the design choices in the architecture>
+
+- **Decision 1:** {one-sentence statement} — _Why:_ {observable constraint, not aesthetic}
+- **Decision 2:** {one-sentence statement} — _Why:_ {observable constraint, not aesthetic}
+
+### Alternatives Considered
+
+<Alternative architectures and design choices considered and reasons for decisions>
+
+| Alternative | Rejected Because | promote_to_adr | <!-- REQUIRED -->
+|-------------|------------------|----------------|
+| _TBD_alt_1_ | _TBD_alt_1_reason_ | _TBD_alt_1_promote_to_adr_ (yes / no — if yes, run `draft adr`) |
+
+#### Notes for HLD Sections
+
+- Try not to use examples to illustrate the design here
+- Don't include detailed design aspects here (e.g. Sequence diagrams for workflows — those go in [`./lld.md`](./lld.md))
+
+---
+
+## Detailed Design
+
+### Component Level Design
+
+**Primary goal:** Zoom into each component and explain its design in detail
+
+<!-- GRAPH:track-component-table:START -->
+<!-- Rendered by draft:decompose Step 5a — one row per module in scope.
+     Columns: Module, Status (New/Modified/Existing), Files, Public API count,
+     Fan-In, Fan-Out, Complexity, Primary Deps, concurrency_model,
+     aggregate_resource_cap, parallel_flag_interaction, Citation. -->
+<!-- WS-7 required columns: concurrency_model, aggregate_resource_cap,
+     parallel_flag_interaction. Use "n/a" when truly inapplicable. -->
+<!-- GRAPH:track-component-table:END -->
+
+For each component, populate one subsection:
+
+#### [Component Name]
+
+**Responsibility:** {one sentence — what this module owns}
+**Status:** `New` | `Modified` | `Existing`
+**Entry point:** `{path:line}` → `{symbol}`
+**Public API:** see [`./lld.md` §Classes and Interfaces — {component}](./lld.md#classes-and-interfaces)
+**Whitebox requirements addressed:** {list AC IDs from spec.md} <!-- back-link to discovery.md Hotspot rows -->
+**Discovery hotspots addressed:** {list Hotspot-row IDs from `./discovery.md`} <!-- REQUIRED -->
+
+**Design notes** (≤200 words). How this component translates whitebox requirements into structure. Cite `path:line` for non-obvious decisions.
+
+#### Key Design Decisions
+
+<Discuss key design choices that are relevant at the component level>
+
+#### Alternatives Considered
+
+<Alternative designs considered for the component if any, and reasons for decisions>
+
+#### Notes for Detailed Sections
+
+- Include APIs, sequence diagrams for important workflows in the components — sequence diagrams live in [`./lld.md` §Key Algorithms and Workflows](./lld.md#key-algorithms-and-workflows)
+- Don't include data structures, protobuf definitions, class level interfaces here (they belong in [`./lld.md`](./lld.md))
+
+---
+
+## Dependencies
+
+<Identify all components dependent on your design proposal. It is important to review this list to identify alternatives, which would minimize/eliminate the impact to other components. It is also important to highlight this list during the design review discussion to raise awareness of the dependent component changes that need to be planned.>
+
+<!-- GRAPH:track-dependencies:START -->
+<!-- Rendered by draft:decompose Step 5a from cross-module integration edges.
+     Columns: Dependent Component, Edge Kind (call/import/event/shared-schema),
+     Impact Assessment (Small/Medium/Large), Description, Citation. -->
+<!-- GRAPH:track-dependencies:END -->
+
+| Dependent Component | Impact Assessment | Description | Citation |
+|---|---|---|---|
+| [Component Name] | Small / Medium / Large | Detailed description of the impacted functionality. | `path:line` |
+
+---
+
+## Intellectual Property
+
+### Inventions
+
+Provide a brief list and summary of all inventions associated with the proposed design.
+
+1. 
+2. 
+3. 
+
+**Were Invention Disclosure Forms (IDFs) submitted for the inventions listed?**
+
+- [ ] Yes
+- [ ] No
+
+> If No, submit an Invention Disclosure Form through your company's standard IP process.
+
+### Third Party Technology (TPT)
+
+**TPT includes:**
+- **Open Source Software (OSS):** Software licensed under an Open Source License (e.g., MIT, BSD, GPL, Apache)
+- **Commercial (non-OSS) Technology:** Non- software, documentation, content, APIs, SDKs, logos, artwork, data, GUIs, Tools, databases, and other intellectual property NOT licensed under an Open Source License
+
+#### List All NEW TPT Used
+
+| TPT | Where/How? |
+|---|---|
+| | |
+
+**Note:** As noted in the TPT Policy, prior to downloading/onboarding any new TPT, you must do the following:
+
+1. **For all new OSS:**
+   - Document the license and usage. Follow your organization's legal and security review process for Open Source.
+
+2. **For all new Commercial TPT:**
+   - Follow your organization's procurement and legal review process before onboarding any commercial technology or non-open-source assets.
+
+---
+
+## Checklist
+
+> **Draft integration:** `draft deploy-checklist` validates each row below is populated before allowing deploy of `criticality ∈ {high, mission-critical}` tracks.
+
+### Performance <!-- REQUIRED -->
+
+- Describe request QPS and 95th percentile latency
+
+| Budget | Value | Baseline source | <!-- REQUIRED -->
+|--------|-------|-----------------|
+| p50 latency | _TBD_p50_ | _TBD_p50_baseline_ |
+| p95 latency | _TBD_p95_ | _TBD_p95_baseline_ |
+| p99 latency | _TBD_p99_ | _TBD_p99_baseline_ |
+| Throughput target | _TBD_throughput_ | _TBD_throughput_baseline_ |
+| Resource budget (CPU / RAM / IO) | _TBD_resource_budget_ | _TBD_resource_baseline_ |
+
+### Scale <!-- REQUIRED -->
+
+- Does the service scale horizontally? What are the metrics used for this?
+- Is vertical scaling required?
+- Are there fundamental scaling bottlenecks? (e.g., single leader doing unbounded work)
+
+### Security <!-- REQUIRED -->
+
+- How are credentials protected?
+- Are there any firewall / ports implications?
+- Is there any resource level RBAC needed for this feature / service?
+- Are there any certificate management implications? (e.g., manual deployment etc.)
+- Is customer data protected with encryption?
+
+### Resiliency <!-- REQUIRED -->
+
+- Describe the kind and number of failures that may cause service unavailability
+- How is graceful degradation on a fault handled?
+
+### Multi-tenancy <!-- REQUIRED -->
+
+- Is the data / metadata isolated across tenants? In other words, even if datastore is shared, query correctness / partitioning should ensure no leaks should happen
+- Can the tenants expect predictable performance regardless of other tenants' workloads?
+- Can the data and state (config and runtime) of a tenant be migrated?
+
+### Upgrade <!-- REQUIRED -->
+
+- Is there any breakage in backward compatibility in API or data model?
+- What are the dependent services that need to be upgraded prior to this? (e.g., in SaaS, this service upgrade depends on a new ElasticSearch manager service version)
+- Does the impact of changes go beyond the upgraded cluster / service instance? (e.g., if this is a cluster change, will it break reporting or remote replication)
+
+### Flags and Controlled Rollout of Features <!-- REQUIRED -->
+
+- Does this change the persistent state? If yes, describe the flags used to protect the change
+- Is the feature going to be rolled out in a controlled manner? If yes, describe the targets and the feature flags here
+
+| Field | Value | <!-- REQUIRED -->
+|-------|-------|
+| `flag_name` | _TBD_flag_name_ |
+| `cluster_feature_gate` | _TBD_cluster_feature_gate_ |
+| `kill_switch_test_id` | _TBD_kill_switch_test_id_ |
+| `runbook_link` | _TBD_runbook_link_ |
+| `sunset_criteria` | _TBD_sunset_criteria_ |
+
+### Cost Implications <!-- REQUIRED -->
+
+*Primarily for SaaS deployments*
+
+- Include cloud cost calculation here
+- Is there any cost to the customer for cloud workloads?
+- Is there any sizing impact?
+
+---
+
+## Pre-Deploy Validation <!-- REQUIRED -->
+
+`scripts/tools/check-track-hygiene.sh` → hygiene clean
+`scripts/tools/verify-citations.sh` → citations clean (±5 lines tolerance)
+`scripts/tools/verify-doc-anchors.sh` → anchors and §-refs resolve
+`scripts/tools/check-graph-usage-report.sh` → Graph Usage Report present
+`scripts/tools/check-scope-conflicts.sh` → no overlap with adjacent tracks
+`scripts/tools/diff-templates-vs-tracks.sh` → no schema drift
+
+Result stored in `metadata.json:pre_deploy_status`
+(`unrun` / `passing` / `failing` / `bypassed`). Deploy is blocked unless
+`passing`.
+
+---
+
+## Deployment
+
+- Is there any dependency on the platform where this is deployed?
+  - For DP: on-prem vs customer managed cloud vs SaaS vs Services running in the cloud
+  - For CP: self managed on-prem vs SaaS vs IBM cloud
+
+---
+
+## Observability
+
+- List down the key metrics (don't list all metrics) that SREs need to look at to identify issues
+- List down alerting thresholds on those metrics
+
+> Per-component metrics + alert threshold tables live in [`./lld.md` §Observability](./lld.md#observability).
+
+</core-file>
+
+---
+
+## core/templates/lld.md
+
+<core-file path="core/templates/lld.md">
+
+---
+project: "{PROJECT_NAME}"
+module: "root"
+track_id: "{TRACK_ID}"
+generated_by: "draft:decompose"
+generated_at: "{ISO_TIMESTAMP}"
+# Stable frontmatter only (WS-8). Ephemeral fields live in metadata.json
+# and render via <!-- META:<key> --> directives.
+links:
+  spec: "./spec.md"
+  plan: "./plan.md"
+  hld: "./hld.md"
+  project_architecture: "../../architecture.md"
+---
+
+# {TRACK_TITLE} — LLD
+
+**_TBD_author_** (_TBD_email_) <!-- REQUIRED -->
+
+**Status:** <!-- META:status --> <!-- REQUIRED -->
+
+> Track ID: `{TRACK_ID}` — generated by `draft:decompose`. Sibling docs: [`./hld.md`](./hld.md), [`./spec.md`](./spec.md), [`./plan.md`](./plan.md). For project-wide architecture, see [`../../architecture.md`](../../architecture.md).
+
+## Approvals
+
+> **Pre-fill:** Pulled from `spec.md` frontmatter `approvers.{team_leads, tech_leads, qa}`. Captured per row before code review begins.
+
+| Role | Approver | Date | Comments | <!-- REQUIRED for criticality ∈ {high, mission-critical} -->
+|------|----------|------|----------|
+| Team Leads | _TBD_approver_team_leads_ | _TBD_date_ | _TBD_comments_ |
+| Technical Leads | _TBD_approver_tech_leads_ | _TBD_date_ | _TBD_comments_ |
+| Quality Assurance | _TBD_approver_qa_ | _TBD_date_ | _TBD_comments_ |
+
+---
+
+## Table of Contents
+
+1. [Background](#background)
+2. [Requirements](#requirements)
+3. [Low Level Design](#low-level-design)
+4. [Observability](#observability)
+
+---
+
+## Background
+
+<Link to HLD and explain context here>
+
+> See [`./hld.md` §Background](./hld.md#background) for the high-level rationale. Use this section only for component-internal context the HLD doesn't cover.
+
+> **Citations.** Use `path/to/file.ext:LINE` (or `LINE-RANGE`); verifier:
+> `scripts/tools/verify-citations.sh`. Prefer `// DRAFT-CITE: <id>` source
+> anchors over raw line numbers for code that moves often.
+
+---
+
+## Requirements
+
+> **Source:** [`./spec.md`](./spec.md). Whitebox (per-component) requirements live there. Do not duplicate.
+
+- **Whitebox requirements scorecard:** see [`./spec.md` §Requirements](./spec.md#requirements)
+- **Acceptance criteria mapped to this LLD:** {list AC IDs covered by this LLD}
+
+---
+
+## Low Level Design
+
+> **NOTE:**
+> - HLD and Detailed Design covers components and interactions across various services that the feature touches
+> - LLD to be documented here is for each such component and internal implementation
+> - A single doc here can cover all components, or they can be split up, but the key is to ensure every component in every service the design touches has an LLD
+
+### Classes and Interfaces
+
+**Describe the class level design preferably with a diagram**
+
+- This should convey what interfaces each class provides and how it interacts with other classes
+- Describe choice of message queues vs RPCs for interactions
+
+<!-- GRAPH:track-class-table:START -->
+<!-- Rendered by draft:decompose Step 5b for each module marked New/Modified.
+     Per-module table. Columns: Symbol, Kind (class/iface/func/method),
+     Signature, Visibility, Citation, Concurrency Notes, lock_acquired,
+     reentrant. -->
+<!-- WS-7 required columns: lock_acquired (named lock or "none"),
+     reentrant (yes/no/n/a). -->
+<!-- GRAPH:track-class-table:END -->
+
+#### [Component/Service Name]
+
+**Public API:**
+
+| Function / Method | Signature | Params | Returns | Errors / Exceptions | Citation |
+|-------------------|-----------|--------|---------|---------------------|----------|
+| `{name}` | `{lang-appropriate signature}` | `{param: type — constraint}` | `{type — shape}` | `{error types / codes}` | `path:line` |
+
+**Preconditions:** {what must be true before call — caller responsibilities}
+**Postconditions:** {what is guaranteed after successful call}
+**Invariants:** {properties preserved across calls — thread safety, idempotency, ordering}
+
+{Repeat per component.}
+
+---
+
+### Data Model
+
+**Describe the schemas of persistent state - protobuf or db schemas**
+
+- Describe the schemas of messages / RPCs
+- Describe caching considerations
+
+<!-- GRAPH:track-data-models:START -->
+<!-- Rendered by draft:decompose Step 5b. One block per new/modified entity.
+     Pulls proto/struct/class declarations + field metadata from the graph. -->
+<!-- GRAPH:track-data-models:END -->
+
+#### [Component/Service Name]
+
+**`{ModelName}`** (`path:line`)
+
+```{language}
+{actual type definition — struct, class, interface, proto message, TypedDict, etc.}
+```
+
+| Field | Type | Nullable | Default | Validation / Constraint |
+|-------|------|----------|---------|-------------------------|
+| `{field}` | `{type}` | yes/no | `{default or —}` | `{rule}` |
+
+**Storage:** {where persisted — table, collection, key prefix}
+**Indexes / Keys:** {primary key, unique constraints, indexed fields}
+**Migration:** {if this is a schema change — migration path and rollback}
+
+{Repeat per model.}
+
+---
+
+### Eligibility / Cap Tables <!-- OPTIONAL -->
+
+> When the LLD specifies caps (byte limits, row limits, concurrency caps),
+> use this schema. Every cap value carries `derived_from` (a flag, threshold,
+> benchmark, or vendor limit). Pure invention without `derived_from` is
+> rejected by the deploy-checklist gate.
+
+| Cap | Value | derived_from | Notes | <!-- REQUIRED if section present -->
+|-----|-------|--------------|-------|
+| _TBD_cap_1_name_ | _TBD_cap_1_value_ | _TBD_cap_1_derived_from_ | _TBD_cap_1_notes_ |
+
+---
+
+### Key Algorithms and Workflows
+
+**Describe certain key algorithms / workflows**
+
+> **WS-7 sequence-diagram rule.** When the prose enumerates edge cases (cap
+> exceeded, OOM, flag flip mid-flow, retry exhausted), the Mermaid sequence
+> diagram **must** include an explicit `alt` / `opt` block per edge case.
+> `Note over X,Y: ... TBD policy ...` is **not** sufficient. Reviewers and
+> deploy-checklist fail on bare prose without diagram blocks.
+
+Examples:
+- List of steps to failover a multi-region database cluster
+- Analysis phase of a background data indexing service
+- Transferring session state information between authentication and profile services via a secure messaging protocol
+
+#### [Algorithm/Workflow Name]
+
+**Inputs:** `{...}`
+**Outputs:** `{...}`
+**Complexity:** `O({...})` time, `O({...})` space
+
+```mermaid
+sequenceDiagram
+    participant U as {Caller}
+    participant A as {module-1}
+    participant B as {module-2}
+    participant D as {DB / external}
+
+    U->>A: {request payload}
+    A->>B: {internal call}
+    B->>D: {query / write}
+    D-->>B: {result}
+    B-->>A: {response}
+    A-->>U: {final response}
+
+    Note over A,B: {invariant / gate}
+```
+
+**Pseudocode:**
+
+```
+1. validate inputs
+2. ...
+3. return result
+```
+
+**Edge cases handled:**
+- {case 1 — what happens}
+- {case 2 — what happens}
+
+---
+
+### Error Handling & Retry Semantics
+
+| Operation | Error Class | Classification | Retry? | Backoff | Max Attempts | Fallback | fault_injection_site | <!-- REQUIRED -->
+|-----------|-------------|----------------|--------|---------|--------------|----------|----------------------|
+| _TBD_err_1_op_ | _TBD_err_1_class_ | _TBD_err_1_classification_ | _TBD_err_1_retry_ | _TBD_err_1_backoff_ | _TBD_err_1_max_attempts_ | _TBD_err_1_fallback_ | _TBD_err_1_fault_injection_site_ |
+
+**Propagation model:** {Result type / exceptions / error codes}
+**Circuit breaker:** {thresholds, half-open policy, reset} — omit if N/A
+**Idempotency:** {which operations are idempotent and how — dedup key, tx id}
+
+---
+
+### Refactoring of Existing Code
+
+<Describe if large sections of existing code is being refactored, and why (e.g., not modular and hence can't be reused; can't write UTs well as interfaces are not defined cleanly)>
+
+---
+
+### Programming Language Choice and Unit Testing
+
+#### Programming Language Choice
+
+<Describe Programming Language choice and justification>
+
+#### Unit Testing Strategy
+
+- **Mock Interfaces:**
+  - How mock interfaces are going to be implemented and used in UTs
+  
+- **Functional Test Cases:**
+  - What are major cases to be UT'd functionally
+  
+- **Error & Fault Injection:**
+  - How errors & faults are injected
+  
+- **Race Condition Simulation:**
+  - How race conditions are simulated
+
+> See `draft testing-strategy` for the project's authoritative test strategy. This LLD section captures only what is specific to this track's components.
+
+---
+
+### PaaS Choices
+
+<Describe the choices made in each of the following areas with justification:>
+
+#### Data Store
+
+- Relational vs NoSQL
+- Justification
+
+#### Workflow Engine
+
+- (e.g., Temporal, etc.)
+- Justification
+
+#### Operational State Checkpointing Store
+
+- (e.g., Scribe, Mongo, etc.)
+- Justification
+
+---
+
+## Observability
+
+### Metrics
+
+List down all metrics that developers and SREs need to look at to identify issues:
+
+- 
+- 
+- 
+
+### Alerting Thresholds
+
+List down alerting thresholds on those metrics:
+
+| Metric | Threshold | Severity | Action |
+|--------|-----------|----------|--------|
+| | | | |
+
+> `draft deploy-checklist` validates this table is populated before deploy.
 
 </core-file>
 

@@ -1,14 +1,4 @@
 #!/usr/bin/env bash
-<<<<<<< HEAD
-# Hygiene/verification tool stub (Foundations phase)
-set -euo pipefail
-if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
-    echo "${0##*/} — Foundations stub (see manifest §2.2)"
-    exit 0
-fi
-echo "${0##*/}: stub — no violations (full impl in later phase)"
-exit 0
-=======
 # check-graph-usage-report.sh — validate that a skill output / template contains
 # the mandatory Graph Usage Report footer required by core/shared/graph-query.md.
 #
@@ -103,4 +93,3 @@ for f in "$@"; do
 done
 
 exit "$fail"
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c

@@ -60,6 +60,7 @@ get_skill_header() {
         docs)              echo "Docs Router" ;;
         discover)          echo "Discover Router" ;;
         jira)              echo "Jira Router" ;;
+        integrations)      echo "Integrations Router" ;;
         tour)              echo "Tour Command" ;;
         impact)            echo "Impact Command" ;;
         assist-review)     echo "Assist Review Command" ;;
@@ -102,6 +103,7 @@ get_copilot_trigger() {
         docs)              echo "\"write docs\" or \"draft docs <intent>\" (documentation)" ;;
         discover)          echo "\"discover debug\" or \"draft discover <intent>\" (debug, bughunt, reviews, coverage, learn, index, etc.)" ;;
         jira)              echo "\"jira preview\", \"jira create\", or \"jira review <ID>\"" ;;
+        integrations)      echo "\"integrations\", \"integrations jira-preview\", or \"integrations jira-create\"" ;;
         tour)              echo "\"tour\" or \"draft tour\"" ;;
         impact)            echo "\"impact\" or \"draft impact\"" ;;
         assist-review)     echo "\"assist review\" or \"draft assist-review\"" ;;

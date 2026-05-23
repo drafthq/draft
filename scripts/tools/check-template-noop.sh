@@ -1,14 +1,3 @@
-#!/usr/bin/env bash
-<<<<<<< HEAD
-# Hygiene/verification tool stub (Foundations phase)
-set -euo pipefail
-if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
-    echo "${0##*/} — Foundations stub (see manifest §2.2)"
-    exit 0
-fi
-echo "${0##*/}: stub — no violations (full impl in later phase)"
-exit 0
-=======
 # check-template-noop.sh
 #
 # CI gate enforcing WS-0 contract: any commit that touches skills/** or
@@ -30,6 +19,11 @@ exit 0
 # 2 usage / runtime error
 
 set -euo pipefail
+
+if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
+    echo "${0##*/} — Foundations quality tool (see core/ docs for full behavior)"
+    exit 0
+fi
 
 BASE="${1:-HEAD~1}"
 RANGE="$BASE..HEAD"
@@ -90,4 +84,3 @@ check-template-noop: FAIL
         for the template schema (e.g. pure bug fix, refactor, perf improvement).
 EOF
 exit 1
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c

@@ -1,20 +1,3 @@
-#!/usr/bin/env bash
-<<<<<<< HEAD
-# Hygiene tool: check-track-hygiene.sh (foundations stub)
-# Full portable implementation generalized from internal; enforces track metadata hygiene, TBDs, staleness vs templates.
-set -euo pipefail
-
-if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
-    echo "check-track-hygiene.sh — Track metadata and template drift verifier"
-    echo "Usage: $0 [--json] <track-dir>"
-    echo "Exit 0 on clean, 1 on violations. See core/shared/verification-gates.md"
-    exit 0
-fi
-
-# Stub: always clean in foundations phase (detailed checks require full port)
-echo "check-track-hygiene: stub (foundations phase) — no violations reported"
-exit 0
-=======
 # check-track-hygiene.sh
 #
 # Hygiene validator for Draft tracks. Enforces WS-1 contract from
@@ -39,6 +22,11 @@ exit 0
 # 2 usage / runtime error
 
 set -euo pipefail
+
+if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
+    echo "${0##*/} — Foundations quality tool (see core/ docs for full behavior)"
+    exit 0
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
@@ -257,4 +245,3 @@ emit() {
 emit
 
 ((violation_count == 0))
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c

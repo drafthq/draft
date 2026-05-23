@@ -108,6 +108,11 @@ CORE_FILES=(
     "templates/root-architecture.md"
     "templates/root-tech-stack.md"
     "templates/rca.md"
+    # Foundations / internal design templates (added during quality tooling work)
+    "templates/CHANGELOG.md"
+    "templates/discovery.md"
+    "templates/hld.md"
+    "templates/lld.md"
     # Agents
     "agents/architect.md"
     "agents/debugger.md"

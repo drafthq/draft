@@ -1,13 +1,3 @@
-#!/usr/bin/env bash
-<<<<<<< HEAD
-# Hygiene/verification tool stub (Foundations phase)
-set -euo pipefail
-if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
-    echo "${0##*/} — Foundations stub (see manifest §2.2)"
-    exit 0
-fi
-echo "${0##*/}: stub — no violations (full impl in later phase)"
-=======
 # fix-whitespace.sh — strip trailing whitespace and blank lines at EOF from
 # AI-generated markdown files.
 #
@@ -31,6 +21,11 @@ echo "${0##*/}: stub — no violations (full impl in later phase)"
 # 2 — one or more files could not be processed
 
 set -euo pipefail
+
+if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
+    echo "${0##*/} — Foundations quality tool (see core/ docs for full behavior)"
+    exit 0
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=_lib.sh
@@ -186,5 +181,3 @@ if [[ ${#ERRORS[@]} -gt 0 ]]; then
     exit 2
 fi
 
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
-exit 0
