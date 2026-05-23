@@ -30,6 +30,10 @@ generated_at: "{ISO_TIMESTAMP}"
 ## NEVER
 {2-3 safety rules — things that must never happen}
 
+## Key Operational Models (from §6 / GRAPH:OPERATIONAL)
+- {Most critical flow 1 — one line}
+- {Most critical flow 2 (if space allows)}
+
 ## Active Tracks
 {List of active track IDs and one-line descriptions, or "none"}
 

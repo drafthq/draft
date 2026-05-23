@@ -18,7 +18,7 @@ Initialize a Draft project for Context-Driven Development.
 - **Producing copy-paste module descriptions** — if 3+ modules share identical Responsibilities or description text, you have NOT analyzed the source files
 - **Writing architecture.md below the tier minimum** for the detected codebase tier — compute tier from Step 1.4.5 graph metrics (M, F, P); falling below the tier minimum indicates incomplete analysis, not conciseness
 - **Writing sequence diagrams under 15 lines** of Mermaid code — shallow diagrams without alt/opt blocks, payloads, and error paths are useless
-- **Writing module deep-dives under 100 lines each** — a module with hundreds of source files cannot be described in a paragraph
+- **Writing module deep-dives that ignore the graph or lack a workflow/state diagram** — the graph is ground truth; every significant module must have at least one synthesized diagram showing its primary flow or lifecycle. Prose volume without diagram fidelity is a failure.
 - **Using "See X/" or "follow BUILD patterns"** as a substitute for reading actual source files and documenting real content
 - **Creating freeform sections** instead of the numbered 28-section template (e.g., "## Module deep-dive: X" instead of "## 7. Core Modules Deep Dive" with "#### 7.1 X" subsections) — the template structure is MANDATORY, graph data enriches it but does not replace it
 - **Capping sub-module depth** — sub-modules with 50+ files get the SAME analysis depth as top-level modules; there is NO page limit; a 100-page architecture.md for a large codebase is correct
@@ -38,7 +38,7 @@ Initialize a Draft project for Context-Driven Development.
 ## 3.  System Identity & Purpose
 ## 4.  Architecture Overview
 ## 5.  Component Map & Interactions
-## 6.  Data Flow — End to End
+## 6.  Core Operational Flows, Lifecycles & State Machines
 ## 7.  Core Modules Deep Dive
 ## 8.  Concurrency Model & Thread Safety
 ## 9.  Framework & Extension Points
@@ -71,6 +71,23 @@ Initialize a Draft project for Context-Driven Development.
 **Self-check before finalizing**: Run a mental grep for `## 1.` through `## 28.` in your output. Any gap = incomplete document. Return and fill it.
 
 > **If you are a subagent** executing this step via a delegation prompt: your prompt is a SUMMARY. The full 28-section structure above is the AUTHORITATIVE requirement. Do not infer section names from the summary — use the exact headings listed here.
+
+---
+
+## Graph Fidelity & Diagram-First Priority (MANDATORY)
+
+The knowledge graph in `draft/graph/` (module-graph.jsonl, hotspots.jsonl, proto-index.jsonl, per-module *.jsonl files, public API tables, and edge weights) is the **deterministic structural ground truth** for the system's actual architecture.
+
+**You are running inside a powerful agentic coding environment** (Cursor, Claude Code, Copilot, Windsurf, etc.) that maintains its own rich, continuously updated index of the entire codebase. **Use that indexed knowledge aggressively** in addition to the explicit graph data and direct source reads.
+
+**LLM role is faithful, high-fidelity synthesis** — not invention.
+
+- Every structural claim must be consistent with the graph records. Contradiction = failure.
+- **Diagrams are first-class deliverables.** For each major module or pipeline, produce at least one accurate Mermaid workflow, state, or sequence diagram.
+- **Accuracy and correctness > document length.** Short, precise synthesis + good diagrams is superior to long prose or file lists.
+- **Workflow and state focus.** Prioritize understanding primary control flows and state transitions so you can draw accurate diagrams.
+
+This rule takes precedence over older volume-oriented language in this file.
 
 ---
 
@@ -671,15 +688,15 @@ Perform a **one-time, exhaustive analysis** of the existing codebase. This is NO
 1. **LLM / AI-agent context** — enabling future code changes, Q&A, and onboarding without re-reading source files.
 2. **Engineer reference** — enabling debugging, extension, and operational understanding.
 
-### Exhaustive Analysis Mandate
+### Graph + Indexed Knowledge Fidelity Mandate
 
-**CRITICAL**: This analysis must be EXHAUSTIVE, not representative. Specifically:
-- **Read ALL relevant source files** — do not sample or skim
-- **Enumerate ALL implementations** — no "and others", "etc.", or "similar patterns"
-- **Generate REAL Mermaid diagrams** — every section calling for a diagram MUST have one
-- **Include ACTUAL code snippets** — from the codebase, not pseudocode
-- **Populate ALL tables** — with real data, not placeholders or examples
-- **Target: comprehensive coverage** — shorter output indicates incomplete analysis
+**CRITICAL**: The output must be **faithful to the deterministic graph and your environment's full indexed understanding** of the project. This is not "read every file" exhaustiveness — it is correctness and completeness of the *model*.
+
+- The knowledge graph (`draft/graph/`) + your agent/IDE's rich codebase index together form the authoritative view.
+- Use direct source reads strategically (hotspots, interfaces, key implementation paths) to validate, enrich, and draw accurate diagrams — not as a brute-force enumeration exercise.
+- **Prioritize synthesis of accurate workflow, state, sequence, and component diagrams** that make the graph's facts and the project's higher-level design immediately usable.
+- **Include real, verified code snippets and invariants** only where they add understanding not already visible in the graph or diagrams.
+- **Target: highest possible correctness** of the generated architecture model. A concise, diagram-rich document that an agent or engineer can trust is the goal. Volume without fidelity is noise.
 
 If the codebase is large (200+ files), focus on the module boundaries but still enumerate exhaustively within each module.
 
@@ -783,17 +800,21 @@ Spawn a **single synthesis agent** with the Synthesis Coordinator Prompt from `c
 - `{ARCHITECTURE_TEMPLATE_STRUCTURE}` — the 28-section outline from `core/templates/architecture.md`
 
 The synthesis agent:
-- Pastes reader deep-dives verbatim into Section 7 — does not rewrite them
-- Derives cross-cutting sections (component map, concurrency, error handling, invariants, extension points) from IR fields
-- Reads source directly for §6 Data Flow, §12 API, §14 Integration, §15 Invariants verification, §18 Patterns, §22 Config
-- Produces the full 28-section architecture.md
+- Integrates the reader outputs (now graph + one high-quality workflow/state diagram + minimal notes per module) into §7 with light editing only for consistency and cross-references.
+- Derives the true cross-cutting sections (§4 topology, §5 component map, §6 operational flows, §8 concurrency, §14 integration sequences, §15 invariants, etc.) by combining IR data, reader diagrams, and additional targeted source reads.
+- Aggressively uses its own full indexed project knowledge (from the host Cursor/Claude Code/Copilot environment) to improve accuracy of workflows, state machines, and higher-level design synthesis beyond what the static graph snapshot provides.
+- Produces a document whose primary value is faithful, visual, diagram-rich representation of the actual system design.
 
 **Source reading policy for synthesis agent (enforce in prompt):**
 ```
-Read source for: §6 Data Flow, §12 API Definitions, §14 Integration Points,
-                 §15 Critical Invariants (verification), §18 Design Patterns, §22 Configuration
+Read source (and aggressively use your full project index) for:
+- §6 Core Operational Flows — the most important system-level workflows, lifecycles, and state machines (this is the highest-ROI section for future coding accuracy)
+- §12 API / Interface surface
+- §14 Cross-module integration sequences
+- §15 Critical Invariants (verification against actual code)
+- §18 Key Design Patterns
 
-All other sections: compose from reader deep-dives (§7) and IR fields.
+All other sections: compose primarily from the graph + reader outputs + IR, with light additional reads only where needed for diagram accuracy.
 ```
 
 #### Phase 3: Parallel Finalization
@@ -877,28 +898,28 @@ For each Ops/Handler directory:
 
 Do NOT batch all 20 modules into one write. Process them sequentially so each module and its sub-modules get dedicated analysis attention. **No upper limit on Pass 2 length** — it scales with codebase complexity. A 14-module C++ codebase with deep sub-module hierarchies may produce 5000+ lines in Pass 2 alone. That is correct and expected.
 
-#### Pass 2 Completion Gate — MANDATORY before Pass 3
+#### Pass 2 Completion Gate — Graph Fidelity + Diagram Check (MANDATORY before Pass 3)
 
-**YOU MUST PRODUCE THIS TABLE before writing a single line of Pass 3.** Do not skip, summarize, or defer it.
+**YOU MUST PRODUCE THIS VERIFICATION before writing Pass 3.** Do not skip it.
 
-For every module written in Pass 2, count the lines in its section and fill in this table:
+For every module that received a `#### 7.X` section, verify the following and record the result:
 
 ```
-## Pass 2 Completion Report
-| Module | Lines written | Sub-modules covered | PASS / FAIL |
-|--------|--------------|---------------------|-------------|
-| foo/bar | 142 | fill_processor, scheduler | PASS |
-| foo/baz | 38  | none                | FAIL — below 100 line minimum |
+## Pass 2 Graph Fidelity & Diagram Report
+| Module | Graph block present? | Workflow/State diagram present & accurate? | Synthesis contradicts graph? | PASS / FAIL |
+|--------|----------------------|--------------------------------------------|------------------------------|-------------|
+| foo/bar | Yes | Yes (stateDiagram of lifecycle) | No | PASS |
+| foo/baz | Yes | Partial (only dependency list) | No | FAIL — add one primary flow diagram |
 ```
 
-**Rules:**
-- PASS threshold: ≥ 100 lines for any module with < 200 source files; ≥ 150 lines for modules with 200+ source files
-- A FAIL row means you MUST expand that module's section NOW, before continuing
-- If any row shows FAIL: re-read additional source files for that module and expand until the line count passes
-- If all rows PASS: print "All modules pass. Proceeding to Pass 3." and continue
-- **Omitting this table is the same as failing the gate** — Pass 3 MUST NOT start without it
+**Rules (new priority):**
+- Every module that appears in `draft/graph/module-graph.jsonl` must have its deterministic `<!-- GRAPH:module-deep/... -->` block rendered.
+- Every architecturally significant module (top 20 by fan-in or any module with >1 clear internal boundary in the graph) must contain **at least one synthesized Mermaid workflow, state, or sequence diagram** that visualizes the dominant control/data flow derived from the graph + source reads.
+- Synthesis prose must not contradict the graph record for that module. If a discrepancy is discovered during source reading, it is noted explicitly; the graph remains the structural authority.
+- A FAIL row means you must add or correct the missing diagram (or remove the contradicting sentence) before proceeding. Re-reading source is allowed only to improve diagram accuracy or resolve a real contradiction.
+- **Passing the gate with a correct graph block + one good diagram + 40 words of synthesis is better than a 200-line prose dump that ignores the graph.**
 
-This gate exists because this skill requires exhaustive module coverage. Skipping modules or writing paragraph-level summaries is a violation of the Exhaustive Analysis Mandate, not an acceptable pragmatic trade-off.
+This gate enforces the new priority: the graph defines structure; diagrams make it usable; prose is minimal supporting narrative. The old 100-line volume targets are retired.
 
 #### Pass 3: Remaining Sections (Sections 8–28 + Appendices)
 

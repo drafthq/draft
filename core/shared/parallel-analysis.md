@@ -144,101 +144,57 @@ Output a JSON array after the "## IR" heading. Each element is one module:
 
 ## Deep-Dives
 
-For each module, write a full Markdown section under the "## Deep-Dives" heading:
+For each module, write a **graph-first, diagram-centric** Markdown section under the "## Deep-Dives" heading. The primary artifacts are the deterministic graph data and one synthesized workflow/state diagram. Prose is minimal supporting narrative.
 
 #### 7.X {ModuleName}
 
-**Role**: One-line description grounded in what you actually read.
+**Role** (≤25 words, derived from graph role + primary source).
 
-**Source Files**:
-- `path/to/file` — what this file does
+**Primary Workflow / State Diagram** (MANDATORY — highest value output)
+One accurate Mermaid diagram (stateDiagram-v2, sequenceDiagram, or flowchart) that visualizes the dominant control flow, lifecycle, or data transformation for this module, using facts from the graph (entry points, public surface, call targets, hotspots). This diagram is more important than any other text in the section.
 
-**Sub-Module Structure**:
-| Sub-Module | Path | Files | Role |
-|------------|------|-------|------|
-| `name` | `path/` | N | description |
+**Graph Summary** (from the module's graph record)
+- Fan-in / Fan-out, hotspot files, key public symbols (only the architecturally significant ones).
 
-**Responsibilities**:
-1. Concrete responsibility with detail from source
-2. (list ALL — no "etc.")
+**Design Notes** (≤60 words total)
+Only observations from source that add understanding *not already visible* in the graph block or the workflow diagram (e.g., a subtle invariant, error boundary, or concurrency rule). Cite `path:line`.
 
-**Key Operations / Methods**:
-| Op / Method | Signature | Description |
-|-------------|-----------|-------------|
-| `name` | `(input: Type) → ReturnType` | what it does |
+**Sub-modules / Internal Boundaries**
+Only when the graph shows clear internal structure with its own public surface or high internal fan-in. Each child follows the same pattern (graph facts + one workflow diagram + minimal notes).
 
-**State Machine** (if stateful):
-[Mermaid stateDiagram-v2]
-
-**Notable Mechanisms**:
-- Caching: describe policy from source
-- Retry: policy and backoff
-- (cover ALL non-trivial mechanisms)
-
-**Error Handling**: How this module handles and propagates errors.
-
-**Thread Safety**: Single-threaded / thread-safe / requires external synchronization.
+**Anti-patterns for this output:**
+- Do not start with "Source Files:" lists or exhaustive sub-directory tables.
+- Do not emit long "Responsibilities (1. 2. 3.)" paragraphs when the graph + diagram already communicate the design.
+- Short, precise synthesis + one excellent diagram is the goal. Volume is not a virtue.
 
 Then, for EACH sub-module within this module:
 
-##### 7.X.Y {ParentModule}/{SubModuleName} (if 50+ files — full deep-dive)
+##### 7.X.Y {ParentModule}/{SubModuleName} (if the graph shows a distinct boundary)
 
 **Role**: One-line description.
 
-**Source Files**:
-- `path/to/interface.h` — public API
-- `path/to/impl.cc` — primary implementation
+**Graph Summary** (from the module's graph record)
+- Fan-in / Fan-out, hotspot files, key public symbols (only the architecturally significant ones).
 
-**Sub-Sub-Module Structure** (if nested directories exist):
-| Sub-Directory | Path | Files | Role |
-|---------------|------|-------|------|
+**Design Notes** (≤60 words total)
+Only observations from source that add understanding *not already visible* in the graph block or the workflow diagram (e.g., a subtle invariant, error boundary, or concurrency rule). Cite `path:line`.
 
-**Responsibilities**:
-1. Concrete responsibility unique to this sub-module
-2. (list ALL)
+**Sub-modules / Internal Boundaries**
+Only when the graph shows clear internal structure with its own public surface or high internal fan-in. Each child follows the same pattern (graph facts + one workflow diagram + minimal notes).
 
-**Key Operations / Methods**:
-| Op / Method | Signature | Description |
-|-------------|-----------|-------------|
-| (at least 5 entries with real data) | | |
-
-**Interaction with Sibling Sub-Modules**:
-- Calls `sibling/` for {purpose}
-- Called by `sibling/` when {trigger}
-
-**State Machine** (if stateful): [Mermaid stateDiagram-v2]
-
-**Notable Mechanisms**: {specific to this sub-module}
-
-**Error Handling**: How errors propagate within this sub-module.
-
-##### 7.X.Y {ParentModule}/{SubModuleName} (if 10-49 files — summary)
-
-**Role**: 2-3 sentence description.
-
-**Key Operations**:
-| Op / Method | Source File | Description |
-|-------------|-------------|-------------|
-| (at least 5 entries) | | |
-
-**Key Interface** (code snippet from actual source, 10-20 lines)
-
-##### 7.X.Y {ParentModule}/{SubModuleName}/ops — Operation Catalog (for ops/handler dirs)
-
-| # | Operation | Source File | Lines | Description |
-|---|-----------|-------------|-------|-------------|
-| (enumerate ALL — no sampling) | | | | |
+**Anti-patterns for sub-modules:**
+- Do not produce long "Source Files + Responsibilities + 5+ operations" templates when the graph + one diagram suffice.
+- Recurse only on boundaries the graph itself makes visible.
 
 ---
 
 ## Constraints
 
 - IR: max 600 tokens per module; null unknown fields; never omit keys.
-- Deep-dive: minimum 150 lines per top-level module (250+ for modules with 200+ files). No upper limit.
-- Deep-dive prose MUST reflect actual source file content — not graph metadata alone.
-- Sub-modules with 50+ files MUST get their own ##### subsection with the SAME depth as top-level modules (role, source files, responsibilities, key ops table, state machine, mechanisms, error handling). There is NO page limit — produce as much content as the codebase warrants.
-- Sub-modules with 10-49 files MUST get a ##### subsection with summary (role, key ops table, code snippet).
-- Ops/handler directories MUST get a numbered catalog table enumerating ALL operations.
+- Deep-dive output per module is graph block + **one mandatory workflow/state diagram** + ≤60 words Design Notes. Volume is not the goal.
+- The diagram must be grounded in the module's graph record (entry points, public surface, call targets).
+- Sub-modules receive their own subsection **only** when the graph data shows a distinct public surface or high internal fan-in. No descent "because the module is large."
+- Ops/handler directories that are primary extension points may receive a short numbered catalog (focus on high-signal operations; exhaustive enumeration of every internal helper is not required).
 - Do NOT read files outside your assigned modules.
 - If a field is unknown in IR, use null or empty array.
 ```
@@ -287,7 +243,7 @@ Your output MUST follow the EXACT numbered section structure from {ARCHITECTURE_
 ## Source Reading Policy
 
 Read source files for these sections — IR and reader prose are insufficient:
-- §6 Data Flow — read entry-point and pipeline files to trace actual data movement
+- §6 Core Operational Flows — read entry points, stateful services, dispatchers, and generation pipelines to synthesize accurate state/sequence diagrams (use full host indexed knowledge)
 - §12 API Definitions — read route/handler files for endpoint enumeration
 - §14 Integration Points — read adapter/client files for external dependency detail
 - §15 Critical Invariants — verify invariants[] from IR against actual source assertions
@@ -321,11 +277,11 @@ MANDATORY output structure (in this exact order):
 6. ## 3. System Identity & Purpose
 7. ## 4. Architecture Overview (with 4.1 High-Level Topology diagram, 4.2 Process Lifecycle, 4.3 Initialization Sequence diagram, 4.4 Module Dependency Graph slot)
 8. ## 5. Component Map & Interactions (with 5.1 Orchestrator table, 5.2 DI Pattern, 5.3 Interaction Matrix)
-9. ## 6. Data Flow — End to End (3-5 SEPARATE diagrams, each 15+ lines of Mermaid)
-10. ## 7. Core Modules Deep Dive (reader deep-dives pasted verbatim — one #### per module, ##### per sub-module; sub-modules get SAME depth as modules)
+9. ## 6. Core Operational Flows, Lifecycles & State Machines (2–5 high-fidelity behavioral diagrams from graph + full indexed knowledge)
+10. ## 7. Core Modules Deep Dive (reader deep-dives pasted verbatim — one #### per module, ##### per sub-module only when graph shows clear boundary; graph block + one workflow/state diagram per module is primary)
 11. ## 8. Concurrency Model & Thread Safety (thread pool table, locking strategy, execution topology diagram)
 12. ## 9. Framework & Extension Points (plugin types table, registry mechanism, core interfaces with REAL code)
-13. ## 10. Full Catalog of Implementations (numbered tables — enumerate ALL, no sampling)
+13. ## 10. Full Catalog of Implementations (architecturally significant implementations and extension points surfaced by graph; no exhaustive enumeration requirement)
 14. ## 11–28: All remaining sections per template
 15. ## Appendix A–E: All appendices per template
 

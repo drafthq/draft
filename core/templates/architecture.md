@@ -25,8 +25,8 @@ verification:
 
 > Enterprise, mission-critical-grade engineering reference.
 > For token-optimized AI context, see `draft/.ai-context.md`.
-> Structure is fixed at 28 sections + 5 appendices. Graph data enriches — it does not replace — this structure.
-> This document is generation-disciplined: read the **Generation Contract** below before authoring any section.
+> The knowledge graph (`draft/graph/`) is the deterministic source of truth for modules, dependencies, APIs, and structure. LLM synthesis produces faithful workflow, state, and sequence diagrams plus minimal narrative that makes the graph's facts actionable. Accuracy and diagram correctness > prose volume.
+> Structure is fixed at 28 sections + 5 appendices. Read the **Generation Contract** (especially "Graph as Ground Truth") before authoring any section.
 
 | Field | Value |
 |-------|-------|
@@ -54,6 +54,20 @@ Every `##` heading carries a `Source:` marker. Author content only from that sou
 | `code-scan` | Deterministic scan (file tree, CODEOWNERS, OpenAPI, `.proto`, config parsers) | Scanner, not the LLM |
 | `user-input` | Captured during `draft:init` interview; never inferred from code | User, captured verbatim |
 | `llm-synthesis` | Narrative from reading code. Word budget is mandatory | LLM, bounded |
+
+### Graph as Ground Truth for System Design
+
+The knowledge graph produced by the `graph` binary (`draft/graph/module-graph.jsonl`, `proto-index.jsonl`, `hotspots.jsonl`, per-module file records, public API tables, and edge data) is the **authoritative, deterministic model** of the system's actual static architecture.
+
+When you (the LLM) are executing inside Cursor, Claude Code, Copilot, or a similar environment, you also possess a powerful, continuously updated semantic index of the entire project. Use that indexed knowledge to cross-validate the graph, discover higher-level workflows and design intent, and synthesize more accurate and useful diagrams and notes. The graph is structural truth; your index + direct reads provide the semantic and workflow layer. Both must be combined for maximum correctness.
+
+- **LLM role is synthesis, not invention.** The LLM must derive all claims about modules, dependencies, entry points, call relationships, data flows, and APIs from the graph or from direct source reads that are consistent with the graph.
+- **Diagrams over paragraphs.** Prefer Mermaid state machines, sequence diagrams, flowcharts, and component interaction diagrams that make the graph's facts (modules, weighted edges, hotspots, entry/exit points) immediately comprehensible. A correct 25-line sequence diagram that accurately reflects a real call path from the graph is more valuable than 300 words of prose.
+- **Accuracy > completeness of prose.** It is acceptable (and preferred) for narrative sections to be short when the graph + diagrams already convey the design. Do not pad with generic descriptions to reach historical line-count targets.
+- **No contradiction.** Any prose description of a module boundary, dependency, or public surface must not contradict the corresponding graph record. If source reading reveals behavior the graph did not capture, the graph slot still governs the structural truth; the discrepancy must be noted explicitly.
+- **Workflow and state focus.** For each major module or pipeline, synthesize at least one logical workflow or state transition diagram (stateDiagram-v2, sequenceDiagram, or flowchart with clear stages) that captures the primary control or data flow. These diagrams are first-class deliverables, not optional illustrations.
+
+The previous sentence "Graph data enriches — it does not replace — this structure" is superseded for structural facts: the graph *defines* the structural facts. Prose and additional diagrams *interpret and visualize* those facts.
 
 ### Absence is signal
 
@@ -117,7 +131,7 @@ Every `##` heading is immediately followed by:
 3. [System Identity & Purpose](#3-system-identity--purpose)
 4. [Architecture Overview](#4-architecture-overview)
 5. [Component Map & Interactions](#5-component-map--interactions)
-6. [Data Flow — End to End](#6-data-flow--end-to-end)
+6. [Core Operational Flows, Lifecycles & State Machines](#6-core-operational-flows-lifecycles--state-machines)
 7. [Core Modules Deep Dive](#7-core-modules-deep-dive)
 8. [Concurrency Model & Thread Safety](#8-concurrency-model--thread-safety)
 9. [Framework & Extension Points](#9-framework--extension-points)
@@ -307,55 +321,83 @@ A short table listing the interaction kinds present. Rendered from graph edge ta
 
 ---
 
-## 6. Data Flow — End to End
+## 6. Core Operational Flows, Lifecycles & State Machines
 
-> **Source:** llm-synthesis + graph
-> **Required:** standard+
-> **Length:** ≤500 words + 1–N diagrams (no minimum)
-> **N/A when:** criticality == low AND no external data ingress/egress
-> **Verification:** citation-check
+> **Source:** llm-synthesis + graph (primary structural truth) + full project index
+> **Required:** high+
+> **Length:** 2–5 high-quality diagrams + minimal supporting prose
+> **N/A when:** the system is trivial (single linear script with no meaningful state or branching) — write explicit N/A.
+> **Verification:** diagram fidelity to graph + indexed understanding + citation-check
 
-### 6.1 Primary Flow
+**Purpose**: This is one of the highest-value sections for any downstream coding assistant. It captures the **real behavioral architecture** — the primary ways the system moves through time and state.
 
-One Mermaid sequence diagram for the dominant request/job flow. Every actor named must map to a module in §5. Every arrow labeled with the call/message type.
+The LLM **must** use:
+- The deterministic knowledge graph (modules, edges, entry points, public surfaces, hotspots)
+- Its full indexed project understanding from the host environment (Cursor, Claude Code, etc.)
+- Targeted source reads for confirmation
 
-### 6.2 Flow Variants
+to identify and accurately diagram the **most important operational models** of the system.
 
-One diagram per variant that meaningfully differs (sync vs async, read vs write, happy vs error). Omit entirely if the system has only one flow — do not pad.
+### 6.1 Primary Operational Models (MANDATORY — 2 to 5 diagrams)
 
-### 6.3 Data Transformation Stages
+Synthesize the 2–5 most important operational views. These are usually:
 
-Table only if the system has explicit transformation stages (ETL, pipeline, compiler). Otherwise omit.
+- The dominant request / job / user-action lifecycle (end-to-end, with key decision points and error paths)
+- The main state machine(s) for stateful components or the overall system
+- Critical background / async / batch pipelines
+- Startup / initialization / shutdown lifecycle (especially valuable for services and tooling)
+- For plugin / meta-tooling / agent platforms: the core execution or dispatch model
 
-| Stage | Input Shape | Transform | Output Shape | Implementation `path:line` |
-|---|---|---|---|---|
+Each diagram should be a **stateDiagram-v2**, **sequenceDiagram**, or detailed **flowchart** with:
+- Real actor / state / stage names from the codebase
+- Labeled transitions with actual function, message, or event names where possible
+- alt / opt / loop where branching or repetition exists
+
+Prioritize **accuracy and usefulness for code generation** over visual beauty.
+
+### 6.2 Error & Recovery Paths
+
+For the primary flows above, explicitly call out or include in the diagrams the main error classification, retry, circuit-breaker, fallback, and recovery behaviors.
+
+### 6.3 Cross-Cutting Concerns in Flows
+
+Only if material: authentication/authorization checkpoints, distributed transaction boundaries, observability hooks, etc. inside the operational models.
+
+**For meta-tooling and plugin platforms**: This section must include clear diagrams of the primary internal processes (initialization pipeline, skill/agent dispatch and contract enforcement, generation pipelines, etc.).
 
 ---
 
 ## 7. Core Modules Deep Dive
 
-> **Source:** graph + llm-synthesis
+> **Source:** graph (primary) + llm-synthesis (secondary)
 > **Required:** always
-> **Length:** ≤300 words per module narrative; enumerate every module the graph emits
+> **Length:** Graph block + one high-signal workflow/state diagram + ≤120 words synthesis per module
 > **N/A when:** never
-> **Verification:** graph-fence per module + citation-check
+> **Verification:** graph-fence fidelity + diagram correctness + citation-check
 
-For each module returned by `draft/graph/module-graph.jsonl`, emit a subsection with identical structure. Do not sample. Do not summarize. Every module that exists in the graph gets a slot.
+**Core rule:** The graph is the source of truth for structure. LLM synthesis exists only to interpret the graph into actionable design understanding (primarily via diagrams).
+
+For each module emitted by `draft/graph/module-graph.jsonl` (and its per-module file records), produce a subsection whose primary content is the deterministic graph block. Every module gets a slot; do not sample.
 
 ### 7.{N} {module-name}
 
 <!-- GRAPH:module-deep/{module-name}:START -->
-<!-- Rendered deterministic block: path, file count, public API list, fan-in, fan-out,
-     hotspot score, primary deps. No LLM prose inside fence. -->
+<!-- Rendered deterministic block: path, file count, public API list, fan-in/fan-out, hotspot score,
+     primary incoming/outgoing edges with weights, entry points if known. No LLM prose inside fence. -->
 <!-- GRAPH:module-deep/{module-name}:END -->
 
-**Role** (≤40 words). What this module is responsible for.
+**Role** (≤25 words, derived strictly from graph role + primary source files read).
 
-**Public Surface**. Enumerate every exported symbol from the graph's `public_api` table for this module. Format: `symbol_name (kind) — path:line`. No sampling.
+**Primary Workflow / State** (MANDATORY — one diagram per module)
+Synthesize a single, accurate Mermaid diagram (stateDiagram-v2, sequenceDiagram, or flowchart LR/TD with clear stages) that captures the dominant control flow, data transformation pipeline, or lifecycle state machine for this module, grounded in the call graph / entry points / public surface from the graph record. Label transitions with the actual function or message names where possible. This diagram is more important than any prose.
 
-**Key Invariants** (cite §15 entries by number). If none apply, write `None.`
+**Public Surface** (from graph `public_api` + verified source). Enumerate only the highest-fan-in or architecturally significant symbols. Format: `symbol (kind) — path:line`. No exhaustive dump of every getter.
 
-**Sub-modules**. If the module has sub-directories with source files, recurse. Each sub-module gets the same structure at one heading level deeper. Depth is bounded by the graph, not by a page target.
+**Design Notes** (≤80 words total). Only what the graph + one or two key source reads reveal about invariants, error boundaries, or concurrency that is not already visible in the graph block or the workflow diagram. Cite specific `path:line`.
+
+**Sub-modules / Subsystems**. Recurse only when the graph shows a clear internal boundary (distinct sub-directories with their own public surface or high internal fan-in). Each child follows the identical pattern (graph block + one workflow diagram + minimal notes). Depth is strictly bounded by observable graph structure, never by a desire for "completeness."
+
+**Anti-pattern:** Do not emit long "Responsibilities" paragraphs or exhaustive file lists. If the graph block + workflow diagram already communicate the design, the synthesis may be two sentences. Accuracy and diagram correctness are the success criteria.
 
 ---
 
