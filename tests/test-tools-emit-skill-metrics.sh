@@ -5,4 +5,7 @@ test_emit_skill_metrics_help() {
   assert_contains "Foundations stub" "$OUTPUT"
   pass
 }
-run_tests
+
+echo ""
+echo "=== Results: $PASS passed, $FAIL failed ==="
+exit "$FAIL"

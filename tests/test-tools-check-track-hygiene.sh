@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Test suite for scripts/tools/check-track-hygiene.sh
 set -euo pipefail
 

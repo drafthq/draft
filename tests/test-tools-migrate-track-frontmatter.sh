@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Test suite for scripts/tools/migrate-track-frontmatter.sh
 set -euo pipefail
 

@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Test suite for scripts/tools/verify-doc-anchors.sh
 set -euo pipefail
 

@@ -37,6 +37,7 @@ SKILL_ORDER=(
     docs
     discover
     jira
+    integrations
     quick-review
     deep-review
     testing-strategy

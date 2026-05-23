@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Test suite for scripts/tools/diff-templates-vs-tracks.sh
 set -euo pipefail
 

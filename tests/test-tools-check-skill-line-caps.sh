@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Test suite for scripts/tools/check-skill-line-caps.sh
 set -euo pipefail
 

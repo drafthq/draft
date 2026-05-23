@@ -5,4 +5,7 @@ test_check_graph_usage_report_help() {
   assert_contains "Foundations stub" "$OUTPUT"
   pass
 }
-run_tests
+
+echo ""
+echo "=== Results: $PASS passed, $FAIL failed ==="
+exit "$FAIL"

@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Test suite for scripts/tools/check-scope-conflicts.sh
 set -euo pipefail
 
