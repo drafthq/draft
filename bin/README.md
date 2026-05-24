@@ -5,7 +5,7 @@ This directory contains architecture-specific `graph` binaries (and optional `gr
 ## Canonical Layout (arch-specific only)
 
 ```
-codev/bin/
+bin/
 ├── linux-amd64/
 │   ├── graph
 │   └── graph-clang   (optional)
@@ -20,19 +20,19 @@ codev/bin/
 
 **Only** architecture-specific subdirectories are kept. There is no top-level `bin/graph` shim.
 
-## How Codev Selects the Binary
+## Binary Selection
 
-Codev computes the current host triple (`uname -s`-`uname -m`, normalized: linux-amd64, linux-arm64, darwin-arm64, etc.) and looks for:
+The resolver computes the current host triple (`uname -s`-`uname -m`, normalized: linux-amd64, linux-arm64, darwin-arm64, etc.) and looks for:
 
 1. `graph` in `$PATH` (strongly preferred for dev and global installs)
-2. `bin/<os>-<arch>/graph` relative to the Codev plugin root (canonical)
+2. `bin/<os>-<arch>/graph` relative to the plugin root (canonical)
 3. Legacy flat `bin/graph` (transitional only; will be removed)
 
-When running `/codev:init`, the embedded detector (Step 1.4) and `scripts/tools/_lib.sh:find_graph_bin()` both implement this selection.
+When running `/draft:init`, the embedded detector (Step 1.4) and `scripts/tools/_lib.sh:find_graph_bin()` both implement this selection.
 
 ## Ensuring the Correct Binary for the Invocation Host
 
-**Critical**: The binary placed under `bin/<os>-<arch>/` must match the architecture of the machine where `/codev:init` (or any graph-using command) executes.
+**Critical**: The binary placed under `bin/<os>-<arch>/` must match the architecture of the machine where `/draft:init` (or any graph-using command) executes.
 
 - On an x86_64 Linux machine: provide `bin/linux-amd64/graph`
 - On an aarch64 Linux machine: provide `bin/linux-arm64/graph`
@@ -42,21 +42,20 @@ Cross-arch binaries will fail to execute. If the required arch directory is empt
 
 ## Development
 
-Latest binaries are produced by the aether repo (sibling or ../aether). After building/staging there (see aether/scripts/build-binaries.sh and clang build), copy into Draft:
+Latest binaries are produced by the aether repo (sibling or ../aether). After building/staging there (see aether/scripts/build-binaries.sh and clang build), copy (renaming `aether` → `graph`) into Draft:
 
 ```bash
 # From aether/ (after its release builds)
 cp dist/linux-arm64/aether bin/linux-arm64/graph
 cp clang/build/graph-clang bin/linux-arm64/graph-clang
-# repeat for other arches (rename aether -> graph); graph-clang currently linux-arm64 only
+# Repeat for other arches. graph-clang is currently produced only for linux-arm64.
 ```
 
-The dist/ artifacts are stripped release builds (recommended for vendoring).
-```
+The `dist/` artifacts are stripped release builds (recommended for vendoring).
 
 ## Distribution
 
-When packaging Codev, populate each `bin/<os>-<arch>/` directory with the matching pre-built binary for that platform. The install process (or manual placement) must ensure the host where the plugin runs has the corresponding arch binary present.
+When packaging or distributing the plugin, populate each `bin/<os>-<arch>/` directory with the matching pre-built binary for that platform. The install process (or manual placement) must ensure the host where the plugin runs has the corresponding arch binary present.
 
 ## Storage (Git LFS)
 

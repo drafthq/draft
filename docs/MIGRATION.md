@@ -73,7 +73,7 @@ See `skills/plan/SKILL.md`, `skills/discover/SKILL.md`, etc. for exact dispatch 
 - `make build` (post-edit): Would succeed, emit new `## Plan Router` / `## Discover Router` etc sections + updated triggers in `integrations/copilot/.github/copilot-instructions.md`; no syntax breakage or sentinel violation
 
 **Forbidden-string grep result (on all created + delta of edited files)**: **CLEAN** (0 matches).
-- Searched: `gerrit|cot|cohesity|codev|bazel|minimal hierarchy|internal policy|Cohesity` (case-insensitive) across plan/, ops/, docs/, discover/, jira/, lib.sh, build-integrations.sh (cases), draft/SKILL.md, GRAPH.md, MIGRATION.md, and the edited sections of init/new-track.
+- Searched for legacy internal codenames, tooling references, and hierarchy policies (case-insensitive) across plan/, ops/, docs/, discover/, jira/, lib.sh, build-integrations.sh (cases), draft/SKILL.md, GRAPH.md, MIGRATION.md, and the edited sections of init/new-track.
 - Pre-existing "Bazel" examples in untouched language-guide tables of `skills/init/SKILL.md` do not appear in the surgical diff.
 - Zero Draft-forbidden strings introduced.
 
