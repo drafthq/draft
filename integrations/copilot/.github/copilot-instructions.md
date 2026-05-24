@@ -137,64 +137,37 @@ Initialize a Draft project for Context-Driven Development.
 - Not presenting .ai-context.md for developer review before proceeding
 - Overwriting existing tracks.md (this destroys track history)
 - **Producing copy-paste module descriptions** — if 3+ modules share identical Responsibilities or description text, you have NOT analyzed the source files
-- **Writing architecture.md below the tier minimum** for the detected codebase tier — compute tier from Step 1.4.5 graph metrics (M, F, P); falling below the tier minimum indicates incomplete analysis, not conciseness
 - **Writing sequence diagrams under 15 lines** of Mermaid code — shallow diagrams without alt/opt blocks, payloads, and error paths are useless
 - **Writing module deep-dives that ignore the graph or lack a workflow/state diagram** — the graph is ground truth; every significant module must have at least one synthesized diagram showing its primary flow or lifecycle. Prose volume without diagram fidelity is a failure.
 - **Using "See X/" or "follow BUILD patterns"** as a substitute for reading actual source files and documenting real content
-- **Creating freeform sections** instead of the numbered 28-section template (e.g., "## Module deep-dive: X" instead of "## 7. Core Modules Deep Dive" with "#### 7.1 X" subsections) — the template structure is MANDATORY, graph data enriches it but does not replace it
-- **Capping sub-module depth** — sub-modules with 50+ files get the SAME analysis depth as top-level modules; there is NO page limit; a 100-page architecture.md for a large codebase is correct
 - **Ignoring detected high-quality existing agent context** (e.g. CLAUDE.md + docs/INVARIANTS.md written explicitly for AI agents) and regenerating large volumes of duplicative prose instead of a graph-primary overlay with strong cross-references and explicit Relationship section — this creates documentation debt and divergence risk in mature brownfield systems
+- **Retaining any legacy 28-section or volume-oriented language** in generated architecture.md or in the reasoning process — the modern 10-section graph-primary template is the only accepted format.
 
 **Initialize once, refresh to update. Never overwrite without confirmation.**
 
 ---
 
-## MANDATORY SECTION CHECKLIST — architecture.md
+## MANDATORY SECTION CHECKLIST — architecture.md (Graph-Primary)
 
 > **READ THIS BEFORE WRITING A SINGLE LINE OF architecture.md.**
-> The document MUST use the EXACT numbered structure below. Freeform sections, renamed headings, or missing sections are FAILURES. Verify each item is present before considering architecture.md complete.
+> The document MUST use the EXACT modern graph-primary structure below. Freeform sections, renamed headings, or missing mandatory sections are FAILURES. This is the single forward-looking format — no legacy 28-section or volume-oriented material is accepted.
 
 ```
-## 1.  Executive Summary
-## 2.  AI Agent Quick Reference
-## 3.  System Identity & Purpose
-## 4.  Architecture Overview
-## 5.  Component Map & Interactions
-## 6.  Core Operational Flows, Lifecycles & State Machines
-## 7.  Core Modules Deep Dive
-## 8.  Concurrency Model & Thread Safety
-## 9.  Framework & Extension Points
-## 10. Full Catalog of Implementations
-## 11. Secondary Subsystem (V2 / Redesign)
-## 12. API & Interface Definitions
-## 13. External Dependencies
-## 14. Cross-Module Integration Points
-## 15. Critical Invariants & Safety Rules
-## 16. Security Architecture
-## 17. Observability & Telemetry
-## 18. Error Handling & Failure Modes
-## 19. State Management & Persistence
-## 20. Reusable Modules for Future Projects
-## 21. Key Design Patterns
-## 22. Configuration & Tuning
-## 23. Performance Characteristics & Hot Paths
-## 24. How to Extend — Step-by-Step Cookbooks
-## 25. Build System & Development Workflow
-## 26. Testing Infrastructure
-## 27. Known Technical Debt & Limitations
-## 28. Glossary
-## 29. Graph Coverage Gaps & Known Limitations (MANDATORY)
-## 30. Relationship to Existing Authoritative Documentation (MANDATORY when high/medium context from audit)
-### Appendix A: File Structure Summary
-### Appendix B: Data Source → Implementation Mapping
-### Appendix C: Output Flow — Implementation to Target
-### Appendix D: Mermaid Sequence Diagrams — Critical Flows
-### Appendix E: Proto Service Map (graph-derived)
+## 1. Executive Summary + Graph Health Dashboard
+## 2. Critical Invariants & Safety Rules (with provenance)
+## 3. Primary Control & Data Flows (Graph + Synthesis)
+## 4. Module & Dependency Map (Primarily Graph-Derived)
+## 5. Concurrency, Ownership & Isolation Model
+## 6. Error Handling & Failure Mode Catalog
+## 7. State & Data Truth Sources + Reconciliation
+## 8. Extension Points & Safe Mutation Patterns
+## 9. Graph Coverage Gaps & Known Limitations (MANDATORY)
+## 10. Relationship to Other Authoritative Documentation (MANDATORY on high/medium Context Audit)
 ```
 
-**Self-check before finalizing**: Run a mental grep for `## 1.` through `## 30.` (or the full list above) in your output. Any gap in the required numbered sections = incomplete document. Return and fill it. The two new sections (29/30) are additive for compatibility; older 28-section documents remain valid.
+**Self-check before finalizing**: Confirm every one of the 10 sections above exists with the required fidelity declarations, provenance tags on claims, and (where applicable) Mermaid diagrams grounded in the graph. The Graph Health Dashboard + §9 Gaps + §10 Relationship are the highest-leverage sections for future agents.
 
-> **If you are a subagent** executing this step via a delegation prompt: your prompt is a SUMMARY. The full 28-section structure above is the AUTHORITATIVE requirement. Do not infer section names from the summary — use the exact headings listed here.
+> **If you are a subagent**: your prompt is a summary. The 10-section graph-primary structure above is authoritative. Use the exact headings. No legacy 28-section material is permitted.
 
 ---
 
@@ -957,7 +930,7 @@ Spawn a **single synthesis agent** with the Synthesis Coordinator Prompt from `c
 - `{CONCATENATED_DEEP_DIVES}` — content of `draft.tmp/.state/reader-deep-dives.md`
 - `{CONCATENATED_IRS}` — content of `draft.tmp/.state/reader-irs.json`
 - `{GRAPH_DEPENDENCY_DIAGRAM}` — mermaid output from `--query --mode mermaid --symbol module-deps`
-- `{ARCHITECTURE_TEMPLATE_STRUCTURE}` — the 28-section outline from `core/templates/architecture.md`
+- `{ARCHITECTURE_TEMPLATE_STRUCTURE}` — the modern 10-section graph-primary outline from `core/templates/architecture.md` (the single source of truth)
 
 The synthesis agent:
 - Integrates the reader outputs (now graph + one high-quality workflow/state diagram + minimal notes per module) into §7 with light editing only for consistency and cross-references.
@@ -1081,21 +1054,18 @@ For every module that received a `#### 7.X` section, verify the following and re
 
 This gate enforces the new priority: the graph defines structure; diagrams make it usable; prose is minimal supporting narrative. The old 100-line volume targets are retired.
 
-#### Pass 3: Remaining Sections (Sections 8–28 + Appendices)
+#### Pass 3: Cross-Cutting Sections + Mandatory Gaps & Relationship
 
-Generate Sections 8–28 and Appendices A–D. These cover concurrency, extensions, catalogs, APIs, dependencies, integration, invariants, security, observability, error handling, state, patterns, configuration, performance, cookbooks, build, testing, debt, glossary, and cross-reference appendices. **Minimum 600 lines for Pass 3.**
+Synthesize the remaining high-value cross-cutting sections using the graph + targeted reads. The focus is on invariants with provenance, failure modes, data truth sources, extension patterns, and (always) the two mandatory closing sections:
 
-Read additional source files as needed for each section — do not rely solely on what was read in earlier passes.
+- §9 Graph Coverage Gaps & Known Limitations
+- §10 Relationship to Other Authoritative Documentation (when Context Audit detected high/medium context)
+
+No volume targets. No legacy appendices. Quality is measured by fidelity declarations, provenance tags, diagram accuracy, and honest gap reporting — not line counts.
 
 #### Pass 4: Quality Gate Verification
 
-After all sections are written, run the Completion Verification (defined later in this skill) against hard minimum thresholds. If any metric fails:
-1. Identify the weakest sections
-2. Read additional source files for those sections
-3. Expand until all metrics pass
-4. Only then proceed to `.ai-context.md` generation
-
-**Minimum scale guidance:** Pass 1: 400+ lines, Pass 2: scales with modules (no cap), Pass 3: 600+ lines. For a 500+ file codebase with 10+ modules and deep sub-module hierarchies, total output of 5000-10000+ lines is expected and correct.
+Run the (now signal-quality) Completion Verification defined later in this skill. Only the hard fidelity / provenance / gaps / relationship checks are blocking. Expand only where those checks fail. Proceed to condensation only when they pass.
 
 ---
 
@@ -1312,22 +1282,24 @@ Follow these steps in order. The specific files to look for depend on the langua
 
 ---
 
-## architecture.md Specification
+## architecture.md Specification (Graph-Primary — Forward Only)
 
-Generate `draft/architecture.md` as a comprehensive human-readable engineering reference using the canonical 28-section structure plus appendices A–E. The document MUST follow the exact numbered headings listed in **MANDATORY SECTION CHECKLIST** above; freeform sections, renamed headings, or missing sections are failures.
+Generate `draft/architecture.md` using the modern 10-section graph-primary structure defined in the **MANDATORY SECTION CHECKLIST** above and in `core/templates/architecture.md`.
 
-**Full specification, per-section instructions, anti-patterns, and quality gates** — see `references/architecture-spec.md`. It covers:
+The document is:
+- Primarily derived from the deterministic knowledge graph (`draft/graph/`).
+- Explicit about fidelity (frontmatter `graph:` block + Dashboard).
+- Required to carry provenance/fidelity tags on all significant claims.
+- Duplication-aware when high-quality agent docs (CLAUDE.md, INVARIANTS.md, etc.) are detected by the Context Audit.
 
-- MANDATORY YAML frontmatter format (project, module, generated_by, generated_at, git, synced_to_commit)
-- Required body header (`# Architecture: {PROJECT_NAME}`) and Table of Contents
-- Per-section guidance for sections 1–28 (Executive Summary through Glossary) with word budgets and depth requirements
-- Appendix structure (A: File Structure Summary, B: Data Source → Implementation Mapping, C: Output Flow, D: Mermaid Sequence Diagrams, E: Proto Service Map)
-- Tier classification gates (S/M/L/XL) and anti-patterns (Shallow Sub-Module Treatment, Copy-Paste Module Descriptions, etc.)
-- Pre-finalization quality checklist
+**Full details, per-section guidance, provenance rules, and examples** live in:
+- `core/templates/architecture.md` (the source of truth for the 10 sections + Generation Contract)
+- `docs/research/proposed-graph-backed-architecture-template.md` (design rationale and fidelity rules)
+- `references/architecture-spec.md` (supplementary per-section notes, kept in sync with the template)
 
-The canonical output template lives at `core/templates/architecture.md` (already inlined into integrations).
+There is no legacy 28-section, no volume targets, and no Pass 1/2/3 protocol. The template itself is the contract.
 
-**After completing analysis AND passing all checks**, write the content to `draft/architecture.md` using the Write tool. This is the PRIMARY output. Then run the Condensation Subroutine to derive `.ai-context.md`.
+**After completing analysis AND passing verification**, write to `draft/architecture.md`. This is the PRIMARY output. Then run the Condensation Subroutine.
 
 ## .ai-context.md Specification
 
@@ -1624,13 +1596,13 @@ After completing the 5-phase analysis:
 
    # Architecture: {PROJECT_NAME}
 
-   > Comprehensive human-readable engineering reference.
+   > Graph-primary high-signal engineering reference (10-section modern structure).
    > For token-optimized AI context, see `draft/.ai-context.md`.
 
    ---
 
    ## Table of Contents
-   ... (then continue with full 28 sections + appendices)
+   ... (the 10 sections from the current `core/templates/architecture.md`)
    ```
 
 3. **Run Completion Verification (MANDATORY)** — Before proceeding to `.ai-context.md`, verify architecture.md meets signal-quality, fidelity, and duplication-aware requirements (volume is now guidance only, secondary to provenance and honesty):
@@ -1658,7 +1630,7 @@ After completing the 5-phase analysis:
    6. All <!-- GRAPH:*:START/END --> injection slots either populated from graph or explicitly marked unavailable with fidelity impact note.
       → PASS / FAIL: ___
 
-   7. (Retained) Pass 2 per-module Graph Fidelity & Diagram Report complete; no synthesis contradictions with graph; low-fidelity areas called out.
+   7. Per-module Graph Fidelity & Diagram Report complete for all modules that have graph data; no synthesis contradictions with graph; low-fidelity areas explicitly called out in §9.
       → PASS / FAIL: ___
 
    Soft / guidance (low-context runs only; high-context runs may legitimately be shorter when deferring to authoritative sources):
@@ -17651,12 +17623,13 @@ After updating guardrails.md, append a brief learning summary to the end of the 
 
 This is a self-contained, callable procedure for generating `draft/.ai-context.md` from `draft/architecture.md`. 
 
-**Critical fidelity requirement**: The condensation must faithfully preserve the core operational models (workflows, lifecycles, state machines) from architecture.md §6 "Core Operational Flows, Lifecycles & State Machines", along with invariants and extension points. These behavioral models are the highest-value content for downstream coding accuracy.
+**Critical fidelity requirement**: The condensation must faithfully preserve the core operational models (workflows, lifecycles, state machines) from architecture.md §3 "Primary Control & Data Flows", along with invariants (§2) and extension points (§8). These behavioral models are the highest-value content for downstream coding accuracy.
 
-**Mapping (architecture.md → .ai-context.md)**:
-- Core Operational Flows (§6) → `## GRAPH:OPERATIONAL` (states, transitions, error/recovery paths in compact form)
-- Data Flow diagrams → lightweight `FLOW:{Name}` summaries tied to the operational models above
-- Module graph + hotspots → `GRAPH:MODULE-HOTSPOTS`, `GRAPH:FAN-IN`, `GRAPH:PROTO-MAP` etc. as already defined
+**Mapping (architecture.md → .ai-context.md)** (modern 10-section graph-primary):
+- Primary Control & Data Flows (§3) → `## GRAPH:OPERATIONAL` + GRAPH:DATAFLOW (states, transitions, error/recovery paths in compact form)
+- Module & Dependency Map (§4) + hotspots → `GRAPH:MODULE-HOTSPOTS`, `GRAPH:FAN-IN`, `GRAPH:PROTO-MAP` etc.
+- Critical Invariants (§2) → INVARIANTS
+- Extension Points (§8) → EXTEND + INTERFACES
 
 Any skill that mutates `architecture.md` should execute this subroutine afterward to keep the derived context files in sync.
 
@@ -20253,7 +20226,7 @@ generated_at: "{ISO_TIMESTAMP}"
 
 > Self-contained AI context. Budget: {TIER_MIN}–{TIER_MAX} lines (tier {N}: {LABEL}).
 > Graph metrics: M={modules} F={functions} P={proto_rpcs} E={include_edges}
-> Primary value: faithful structural graph + **core operational models** (workflows, lifecycles, state machines) derived from architecture.md §6.
+> Primary value: faithful structural graph + **core operational models** (workflows, lifecycles, state machines) derived from architecture.md §3 (Primary Control & Data Flows).
 > This file must stand alone — no references to architecture.md or source files needed.
 
 | Field | Value |
@@ -20339,7 +20312,7 @@ None ✓
 
 ## GRAPH:OPERATIONAL (Core Behavioral Models)
 
-**Primary Operational Models** (from architecture.md §6 — highest fidelity requirement):
+**Primary Operational Models** (from architecture.md §3 — highest fidelity requirement):
 
 - **{Flow/Lifecycle Name 1}** (e.g. Request Lifecycle, Init Pipeline, Job Pipeline):
   State1 --(event/func)--> State2 --(error path)--> ErrorState --> Recovery
@@ -20577,10 +20550,7 @@ module: "root"
 generated_by: "draft:init"
 generated_at: "{ISO_TIMESTAMP}"
 
-# Classification — drives which sections are Required vs skippable.
-# Do not leave placeholders. If unknown, ask during draft:init interview.
-
-# Ownership — enterprise accountability. Populate from CODEOWNERS / docs / interview.
+# Ownership — enterprise accountability.
 ownership:
   codeowners_file: "{path-to-CODEOWNERS or 'none'}"
   primary_owners: ["{team-or-person}"]
@@ -20592,6 +20562,8 @@ verification:
   citations_verified: "{true | false | unchecked}"
   staleness_hash: "{sha256 of tracked source set at synced_to_commit}"
   graph_schema_version: "{semver or 'absent'}"
+
+# Graph fidelity (mandatory, forward-looking)
 graph:
   build_status: "{success | failed | absent}"
   overall_fidelity: "{high | mixed | low | stub}"
@@ -20606,1077 +20578,175 @@ graph:
     edges: "{N from module-graph.jsonl}"
     hotspots: "{N}"
   notes: "{explicit fidelity summary, e.g. 'Python: stub (0 edges, dir-level only); C++: high from graph-clang'}"
-generation_notes: "{High existing context detected via audit — see §30 Relationship for deference and cross-refs | Standard generation}"
+generation_notes: "{High existing context detected via audit — see §10 Relationship for deference | Standard graph-primary generation}"
 ---
 
 # Architecture: {PROJECT_NAME}
 
-> Enterprise, mission-critical-grade engineering reference.
-> For token-optimized AI context, see `draft/.ai-context.md`.
-> The knowledge graph (`draft/graph/`) is the deterministic source of truth for modules, dependencies, APIs, and structure. LLM synthesis produces faithful workflow, state, and sequence diagrams plus minimal narrative that makes the graph's facts actionable. Accuracy and diagram correctness > prose volume.
-> Structure is fixed at 28 sections + 5 appendices. Read the **Generation Contract** (especially "Graph as Ground Truth") before authoring any section.
+> Graph-primary, high-signal engineering reference for AI coding assistants and humans.
+> For the token-optimized machine version, see `draft/.ai-context.md`.
+> The knowledge graph is the deterministic structural spine. LLM synthesis exists only to interpret dynamic behavior, state machines, and rationale not visible in the static graph. Fidelity is declared explicitly. Provenance is mandatory on all claims.
 
-| Field | Value |
-|-------|-------|
-| **Branch** | `{LOCAL_BRANCH}` → `{REMOTE/BRANCH}` |
-| **Commit** | `{SHORT_SHA}` — {COMMIT_MESSAGE} |
-| **Generated** | {ISO_TIMESTAMP} |
-| **Synced To** | `{FULL_SHA}` |
-| **Criticality** | `{classification.criticality}` |
-| **Data Class** | `{classification.data_classification}` |
-
-**Graph Health & Fidelity Dashboard** (mandatory; populated from frontmatter `graph:` block at generation time; future agents calibrate trust here first):
+**Graph Health & Fidelity Dashboard** (populated at generation time from the `graph:` block; future agents must read this first):
 
 | Language/Area | Fidelity | Modules | Edges | Hotspots | Notes |
 |---------------|----------|---------|-------|----------|-------|
-| Python        | {low/stub} | {N} | {N} | {N} | {e.g. directory-level only, 0 edges, 0 symbols} |
-| Rust          | {approx/high} | {N} | {N} | {N} | {graph-derived or host index} |
-| C++           | {high} | {N} | {N} | {N} | {full symbols via graph-clang} |
-| ...           | ... | ... | ... | ... | ... |
+| Python        | {stub}   | {N}     | {N}   | {N}      | {e.g. directory-level only} |
+| Rust          | {high}   | {N}     | {N}   | {N}      | {graph-derived} |
+| ...           | ...      | ...     | ...   | ...      | ... |
 
-> This table + the `graph:` frontmatter block is the single source of truth for "how much of this document is deterministic vs. synthesized." Low-fidelity areas must be explicitly called out in §29 Graph Coverage Gaps.
+> Low-fidelity areas are explicitly called out in §9. This document never pretends richer graph data than actually exists.
+
+## Generation Contract (read first — binding)
+
+1. **Graph is structural truth.** Module boundaries, dependencies, public surfaces, hotspots, and call relationships come from `draft/graph/`. LLM never invents them.
+2. **Fidelity declaration is non-negotiable.** Every major claim carries an explicit tag: `[Graph:High]`, `[Graph:Stub]`, `[Existing:CLAUDE.md §3]`, `[Human:Synthesis]`, or `[Test-backed:INV-042]`.
+3. **Provenance on all claims.** Invariants, failure modes, lock ordering, and data truth sources must name their source and enforcement.
+4. **Diagrams > prose.** One accurate Mermaid workflow/state/sequence diagram grounded in the graph is worth more than paragraphs of generic description.
+5. **No duplication of excellent existing agent docs.** When the Context Audit detects CLAUDE.md / INVARIANTS.md / ADRs, this document defers and cross-references. It supplies the graph spine and synthesis, not a parallel prose copy.
+6. **Honest gaps.** §9 is mandatory and high-value. Future agents must be able to read the fidelity table + gaps section and know exactly where to distrust the model.
+7. **Accuracy over volume.** Short, precise, graph-anchored sections are correct. Historical line-count or diagram-count targets are retired.
+
+Absence is signal. If a section does not apply, state the precise reason referencing graph data or classification.
 
 ---
 
-## Generation Contract (read first)
+## 1. Executive Summary + Graph Health Dashboard
 
-Every agent or human editor of this file MUST observe the following rules. Violations are completeness failures.
+One tight paragraph: what the system is, what it does, its role in the larger environment.
 
-### Sources
+The Graph Health & Fidelity Dashboard (above) is the first artifact any reader or agent must internalize.
 
-Every `##` heading carries a `Source:` marker. Author content only from that source:
+---
 
-| Source | Meaning | Who writes it |
-|---|---|---|
-| `graph` | Rendered from `draft/graph/` between `<!-- GRAPH:*:START/END -->` fences | `draft:init` render pass, not the LLM |
-| `manifest` | Extracted deterministically from `package.json` / `go.mod` / `Cargo.toml` / `requirements.txt` / `pom.xml` / Bazel `BUILD` / `pyproject.toml` | Scanner, not the LLM |
-| `code-scan` | Deterministic scan (file tree, CODEOWNERS, OpenAPI, `.proto`, config parsers) | Scanner, not the LLM |
-| `user-input` | Captured during `draft:init` interview; never inferred from code | User, captured verbatim |
-| `llm-synthesis` | Narrative from reading code. Word budget is mandatory | LLM, bounded |
+## 2. Critical Invariants & Safety Rules (Highest Priority)
 
-### Graph as Ground Truth for System Design
+The longest and most precise section.
 
-The knowledge graph produced by the `graph` binary (`draft/graph/module-graph.jsonl`, `proto-index.jsonl`, `hotspots.jsonl`, per-module file records, public API tables, and edge data) is the **authoritative, deterministic model** of the system's actual static architecture.
+Every invariant must include:
+- Precise statement
+- Why violation is dangerous
+- Enforcement mechanism (test, runtime, type system, review, graph constraint, or none)
+- Provenance / Fidelity tag + source (e.g. `docs/INVARIANTS.md:INV-003`, `Graph:High`, `Human Judgment`)
 
-When you (the LLM) are executing inside Cursor, Claude Code, Copilot, or a similar environment, you also possess a powerful, continuously updated semantic index of the entire project. Use that indexed knowledge to cross-validate the graph, discover higher-level workflows and design intent, and synthesize more accurate and useful diagrams and notes. The graph is structural truth; your index + direct reads provide the semantic and workflow layer. Both must be combined for maximum correctness.
-
-- **LLM role is synthesis, not invention.** The LLM must derive all claims about modules, dependencies, entry points, call relationships, data flows, and APIs from the graph or from direct source reads that are consistent with the graph.
-- **Diagrams over paragraphs.** Prefer Mermaid state machines, sequence diagrams, flowcharts, and component interaction diagrams that make the graph's facts (modules, weighted edges, hotspots, entry/exit points) immediately comprehensible. A correct 25-line sequence diagram that accurately reflects a real call path from the graph is more valuable than 300 words of prose.
-- **Accuracy > completeness of prose.** It is acceptable (and preferred) for narrative sections to be short when the graph + diagrams already convey the design. Do not pad with generic descriptions to reach historical line-count targets.
-- **No contradiction.** Any prose description of a module boundary, dependency, or public surface must not contradict the corresponding graph record. If source reading reveals behavior the graph did not capture, the graph slot still governs the structural truth; the discrepancy must be noted explicitly.
-- **Workflow and state focus.** For each major module or pipeline, synthesize at least one logical workflow or state transition diagram (stateDiagram-v2, sequenceDiagram, or flowchart with clear stages) that captures the primary control or data flow. These diagrams are first-class deliverables, not optional illustrations.
-
-The previous sentence "Graph data enriches — it does not replace — this structure" is superseded for structural facts: the graph *defines* the structural facts. Prose and additional diagrams *interpret and visualize* those facts.
-
-### Absence is signal
-
-There are **no quotas** in this template. Do not pad to hit a count. If a section does not apply:
+Example format:
 
 ```
-N/A — reason: {one-sentence justification referencing classification or codebase facts}.
-```
-
-Examples:
-- `N/A — reason: project_type == 'library'; no HTTP surface.`
-- `N/A — reason: single-threaded CLI; no concurrency primitives in use.`
-- `N/A — reason: no proto/OpenAPI/GraphQL definitions present in repository.`
-
-### Citations
-
-Every `path:line` reference must resolve at `synced_to_commit`. If a citation cannot be verified (file moved, line out of range, commit unknown), write it as:
-
-```
-[unverified] path/to/file.ext:123
-```
-
-`draft:init` runs a post-generation verification pass that rewrites unresolved citations to this form. Do not attempt to guess or invent locations.
-
-### Word budgets
-
-Every `llm-synthesis` section carries a hard word cap. Exceeding the cap is a failure, not a feature. Cut to fit; do not expand neighbor sections to compensate.
-
-### Classification gates
-
-Each section declares `Required:` at one of four levels:
-- `always` — every codebase, every run. Cannot be N/A.
-- `standard+` — required when `criticality ∈ {standard, high, mission-critical}`.
-- `high+` — required when `criticality ∈ {high, mission-critical}`.
-- `mission-critical` — required only at that criticality.
-
-Sections below the declared level MAY be N/A with reason; sections at or above MUST be populated.
-
-### Do not regenerate untouched sections
-
-If a section's source set (the files or graph tables it depends on) has not changed since the last run, leave the section byte-identical. `draft/.state/freshness.json` records per-section hashes. Re-derivation without source change is the single largest cause of cross-model divergence and is prohibited.
-
-### Section metadata block
-
-Every `##` heading is immediately followed by:
-
-```
-> **Source:** <one of the 5 sources above>
-> **Required:** always | standard+ | high+ | mission-critical
-> **Length:** rendered | ≤N words | ≤N rows | table | N/A
-> **N/A when:** {precise, machine-checkable condition}
-> **Verification:** graph-fence | citation-check | schema-check | manifest-diff | none
+### INV-003: Sentinel Lock Ordering
+**Rule**: `_strategies_lock < _strategy_process_locks < _global_capacity_lock < entry_lock`
+**Fidelity**: High (enforced in code + tests)
+**Graph Evidence**: Not expressible in static graph (dynamic ordering)
+**Source**: docs/INVARIANTS.md + src/.../sentinel/...
+**Enforcement**: test + code review
 ```
 
 ---
 
-## Table of Contents
+## 3. Primary Control & Data Flows (Graph + Synthesis)
 
-1. [Executive Summary](#1-executive-summary)
-2. [AI Agent Quick Reference](#2-ai-agent-quick-reference)
-3. [System Identity & Purpose](#3-system-identity--purpose)
-4. [Architecture Overview](#4-architecture-overview)
-5. [Component Map & Interactions](#5-component-map--interactions)
-6. [Core Operational Flows, Lifecycles & State Machines](#6-core-operational-flows-lifecycles--state-machines)
-7. [Core Modules Deep Dive](#7-core-modules-deep-dive)
-8. [Concurrency Model & Thread Safety](#8-concurrency-model--thread-safety)
-9. [Framework & Extension Points](#9-framework--extension-points)
-10. [Full Catalog of Implementations](#10-full-catalog-of-implementations)
-11. [Secondary Subsystem (V2 / Redesign)](#11-secondary-subsystem-v2--redesign)
-12. [API & Interface Definitions](#12-api--interface-definitions)
-13. [External Dependencies](#13-external-dependencies)
-14. [Cross-Module Integration Points](#14-cross-module-integration-points)
-15. [Critical Invariants & Safety Rules](#15-critical-invariants--safety-rules)
-16. [Security Architecture](#16-security-architecture)
-17. [Observability & Telemetry](#17-observability--telemetry)
-18. [Error Handling & Failure Modes](#18-error-handling--failure-modes)
-19. [State Management & Persistence](#19-state-management--persistence)
-20. [Reusable Modules for Future Projects](#20-reusable-modules-for-future-projects)
-21. [Key Design Patterns](#21-key-design-patterns)
-22. [Configuration & Tuning](#22-configuration--tuning)
-23. [Performance Characteristics & Hot Paths](#23-performance-characteristics--hot-paths)
-24. [How to Extend — Step-by-Step Cookbooks](#24-how-to-extend--step-by-step-cookbooks)
-25. [Build System & Development Workflow](#25-build-system--development-workflow)
-26. [Testing Infrastructure](#26-testing-infrastructure)
-27. [Known Technical Debt & Limitations](#27-known-technical-debt--limitations)
-28. [Glossary](#28-glossary)
-- [Appendix A: File Structure Summary](#appendix-a-file-structure-summary)
-- [Appendix B: Data Source → Implementation Mapping](#appendix-b-data-source--implementation-mapping)
-- [Appendix C: Output Flow — Implementation to Target](#appendix-c-output-flow--implementation-to-target)
-- [Appendix D: Mermaid Sequence Diagrams — Critical Flows](#appendix-d-mermaid-sequence-diagrams--critical-flows)
-- [Appendix E: Proto Service Map (graph-derived)](#appendix-e-proto-service-map-graph-derived)
+Focus on the highest-value dynamic behavior:
+
+- Dominant request / data / control flows (end-to-end)
+- State machines with financial or safety impact
+- Lifecycle sequences (bootstrap, shutdown, reconciliation, failover)
+
+Each backed by:
+- Graph-derived paths where available
+- High-quality Mermaid (stateDiagram-v2, sequenceDiagram, or detailed flowchart)
+- Explicit note when the flow is only partially visible in the graph
 
 ---
 
-## 1. Executive Summary
+## 4. Module & Dependency Map (Primarily Graph-Derived)
 
-> **Source:** llm-synthesis
-> **Required:** always
-> **Length:** ≤200 words
-> **N/A when:** never
-> **Verification:** citation-check
+- Module dependency graph rendered from `draft/graph/module-graph.jsonl`
+- High fan-in / fan-out modules highlighted
+- Cyclic dependencies called out
+- Cross-language boundaries (FFI, RPC, shared memory) explicitly surfaced with coverage notes
 
-One paragraph, plain prose, no bullets. State what the system IS, what it DOES, and its role. Open with a single sentence that would stand alone as the whole summary if truncated. No marketing language.
-
-**Key Facts** (exactly these rows, fill or mark N/A):
-
-| Field | Value |
-|-------|-------|
-| Language & Version | {e.g., TypeScript 5.3} |
-| Entry Point | `{path:line}` → `{symbol}` |
-| Architecture Style | {Hexagonal / Layered / Microservice / Pipeline / Actor / N/A} |
-| Component Count | {integer from graph} |
-| Primary Data Sources | {databases, queues, APIs read from — or N/A} |
-| Primary Action Targets | {databases, services, files written to — or N/A} |
-| Deployment Model | {binary / container / lambda / library artifact / daemon / N/A} |
+Include a short "graph coverage for this view" paragraph.
 
 ---
 
-## 2. AI Agent Quick Reference
+## 5. Concurrency, Ownership & Isolation Model
 
-> **Source:** code-scan + manifest + user-input
-> **Required:** always
-> **Length:** table, fixed rows
-> **N/A when:** never
-> **Verification:** citation-check + manifest-diff
-
-Compact block optimized for agent context loading. Every field populated or explicit "N/A".
-
-```
-Module : {PROJECT_NAME}
-Root Path : ./
-Language : {e.g., Go 1.21, Python 3.12, TypeScript 5.3}
-Build : {exact command, e.g., `bazel build //path:target`, `npm run build`}
-Test : {exact command, e.g., `pytest -q`, `go test ./...`}
-Entry Point : {file:line → symbol}
-Config System : {gflags / .env + YAML / Viper / Spring / environment / N/A}
-Extension Point : {interface + registration site — or N/A}
-API Definition : {path to .proto / OpenAPI / GraphQL — or N/A}
-Key Config Prefix : {MODULE_* env / module.* YAML / --module-* CLI — or N/A}
-CODEOWNERS : {path — or "none"}
-Security Contact : {from ownership block}
-On-Call : {from ownership block — or "none"}
-```
-
-**Before Making Changes, Always:**
-
-1. {Primary invariant check — the #1 thing that must not break, citing §15 entry}
-2. {Thread-safety / async-safety consideration — or "single-threaded — no concerns"}
-3. {Test command to run after changes — copy from `Test` row above}
-4. {API / schema versioning rule — or "N/A"}
-
-**Never:**
-
-- {Critical safety rule 1 — cite §15 or §16}
-- {Critical safety rule 2}
-- {Critical safety rule 3}
-
-List exactly the rules that apply. If fewer than three apply, list fewer. Do not pad.
+- Single-writer patterns and ownership boundaries
+- Lock ordering (explicitly tagged when not graph-expressible)
+- Async / thread-pool / actor boundaries
+- Failure isolation regions
 
 ---
 
-## 3. System Identity & Purpose
+## 6. Error Handling & Failure Mode Catalog
 
-> **Source:** user-input
-> **Required:** always
-> **Length:** ≤300 words
-> **N/A when:** never
-> **Verification:** none
-
-Captured during `draft:init` interview. Do not infer purpose or business rationale from code — ask the user.
-
-**What this system IS** (≤60 words).
-
-**What this system DOES** (≤60 words, bullet list of top-level capabilities).
-
-**Who uses it** (≤40 words — internal teams / external customers / automated systems).
-
-**Non-Goals** (explicit list; what this system will not do, to prevent scope creep).
-
-**Upstream producers** (systems that send data or requests into this one — or N/A).
-
-**Downstream consumers** (systems that receive data or requests from this one — or N/A).
+For every major component or flow:
+- What can go wrong
+- How it is detected
+- The defined safe response
+- Whether enforcement is graph, test, runtime, or process
 
 ---
 
-## 4. Architecture Overview
+## 7. State & Data Truth Sources + Reconciliation
 
-> **Source:** llm-synthesis + graph
-> **Required:** always
-> **Length:** ≤400 words + one Mermaid diagram
-> **N/A when:** never
-> **Verification:** graph-fence (topology)
-
-### 4.1 High-Level Topology
-
-<!-- GRAPH:module-topology:START -->
-<!-- Rendered by draft:init. If absent, emit:
-     N/A — reason: graph artifacts not present. Run 'draft init' or 'graph --repo . --out draft/graph' to populate. -->
-<!-- GRAPH:module-topology:END -->
-
-### 4.2 Narrative
-
-≤400 words describing the topology in prose. Name the architectural style (hexagonal, layered, pipeline, actor, event-driven, plugin-host, monorepo, polyrepo) and justify from observable evidence (directory structure, dep graph, call boundaries).
-
-### 4.3 Lifecycle Model
-
-Choose one applicable model and fill only its rows. Delete rows that do not apply; do not force-fit.
-
-| Model | Phases | Describe only if applicable |
-|---|---|---|
-| Long-running service | startup → ready → steady-state → drain → shutdown | |
-| Short-lived CLI | parse-args → execute → exit | |
-| Batch/ETL | trigger → extract → transform → load → ack | |
-| Library | no lifecycle — N/A | |
-| Actor/reactive | spawn → receive → handle → terminate | |
+For each major domain:
+- Authoritative source
+- Derived / cached views
+- Reconciliation mechanisms and lag tolerance
+- Staleness policy
 
 ---
 
-## 5. Component Map & Interactions
+## 8. Extension Points & Safe Mutation Patterns
 
-> **Source:** graph
-> **Required:** always
-> **Length:** rendered
-> **N/A when:** never (graph absent → explicit N/A with reason)
-> **Verification:** graph-fence
-
-### 5.1 Module Dependency Graph
-
-<!-- GRAPH:module-deps:START -->
-<!-- Rendered from draft/graph/module-graph.jsonl (nodes + edges).
-     Emits Mermaid graph + dependency matrix. No LLM prose inside fence. -->
-<!-- GRAPH:module-deps:END -->
-
-### 5.2 Component Interaction Matrix
-
-<!-- GRAPH:integration-edges:START -->
-<!-- Rendered matrix: rows = source module, cols = target module, cells = edge kind
-     (calls / imports / emits-event / reads-schema). -->
-<!-- GRAPH:integration-edges:END -->
-
-### 5.3 Boundary Types
-
-A short table listing the interaction kinds present. Rendered from graph edge taxonomy.
-
-| Boundary Kind | Count | Example |
-|---|---|---|
-| in-process call | {n} | `moduleA.Foo` → `moduleB.Bar` |
-| inter-process RPC | {n} | {service → service} |
-| async message | {n} | {producer → topic → consumer} |
-| shared database | {n} | {table} |
+How to add new behavior without violating invariants. Include registration sites, required vs optional contracts, and test patterns. Graph-derived where possible.
 
 ---
 
-## 6. Core Operational Flows, Lifecycles & State Machines
+## 9. Graph Coverage Gaps & Known Limitations (MANDATORY)
 
-> **Source:** llm-synthesis + graph (primary structural truth) + full project index
-> **Required:** high+
-> **Length:** 2–5 high-quality diagrams + minimal supporting prose
-> **N/A when:** the system is trivial (single linear script with no meaningful state or branching) — write explicit N/A.
-> **Verification:** diagram fidelity to graph + indexed understanding + citation-check
+Explicit, honest list of where the document and underlying graph are weak or absent.
 
-**Purpose**: This is one of the highest-value sections for any downstream coding assistant. It captures the **real behavioral architecture** — the primary ways the system moves through time and state.
+- Per-language fidelity shortfalls (copy from Dashboard)
+- Areas where synthesis or existing high-quality docs were the real ground truth
+- Remaining hallucination risk for future agents
+- "Future agents should re-verify X against source before acting here"
 
-The LLM **must** use:
-- The deterministic knowledge graph (modules, edges, entry points, public surfaces, hotspots)
-- Its full indexed project understanding from the host environment (Cursor, Claude Code, etc.)
-- Targeted source reads for confirmation
-
-to identify and accurately diagram the **most important operational models** of the system.
-
-### 6.1 Primary Operational Models (MANDATORY — 2 to 5 diagrams)
-
-Synthesize the 2–5 most important operational views. These are usually:
-
-- The dominant request / job / user-action lifecycle (end-to-end, with key decision points and error paths)
-- The main state machine(s) for stateful components or the overall system
-- Critical background / async / batch pipelines
-- Startup / initialization / shutdown lifecycle (especially valuable for services and tooling)
-- For plugin / meta-tooling / agent platforms: the core execution or dispatch model
-
-Each diagram should be a **stateDiagram-v2**, **sequenceDiagram**, or detailed **flowchart** with:
-- Real actor / state / stage names from the codebase
-- Labeled transitions with actual function, message, or event names where possible
-- alt / opt / loop where branching or repetition exists
-
-Prioritize **accuracy and usefulness for code generation** over visual beauty.
-
-### 6.2 Error & Recovery Paths
-
-For the primary flows above, explicitly call out or include in the diagrams the main error classification, retry, circuit-breaker, fallback, and recovery behaviors.
-
-### 6.3 Cross-Cutting Concerns in Flows
-
-Only if material: authentication/authorization checkpoints, distributed transaction boundaries, observability hooks, etc. inside the operational models.
-
-**For meta-tooling and plugin platforms**: This section must include clear diagrams of the primary internal processes (initialization pipeline, skill/agent dispatch and contract enforcement, generation pipelines, etc.).
+This section is one of the most valuable outputs for safety-critical or low-graph-fidelity systems.
 
 ---
 
-## 7. Core Modules Deep Dive
+## 10. Relationship to Other Authoritative Documentation (MANDATORY when Context Audit high/medium)
 
-> **Source:** graph (primary) + llm-synthesis (secondary)
-> **Required:** always
-> **Length:** Graph block + one high-signal workflow/state diagram + ≤120 words synthesis per module
-> **N/A when:** never
-> **Verification:** graph-fence fidelity + diagram correctness + citation-check
+When the Pre-Check Context Audit detects strong agent-optimized sources (CLAUDE.md, INVARIANTS.md, ADRs, etc.):
 
-**Core rule:** The graph is the source of truth for structure. LLM synthesis exists only to interpret the graph into actionable design understanding (primarily via diagrams).
+- List the detected files with one-line characterization
+- State exactly what this architecture.md supplies (graph spine, deterministic maps, visual synthesis, provenance on claims)
+- State what it defers to, with concrete cross-references
+- Explicit confirmation that no large-scale prose duplication of the existing authoritative material occurred
 
-For each module emitted by `draft/graph/module-graph.jsonl` (and its per-module file records), produce a subsection whose primary content is the deterministic graph block. Every module gets a slot; do not sample.
-
-### 7.{N} {module-name}
-
-<!-- GRAPH:module-deep/{module-name}:START -->
-<!-- Rendered deterministic block: path, file count, public API list, fan-in/fan-out, hotspot score,
-     primary incoming/outgoing edges with weights, entry points if known. No LLM prose inside fence. -->
-<!-- GRAPH:module-deep/{module-name}:END -->
-
-**Role** (≤25 words, derived strictly from graph role + primary source files read).
-
-**Primary Workflow / State** (MANDATORY — one diagram per module)
-Synthesize a single, accurate Mermaid diagram (stateDiagram-v2, sequenceDiagram, or flowchart LR/TD with clear stages) that captures the dominant control flow, data transformation pipeline, or lifecycle state machine for this module, grounded in the call graph / entry points / public surface from the graph record. Label transitions with the actual function or message names where possible. This diagram is more important than any prose.
-
-**Public Surface** (from graph `public_api` + verified source). Enumerate only the highest-fan-in or architecturally significant symbols. Format: `symbol (kind) — path:line`. No exhaustive dump of every getter.
-
-**Design Notes** (≤80 words total). Only what the graph + one or two key source reads reveal about invariants, error boundaries, or concurrency that is not already visible in the graph block or the workflow diagram. Cite specific `path:line`.
-
-**Sub-modules / Subsystems**. Recurse only when the graph shows a clear internal boundary (distinct sub-directories with their own public surface or high internal fan-in). Each child follows the identical pattern (graph block + one workflow diagram + minimal notes). Depth is strictly bounded by observable graph structure, never by a desire for "completeness."
-
-**Anti-pattern:** Do not emit long "Responsibilities" paragraphs or exhaustive file lists. If the graph block + workflow diagram already communicate the design, the synthesis may be two sentences. Accuracy and diagram correctness are the success criteria.
+When no high context was detected: short note that this document is the primary self-contained reference.
 
 ---
 
-## 8. Concurrency Model & Thread Safety
+## Fidelity & Provenance Rules (Strict — apply everywhere)
 
-> **Source:** llm-synthesis
-> **Required:** standard+
-> **Length:** ≤400 words
-> **N/A when:** single-threaded (no goroutines, threads, async runtime, workers) — write `N/A — reason: single-threaded {language} {entry-point}. No shared mutable state across execution contexts.`
-> **Verification:** citation-check
+Every claim or section must be tagged with one of:
 
-### 8.1 Execution Model
+- `Graph-Derived (High)` — direct from rich graph data
+- `Graph-Derived (Approximate)` — tree-sitter / static analysis
+- `Graph-Derived (Stub)` — directory/file counts only
+- `Human + Graph` — graph shows structure; synthesis added rationale or dynamic behavior
+- `Human Judgment` — not (yet) expressible in the graph (lock ordering, certain safety rules) — always call out
+- `Existing Authoritative Doc` — defers to CLAUDE.md / INVARIANTS.md etc.
 
-One-sentence statement. E.g., "Go runtime with bounded worker pool sized from `GOMAXPROCS`." Cite the entry-point `path:line`.
-
-### 8.2 Shared State
-
-Enumerate every location of shared mutable state. One row per location. If zero, write `None.`
-
-| Kind | Location `path:line` | Protection | Contention Risk |
-|---|---|---|---|
-| {mutex / atomic / channel / DB row / cache entry} | | {lock / CAS / transaction / actor ownership} | {low / medium / high — with rationale} |
-
-### 8.3 Locking & Ordering
-
-If multiple locks are acquired, state the global acquisition order. If violating the order causes deadlock, mark the rule as an invariant and cite §15.
-
-### 8.4 Async/Await Surface
-
-Languages with async runtimes (TS, Python asyncio, Rust tokio, Kotlin coroutines): describe the executor, cancellation policy, and any blocking calls. Otherwise omit.
+AI agents are trained by the document itself to treat Stub and Human Judgment claims with calibrated caution.
 
 ---
 
-## 9. Framework & Extension Points
+**End of clean graph-primary architecture template.**
 
-> **Source:** code-scan
-> **Required:** standard+ (when plugin/handler/middleware system exists)
-> **Length:** tables, no minimum
-> **N/A when:** no plugin, handler, middleware, strategy, or visitor system exists — write `N/A — reason: monolithic; no extension surface.`
-> **Verification:** citation-check
-
-### 9.1 Extension Types
-
-| Type | Interface | Registration Site `path:line` | Example Impl `path:line` |
-|---|---|---|---|
-
-### 9.2 Registration Mechanism
-
-One sentence: explicit-call / decorator / convention-based-scan / config-driven / DI-container. Cite the mechanism's `path:line`.
-
-### 9.3 Core Interfaces
-
-For each interface in §9.1, show the exact declaration, citing `path:line`. Do not paraphrase. If the declaration exceeds 25 lines, show signature only and link to `path:line`.
-
-```{language}
-// path:line — verbatim
-```
-
----
-
-## 10. Full Catalog of Implementations
-
-> **Source:** graph
-> **Required:** standard+ (when §9 is populated or operation/handler pattern exists)
-> **Length:** rendered
-> **N/A when:** §9 is N/A AND no operation/handler directories exist
-> **Verification:** graph-fence
-
-### 10.1 By Category
-
-<!-- GRAPH:catalog:START -->
-<!-- Rendered from draft/graph/{go,python,ts,c}-index.jsonl (per-language symbol indexes).
-     Group implementations by category (handlers, operations, strategies, extractors, etc.).
-     One row per implementation. No sampling, no summarization. -->
-<!-- GRAPH:catalog:END -->
-
-### 10.2 Per-Directory Operation Lists
-
-For each operation-bearing directory, render a complete list from the graph. One table per directory.
-
-<!-- GRAPH:catalog-per-dir:START -->
-<!-- Rendered per-directory enumeration. -->
-<!-- GRAPH:catalog-per-dir:END -->
-
----
-
-## 11. Secondary Subsystem (V2 / Redesign)
-
-> **Source:** user-input
-> **Required:** standard+ (when V2/redesign present)
-> **Length:** ≤400 words
-> **N/A when:** no parallel or next-generation subsystem exists — write `N/A — reason: single subsystem; no parallel V2 or redesign in flight.`
-> **Verification:** citation-check
-
-### 11.1 Architecture
-
-One Mermaid flowchart of the redesigned subsystem. Same notation as §5.
-
-### 11.2 Key Differences from V1
-
-| Aspect | V1 / Legacy | V2 / Current |
-|---|---|---|
-
-Enumerate only differences that materially affect behavior or operations. Cosmetic differences (renames, reorg) do not belong here.
-
-### 11.3 Coexistence & Migration
-
-State how V1 and V2 coexist (traffic split, feature flag, shadow mode, dual-write) and the cutover criterion. Cite the flag or switch `path:line`.
-
-### 11.4 Framework Details
-
-Key source files and their roles. Enumerate; do not sample.
-
----
-
-## 12. API & Interface Definitions
-
-> **Source:** code-scan (proto / OpenAPI / GraphQL / route registration)
-> **Required:** standard+ (when any external API exists)
-> **Length:** rendered
-> **N/A when:** project_type == 'library' AND no network-exposed surface — write `N/A — reason: library artifact; public surface documented in §7 Public Surface tables.`
-> **Verification:** graph-fence + schema-check
-
-### 12.1 Endpoints
-
-<!-- GRAPH:api-endpoints:START -->
-<!-- Rendered from OpenAPI / proto / route-registration parsers.
-     Columns: Method, Path, Handler path:line, Auth, Rate Limit, SLO. -->
-<!-- GRAPH:api-endpoints:END -->
-
-### 12.2 Proto / Schema Definitions
-
-<!-- GRAPH:api-proto:START -->
-<!-- Rendered from draft/graph/proto-index.jsonl. One row per service and message. -->
-<!-- GRAPH:api-proto:END -->
-
-### 12.3 Data Models
-
-Table of the top-level request/response/event models the API exposes. Cite declaration `path:line` for each.
-
-| Model | Kind (request / response / event / shared) | Declaration `path:line` | Versioning Rule |
-|---|---|---|---|
-
-### 12.4 Definition Files
-
-Enumerate every `.proto`, `openapi.yaml`, `schema.graphql`, or equivalent. Give the file path and its role.
-
----
-
-## 13. External Dependencies
-
-> **Source:** manifest
-> **Required:** always
-> **Length:** rendered table
-> **N/A when:** never (zero deps → table with one row: "None. Language standard library only.")
-> **Verification:** manifest-diff
-
-### 13.1 Runtime Dependencies
-
-<!-- GRAPH:external-deps:kind=runtime:START -->
-<!-- Rendered from package manifest(s). Columns: Name, Version, License, Source, Transitive Count, Used-In (top 3 modules). -->
-<!-- GRAPH:external-deps:kind=runtime:END -->
-
-### 13.2 Build / Dev Dependencies
-
-<!-- GRAPH:external-deps:kind=dev:START -->
-<!-- Rendered for dev/test/build-only deps. -->
-<!-- GRAPH:external-deps:kind=dev:END -->
-
-### 13.3 Service Dependencies (network-reachable)
-
-| Service | Protocol | Client Path `path:line` | Criticality | Failure Mode |
-|---|---|---|---|---|
-
-Only for systems the runtime reaches over the network (databases, queues, third-party APIs). For libraries or pure CPU workloads: `None.`
-
----
-
-## 14. Cross-Module Integration Points
-
-> **Source:** graph + llm-synthesis
-> **Required:** standard+
-> **Length:** ≤300 words per integration
-> **N/A when:** single-module system — write `N/A — reason: single-module; no cross-module integration surface.`
-> **Verification:** graph-fence + citation-check
-
-For each integration edge of kind `rpc` / `queue` / `shared-db` / `shared-schema` in the graph:
-
-### 14.{N} {Source} ↔ {Target}
-
-- **Contract** — API version, schema revision, response format, latency SLO.
-- **Failure Isolation** — circuit breaker, timeout, retry, bulkhead, fallback. Cite `path:line`.
-- **Version Coupling** — compatibility window; who upgrades first; flag gating.
-- **Integration Tests** — how tested; where the tests live `path:line`.
-
----
-
-## 15. Critical Invariants & Safety Rules
-
-> **Source:** llm-synthesis
-> **Required:** always (may be `None.`)
-> **Length:** ≤30 words per invariant; enumerate all that apply; do not pad
-> **N/A when:** never — if the codebase has zero invariants, write `None. No data-integrity, concurrency, or security invariants identified.`
-> **Verification:** citation-check
-
-No quota. Enumerate every invariant that actually exists. One row per invariant.
-
-| # | Invariant | Category | Where Enforced `path:line` | Enforcement Mechanism | Violation Consequence |
-|---|---|---|---|---|---|
-| 1 | {precise statement} | {data / concurrency / security / resource / ordering} | `{path:line}` | {type-system / runtime-assert / test / code-review / none} | {what breaks if violated} |
-
-**Mission-critical rule.** Any invariant in categories `data` or `security` with `Enforcement Mechanism == none` MUST be flagged for review. List such invariants at the end of the table with `⚠ unenforced` prefix.
-
----
-
-## 16. Security Architecture
-
-> **Source:** llm-synthesis + user-input
-> **Required:** high+
-> **Length:** ≤500 words
-> **N/A when:** criticality == low AND no authentication, authorization, crypto, PII, or network ingress — write `N/A — reason: criticality=low; no auth, crypto, PII, or external ingress.`
-> **Verification:** citation-check
-
-### 16.1 Threat Model Scope
-
-Name the threat model's in-scope and out-of-scope items. Cite the threat-model doc if one exists; if not, state `No formal threat model on file.` and list the top three assumed threats.
-
-### 16.2 Authentication & Authorization
-
-Mechanism(s) in use. Cite the primary auth middleware or guard `path:line`. State the authorization model (RBAC / ABAC / ACL / capability / none).
-
-### 16.3 Crypto Primitives
-
-| Purpose | Library + Version | Algorithm | Key Source | `path:line` |
-|---|---|---|---|---|
-
-Mark `None.` if no crypto in use.
-
-### 16.4 Secret Handling
-
-How secrets are loaded (env / vault / KMS / file). Where rotation is triggered. Cite config loader `path:line`.
-
-### 16.5 Known CVE Mitigations (mission-critical only)
-
-Only if any dependency's CVE required explicit mitigation. Otherwise omit the subsection.
-
----
-
-## 17. Observability & Telemetry
-
-> **Source:** code-scan + llm-synthesis
-> **Required:** high+
-> **Length:** ≤400 words
-> **N/A when:** criticality == low OR project_type == 'library' — write `N/A — reason: {...}`.
-> **Verification:** citation-check + graph-fence (metrics)
-
-### 17.1 Golden Signals
-
-| Signal | Metric Name | Dashboard URL | Alert URL |
-|---|---|---|---|
-| Latency | | | |
-| Traffic | | | |
-| Errors | | | |
-| Saturation | | | |
-
-### 17.2 Logging
-
-Log library + version. Log level policy. Structured vs free-form. PII redaction policy. Cite `path:line` for the logger init.
-
-### 17.3 Tracing
-
-Tracing library (OpenTelemetry / Zipkin / X-Ray / none). Trace context propagation points. Sampling policy.
-
-### 17.4 Alert Runbook
-
-Link to runbook(s). Mission-critical requires at least one runbook URL or inline entry.
-
-### 17.5 Log Retention
-
-Retention period. Where logs are stored. Who has read access.
-
----
-
-## 18. Error Handling & Failure Modes
-
-> **Source:** llm-synthesis
-> **Required:** standard+
-> **Length:** ≤400 words
-> **N/A when:** project_type == 'library' AND errors are returned unchanged to the caller — write `N/A — reason: pure library; errors propagate verbatim to caller.`
-> **Verification:** citation-check
-
-### 18.1 Error Taxonomy
-
-| Error Class | Source | Retry Policy | User-Visible? | `path:line` |
-|---|---|---|---|---|
-
-Enumerate classes that actually exist. Do not invent categories.
-
-### 18.2 Failure Modes Beyond Errors
-
-| Mode | Trigger | Detection | Recovery |
-|---|---|---|---|
-| {timeout / partial write / data loss / deadlock / corruption / OOM / thundering herd} | | | |
-
-Only rows for modes the codebase or deployment actually exhibits. Omit if none.
-
-### 18.3 Graceful Degradation
-
-If any component has fallback behavior, describe it here with `path:line`. Otherwise write `None — all failures surface as errors to caller.`
-
----
-
-## 19. State Management & Persistence
-
-> **Source:** code-scan + user-input
-> **Required:** standard+ (when persistence exists); mission-critical sections below are `high+`
-> **Length:** ≤400 words + SLO table for mission-critical
-> **N/A when:** stateless — write `N/A — reason: stateless; all state is request-scoped.`
-> **Verification:** citation-check
-
-### 19.1 State Stores
-
-| Store | Kind (SQL / KV / blob / cache / queue / filesystem) | Library `path:line` | Durability |
-|---|---|---|---|
-
-### 19.2 Schema & Migrations
-
-Migration tool name + version. Migration directory path. Cite the migration runner `path:line`. State forward/backward compatibility policy.
-
-### 19.3 Durability, RPO, RTO (mission-critical only)
-
-| Store | Durability Model | RPO | RTO | Backup Cadence | Restore Drill Cadence |
-|---|---|---|---|---|---|
-
-Mission-critical requires every row populated. Unknown values → mark `⚠ undefined` and raise as §27 debt.
-
-### 19.4 Caching
-
-Layers, invalidation policy, TTLs. Cite `path:line` for each cache.
-
----
-
-## 20. Reusable Modules for Future Projects
-
-> **Source:** llm-synthesis + graph
-> **Required:** standard+
-> **Length:** tables
-> **N/A when:** project_type == 'cli' AND fewer than 3 modules — write `N/A — reason: monolithic CLI; no modules separable for reuse.`
-> **Verification:** graph-fence
-
-Tiered by how much of the module's surface is reusable outside this project.
-
-### 20.1 Highly Reusable (Framework-Level)
-
-<!-- GRAPH:reusable:tier=framework:START -->
-<!-- Rendered: modules with low external coupling + documented public API. -->
-<!-- GRAPH:reusable:tier=framework:END -->
-
-| Module | Path | What makes it reusable |
-|---|---|---|
-
-### 20.2 Moderately Reusable (Pattern-Level)
-
-| Module | Path | Extraction cost |
-|---|---|---|
-
-### 20.3 Pattern Templates (Design-Level)
-
-| Pattern | Where Used `path:line` | When to copy |
-|---|---|---|
-
----
-
-## 21. Key Design Patterns
-
-> **Source:** llm-synthesis
-> **Required:** standard+
-> **Length:** ≤150 words per pattern + one verified code reference
-> **N/A when:** no non-trivial patterns identified — write `None. Codebase follows straight-line procedural design.`
-> **Verification:** citation-check
-
-For each pattern that materially shapes the codebase:
-
-### 21.{N} {Pattern name}
-
-- **Intent** — one sentence.
-- **Where used** — list occurrences with `path:line`. At least one citation must verify.
-- **Why chosen** — one sentence referencing observable constraint (not aesthetic).
-- **Reference snippet** — ≤15 lines, verbatim from `path:line`.
-
-Do not enumerate every GoF pattern. Only patterns that recur or are load-bearing.
-
----
-
-## 22. Configuration & Tuning
-
-> **Source:** code-scan
-> **Required:** always
-> **Length:** rendered
-> **N/A when:** never (zero config → `None. No runtime configuration surface.`)
-> **Verification:** graph-fence + citation-check
-
-### 22.1 Configuration Surface
-
-<!-- GRAPH:config:START -->
-<!-- Rendered from config parsers: env vars, CLI flags, YAML keys.
-     Columns: Key, Type, Default, Where Read path:line, Valid Range / Enum. -->
-<!-- GRAPH:config:END -->
-
-### 22.2 Tuning Guidance
-
-Only for knobs with non-obvious tradeoffs. One row per knob. Omit if none.
-
-| Knob | Default | Raise when | Lower when | Risk of wrong value |
-|---|---|---|---|---|
-
----
-
-## 23. Performance Characteristics & Hot Paths
-
-> **Source:** graph (hotspots) + llm-synthesis
-> **Required:** standard+
-> **Length:** ≤200 words per hot path
-> **N/A when:** project_type == 'library' AND no measured performance constraint — write `N/A — reason: library; performance characterization is caller-dependent.`
-> **Verification:** graph-fence
-
-### 23.1 Hotspots (graph-derived)
-
-<!-- GRAPH:hotspots:START -->
-<!-- Rendered from draft/graph/hotspots.jsonl. Columns: Path, Fan-In, Fan-Out, Change-Frequency, Hotspot Score. -->
-<!-- GRAPH:hotspots:END -->
-
-### 23.2 Critical Hot Paths
-
-For each hot path that matters operationally:
-
-#### 23.2.{N} {Path name}
-
-- **Trace** — entry-point `path:line` → terminal `path:line`.
-- **Observed characteristic** — measured latency / throughput / memory. Cite the measurement source (benchmark file, load test, production metric URL). If unmeasured, write `⚠ unmeasured` and log a §27 debt item.
-- **Known optimizations** — what has already been done.
-- **Known risks** — what would slow this path.
-
-**Mission-critical rule.** Every hot path must have a measured baseline. `⚠ unmeasured` on a mission-critical system is a release blocker.
-
-### 23.3 Measured Baselines (mission-critical only)
-
-| Hot Path | p50 | p95 | p99 | Measured At (commit + date) | Source |
-|---|---|---|---|---|---|
-
----
-
-## 24. How to Extend — Step-by-Step Cookbooks
-
-> **Source:** llm-synthesis
-> **Required:** standard+ (when §9 or §10 populated)
-> **Length:** ≤400 words per cookbook
-> **N/A when:** §9 is N/A — write `N/A — reason: no extension surface (see §9).`
-> **Verification:** citation-check
-
-One cookbook per extension type in §9.1. Each cookbook is an ordered step list. Every step cites `path:line` or a command. Test every step as you write by resolving citations.
-
-### 24.{N} How to add a new {extension type}
-
-1. ...
-2. ...
-3. Register at `path:line`.
-4. Test with `{command}`.
-
-No invented extension types. If a pattern is theoretically supported but has never been exercised, say so explicitly.
-
----
-
-## 25. Build System & Development Workflow
-
-> **Source:** manifest + code-scan
-> **Required:** always
-> **Length:** rendered
-> **N/A when:** never
-> **Verification:** graph-fence + manifest-diff
-
-### 25.1 Build Tooling
-
-| Tool | Version | Config File | Notes |
-|---|---|---|---|
-
-### 25.2 Key Build Targets
-
-<!-- GRAPH:build-targets:START -->
-<!-- Rendered from Makefile / BUILD / package.json scripts / pyproject scripts. -->
-<!-- GRAPH:build-targets:END -->
-
-### 25.3 Developer Setup
-
-Ordered command list, starting from a fresh clone. Every command must run to completion on a supported OS/arch. Cite the OS/arch matrix.
-
-### 25.4 CI Pipeline
-
-| Stage | Tool | Config `path:line` | Required for merge? |
-|---|---|---|---|
-
----
-
-## 26. Testing Infrastructure
-
-> **Source:** code-scan
-> **Required:** always
-> **Length:** rendered table + ≤200 words
-> **N/A when:** never (zero tests → `None. No automated tests present.` + flag as §27 debt item)
-> **Verification:** citation-check
-
-### 26.1 Test Suites
-
-| Suite | Location | Command | Kind (unit / integration / e2e / property / fuzz / load) | Coverage |
-|---|---|---|---|---|
-
-### 26.2 Test Data & Fixtures
-
-Where fixtures live. How they are generated or maintained. Cite `path:line`.
-
-### 26.3 Flaky Test Policy
-
-If flaky tests exist and have a known handling policy (quarantine, retry, skip-with-ticket), describe it. Otherwise omit.
-
----
-
-## 27. Known Technical Debt & Limitations
-
-> **Source:** user-input (debt items must be acknowledged, not inferred)
-> **Required:** always (may be `None.`)
-> **Length:** ≤30 words per item
-> **N/A when:** never — zero debt → `None. No known debt items at synced_to_commit.`
-> **Verification:** citation-check
-
-No quota. Enumerate every real item. One row per item.
-
-| # | Item | Severity | Blast Radius | Owner | ETA | `path:line` or ticket |
-|---|---|---|---|---|---|---|
-| 1 | {statement} | {low / medium / high / critical} | {module / subsystem / org} | {team-or-person} | {date or "backlog"} | `{path:line}` or `JIRA-1234` |
-
-**Mission-critical rule.** Every high/critical row must have Owner and ETA populated.
-
----
-
-## 28. Glossary
-
-> **Source:** user-input + code-scan
-> **Required:** always
-> **Length:** table
-> **N/A when:** never (zero jargon → `None. Codebase uses standard terminology only.`)
-> **Verification:** none
-
-| Term | Definition | First Appears `path:line` or §ref |
-|---|---|---|
-
-Only terms that are non-standard in the broader industry OR carry project-specific meaning. Do not define standard terms ("mutex", "HTTP").
-
----
-
-## 29. Graph Coverage Gaps & Known Limitations (MANDATORY)
-
-> **Source:** graph + llm-synthesis + Context Audit
-> **Required:** always (non-skippable)
-> **Length:** substantive (≥150 words or explicit "Full coverage" + justification)
-> **Verification:** must enumerate real shortfalls from this run's graph build and audit; cross-reference the frontmatter `graph:` block and Dashboard table
-
-**Purpose**: Tell future AI agents exactly where this document (and the underlying graph) has weak or absent coverage so they calibrate trust and know where to read source or defer to other authoritative material.
-
-**Mandatory content**:
-- Per-language and per-major-area fidelity summary (copy/adapt from frontmatter Dashboard + notes).
-- Specific modules/flows where graph provided only directory stubs (0 edges, 0 symbols) and synthesis relied on host index + targeted reads.
-- Any areas where high-quality existing docs (from Pre-Check Context Audit) were treated as ground truth with cross-references instead of re-documenting.
-- Explicit remaining risk statement: "Future agents should re-verify [specific claims] against source before acting in these areas."
-
-Example (low-graph Python-heavy mature project):
-> Python modules: stub (directory-level only, 0 edges, 0 symbols in graph). Host index + 18 targeted source reads used for workflows and invariants. See §30 for deference to CLAUDE.md (agent protocols) and docs/INVARIANTS.md (verified rules). Gaps: dynamic lock ordering, runtime state machines, and cross-language FFI boundaries only partially visible in static graph.
-
-This section is high-value for safety-critical and low-fidelity-graph codebases.
-
----
-
-## 30. Relationship to Existing Authoritative Documentation (MANDATORY when Context Audit = high/medium)
-
-> **Source:** Context Audit + user-input + llm-synthesis
-> **Required:** non-skippable when high/medium context detected in Pre-Check; otherwise include with "None detected" note
-> **Length:** table or clear bullets with cross-references
-> **Verification:** must name the exact files from the audit, state what this document adds vs. defers, and confirm absence of large prose duplication
-
-**Purpose**: Prevent drift and duplication. Explicitly position this graph-primary architecture.md relative to any pre-existing high-signal agent-optimized sources.
-
-**Mandatory content** (when audit high):
-- List of detected files with one-line signal (e.g. "CLAUDE.md — 10k+ lines, purpose-built so future AI agents do not re-read source").
-- What this architecture.md supplies: the deterministic graph-derived structural spine (modules, dependencies, public surfaces, hotspots), visual diagrams (Mermaid workflows/state), and synthesis for dynamic behavior or low-graph areas.
-- What it defers to (with concrete refs): "Defers to CLAUDE.md §X for agent behavioral specifications and docs/INVARIANTS.md:INV-042 for machine-verified system rules (test-backed)."
-- Confirmation: "No large-scale prose duplication of existing authoritative material occurred. This document is an overlay and navigation aid, not a replacement."
-
-If no high context detected:
-> No high-quality agent-optimized documentation (CLAUDE.md / INVARIANTS.md / ADRs) detected beyond standard project README and inline comments. This architecture.md is the primary self-contained engineering reference.
-
-Cross-references in this section must be resolvable (file paths or § numbers that exist).
-
----
-
-## Appendix A: File Structure Summary
-
-> **Source:** code-scan
-> **Required:** always
-> **Length:** rendered tree
-> **N/A when:** never
-> **Verification:** graph-fence
-
-<!-- GRAPH:file-tree:START -->
-<!-- Rendered from filesystem walk at synced_to_commit.
-     Depth and exclusions configurable in draft/graph/config.json. -->
-<!-- GRAPH:file-tree:END -->
-
----
-
-## Appendix B: Data Source → Implementation Mapping
-
-> **Source:** graph
-> **Required:** standard+
-> **Length:** rendered
-> **N/A when:** §13.3 is `None.` AND no local data stores — write `N/A — reason: no data sources.`
-> **Verification:** graph-fence
-
-<!-- GRAPH:source-sink:direction=source:START -->
-<!-- Rendered: rows = external source, cols = modules that read it, cells = call path:line. -->
-<!-- GRAPH:source-sink:direction=source:END -->
-
----
-
-## Appendix C: Output Flow — Implementation to Target
-
-> **Source:** graph
-> **Required:** standard+
-> **Length:** rendered
-> **N/A when:** no external write surface — write `N/A — reason: no outputs beyond process return value.`
-> **Verification:** graph-fence
-
-<!-- GRAPH:source-sink:direction=sink:START -->
-<!-- Rendered: rows = module, cols = external target, cells = call path:line. -->
-<!-- GRAPH:source-sink:direction=sink:END -->
-
----
-
-## Appendix D: Mermaid Sequence Diagrams — Critical Flows
-
-> **Source:** llm-synthesis
-> **Required:** high+
-> **Length:** 1–N diagrams, no minimum, no maximum
-> **N/A when:** criticality < high AND no flow crosses more than two modules — write `N/A — reason: {...}`.
-> **Verification:** citation-check (every participant must map to a §5 component)
-
-Diagrams for flows that are operationally critical and NOT already covered by §6. Each diagram must:
-
-- name every participant with the exact component name from §5;
-- label every arrow with the call/message kind;
-- cite the entry-point and terminal `path:line` below the diagram.
-
-Do not duplicate §6 diagrams. If §6 already covers the flow, skip it here.
-
----
-
-## Appendix E: Proto Service Map (graph-derived)
-
-> **Source:** graph
-> **Required:** standard+ (when proto definitions exist)
-> **Length:** rendered
-> **N/A when:** no `.proto` files in repository — write `N/A — reason: no gRPC/proto definitions present.`
-> **Verification:** graph-fence
-
-<!-- GRAPH:proto-map:START -->
-<!-- Rendered from draft/graph/proto-index.jsonl. Services × methods × request/response types. -->
-<!-- GRAPH:proto-map:END -->
-
----
-
-End of document. Completion verification is owned by `skills/init/SKILL.md` §Completion Verification. For AI-optimized context, see `draft/.ai-context.md`.
-
+This is the single forward-looking source of truth. Legacy 28-section volume-oriented material has been retired.
 </core-file>
 
 ---

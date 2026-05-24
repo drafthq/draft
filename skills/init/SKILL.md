@@ -16,64 +16,37 @@ Initialize a Draft project for Context-Driven Development.
 - Not presenting .ai-context.md for developer review before proceeding
 - Overwriting existing tracks.md (this destroys track history)
 - **Producing copy-paste module descriptions** — if 3+ modules share identical Responsibilities or description text, you have NOT analyzed the source files
-- **Writing architecture.md below the tier minimum** for the detected codebase tier — compute tier from Step 1.4.5 graph metrics (M, F, P); falling below the tier minimum indicates incomplete analysis, not conciseness
 - **Writing sequence diagrams under 15 lines** of Mermaid code — shallow diagrams without alt/opt blocks, payloads, and error paths are useless
 - **Writing module deep-dives that ignore the graph or lack a workflow/state diagram** — the graph is ground truth; every significant module must have at least one synthesized diagram showing its primary flow or lifecycle. Prose volume without diagram fidelity is a failure.
 - **Using "See X/" or "follow BUILD patterns"** as a substitute for reading actual source files and documenting real content
-- **Creating freeform sections** instead of the numbered 28-section template (e.g., "## Module deep-dive: X" instead of "## 7. Core Modules Deep Dive" with "#### 7.1 X" subsections) — the template structure is MANDATORY, graph data enriches it but does not replace it
-- **Capping sub-module depth** — sub-modules with 50+ files get the SAME analysis depth as top-level modules; there is NO page limit; a 100-page architecture.md for a large codebase is correct
 - **Ignoring detected high-quality existing agent context** (e.g. CLAUDE.md + docs/INVARIANTS.md written explicitly for AI agents) and regenerating large volumes of duplicative prose instead of a graph-primary overlay with strong cross-references and explicit Relationship section — this creates documentation debt and divergence risk in mature brownfield systems
+- **Retaining any legacy 28-section or volume-oriented language** in generated architecture.md or in the reasoning process — the modern 10-section graph-primary template is the only accepted format.
 
 **Initialize once, refresh to update. Never overwrite without confirmation.**
 
 ---
 
-## MANDATORY SECTION CHECKLIST — architecture.md
+## MANDATORY SECTION CHECKLIST — architecture.md (Graph-Primary)
 
 > **READ THIS BEFORE WRITING A SINGLE LINE OF architecture.md.**
-> The document MUST use the EXACT numbered structure below. Freeform sections, renamed headings, or missing sections are FAILURES. Verify each item is present before considering architecture.md complete.
+> The document MUST use the EXACT modern graph-primary structure below. Freeform sections, renamed headings, or missing mandatory sections are FAILURES. This is the single forward-looking format — no legacy 28-section or volume-oriented material is accepted.
 
 ```
-## 1.  Executive Summary
-## 2.  AI Agent Quick Reference
-## 3.  System Identity & Purpose
-## 4.  Architecture Overview
-## 5.  Component Map & Interactions
-## 6.  Core Operational Flows, Lifecycles & State Machines
-## 7.  Core Modules Deep Dive
-## 8.  Concurrency Model & Thread Safety
-## 9.  Framework & Extension Points
-## 10. Full Catalog of Implementations
-## 11. Secondary Subsystem (V2 / Redesign)
-## 12. API & Interface Definitions
-## 13. External Dependencies
-## 14. Cross-Module Integration Points
-## 15. Critical Invariants & Safety Rules
-## 16. Security Architecture
-## 17. Observability & Telemetry
-## 18. Error Handling & Failure Modes
-## 19. State Management & Persistence
-## 20. Reusable Modules for Future Projects
-## 21. Key Design Patterns
-## 22. Configuration & Tuning
-## 23. Performance Characteristics & Hot Paths
-## 24. How to Extend — Step-by-Step Cookbooks
-## 25. Build System & Development Workflow
-## 26. Testing Infrastructure
-## 27. Known Technical Debt & Limitations
-## 28. Glossary
-## 29. Graph Coverage Gaps & Known Limitations (MANDATORY)
-## 30. Relationship to Existing Authoritative Documentation (MANDATORY when high/medium context from audit)
-### Appendix A: File Structure Summary
-### Appendix B: Data Source → Implementation Mapping
-### Appendix C: Output Flow — Implementation to Target
-### Appendix D: Mermaid Sequence Diagrams — Critical Flows
-### Appendix E: Proto Service Map (graph-derived)
+## 1. Executive Summary + Graph Health Dashboard
+## 2. Critical Invariants & Safety Rules (with provenance)
+## 3. Primary Control & Data Flows (Graph + Synthesis)
+## 4. Module & Dependency Map (Primarily Graph-Derived)
+## 5. Concurrency, Ownership & Isolation Model
+## 6. Error Handling & Failure Mode Catalog
+## 7. State & Data Truth Sources + Reconciliation
+## 8. Extension Points & Safe Mutation Patterns
+## 9. Graph Coverage Gaps & Known Limitations (MANDATORY)
+## 10. Relationship to Other Authoritative Documentation (MANDATORY on high/medium Context Audit)
 ```
 
-**Self-check before finalizing**: Run a mental grep for `## 1.` through `## 30.` (or the full list above) in your output. Any gap in the required numbered sections = incomplete document. Return and fill it. The two new sections (29/30) are additive for compatibility; older 28-section documents remain valid.
+**Self-check before finalizing**: Confirm every one of the 10 sections above exists with the required fidelity declarations, provenance tags on claims, and (where applicable) Mermaid diagrams grounded in the graph. The Graph Health Dashboard + §9 Gaps + §10 Relationship are the highest-leverage sections for future agents.
 
-> **If you are a subagent** executing this step via a delegation prompt: your prompt is a SUMMARY. The full 28-section structure above is the AUTHORITATIVE requirement. Do not infer section names from the summary — use the exact headings listed here.
+> **If you are a subagent**: your prompt is a summary. The 10-section graph-primary structure above is authoritative. Use the exact headings. No legacy 28-section material is permitted.
 
 ---
 
@@ -836,7 +809,7 @@ Spawn a **single synthesis agent** with the Synthesis Coordinator Prompt from `c
 - `{CONCATENATED_DEEP_DIVES}` — content of `draft.tmp/.state/reader-deep-dives.md`
 - `{CONCATENATED_IRS}` — content of `draft.tmp/.state/reader-irs.json`
 - `{GRAPH_DEPENDENCY_DIAGRAM}` — mermaid output from `--query --mode mermaid --symbol module-deps`
-- `{ARCHITECTURE_TEMPLATE_STRUCTURE}` — the 28-section outline from `core/templates/architecture.md`
+- `{ARCHITECTURE_TEMPLATE_STRUCTURE}` — the modern 10-section graph-primary outline from `core/templates/architecture.md` (the single source of truth)
 
 The synthesis agent:
 - Integrates the reader outputs (now graph + one high-quality workflow/state diagram + minimal notes per module) into §7 with light editing only for consistency and cross-references.
@@ -960,21 +933,18 @@ For every module that received a `#### 7.X` section, verify the following and re
 
 This gate enforces the new priority: the graph defines structure; diagrams make it usable; prose is minimal supporting narrative. The old 100-line volume targets are retired.
 
-#### Pass 3: Remaining Sections (Sections 8–28 + Appendices)
+#### Pass 3: Cross-Cutting Sections + Mandatory Gaps & Relationship
 
-Generate Sections 8–28 and Appendices A–D. These cover concurrency, extensions, catalogs, APIs, dependencies, integration, invariants, security, observability, error handling, state, patterns, configuration, performance, cookbooks, build, testing, debt, glossary, and cross-reference appendices. **Minimum 600 lines for Pass 3.**
+Synthesize the remaining high-value cross-cutting sections using the graph + targeted reads. The focus is on invariants with provenance, failure modes, data truth sources, extension patterns, and (always) the two mandatory closing sections:
 
-Read additional source files as needed for each section — do not rely solely on what was read in earlier passes.
+- §9 Graph Coverage Gaps & Known Limitations
+- §10 Relationship to Other Authoritative Documentation (when Context Audit detected high/medium context)
+
+No volume targets. No legacy appendices. Quality is measured by fidelity declarations, provenance tags, diagram accuracy, and honest gap reporting — not line counts.
 
 #### Pass 4: Quality Gate Verification
 
-After all sections are written, run the Completion Verification (defined later in this skill) against hard minimum thresholds. If any metric fails:
-1. Identify the weakest sections
-2. Read additional source files for those sections
-3. Expand until all metrics pass
-4. Only then proceed to `.ai-context.md` generation
-
-**Minimum scale guidance:** Pass 1: 400+ lines, Pass 2: scales with modules (no cap), Pass 3: 600+ lines. For a 500+ file codebase with 10+ modules and deep sub-module hierarchies, total output of 5000-10000+ lines is expected and correct.
+Run the (now signal-quality) Completion Verification defined later in this skill. Only the hard fidelity / provenance / gaps / relationship checks are blocking. Expand only where those checks fail. Proceed to condensation only when they pass.
 
 ---
 
@@ -1191,22 +1161,24 @@ Follow these steps in order. The specific files to look for depend on the langua
 
 ---
 
-## architecture.md Specification
+## architecture.md Specification (Graph-Primary — Forward Only)
 
-Generate `draft/architecture.md` as a comprehensive human-readable engineering reference using the canonical 28-section structure plus appendices A–E. The document MUST follow the exact numbered headings listed in **MANDATORY SECTION CHECKLIST** above; freeform sections, renamed headings, or missing sections are failures.
+Generate `draft/architecture.md` using the modern 10-section graph-primary structure defined in the **MANDATORY SECTION CHECKLIST** above and in `core/templates/architecture.md`.
 
-**Full specification, per-section instructions, anti-patterns, and quality gates** — see `references/architecture-spec.md`. It covers:
+The document is:
+- Primarily derived from the deterministic knowledge graph (`draft/graph/`).
+- Explicit about fidelity (frontmatter `graph:` block + Dashboard).
+- Required to carry provenance/fidelity tags on all significant claims.
+- Duplication-aware when high-quality agent docs (CLAUDE.md, INVARIANTS.md, etc.) are detected by the Context Audit.
 
-- MANDATORY YAML frontmatter format (project, module, generated_by, generated_at, git, synced_to_commit)
-- Required body header (`# Architecture: {PROJECT_NAME}`) and Table of Contents
-- Per-section guidance for sections 1–28 (Executive Summary through Glossary) with word budgets and depth requirements
-- Appendix structure (A: File Structure Summary, B: Data Source → Implementation Mapping, C: Output Flow, D: Mermaid Sequence Diagrams, E: Proto Service Map)
-- Tier classification gates (S/M/L/XL) and anti-patterns (Shallow Sub-Module Treatment, Copy-Paste Module Descriptions, etc.)
-- Pre-finalization quality checklist
+**Full details, per-section guidance, provenance rules, and examples** live in:
+- `core/templates/architecture.md` (the source of truth for the 10 sections + Generation Contract)
+- `docs/research/proposed-graph-backed-architecture-template.md` (design rationale and fidelity rules)
+- `references/architecture-spec.md` (supplementary per-section notes, kept in sync with the template)
 
-The canonical output template lives at `core/templates/architecture.md` (already inlined into integrations).
+There is no legacy 28-section, no volume targets, and no Pass 1/2/3 protocol. The template itself is the contract.
 
-**After completing analysis AND passing all checks**, write the content to `draft/architecture.md` using the Write tool. This is the PRIMARY output. Then run the Condensation Subroutine to derive `.ai-context.md`.
+**After completing analysis AND passing verification**, write to `draft/architecture.md`. This is the PRIMARY output. Then run the Condensation Subroutine.
 
 ## .ai-context.md Specification
 
@@ -1503,13 +1475,13 @@ After completing the 5-phase analysis:
 
    # Architecture: {PROJECT_NAME}
 
-   > Comprehensive human-readable engineering reference.
+   > Graph-primary high-signal engineering reference (10-section modern structure).
    > For token-optimized AI context, see `draft/.ai-context.md`.
 
    ---
 
    ## Table of Contents
-   ... (then continue with full 28 sections + appendices)
+   ... (the 10 sections from the current `core/templates/architecture.md`)
    ```
 
 3. **Run Completion Verification (MANDATORY)** — Before proceeding to `.ai-context.md`, verify architecture.md meets signal-quality, fidelity, and duplication-aware requirements (volume is now guidance only, secondary to provenance and honesty):
@@ -1537,7 +1509,7 @@ After completing the 5-phase analysis:
    6. All <!-- GRAPH:*:START/END --> injection slots either populated from graph or explicitly marked unavailable with fidelity impact note.
       → PASS / FAIL: ___
 
-   7. (Retained) Pass 2 per-module Graph Fidelity & Diagram Report complete; no synthesis contradictions with graph; low-fidelity areas called out.
+   7. Per-module Graph Fidelity & Diagram Report complete for all modules that have graph data; no synthesis contradictions with graph; low-fidelity areas explicitly called out in §9.
       → PASS / FAIL: ___
 
    Soft / guidance (low-context runs only; high-context runs may legitimately be shorter when deferring to authoritative sources):

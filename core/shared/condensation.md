@@ -6,12 +6,13 @@
 
 This is a self-contained, callable procedure for generating `draft/.ai-context.md` from `draft/architecture.md`. 
 
-**Critical fidelity requirement**: The condensation must faithfully preserve the core operational models (workflows, lifecycles, state machines) from architecture.md §6 "Core Operational Flows, Lifecycles & State Machines", along with invariants and extension points. These behavioral models are the highest-value content for downstream coding accuracy.
+**Critical fidelity requirement**: The condensation must faithfully preserve the core operational models (workflows, lifecycles, state machines) from architecture.md §3 "Primary Control & Data Flows", along with invariants (§2) and extension points (§8). These behavioral models are the highest-value content for downstream coding accuracy.
 
-**Mapping (architecture.md → .ai-context.md)**:
-- Core Operational Flows (§6) → `## GRAPH:OPERATIONAL` (states, transitions, error/recovery paths in compact form)
-- Data Flow diagrams → lightweight `FLOW:{Name}` summaries tied to the operational models above
-- Module graph + hotspots → `GRAPH:MODULE-HOTSPOTS`, `GRAPH:FAN-IN`, `GRAPH:PROTO-MAP` etc. as already defined
+**Mapping (architecture.md → .ai-context.md)** (modern 10-section graph-primary):
+- Primary Control & Data Flows (§3) → `## GRAPH:OPERATIONAL` + GRAPH:DATAFLOW (states, transitions, error/recovery paths in compact form)
+- Module & Dependency Map (§4) + hotspots → `GRAPH:MODULE-HOTSPOTS`, `GRAPH:FAN-IN`, `GRAPH:PROTO-MAP` etc.
+- Critical Invariants (§2) → INVARIANTS
+- Extension Points (§8) → EXTEND + INTERFACES
 
 Any skill that mutates `architecture.md` should execute this subroutine afterward to keep the derived context files in sync.
 
