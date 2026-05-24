@@ -9,7 +9,7 @@ generated_at: "{ISO_TIMESTAMP}"
 
 > Self-contained AI context. Budget: {TIER_MIN}–{TIER_MAX} lines (tier {N}: {LABEL}).
 > Graph metrics: M={modules} F={functions} P={proto_rpcs} E={include_edges}
-> Primary value: faithful structural graph + **core operational models** (workflows, lifecycles, state machines) derived from architecture.md §6.
+> Primary value: faithful structural graph + **core operational models** (workflows, lifecycles, state machines) derived from architecture.md §3 (Primary Control & Data Flows).
 > This file must stand alone — no references to architecture.md or source files needed.
 
 | Field | Value |
@@ -95,7 +95,7 @@ None ✓
 
 ## GRAPH:OPERATIONAL (Core Behavioral Models)
 
-**Primary Operational Models** (from architecture.md §6 — highest fidelity requirement):
+**Primary Operational Models** (from architecture.md §3 — highest fidelity requirement):
 
 - **{Flow/Lifecycle Name 1}** (e.g. Request Lifecycle, Init Pipeline, Job Pipeline):
   State1 --(event/func)--> State2 --(error path)--> ErrorState --> Recovery
