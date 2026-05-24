@@ -16,7 +16,7 @@
                 { text: 'Phase 1: Discovery    ████████░░ signals classified', cls: 'out-info' },
                 { text: 'Phase 2: Wiring       ██████████ entry points mapped', cls: 'out-info' },
                 { text: 'Phase 3: Depth        ██████████ data flows traced', cls: 'out-info' },
-                { text: '→ Generated architecture.md (28 sections + 5 appendices)', cls: 'out-success' },
+                { text: '→ Generated graph-primary architecture.md (fidelity dashboard + provenance + gaps)', cls: 'out-success' },
                 { text: '→ Derived .ai-context.md (312 lines)', cls: 'out-success' },
                 { text: '→ State persisted: freshness.json, signals.json', cls: 'out-file' }
             ]
