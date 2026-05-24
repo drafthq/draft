@@ -5795,9 +5795,9 @@ If one of these applies, route directly to the specialist workflow and stop this
 5. Read `draft/tech-stack.md` for technical context
 6. Read `draft/guardrails.md` (if exists) for hard guardrails and learned conventions
 7. **Check for architecture context:**
-   - Track-level: `draft/tracks/<id>/architecture.md`
-   - Project-level: `draft/.ai-context.md` (or legacy `draft/architecture.md`)
-   - If either exists → **Enable architecture mode** (Story, Execution State, Skeletons)
+   - Project-level: `draft/.ai-context.md` (preferred) or `draft/architecture.md` (graph-primary)
+   - Track-level design docs: `draft/tracks/<id>/hld.md` (+ `lld.md` when present)
+   - If relevant design context exists → **Enable architecture mode** (Story, Execution State, Skeletons)
    - If neither exists → Standard TDD workflow
 8. **Load production invariants** (if `draft/.ai-context.md` exists):
    - Read the `## INVARIANTS` section (and `## CONCURRENCY` if present)
@@ -5814,10 +5814,10 @@ If one of these applies, route directly to the specialist workflow and stop this
 If no active track found:
 - Tell user: "No active track found. Run `draft plan` to create or resume planned work."
 
-**Architecture Mode Activation:**
-- Automatically enabled when `.ai-context.md` or `architecture.md` exists (file-based, no flag needed)
-- Track-level architecture.md created by `draft decompose`
-- Project-level `.ai-context.md` created by `draft init`
+**Architecture / Design Mode Activation:**
+- Automatically enabled when `.ai-context.md`, graph-primary `architecture.md`, or track `hld.md`/`lld.md` exists.
+- Project-level context from `draft init`.
+- Track-level design docs from `draft decompose`.
 
 ## Step 1.5: Readiness Gate (Fresh Start Only)
 
@@ -5924,7 +5924,7 @@ If the selected task is blocked because earlier implementation appears invalid, 
 
 ## Step 2.5: Write Story (Architecture Mode Only)
 
-**Activation:** Only runs when `.ai-context.md` or `architecture.md` exists (track-level or project-level).
+**Activation:** Only runs when `.ai-context.md`, graph-primary `architecture.md`, or track `hld.md`/`lld.md` exists.
 
 When the next task involves creating or substantially modifying a code file:
 
@@ -5966,7 +5966,7 @@ See `core/agents/architect.md` for story writing guidelines.
 
 ### Step 3.0: Design Before Code (Architecture Mode Only)
 
-**Activation:** Only runs when `.ai-context.md` or `architecture.md` exists (track-level or project-level).
+**Activation:** Only runs when `.ai-context.md`, graph-primary `architecture.md`, or track `hld.md`/`lld.md` exists.
 **Skip for trivial tasks** - Config updates, type-only changes, single-function tasks where the design is obvious.
 
 #### 3.0a. Execution State Design
@@ -6212,10 +6212,10 @@ After completing each task:
      - Add recovery message: "State update failed after commit <SHA>. Recovery: manually edit plan.md line X to mark `[x]`, update metadata.json tasks.completed to Y"
      - HALT - require manual intervention before continuing
 
-5. If `.ai-context.md` or `architecture.md` exists for the track:
-   - Update module status markers (`[ ]` → `[~]` when first task in module starts, `[~]` → `[x]` when all tasks complete)
+5. If `.ai-context.md` or graph-primary `architecture.md` (or track hld/lld) exists:
+   - Update module status markers where applicable.
    - Fill in Story placeholders with the approved story from Step 2.5
-   - If updating project-level `draft/.ai-context.md`: also update YAML frontmatter `git.commit` and `git.commit_message` to current HEAD. Update `draft/architecture.md` with structural changes, then run the Condensation Subroutine (defined in `core/shared/condensation.md`) to regenerate `draft/.ai-context.md`.
+   - If updating project-level `draft/.ai-context.md`: also update YAML frontmatter and run the Condensation Subroutine to keep it in sync.
 
 ## Verification Gate (REQUIRED)
 
@@ -15730,9 +15730,9 @@ Draft solves this through **Context-Driven Development**: structured documents t
 |----------|---------|----------|
 | `product.md` | Defines users, goals, success criteria, guidelines | AI building features nobody asked for |
 | `tech-stack.md` | Languages, frameworks, patterns, accepted patterns | AI introducing random dependencies |
-| `architecture.md` | **Source of truth.** Comprehensive human-readable engineering reference with 28 sections + 5 appendices, Mermaid diagrams, and code snippets. Generated from Graph build + 5-phase codebase analysis. | Engineers needing onboarding documentation |
+| `architecture.md` | **Graph-primary source of truth.** Focused high-signal engineering reference (Graph Health & Fidelity Dashboard first, then 9 critical sections with explicit provenance/fidelity tags, coverage gaps, and relationship to existing high-quality docs). | Engineers needing onboarding documentation |
 | `.ai-profile.md` | **Derived from .ai-context.md.** 20-50 lines, ultra-compact always-injected project profile. Contains: language, framework, database, auth, API style, critical invariants, safety rules, active tracks, recent changes. Auto-refreshed on mutations. | AI needing full context for simple tasks |
-| `.ai-context.md` | **Derived from architecture.md.** 200-400 lines, token-optimized, self-contained AI context. 15+ mandatory sections: architecture, invariants, interface contracts, data flows, concurrency rules, error handling, implementation catalogs, extension cookbooks, testing strategy, glossary. Auto-refreshed on mutations. | AI re-analyzing codebase every session |
+| `.ai-context.md` | **Derived from architecture.md via condensation.** 200-400 lines, token-optimized, self-contained AI context. Pulls core operational models, invariants with provenance, graph-derived structures, and extension patterns. Auto-refreshed on mutations. | AI re-analyzing codebase every session |
 | `workflow.md` | TDD preference, commit style, review process | AI skipping tests or making giant commits |
 | `guardrails.md` | Hard guardrails, learned conventions, learned anti-patterns. Entries include dual-layer timestamps (`discovered_at`, `established_at`, `last_verified_at`, `last_active_at`) for temporal reasoning. | AI repeating false positives or missing known-bad patterns |
 | `spec.md` | Acceptance criteria for a specific track | Scope creep, gold-plating |
@@ -15773,12 +15773,12 @@ Layer 2: draft/.state/facts.json — Fact-level precision (queried by relevance)
 
 ```mermaid
 graph TD
-    A["draft init"] -->|"Creates draft/"| B["draft plan"]
+    A["draft init"] -->|"Creates draft/ + graph-primary architecture.md"| B["draft plan"]
     B -->|"Routes to new-track/change/adr"| C["draft new-track"]
     C -->|"Creates spec.md + plan.md"| D{Complex?}
     D -->|Yes| E["draft decompose"]
     D -->|No| F["draft implement"]
-    E -->|"Creates architecture.md"| F
+    E -->|"Creates hld.md (+ lld.md if needed)"| F
     F -->|"TDD cycle per task"| G{Phase done?}
     G -->|No| F
     G -->|Yes| H["Three-Stage Review"]
@@ -15794,13 +15794,8 @@ graph TD
     N["draft bughunt"] -.->|"Quality check"| F
     O["draft review"] -.->|"At track end"| H
     P["draft adr"] -.->|"Document decisions"| B
-<<<<<<< HEAD
-    Q["draft jira"] -.->|"Jira integration"| B
-    R["draft deep-review"] -.->|"Audit module"| E
-=======
-    Q["draft jira-preview"] -.->|"Export to Jira"| C
+    Q["draft jira-preview/create"] -.->|"Export to Jira"| C
     R["draft deep-review"] -.->|"Audit module"| F
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 ```
 
 ### Context Hierarchy
@@ -15863,16 +15858,10 @@ Draft's artifacts are designed for team collaboration through standard git workf
 **The PR cycle on documents:**
 
 1. **Project context** — Tech lead runs `draft init`. Team reviews `product.md`, `tech-stack.md`, and `workflow.md` via PR. Product managers review vision without reading code. Engineers review technical choices without context-switching into implementation.
-<<<<<<< HEAD
-2. **Spec & plan** — Lead runs `draft new-track`. Team reviews `spec.md` (requirements, acceptance criteria) and `plan.md` (phased task breakdown, dependencies) via PR. Disagreements surface as markdown comments — resolved by editing a paragraph, not rewriting a module.
-3. **Architecture** — Lead runs `draft decompose`. Team reviews `architecture.md` (derived human-readable guide with module boundaries, API surfaces, dependency graph, implementation order) via PR. Senior engineers validate architecture without touching the codebase. The machine-optimized `.ai-context.md` is the source of truth.
-4. **Work distribution** — Lead runs `draft jira` (preview/create). Work is pushed to Jira. Individual team members pick up stories and implement — with or without `draft implement`.
-=======
 2. **Spec & plan** — Lead runs `draft plan` for new work. In the common case, Draft routes to `draft new-track`. Team reviews `spec.md` (requirements, acceptance criteria) and `plan.md` (phased task breakdown, dependencies) via PR. Disagreements surface as markdown comments — resolved by editing a paragraph, not rewriting a module.
-3. **Architecture** — When planning reveals structural complexity, `draft plan` escalates to `draft decompose`. Team reviews `architecture.md` (derived human-readable guide with module boundaries, API surfaces, dependency graph, implementation order) via PR. Senior engineers validate architecture without touching the codebase. The machine-optimized `.ai-context.md` is the source of truth.
+3. **Architecture / Design** — When planning reveals structural complexity, `draft plan` escalates to `draft decompose`. Team reviews `hld.md` (and `lld.md` when triggered) with module boundaries, API surfaces, dependency graph, and implementation order via PR. Senior engineers validate without touching the codebase. The graph-primary `architecture.md` + condensed `.ai-context.md` provide the machine-optimized view.
 4. **Work distribution** — Lead runs `draft jira-preview` and `draft jira-create`. Epics, stories, and sub-tasks are created from the approved plan. Individual team members pick up Jira stories and implement — with or without `draft implement`.
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
-5. **Implementation** — Only after all documents are merged does coding start. Every developer has full context: what to build (`spec.md`), in what order (`plan.md`), with what boundaries (`.ai-context.md` / `architecture.md`).
+5. **Implementation** — Only after all documents are merged does coding start. Every developer has full context: what to build (`spec.md`), in what order (`plan.md`), with what boundaries (`.ai-context.md` / graph-primary `architecture.md` / hld/lld).
 
 **Why this works:** The CLI is single-user, but the artifacts it produces are the collaboration layer. Draft handles planning and decomposition. Git handles review. Jira handles distribution. Changing a sentence in `spec.md` takes seconds. Changing an architectural decision after 2,000 lines of code takes days.
 
@@ -16025,8 +16014,8 @@ Located in `draft/` of the target project:
 |------|---------|
 | `product.md` | Product vision, users, goals, guidelines (optional section) |
 | `tech-stack.md` | Languages, frameworks, patterns, accepted patterns |
-| `architecture.md` | **Source of truth.** Comprehensive human-readable engineering reference with 28 sections + 5 appendices. Generated from Graph build + 5-phase codebase analysis. |
-| `.ai-context.md` | **Derived from architecture.md.** 200-400 lines, token-optimized, self-contained AI context with 15+ mandatory sections. Consumed by all Draft commands and external AI tools. Auto-refreshed on mutations. |
+| `architecture.md` | **Graph-primary source of truth.** Focused high-signal reference (Graph Health & Fidelity Dashboard + 9 critical sections with provenance/fidelity tags, gaps, and relationship to existing docs). |
+| `.ai-context.md` | **Derived via condensation.** 200-400 lines, token-optimized AI context pulling operational models, invariants with provenance, and graph structures from the primary architecture.md. |
 | `workflow.md` | TDD preferences, commit strategy, validation config |
 | `guardrails.md` | Hard guardrails, learned conventions, learned anti-patterns |
 | `jira.md` | Jira project configuration (optional) |
