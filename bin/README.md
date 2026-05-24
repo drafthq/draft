@@ -42,13 +42,16 @@ Cross-arch binaries will fail to execute. If the required arch directory is empt
 
 ## Development
 
-Build the Rust `graph` crate for the desired target triple and stage the resulting executable into the matching `bin/<triple>/` directory.
+Latest binaries are produced by the aether repo (sibling or ../aether). After building/staging there (see aether/scripts/build-binaries.sh and clang build), copy into Draft:
 
-Example (from aether/ checkout):
 ```bash
-cargo build --release -p graph --bin graph
-mkdir -p ../codev/bin/linux-amd64
-cp target/release/graph ../codev/bin/linux-amd64/graph
+# From aether/ (after its release builds)
+cp dist/linux-arm64/aether bin/linux-arm64/graph
+cp clang/build/graph-clang bin/linux-arm64/graph-clang
+# repeat for other arches (rename aether -> graph); graph-clang currently linux-arm64 only
+```
+
+The dist/ artifacts are stripped release builds (recommended for vendoring).
 ```
 
 ## Distribution
