@@ -573,7 +573,7 @@
             <!-- Key Features -->
             <h2>Key Features</h2>
             <ul>
-                <li><strong>32 commands</strong> organized in a two-tier architecture: 7 primary workflow commands with orchestration, plus 25 specialist commands</li>
+                <li><strong>Canonical commands</strong> organized as 7 primary workflow parents + 5 intent routers dispatching to 20+ specialist leaf commands. Prefer the routers (`/draft:plan`, `/draft:ops`, `/draft:docs`, `/draft:discover`, `/draft:jira`) for most use.</li>
                 <li><strong>7 specialized agents</strong> &mdash; Architect, Debugger, Planner, Reviewer, RCA (root cause analysis), Ops, and Writer &mdash; each with behavioral protocols tuned for their domain</li>
                 <li><strong>Context tiering</strong> &mdash; three-layer system (profile &rarr; context &rarr; architecture) that loads the right amount of project knowledge for each task</li>
                 <li><strong>TDD enforcement</strong> &mdash; RED &rarr; GREEN &rarr; REFACTOR cycle with test-first implementation and architecture checkpoints</li>

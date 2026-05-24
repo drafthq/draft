@@ -27,7 +27,7 @@
                 <text x="360" y="192" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">Tier 2</text>
                 <text x="590" y="175" fill="#059669" font-size="11" font-weight="600">architecture.md</text>
                 <text x="590" y="190" fill="#718096" font-size="10">Full document | Deep analysis</text>
-                <text x="590" y="205" fill="#718096" font-size="10">28 sections + 5 appendices</text>
+                <text x="590" y="205" fill="#718096" font-size="10">Graph-primary (10 sections + fidelity)</text>
             </svg>
         </div>
         <div class="figure-caption">Context tiering pyramid: smaller tiers load faster and are used more frequently. Each tier adds depth for tasks that need it.</div>
@@ -132,7 +132,7 @@ coverage: `npm run coverage` | target: 80% line coverage</code></pre>
     </div>
 
     <h2>Tier 2: The Full Architecture</h2>
-    <p>The file <code>draft/architecture.md</code> is the source of truth. It is a comprehensive, human-readable engineering reference with 28 sections and 5 appendices, complete with Mermaid diagrams, code snippets, interaction matrices, and state machine definitions. It exists for two audiences: AI agents performing deep analysis, and engineers who need to understand a module without reading source code.</p>
+    <p>The file <code>draft/architecture.md</code> is the graph-primary source of truth. It is a focused, high-signal engineering reference (Graph Health Dashboard first, followed by 9 critical sections with explicit fidelity declarations and provenance on all claims). It exists for two audiences: AI agents performing deep analysis, and engineers who need to understand a module without reading source code.</p>
 
     <p>Tier 2 is loaded only for deep analysis: <code>/draft:init</code> refresh, <code>/draft:deep-review</code>, <code>/draft:decompose</code>, and full architecture refreshes. Most day-to-day development never touches it. When it is loaded, it provides exhaustive context that Tier 1 intentionally omits: per-module state machines, thread safety annotations, the full implementation catalog, concurrency model details, and configuration reference tables.</p>
 

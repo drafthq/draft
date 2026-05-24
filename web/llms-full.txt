@@ -155,7 +155,7 @@ When users run `/draft:init`, it creates a `draft/` directory in their project:
 
 ```
 draft/
-  architecture.md       — Source of truth: 28-section comprehensive engineering reference + 5 appendices
+  architecture.md       — Graph-primary high-signal engineering reference (10 focused sections: Graph Health & Fidelity Dashboard first, Critical Invariants with provenance, Core Flows & State Machines, Module/Dependency Map, Concurrency/Ownership, Error & Failure Catalog, Data Truth Sources, Extension Patterns, Coverage Gaps, Relationship to Other Docs). Graph is the structural spine; explicit fidelity declarations and provenance on all claims.
   .ai-context.md        — Token-optimized 200-400 line AI context (derived from architecture.md)
   .ai-profile.md        — Ultra-compact 20-50 line always-injected profile
   product.md            — Users, goals, success criteria, guidelines
