@@ -31,7 +31,6 @@ init → plan → implement → review
 ### Primary Workflow (Parent) Commands
 These 7 canonical parent commands coordinate and orchestrate the entire development lifecycle, automatically routing to specialist subcommands when appropriate.
 
-<<<<<<< HEAD
 ### Routed Core Workflows (5 routers)
 The 5 router commands provide intent-based dispatch into the 20+ specialist commands. Use the router form for discoverability; leaf commands remain supported for compatibility.
 
@@ -44,17 +43,6 @@ The 5 router commands provide intent-based dispatch into the 20+ specialist comm
 | `/draft:jira` | Jira integration (preview, create, review) | - |
 
 ### Specialist Commands (leaf skills, invoked via routers or directly)
-=======
-| Command | Purpose | Default Behavior |
-|:---|:---|:---|
-| `/draft:init` | Initialize project context | Analyzes repo, creates context, or routes to index/discover modes |
-| `/draft:plan` | Canonical planning entry point | Routes to `new-track`, `decompose`, `change`, or `adr` by intent |
-| `/draft:implement` | Canonical implementation entry point | Executes active task and auto-coordinates status, coverage, or revert |
-| `/draft:review` | Canonical review entry point | Runs baseline review and routes to `quick`, `bughunt`, `deep`, or `assist` |
-| `/draft:ops` | Canonical operations entry point | Routes to `debug`, `deploy-checklist`, `incident-response`, or `standup` |
-| `/draft:docs` | Canonical documentation entry point | Routes to `documentation`, `testing-strategy`, `tech-debt`, or `tour` |
-| `/draft:integrations` | Canonical integrations entry point | Routes to `jira-preview` or `jira-create` |
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 ---
 
@@ -178,44 +166,7 @@ Used throughout `plan.md` files and referenced by the validation checkpoints abo
 
 ---
 
-<<<<<<< HEAD
 You can also use natural language. Prefer the 5 router commands (`/draft:plan`, `/draft:ops`, `/draft:docs`, `/draft:discover`, `/draft:jira`) for grouped access; they analyze intent and dispatch.
-
-| Say this... | Runs this |
-|-------------|-----------|
-| "plan the work", "new feature", "start X", "tech debt", "adr", "decompose", "scope changed" | `/draft:plan` (routes to new-track / decompose / adr / tech-debt / change) |
-| "ops task", "deploy", "incident", "standup", "status", "revert" | `/draft:ops` (routes to deploy-checklist / incident-response / standup / status / revert) |
-| "write docs", "documentation", "runbook", "api docs" | `/draft:docs` (routes to documentation) |
-| "discover", "debug", "review code", "hunt bugs", "coverage", "learn patterns", "index", "tour", "impact" | `/draft:discover` (routes to debug / bughunt / quick-review / deep-review / coverage / testing-strategy / learn / index / tour / impact / assist-review) |
-| "jira", "jira preview", "jira create", "jira review" | `/draft:jira` (unified Jira router) |
-| "set up the project" | `/draft:init` |
-| "index services", "aggregate context" | `/draft:index` |
-| "new feature", "add X" | `/draft:new-track` |
-| "start implementing" | `/draft:implement` |
-| "what's the status" | `/draft:status` |
-| "undo", "revert" | `/draft:revert` |
-| "break into modules" | `/draft:decompose` |
-| "check coverage" | `/draft:coverage` |
-| "deep review", "module audit", "production audit" | `/draft:deep-review` |
-| "hunt bugs", "find bugs" | `/draft:bughunt` |
-| "review code", "review track", "check quality" | `/draft:review` |
-| "document decision", "create ADR" | `/draft:adr` |
-| "requirements changed", "scope changed", "update the spec" | `/draft:change` |
-| "learn patterns", "update guardrails", "discover conventions" | `/draft:learn` |
-
-| "quick review", "fast review" | `/draft:quick-review` |
-| "debug this", "investigate bug" | `/draft:debug` |
-| "deploy checklist", "pre-deploy" | `/draft:deploy-checklist` |
-| "test strategy", "testing plan" | `/draft:testing-strategy` |
-| "tech debt", "catalog debt" | `/draft:tech-debt` |
-| "standup", "what did I do" | `/draft:standup` |
-| "incident", "outage", "post-mortem" | `/draft:incident-response` |
-| "write docs", "documentation", "runbook" | `/draft:documentation` |
-=======
-## Detailed References
-
-To keep this overview focused, detailed guides live in dedicated files:
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 * **[quality-guide.md](./quality-guide.md)** — Quality Audit Spectrum, command choices, and coordination with external bug-hunting tools.
 * **[context-files.md](./context-files.md)** — Schema, role, and usage of each file inside the `draft/` context directory.

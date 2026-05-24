@@ -123,9 +123,9 @@ If one of these applies, route directly to the specialist workflow and stop this
 5. Read `draft/tech-stack.md` for technical context
 6. Read `draft/guardrails.md` (if exists) for hard guardrails and learned conventions
 7. **Check for architecture context:**
-   - Track-level: `draft/tracks/<id>/architecture.md`
-   - Project-level: `draft/.ai-context.md` (or legacy `draft/architecture.md`)
-   - If either exists → **Enable architecture mode** (Story, Execution State, Skeletons)
+   - Project-level: `draft/.ai-context.md` (preferred) or `draft/architecture.md` (graph-primary)
+   - Track-level design docs: `draft/tracks/<id>/hld.md` (+ `lld.md` when present)
+   - If relevant design context exists → **Enable architecture mode** (Story, Execution State, Skeletons)
    - If neither exists → Standard TDD workflow
 8. **Load production invariants** (if `draft/.ai-context.md` exists):
    - Read the `## INVARIANTS` section (and `## CONCURRENCY` if present)
@@ -142,10 +142,10 @@ If one of these applies, route directly to the specialist workflow and stop this
 If no active track found:
 - Tell user: "No active track found. Run `/draft:plan` to create or resume planned work."
 
-**Architecture Mode Activation:**
-- Automatically enabled when `.ai-context.md` or `architecture.md` exists (file-based, no flag needed)
-- Track-level architecture.md created by `/draft:decompose`
-- Project-level `.ai-context.md` created by `/draft:init`
+**Architecture / Design Mode Activation:**
+- Automatically enabled when `.ai-context.md`, graph-primary `architecture.md`, or track `hld.md`/`lld.md` exists.
+- Project-level context from `/draft:init`.
+- Track-level design docs from `/draft:decompose`.
 
 ## Step 1.5: Readiness Gate (Fresh Start Only)
 
@@ -252,7 +252,7 @@ If the selected task is blocked because earlier implementation appears invalid, 
 
 ## Step 2.5: Write Story (Architecture Mode Only)
 
-**Activation:** Only runs when `.ai-context.md` or `architecture.md` exists (track-level or project-level).
+**Activation:** Only runs when `.ai-context.md`, graph-primary `architecture.md`, or track `hld.md`/`lld.md` exists.
 
 When the next task involves creating or substantially modifying a code file:
 
@@ -294,7 +294,7 @@ See `core/agents/architect.md` for story writing guidelines.
 
 ### Step 3.0: Design Before Code (Architecture Mode Only)
 
-**Activation:** Only runs when `.ai-context.md` or `architecture.md` exists (track-level or project-level).
+**Activation:** Only runs when `.ai-context.md`, graph-primary `architecture.md`, or track `hld.md`/`lld.md` exists.
 **Skip for trivial tasks** - Config updates, type-only changes, single-function tasks where the design is obvious.
 
 #### 3.0a. Execution State Design
@@ -540,10 +540,10 @@ After completing each task:
      - Add recovery message: "State update failed after commit <SHA>. Recovery: manually edit plan.md line X to mark `[x]`, update metadata.json tasks.completed to Y"
      - HALT - require manual intervention before continuing
 
-5. If `.ai-context.md` or `architecture.md` exists for the track:
-   - Update module status markers (`[ ]` → `[~]` when first task in module starts, `[~]` → `[x]` when all tasks complete)
+5. If `.ai-context.md` or graph-primary `architecture.md` (or track hld/lld) exists:
+   - Update module status markers where applicable.
    - Fill in Story placeholders with the approved story from Step 2.5
-   - If updating project-level `draft/.ai-context.md`: also update YAML frontmatter `git.commit` and `git.commit_message` to current HEAD. Update `draft/architecture.md` with structural changes, then run the Condensation Subroutine (defined in `core/shared/condensation.md`) to regenerate `draft/.ai-context.md`.
+   - If updating project-level `draft/.ai-context.md`: also update YAML frontmatter and run the Condensation Subroutine to keep it in sync.
 
 ## Verification Gate (REQUIRED)
 
