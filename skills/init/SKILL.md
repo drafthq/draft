@@ -22,6 +22,7 @@ Initialize a Draft project for Context-Driven Development.
 - **Using "See X/" or "follow BUILD patterns"** as a substitute for reading actual source files and documenting real content
 - **Creating freeform sections** instead of the numbered 28-section template (e.g., "## Module deep-dive: X" instead of "## 7. Core Modules Deep Dive" with "#### 7.1 X" subsections) — the template structure is MANDATORY, graph data enriches it but does not replace it
 - **Capping sub-module depth** — sub-modules with 50+ files get the SAME analysis depth as top-level modules; there is NO page limit; a 100-page architecture.md for a large codebase is correct
+- **Ignoring detected high-quality existing agent context** (e.g. CLAUDE.md + docs/INVARIANTS.md written explicitly for AI agents) and regenerating large volumes of duplicative prose instead of a graph-primary overlay with strong cross-references and explicit Relationship section — this creates documentation debt and divergence risk in mature brownfield systems
 
 **Initialize once, refresh to update. Never overwrite without confirmation.**
 
@@ -61,6 +62,8 @@ Initialize a Draft project for Context-Driven Development.
 ## 26. Testing Infrastructure
 ## 27. Known Technical Debt & Limitations
 ## 28. Glossary
+## 29. Graph Coverage Gaps & Known Limitations (MANDATORY)
+## 30. Relationship to Existing Authoritative Documentation (MANDATORY when high/medium context from audit)
 ### Appendix A: File Structure Summary
 ### Appendix B: Data Source → Implementation Mapping
 ### Appendix C: Output Flow — Implementation to Target
@@ -68,7 +71,7 @@ Initialize a Draft project for Context-Driven Development.
 ### Appendix E: Proto Service Map (graph-derived)
 ```
 
-**Self-check before finalizing**: Run a mental grep for `## 1.` through `## 28.` in your output. Any gap = incomplete document. Return and fill it.
+**Self-check before finalizing**: Run a mental grep for `## 1.` through `## 30.` (or the full list above) in your output. Any gap in the required numbered sections = incomplete document. Return and fill it. The two new sections (29/30) are additive for compatibility; older 28-section documents remain valid.
 
 > **If you are a subagent** executing this step via a delegation prompt: your prompt is a SUMMARY. The full 28-section structure above is the AUTHORITATIVE requirement. Do not infer section names from the summary — use the exact headings listed here.
 
@@ -443,6 +446,38 @@ If the user runs `/draft:init refresh`:
 6. **Pattern Re-Discovery**: Run `/draft:learn` (no arguments — full codebase scan) to update `draft/guardrails.md` with any new or changed patterns since the last init/refresh. This keeps learned conventions and anti-patterns in sync with codebase evolution.
 
 Stop here after refreshing. Continue to standard steps ONLY for fresh init.
+
+## Existing High-Quality Agent Context Audit (MANDATORY)
+
+Before any architecture discovery or large document generation, scan for known high-signal, agent-optimized documentation that may already serve as authoritative source of truth:
+
+```bash
+find . -maxdepth 4 \( -name "CLAUDE.md" -o -name "AGENTS.md" -o -name "INVARIANTS.md" -o -name "AUDIT_STANDARDS.md" -o -name "ARCHITECTURE.md" \) -not -path "./draft/*" -not -path "./node_modules/*" -not -path "./.git/*" 2>/dev/null | head -20
+ls -d docs/ADRs 2>/dev/null && echo "ADR directory present ($(ls docs/ADRs/*.md 2>/dev/null | wc -l) records)" || true
+```
+
+Classify and emit **Context Quality Report** (always, even if none found):
+
+- High: Multiple strong files with explicit AI/agent focus (e.g. "written so future AI agents don't have to re-read source", machine-verified INVARIANTS with test backing).
+- Medium: Partial (README + some docs/).
+- Low/None: Standard project.
+
+If High or Medium:
+- Emit terminal report with file list, sizes/signals, and explicit warning:
+  ```
+  Context Quality Report:
+    High-quality agent-optimized docs detected:
+    - CLAUDE.md (10k+ lines, purpose-built for AI coding assistants)
+    - docs/INVARIANTS.md (single source of truth, test-referenced)
+    - docs/AUDIT_STANDARDS.md
+  Duplication risk: Generating a large parallel architecture.md can create divergence in safety-critical systems. Highest risk is inconsistent documentation, not insufficient volume.
+  Action: architecture.md will be graph-primary (Full mode) with mandatory "Graph Coverage Gaps" and "Relationship to Existing Authoritative Documentation" sections. Strong cross-references + provenance tags required. Prose duplication of existing high-fidelity material is a verification failure.
+  ```
+- Set internal flag `EXISTING_CONTEXT_QUALITY=high` (propagate to synthesis, writing, and Completion Verification steps).
+- Force §30 (Relationship) and §29 (Gaps) as non-skippable in later phases.
+- In Completion Verification: add explicit check that Relationship section defers appropriately and adds only graph-derived or synthesized value.
+
+This audit ensures Draft is safe and effective for mature brownfield projects that have already solved the "permanent AI agent context" problem at high fidelity.
 
 ## Step 1: Project Discovery
 
@@ -1477,73 +1512,45 @@ After completing the 5-phase analysis:
    ... (then continue with full 28 sections + appendices)
    ```
 
-3. **Run Completion Verification (MANDATORY)** — Before proceeding to `.ai-context.md`, verify architecture.md meets all hard minimums:
+3. **Run Completion Verification (MANDATORY)** — Before proceeding to `.ai-context.md`, verify architecture.md meets signal-quality, fidelity, and duplication-aware requirements (volume is now guidance only, secondary to provenance and honesty):
 
    ```
-   COMPLETION VERIFICATION — Score against Hard Minimum Thresholds:
+   SIGNAL QUALITY & FIDELITY VERIFICATION (replaces volume proxy)
 
-   Step 1: Count total lines in draft/architecture.md
-     → Hard minimum: 2000 (3000+ for 500+ file codebases using multi-pass protocol)
-     → PASS / FAIL: ___
+   Hard (blocking) checks — all must PASS:
 
-   Step 2: Count Mermaid diagram blocks (```mermaid)
-     → Hard minimum: 8
-     → PASS / FAIL: ___
+   1. Graph fidelity frontmatter block present and populated (graph: build_status, overall_fidelity, language_fidelity, stats, notes).
+      → PASS / FAIL: ___
 
-   Step 3: Count tables with 3+ data rows (including sub-module tables and op catalogs)
-     → Hard minimum: 25
-     → PASS / FAIL: ___
+   2. Graph Health & Fidelity Dashboard table rendered in header area with real data from this run (no placeholders).
+      → PASS / FAIL: ___
 
-   Step 4: Count non-Mermaid code blocks with actual source code
-     → Hard minimum: 8
-     → PASS / FAIL: ___
+   3. §29 Graph Coverage Gaps & Known Limitations present, substantive (≥150 words or explicit "Full coverage — justification"), and enumerates the actual shortfalls observed (cross-refs Dashboard and frontmatter).
+      → PASS / FAIL: ___
 
-   Step 5: Count backtick-quoted file path references
-     → Hard minimum: 100
-     → PASS / FAIL: ___
+   4. §30 Relationship to Existing Authoritative Documentation present. When Context Audit = high/medium: contains concrete cross-references to detected files (CLAUDE.md, INVARIANTS.md, etc.), states what this doc adds (graph spine + diagrams + synthesis) vs. defers, and confirms no large prose duplication occurred.
+      → PASS / FAIL: ___
 
-   Step 6: Check Section 7 — verify UNIQUE descriptions at ALL levels
-     → Compare Responsibilities text across all modules AND sub-modules
-     → If 3+ entries (modules or sub-modules) share >50% of text: FAIL
-     → PASS / FAIL: ___
+   5. Sample of ≥5 critical claims (invariants §15, key flows §6, modules §7) carry explicit fidelity/provenance tags (e.g. [Graph:High], [Existing:CLAUDE.md §3], [Human:Synthesis]).
+      → PASS / FAIL: ___
 
-   Step 7: Check Section 7 — verify sub-module tiering was applied
-     → Every module with 50+ files MUST have a sub-module structure table
-     → Every Large sub-module (50+ files) MUST have its own ##### deep-dive subsection
-     → Every Medium sub-module (10-49 files) MUST have its own ##### summary subsection
-     → Every ops/handler directory MUST have a numbered operation catalog
-     → PASS / FAIL: ___
+   6. All <!-- GRAPH:*:START/END --> injection slots either populated from graph or explicitly marked unavailable with fidelity impact note.
+      → PASS / FAIL: ___
 
-   Step 8: Check Section 15 — count invariants documented
-     → Hard minimum: 10
-     → PASS / FAIL: ___
+   7. (Retained) Pass 2 per-module Graph Fidelity & Diagram Report complete; no synthesis contradictions with graph; low-fidelity areas called out.
+      → PASS / FAIL: ___
 
-   Step 9: Check Appendix D — verify sequence diagrams have alt/opt blocks and 15+ lines each
-     → PASS / FAIL: ___
+   Soft / guidance (low-context runs only; high-context runs may legitimately be shorter when deferring to authoritative sources):
+   - Lines / Mermaid / tables / file refs / invariants / glossary as historical targets (no longer hard gates).
+   - For 500+ file low-context: still expect substantial depth in graph-covered areas.
 
-   Step 10: Check Section 28 — count glossary terms
-     → Hard minimum: 20
-     → PASS / FAIL: ___
-
-   Step 11: Check Appendix B and C — count table rows
-     → Hard minimum: 10 rows each
-     → PASS / FAIL: ___
-
-   Step 12: Check operation catalogs — verify completeness
-     → For each ops/handler directory, compare catalog entry count against file count from graph data
-     → If catalog entries < 80% of actual files in the directory: FAIL
-     → PASS / FAIL: ___
-     → PASS / FAIL: ___
-
-   OVERALL: If ANY step is FAIL, identify the weakest sections and expand them.
-   Do NOT proceed to .ai-context.md until ALL steps PASS.
+   OVERALL: If ANY hard check is FAIL, identify the weakest area (most often Gaps/Relationship or missing tags when audit was high) and expand/re-synthesize. Do NOT proceed to .ai-context.md until all hard checks PASS.
    ```
 
    If any verification step fails:
-   - Read additional source files relevant to the failing sections
-   - Expand the weak sections with real content
-   - Re-run verification
-   - Repeat until all steps pass
+   - Re-run synthesis (or the specific reader) with explicit instruction to address the failing check using the Context Audit flag + graph data + provenance requirements.
+   - Re-run verification.
+   - Repeat until all hard checks pass.
 
 4. **Derive `draft/.ai-context.md`** with the SAME metadata header, then use the Condensation Subroutine to transform architecture.md content into machine-optimized format.
 

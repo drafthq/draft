@@ -415,6 +415,7 @@ Draft auto-classifies the project:
 
 - **Brownfield (existing codebase):** Detected by the presence of `package.json`, `requirements.txt`, `go.mod`, `Cargo.toml`, `src/`, or git history with commits. Draft scans the existing stack and pre-fills `tech-stack.md`.
 - **Greenfield (new project):** Empty or near-empty directory. Developer provides all context through dialogue.
+- **Mature high-context brownfield:** Projects with strong existing agent-optimized docs (CLAUDE.md, INVARIANTS.md, ADRs, etc.) now receive an early Context Quality Audit, graph fidelity declaration, and explicit Relationship/Gaps sections so the generated architecture.md acts as graph-primary overlay rather than duplicative prose.
 - **Monorepo:** Detected by `lerna.json`, `pnpm-workspace.yaml`, `nx.json`, `turbo.json`, or multiple package manifests in child directories. Suggests `/draft:index` instead.
 
 #### Initialization Sequence

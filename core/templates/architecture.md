@@ -19,6 +19,21 @@ verification:
   citations_verified: "{true | false | unchecked}"
   staleness_hash: "{sha256 of tracked source set at synced_to_commit}"
   graph_schema_version: "{semver or 'absent'}"
+graph:
+  build_status: "{success | failed | absent}"
+  overall_fidelity: "{high | mixed | low | stub}"
+  language_fidelity:
+    python: "{stub (directory-level only) | approximate | high}"
+    typescript: "{stub | approximate | high}"
+    rust: "{approximate | high}"
+    cpp: "{high}"
+    go: "{approximate | high}"
+  stats:
+    modules: "{N from schema.yaml}"
+    edges: "{N from module-graph.jsonl}"
+    hotspots: "{N}"
+  notes: "{explicit fidelity summary, e.g. 'Python: stub (0 edges, dir-level only); C++: high from graph-clang'}"
+generation_notes: "{High existing context detected via audit — see §30 Relationship for deference and cross-refs | Standard generation}"
 ---
 
 # Architecture: {PROJECT_NAME}
@@ -36,6 +51,17 @@ verification:
 | **Synced To** | `{FULL_SHA}` |
 | **Criticality** | `{classification.criticality}` |
 | **Data Class** | `{classification.data_classification}` |
+
+**Graph Health & Fidelity Dashboard** (mandatory; populated from frontmatter `graph:` block at generation time; future agents calibrate trust here first):
+
+| Language/Area | Fidelity | Modules | Edges | Hotspots | Notes |
+|---------------|----------|---------|-------|----------|-------|
+| Python        | {low/stub} | {N} | {N} | {N} | {e.g. directory-level only, 0 edges, 0 symbols} |
+| Rust          | {approx/high} | {N} | {N} | {N} | {graph-derived or host index} |
+| C++           | {high} | {N} | {N} | {N} | {full symbols via graph-clang} |
+| ...           | ... | ... | ... | ... | ... |
+
+> This table + the `graph:` frontmatter block is the single source of truth for "how much of this document is deterministic vs. synthesized." Low-fidelity areas must be explicitly called out in §29 Graph Coverage Gaps.
 
 ---
 
@@ -954,6 +980,50 @@ No quota. Enumerate every real item. One row per item.
 |---|---|---|
 
 Only terms that are non-standard in the broader industry OR carry project-specific meaning. Do not define standard terms ("mutex", "HTTP").
+
+---
+
+## 29. Graph Coverage Gaps & Known Limitations (MANDATORY)
+
+> **Source:** graph + llm-synthesis + Context Audit
+> **Required:** always (non-skippable)
+> **Length:** substantive (≥150 words or explicit "Full coverage" + justification)
+> **Verification:** must enumerate real shortfalls from this run's graph build and audit; cross-reference the frontmatter `graph:` block and Dashboard table
+
+**Purpose**: Tell future AI agents exactly where this document (and the underlying graph) has weak or absent coverage so they calibrate trust and know where to read source or defer to other authoritative material.
+
+**Mandatory content**:
+- Per-language and per-major-area fidelity summary (copy/adapt from frontmatter Dashboard + notes).
+- Specific modules/flows where graph provided only directory stubs (0 edges, 0 symbols) and synthesis relied on host index + targeted reads.
+- Any areas where high-quality existing docs (from Pre-Check Context Audit) were treated as ground truth with cross-references instead of re-documenting.
+- Explicit remaining risk statement: "Future agents should re-verify [specific claims] against source before acting in these areas."
+
+Example (low-graph Python-heavy mature project):
+> Python modules: stub (directory-level only, 0 edges, 0 symbols in graph). Host index + 18 targeted source reads used for workflows and invariants. See §30 for deference to CLAUDE.md (agent protocols) and docs/INVARIANTS.md (verified rules). Gaps: dynamic lock ordering, runtime state machines, and cross-language FFI boundaries only partially visible in static graph.
+
+This section is high-value for safety-critical and low-fidelity-graph codebases.
+
+---
+
+## 30. Relationship to Existing Authoritative Documentation (MANDATORY when Context Audit = high/medium)
+
+> **Source:** Context Audit + user-input + llm-synthesis
+> **Required:** non-skippable when high/medium context detected in Pre-Check; otherwise include with "None detected" note
+> **Length:** table or clear bullets with cross-references
+> **Verification:** must name the exact files from the audit, state what this document adds vs. defers, and confirm absence of large prose duplication
+
+**Purpose**: Prevent drift and duplication. Explicitly position this graph-primary architecture.md relative to any pre-existing high-signal agent-optimized sources.
+
+**Mandatory content** (when audit high):
+- List of detected files with one-line signal (e.g. "CLAUDE.md — 10k+ lines, purpose-built so future AI agents do not re-read source").
+- What this architecture.md supplies: the deterministic graph-derived structural spine (modules, dependencies, public surfaces, hotspots), visual diagrams (Mermaid workflows/state), and synthesis for dynamic behavior or low-graph areas.
+- What it defers to (with concrete refs): "Defers to CLAUDE.md §X for agent behavioral specifications and docs/INVARIANTS.md:INV-042 for machine-verified system rules (test-backed)."
+- Confirmation: "No large-scale prose duplication of existing authoritative material occurred. This document is an overlay and navigation aid, not a replacement."
+
+If no high context detected:
+> No high-quality agent-optimized documentation (CLAUDE.md / INVARIANTS.md / ADRs) detected beyond standard project README and inline comments. This architecture.md is the primary self-contained engineering reference.
+
+Cross-references in this section must be resolvable (file paths or § numbers that exist).
 
 ---
 
