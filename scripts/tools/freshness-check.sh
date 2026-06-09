@@ -64,9 +64,8 @@ if [[ -z "$STATE_FILE" ]]; then
 fi
 
 if [[ ! -f "$STATE_FILE" ]]; then
-    cat <<EOF
-{"fresh": false, "stale_files": [], "missing_files": [], "reason": "no state file at $STATE_FILE"}
-EOF
+    esc="${STATE_FILE//\\/\\\\}"; esc="${esc//\"/\\\"}"
+    printf '{"fresh": false, "stale_files": [], "missing_files": [], "reason": "no state file at %s"}\n' "$esc"
     exit 2
 fi
 

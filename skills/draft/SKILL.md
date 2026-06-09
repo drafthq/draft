@@ -78,16 +78,10 @@ These commands remain available for targeted, specialist execution outside paren
 * `/draft:documentation` - Generate structured codebase documentation (API, Onboarding, Runbooks)
 * `/draft:tech-debt` - Audit technical debt across 6 key dimensions
 
-<<<<<<< HEAD
 **Integration:**
 | Command | Purpose |
 |---------|---------|
 | `/draft:jira` | Unified Jira workflows (preview / create / review) |
-=======
-#### 5. Issue Tracking & Project Management
-* `/draft:jira-preview` - Generate a markdown preview of tasks formatted for Jira import
-* `/draft:jira-create` - Push planned tasks and tracks directly into Jira issues via MCP
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 ---
 

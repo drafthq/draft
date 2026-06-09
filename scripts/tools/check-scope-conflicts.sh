@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # check-scope-conflicts.sh
 #
 # Walks every track in the repository (or those passed on the command line),
@@ -125,18 +126,18 @@ for ((i=0; i<${#tracks[@]}; i++)); do
         b_exc="${track_excludes[$b]:-}"
         for tag in $a_inc; do
             [[ -z "$tag" ]] && continue
-            if echo "$b_inc" | grep -wq "$tag"; then
+            if [[ " $b_inc " == *" $tag "* ]]; then
                 # Both include `tag`. Mutual exclusion satisfied if either
                 # excludes a tag in the other's includes.
                 conflict=1
                 for ex in $a_exc; do
                     [[ -z "$ex" ]] && continue
-                    if echo "$b_inc" | grep -wq "$ex"; then conflict=0; break; fi
+                    if [[ " $b_inc " == *" $ex "* ]]; then conflict=0; break; fi
                 done
                 if ((conflict)); then
                     for ex in $b_exc; do
                         [[ -z "$ex" ]] && continue
-                        if echo "$a_inc" | grep -wq "$ex"; then conflict=0; break; fi
+                        if [[ " $a_inc " == *" $ex "* ]]; then conflict=0; break; fi
                     done
                 fi
                 if ((conflict)); then

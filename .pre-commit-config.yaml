@@ -18,4 +18,4 @@ repos:
     hooks:
     -   id: markdownlint
         args: ["--fix"]
-        exclude: ^(node_modules|draft.tmp|draft/tracks)/
+        exclude: ^(node_modules|draft.tmp|draft/tracks|integrations/copilot)/

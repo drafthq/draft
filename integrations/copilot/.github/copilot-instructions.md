@@ -9295,367 +9295,6 @@ Direct leaf commands remain available during the transition period (see MIGRATIO
 ## Quality Gate
 
 All planning dispatches should result in updated `draft/tracks/<id>/spec.md` or `plan.md` (or new ADR/debt artifacts) with proper metadata headers and citations back to product/tech-stack context.
-=======
-description: "Canonical planning entry point. Routes high-level planning intent to new-track, decompose, change, or adr, and provides a planning checkpoint when the next planning step depends on track state. Use when the user says 'plan this', 'scope this work', 'start a feature', 'continue planning', or wants one command to handle planning and design flow."
----
-
-# Plan Work
-
-`draft plan` is the **parent planning command**.
-
-It exists to remove planning command soup from the developer experience.
-
-Do not treat this command as a static menu. It must either:
-
-- route to the correct planning workflow, or
-- produce a useful planning checkpoint that tells the developer the next best planning action
-
-Specialist planning skills remain available:
-
-- `draft new-track`
-- `draft decompose`
-- `draft change`
-- `draft adr`
-
-But `draft plan` is now the canonical entry point for planning intent.
-
-## Red Flags - STOP if you're:
-
-- dumping a list of planning commands instead of routing
-- creating a new track without reading existing Draft context
-- mutating a track plan without first checking whether the request is actually a requirement change
-- sending the user to `draft decompose` or `draft adr` without explaining why
-- overriding explicit user intent for a named planning mode
-
-**Route first. Explain why. Then execute the chosen planning workflow.**
-
----
-
-## Parent Contract
-
-`draft plan` owns four planning jobs:
-
-1. **Create work** → `draft new-track`
-2. **Break work into modules and architecture** → `draft decompose`
-3. **Amend planned work safely** → `draft change`
-4. **Capture a durable technical decision** → `draft adr`
-
-The parent command should absorb the choice burden whenever the intent is obvious.
-
----
-
-## Step 1: Parse Intent
-
-Inspect `$ARGUMENTS` and classify the request into one of these buckets.
-
-### Explicit Named Modes
-
-If the command already names a specialist mode, route directly:
-
-- `new-track`
-- `decompose`
-- `change`
-- `adr`
-
-Examples:
-
-- `draft plan new-track add user auth`
-- `draft plan decompose`
-- `draft plan change support JSON export`
-- `draft plan adr choose outbox pattern`
-
-### High-Signal Natural Language
-
-Route by intent when the user did not name the specialist command explicitly.
-
-| Intent Pattern | Route To |
-|---|---|
-| "start a feature", "plan this feature", "scope this work", "I want to build X", "fix Y bug", "create a track" | `draft new-track` |
-| "break into modules", "architecture this", "decompose", "design boundaries", "need HLD/LLD" | `draft decompose` |
-| "requirements changed", "scope changed", "update the plan", "we also need X", "adjust the spec" | `draft change` |
-| "document decision", "write an ADR", "record the tradeoff", "capture this architecture decision" | `draft adr` |
-
-### Bare `draft plan`
-
-If there are no meaningful arguments, do not fall back to a command list.
-
-Instead, inspect Draft state and determine the next planning action.
-
----
-
-## Step 2: Verify Draft Context
-
-Run this check first:
-
-```bash
-ls draft/tracks.md 2>/dev/null
-```
-
-If `draft/` does not exist:
-
-- If the user is trying to create new planned work, stop and say: `No Draft context found. Run draft init first.`
-- Do not continue into planning without initialized context.
-
----
-
-## Step 3: Inspect Current Planning State
-
-For bare `draft plan`, or when intent is ambiguous, inspect current project state before routing.
-
-### 3.1 Active Track Detection
-
-Read `draft/tracks.md`.
-
-Find:
-
-- first `[~]` In Progress track
-- otherwise first `[ ]` Pending track
-
-If no track exists:
-
-- default to `draft new-track`
-
-Announce:
-
-```text
-Planning mode selected: new-track
-Reason: no active Draft track exists yet.
-```
-
-Then follow the `draft new-track` workflow.
-
-### 3.2 Track Artifact Inspection
-
-For the active track, inspect:
-
-- `draft/tracks/<id>/spec.md`
-- `draft/tracks/<id>/plan.md`
-- `draft/tracks/<id>/hld.md` if present
-- `draft/tracks/<id>/lld.md` if present
-- `draft/tracks/<id>/metadata.json` if present
-
-Extract:
-
-- track name and status
-- whether architecture artifacts already exist
-- whether the plan appears structurally complex
-- whether there are recent planning amendments or unresolved scope drift
-
-### 3.3 Complexity Signals
-
-Treat these as signals that `draft decompose` is likely the next best planning step:
-
-- plan spans multiple phases or modules
-- spec mentions migrations, concurrency, background jobs, external systems, or multi-service boundaries
-- work touches auth, payments, persistence, or public APIs
-- user explicitly asks for module boundaries, interfaces, implementation order, HLD, or LLD
-- `hld.md` is absent for clearly non-trivial work
-
-### 3.4 Change Signals
-
-Treat these as signals that `draft change` is likely the next step:
-
-- user asks to revise scope of an existing active track
-- user adds or removes acceptance criteria after planning already exists
-- completed or in-progress work may be invalidated by a new requirement
-
-### 3.5 ADR Signals
-
-Treat these as signals that `draft adr` is likely the next step:
-
-- a durable architecture decision is being proposed
-- multiple viable options exist and the tradeoff matters long-term
-- the team wants the rationale preserved independently of the track
-
----
-
-## Step 4: Route Deterministically
-
-Apply these routing rules in order.
-
-### Rule 1: Explicit Mode Wins
-
-If the user invoked:
-
-- `draft plan new-track`
-- `draft plan decompose`
-- `draft plan change`
-- `draft plan adr`
-
-route directly and follow that specialist workflow.
-
-### Rule 2: Requirement Drift Beats Architecture Work
-
-If an active track exists and the request changes already-planned work, prefer `draft change` before `draft decompose` or `draft adr`.
-
-Reason:
-
-- spec/plan truth must be corrected before deeper design artifacts are regenerated
-
-### Rule 3: Architecture Work Beats New Feature Intake
-
-If a track already exists and complexity signals show the next planning bottleneck is structure, route to `draft decompose`.
-
-### Rule 4: Decision Capture Is Explicit or Triggered by a Confirmed Tradeoff
-
-Route to `draft adr` when:
-
-- the user asked for an ADR, or
-- planning analysis exposes a material architectural fork that should be recorded
-
-### Rule 5: Otherwise Default to New Track Intake
-
-If no stronger signal exists, route to `draft new-track`.
-
-This is the default parent behavior for feature, bugfix, and refactor planning requests.
-
----
-
-## Step 5: Announce the Selected Planning Mode
-
-Before executing the chosen workflow, tell the user what `draft plan` decided.
-
-Use this format:
-
-```text
-Planning mode selected: <mode>
-Reason: <short reason grounded in track state or user intent>
-```
-
-Examples:
-
-```text
-Planning mode selected: new-track
-Reason: this is a fresh feature request and no active matching track exists.
-```
-
-```text
-Planning mode selected: change
-Reason: an active track already exists and the request alters approved scope.
-```
-
-```text
-Planning mode selected: decompose
-Reason: the track is multi-phase, crosses service boundaries, and has no HLD yet.
-```
-
----
-
-## Step 6: Execute the Specialist Workflow
-
-After routing, fully follow the corresponding specialist skill as the canonical implementation:
-
-- `draft new-track` for intake, spec, plan, and metadata creation
-- `draft decompose` for architecture/module decomposition
-- `draft change` for scoped amendments to an existing track
-- `draft adr` for decision records
-
-Do not partially imitate those commands. Route, announce, then execute their workflow.
-
----
-
-## Bare `draft plan` Fallback Output
-
-If `draft plan` is bare and the next planning step is genuinely ambiguous even after inspecting context, produce a short planning checkpoint instead of a command list.
-
-Format:
-
-```text
-Planning checkpoint: <track_id> - <track_name>
-- Current state: <one-line summary>
-- Next recommended planning action: <new-track|decompose|change|adr>
-- Why: <short reason>
-```
-
-Then proceed with the recommended action unless the user objects.
-
-The parent command should still move planning forward.
-
----
-
-## Examples
-
-### Example 1: Fresh feature request
-
-Input:
-
-```text
-draft plan add user authentication
-```
-
-Route:
-
-- `draft new-track`
-
-### Example 2: Existing track got new scope
-
-Input:
-
-```text
-draft plan we also need JSON export
-```
-
-Context:
-
-- active track already exists for CSV export
-
-Route:
-
-- `draft change`
-
-### Example 3: Complex track needs structure
-
-Input:
-
-```text
-draft plan
-```
-
-Context:
-
-- active track exists
-- plan spans multiple modules
-- no `hld.md`
-
-Route:
-
-- `draft decompose`
-
-### Example 4: Decision needs durable record
-
-Input:
-
-```text
-draft plan should we use the outbox pattern here?
-```
-
-If the tradeoff is real and decision-worthy:
-
-- `draft adr`
-
-Otherwise:
-
-- discuss briefly during planning, then continue with the best planning workflow
-
----
-
-## Compatibility Notes
-
-The following specialist commands remain valid and should continue to work:
-
-- `draft new-track`
-- `draft decompose`
-- `draft change`
-- `draft adr`
-
-`draft plan` is the canonical parent.
-
-When helpful, reinforce the canonical form in output:
-
-```text
-`draft new-track` remains supported. Canonical parent: `draft plan new-track`.
-```
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 ---
 
@@ -9712,67 +9351,6 @@ User: "revert the last two commits on this branch safely"
 Ops commands often read `draft/tracks.md`, `draft/*/plan.md`, and git metadata. They feed forward into documentation and jira flows when needed.
 
 Direct invocation of the leaf skills continues to work for power users and scripts during the deprecation window.
-=======
-description: "Canonical operations parent command. Handles debugging, deployments, incident response, and operational summaries. Routes intent to debug, deploy-checklist, incident-response, or standup based on context."
----
-
-# Operations Workflows
-
-`draft ops` is the **canonical operations parent command**.
-
-It provides a unified entry point for debugging, deployment readiness, incident handling, and daily summaries, absorbing the cognitive load of selecting the right specialist tool.
-
-Specialist operations workflows remain available as named modes:
-
-- `draft ops debug` (formerly `draft debug`)
-- `draft ops deploy-checklist` (formerly `draft deploy-checklist`)
-- `draft ops incident-response` (formerly `draft incident-response`)
-- `draft ops standup` (formerly `draft standup`)
-
-## Step 1: Parse Intent and Route
-
-Examine the user's input and route to the correct operations workflow.
-
-### Explicit Named Modes
-
-If the user explicitly invokes a specialist mode, route directly:
-
-- `draft ops debug` → follow `draft debug`
-- `draft ops deploy-checklist` → follow `draft deploy-checklist`
-- `draft ops incident-response` → follow `draft incident-response`
-- `draft ops standup` → follow `draft standup`
-
-### Intent Routing
-
-If no explicit mode is specified, infer the intent from the user's prompt:
-
-| Intent | Action | Route |
-|--------|--------|-------|
-| "I have a bug", "Help me fix this error", "Why is this failing?" | Debugging | `draft debug` |
-| "Ready to ship", "Are we good to deploy?", "Go live check" | Deploy readiness | `draft deploy-checklist` |
-| "Site is down", "Production error", "Sev 1" | Incident handling | `draft incident-response` |
-| "What did I do yesterday?", "Write my update", "Summarize work" | Standup summary | `draft standup` |
-
-## Step 2: Bare Parent Command Fallback
-
-If the user runs a bare `draft ops` without clear intent, present a small ops menu with a recommended default path:
-
-```text
-Draft Operations Menu:
-1. draft ops debug (Structured debugging session)
-2. draft ops deploy-checklist (Pre-deployment verification)
-3. draft ops incident-response (Production incident handling)
-4. draft ops standup (Generate daily summary)
-
-How can I help you operate the system today?
-```
-
-Do not automatically launch a specialist workflow without explicit or clear inferred intent, unless an ongoing incident is already active.
-
-## Compatibility Note
-
-The legacy specialist commands remain supported during the migration period, but `draft ops` is the canonical parent for operational tasks.
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 ---
 
@@ -9815,69 +9393,6 @@ User: "create onboarding guide for new engineers"
 The documentation command reads heavily from `draft/architecture.md`, `draft/.ai-context.md`, `draft/product.md`, and `draft/tech-stack.md` (plus graph artifacts when present).
 
 Prefer `draft docs` going forward for all authoring requests. The legacy direct form remains for compatibility (see migration guidance).
-=======
-description: "Canonical documentation parent command. Produces engineering documentation, explains the system, defines testing strategy, captures technical debt, and provides project onboarding. Routes intent to documentation, testing-strategy, tech-debt, or tour based on context."
----
-
-# Documentation Workflows
-
-`draft docs` is the **canonical documentation parent command**.
-
-It orchestrates the generation and maintenance of engineering documentation, absorbing the cognitive load of selecting the right specialist tool.
-
-Specialist documentation workflows remain available as named modes:
-
-- `draft docs documentation` (formerly `draft documentation`)
-- `draft docs testing-strategy` (formerly `draft testing-strategy`)
-- `draft docs tech-debt` (formerly `draft tech-debt`)
-- `draft docs tour` (formerly `draft tour`)
-
-## Step 1: Parse Intent and Route
-
-Examine the user's input and route to the correct documentation workflow.
-
-### Explicit Named Modes
-
-If the user explicitly invokes a specialist mode, route directly:
-
-- `draft docs documentation` → follow `draft documentation`
-- `draft docs testing-strategy` → follow `draft testing-strategy`
-- `draft docs tech-debt` → follow `draft tech-debt`
-- `draft docs tour` → follow `draft tour`
-
-### Intent Routing
-
-If no explicit mode is specified, infer the intent from the user's prompt:
-
-| Intent | Action | Route |
-|--------|--------|-------|
-| "Document this feature", "Write README", "Generate API docs" | Engineering Docs | `draft documentation` |
-| "How should we test this?", "Create test plan", "Testing strategy" | Testing Strategy | `draft testing-strategy` |
-| "Log technical debt", "We need to fix this later", "Track shortcuts" | Tech Debt | `draft tech-debt` |
-| "How does this work?", "Walk me through the codebase", "Onboard me" | System Tour | `draft tour` |
-
-**Ambiguous phrasing** (e.g., "document our testing approach" could match `documentation` or `testing-strategy`): do not guess. Ask the user one clarifying question — "Do you want (a) prose docs describing the existing tests, or (b) a test plan defining what to test next?" — then route.
-
-## Step 2: Bare Parent Command Fallback
-
-If the user runs a bare `draft docs` without clear intent, present a small documentation menu with a recommended default path based on the current context:
-
-```text
-Draft Documentation Menu:
-1. draft docs documentation (Generate engineering docs)
-2. draft docs testing-strategy (Define project testing approach)
-3. draft docs tech-debt (Log or review technical debt)
-4. draft docs tour (Onboarding walkthrough of the system)
-
-What type of documentation do you need?
-```
-
-Do not automatically launch a specialist workflow without explicit or clear inferred intent.
-
-## Compatibility Note
-
-The legacy specialist commands remain supported during the migration period, but `draft docs` is the canonical parent for documentation tasks.
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 ---
 
@@ -9943,103 +9458,6 @@ User: "index the monorepo so agents see all services"
 - After major changes, `draft discover learn` is recommended to keep guardrails current.
 
 Direct specialist commands are preserved as shims for existing workflows and scripts.
-=======
-description: Draft Phase 0 — produce a discovery.md code-spike report before spec freeze. Run by draft:new-track as the first step on any new track. Reads current code, enumerates hotspots, names mode-selection flags, surfaces load-bearing open questions, and records references. Output is a first-class artifact verifiable by the citation verifier against metadata.json:synced_to_commit.
----
-
-# draft discover — Phase 0 Code Spike
-
-> Mandatory first step for any new Draft track. Builds the `discovery.md`
-> artifact that subsequent `spec.md` / `hld.md` / `lld.md` cite as their
-> grounding source. Without it, downstream artifacts are not eligible for
-> `ready-for-review` promotion.
-
-## Contract
-
-- Schema: [core/shared/discovery-schema.md](../../core/shared/discovery-schema.md)
-- Template: [core/templates/discovery.md](../../core/templates/discovery.md)
-- Hygiene rules: [core/shared/template-hygiene.md](../../core/shared/template-hygiene.md)
-- Citation verifier: `scripts/tools/verify-citations.sh tracks/<track-id>` (exit 0 = clean, 1 = drift detected; add `--tolerance N` to widen the line-window match)
-
-## Inputs
-
-1. The track ID (from `metadata.json:id`).
-2. The pinned commit (`metadata.json:synced_to_commit` — set by
-   `draft:new-track` Step 0a).
-3. The problem statement the user provided.
-
-## When `draft/graph/schema.yaml` exists
-
-Follow the graph-first lookup contract in
-[core/shared/graph-query.md](../../core/shared/graph-query.md)
-§Mandatory Lookup Contract. The discovery hotspots **must** start from the
-graph; filesystem `grep` is permitted only after a documented graph miss.
-
-## Procedure
-
-1. **Read the problem statement.** Extract candidate nouns (component
-   names, file extensions, flag names, behaviors).
-2. **Query the graph** with each candidate. Capture modules and entry
-   symbols. If the graph has no schema, fall back to `grep` and document
-   the miss per `graph-query.md` rules.
-3. **Read 3–10 files** at the entry points found. Quote the exact
-   `path:line-range` you read.
-4. **Fill the Hotspots table** with at least N rows (default 3; configurable
-   via `metadata.json:hygiene_budget.discovery_min_hotspots`).
-5. **Fill the Mode selection table** with every flag, env var, build
-   option, or cluster-feature gate the reading surfaced.
-6. **Write Open Questions**: each is a load-bearing unknown. Examples:
-   "Does dependency X expose a public API for behavior Y?", "Is constraint
-   Z still active given upstream change W?". Surface, do not hide.
-7. **Write References**: flat list of files and named functions.
-8. **Save** `discovery.md` under the track directory; emit the `generated_at`
-   timestamp; do NOT touch `metadata.json:status` (still `draft`).
-
-## Output gate
-
-The skill output is rejected if any of:
-
-- `discovery.md` has zero Hotspot rows AND no `_NONE_FOUND_` justification.
-- Any `path:line` citation in Hotspots fails `verify-citations.sh`.
-- Open Questions list is empty AND no `_NONE_FOUND_ — <reason>` line.
-- Any forbidden sentinel from `template-hygiene.md` appears in the output.
-
-## Re-spiking
-
-If a later phase reveals the original spike missed material facts:
-
-1. Rename the existing file to `discovery-<isodate>.md`.
-2. Run `draft:discover` again to produce a fresh `discovery.md`.
-3. Bump `metadata.json:synced_to_commit` if the re-spike was driven by an
-   upstream change.
-
-## Red Flags — STOP if you're:
-
-See [shared red flags](../../core/shared/red-flags.md).
-
-Skill-specific:
-
-- Writing hotspot rows without `path:line` citations.
-- Inventing function names not present in the code at `synced_to_commit`.
-- Filling the Open Questions section with non-blocking commentary instead
-  of load-bearing unknowns.
-- Re-running discovery silently on top of an existing `discovery.md`
-  without archiving the previous file.
-
-## Graph Usage Report
-
-End every invocation with the standard footer from
-[core/shared/graph-query.md](../../core/shared/graph-query.md)
-§Graph Usage Report:
-
-```
-## Graph Usage Report
-- Graph files queried: <list>
-- Modules / files identified via graph: <list>
-- Grep fallbacks: <count, with justification per item>
-- Justification when NONE: <if graph was not consulted>
-```
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 ---
 
@@ -18911,11 +18329,7 @@ applies_to: all skills that load Draft project context
 
 # Verify Draft Context (Shared Subroutine)
 
-<<<<<<< HEAD
 Single-source `Verify Draft Context` subroutine. Replaces the duplicated 3–4 line blocks that appeared in skills that load project context.
-=======
-Single-source `Verify Draft Context` subroutine. Replaces the duplicated 3–4 line blocks that appeared in roughly 18 skills (`bughunt`, `review`, `quick-review`, `learn`, `tech-debt`, `deploy-checklist`, `debug`, `documentation`, `testing-strategy`, `coverage`, `regression`, `incident-response`, `change`, `revert`, `tour`, `assist-review`, `adr`, `epic-status`).
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 Referenced by: every skill that starts with a `Verify Draft Context` step.
 
@@ -18951,11 +18365,7 @@ This keeps each skill explicit about whether draft context is required, while ce
 
 ## Why This Exists
 
-<<<<<<< HEAD
 Duplicating the same `ls draft/ 2>/dev/null` snippet across skills costs tokens per duplicate after frontmatter and surrounding prose. Factoring removes the duplication without changing semantics.
-=======
-Duplicating the same `ls draft/ 2>/dev/null` snippet across 18 skills costs ~250 tokens per duplicate after frontmatter and surrounding prose — roughly **4.5K tokens of floor context across the catalog**. Factoring removes the duplication without changing semantics.
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 </core-file>
 
@@ -18967,13 +18377,8 @@ Duplicating the same `ls draft/ 2>/dev/null` snippet across 18 skills costs ~250
 
 # Discovery Artifact Schema
 
-<<<<<<< HEAD
 > Schema for the `discovery.md` artifact produced by discovery flows (as part of
 > new-track). The artifact captures the AI's pre-spec code-spike
-=======
-> Schema for the `discovery.md` artifact produced by `draft:discover` (Phase 0
-> of `draft:new-track`). The artifact captures the AI's pre-spec code-spike
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 > findings as a first-class output.
 
 ## Why this is first-class
@@ -19040,11 +18445,7 @@ appear with line numbers elsewhere.
 ## Renaming / archiving
 
 Discovery is created once per track at spec time. Subsequent
-<<<<<<< HEAD
 decompose runs DO NOT regenerate `discovery.md` — its job is to
-=======
-`draft:decompose` runs DO NOT regenerate `discovery.md` — its job is to
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 capture the moment in time when the spec was written, anchored to
 `metadata.json:synced_to_commit`. Re-running discovery is a deliberate
 re-spike; the previous file should be renamed `discovery-<isodate>.md`
@@ -19058,7 +18459,6 @@ and the new one inherits the slot.
 
 <core-file path="core/shared/graph-usage-report.md">
 
-<<<<<<< HEAD
 ---
 shared: graph-usage-report
 applies_to: quality + init + graph skills
@@ -19069,61 +18469,6 @@ applies_to: quality + init + graph skills
 Portable generalized stub per manifest §2.1. Full content will be expanded in later agent tranche or manual follow-up.
 
 See verification-gates.md and template-hygiene.md for usage contracts.
-=======
-# Graph Usage Report Footer
-
-Every code-touching skill that consults `draft/graph/` MUST emit this footer
-as the closing section of its output. The lint hook
-`scripts/tools/check-graph-usage-report.sh` validates the footer's presence
-and column shape on save.
-
-The footer documents what the skill **looked at** in the graph before
-acting — making after-the-fact review of graph-vs-grep discipline possible.
-
-## Canonical footer (markdown to emit)
-
-```md
-## Graph Usage Report
-
-- Graph files queried: <list, or `NONE` with justification>
-- Modules identified via graph: <list>
-- Files identified via graph: <count>
-- Filesystem grep fallbacks: <list with justification, or `none`>
-- Justification (only when Graph files queried = NONE): <required>
-```
-
-## Where each skill appends
-
-Skills append the footer to their primary output artifact. Convention:
-
-- `draft new-track` — completion announcement
-- `draft decompose` — terminal output
-- `draft implement` — session summary
-- `draft review`, `quick-review`, `deep-review` — review report (before Verdict)
-- `draft bughunt` — bug report
-- `draft debug` — debug report
-- `draft learn` — completion summary
-- `draft tech-debt` — debt report
-- `draft deploy-checklist` — checklist
-- `draft discover` — discovery.md trailer
-
-When the skill's output is a long-form artifact, the footer goes at the
-bottom of the artifact (after the Verdict line is rendered for reviews;
-before the closing for sessions). When the skill's output is the terminal
-announcement only, the footer goes at the end of the announcement.
-
-## Rule on `NONE`
-
-If `draft/graph/schema.yaml` does not exist OR the skill genuinely consulted
-no graph files, set `Graph files queried: NONE` and provide a one-line
-justification (e.g. "graph data unavailable", "non-code-touching command").
-The lint hook fails when `NONE` appears without an adjacent justification.
-
-## See also
-
-- [graph-query.md](graph-query.md) — §Mandatory Lookup Contract
-- [red-flags.md](red-flags.md) — universal red flags including the GUR-omission rule
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 </core-file>
 
@@ -19219,7 +18564,6 @@ This keeps boilerplate centralized while leaving room for skill-specific guardra
 
 <core-file path="core/shared/template-contract.md">
 
-<<<<<<< HEAD
 ---
 shared: template-contract
 applies_to: quality + init + graph skills
@@ -19230,162 +18574,6 @@ applies_to: quality + init + graph skills
 Portable generalized stub per manifest §2.1. Full content will be expanded in later agent tranche or manual follow-up.
 
 See verification-gates.md and template-hygiene.md for usage contracts.
-=======
-# Template Contract
-
-> Narrative + field index for `core/templates/*`. Every generator skill imports
-> this block so the schema lives in one place. Source of truth: this file and
-> `core/templates/CHANGELOG.md`.
-
-## Contract summary
-
-1. **Templates are the schema.** Skills, validators, and renderers consume
-   `core/templates/*` as the canonical shape of every artifact. Schema changes
-   that land only in skill prompts or validators (without touching templates)
-   are forbidden.
-
-2. **Placeholders are parseable.** Every authorable field uses one of:
-   - `_TBD_<field>_` — value missing, must be filled before status promotion.
-   - `_PLACEHOLDER_<kind>_` — illustrative example for authors (e.g.
-     `_PLACEHOLDER_module_name_`); not blocking.
-   - `_NONE_FOUND_` — explicit "I looked and there's nothing here" (e.g. used
-     in `discovery.md` open-questions when truly empty); requires a one-line
-     justification adjacent to it.
-
-   Silent placeholders such as `Author1`, `xxx@example.com`, `xxx@example.com`,
-   `[name]`, pre-checked `Status: [x] Complete`, or empty cells in approval
-   tables are **forbidden**. Hygiene validator (WS-1) fails on any match.
-
-3. **Required vs optional is explicit.**
-   - `<!-- REQUIRED -->` next to a field, header, or table column: the
-     hygiene validator counts this as blocking for `ready-for-review`.
-   - `<!-- OPTIONAL -->` next to a field: never blocking; may carry sentinels.
-   - Fields with neither marker default to optional but may be tightened
-     later — prefer explicit markers.
-
-4. **Two-tier metadata pattern — git state never in per-file frontmatter.**
-
-   **Project level** (`draft/metadata.json`):
-   - Single file that owns `git.*`, `synced_to_commit`, and `schema_version`
-     for all 15 project-level artifacts (`architecture.md`, `.ai-context.md`,
-     `.ai-profile.md`, `product.md`, `workflow.md`, etc.).
-   - Written once by `draft:init` / `draft:init refresh` / `draft:index`.
-   - All skills that need the project sync anchor read it here — never from
-     per-file frontmatter.
-   - Template: `core/templates/draft-metadata.json`.
-
-   **Track level** (`tracks/<id>/metadata.json`):
-   - Per-track file that owns `git.*`, `synced_to_commit`, `classification.*`,
-     `status`, `scope_includes`, `scope_excludes`, `template_version`, and
-     track progress fields.
-   - Markdown track docs reference ephemeral fields via `<!-- META:<key> -->`
-     directives, resolved by `scripts/tools/render-track.sh` at view time.
-   - This makes re-sync a single-file edit and prevents drift across
-     `spec.md` / `hld.md` / `lld.md` / `plan.md`.
-   - Template: `core/templates/metadata.json`.
-
-5. **Stable frontmatter only.** Per-file YAML frontmatter carries `project`,
-   `module`, `track_id`, `generated_by`, `generated_at`, `links`, and nothing
-   else. Never emit `git.*` or `synced_to_commit` into per-file frontmatter.
-
-6. **Phase regeneration is bracketed.** `plan.md` wraps phase tables in
-   `<!-- DECOMPOSE:REGENERATE START -->` / `<!-- DECOMPOSE:REGENERATE END -->`.
-   `draft:decompose` rewrites only between markers. Manual notes outside the
-   markers survive every regenerate.
-
-7. **Example citations in templates are lint-clean by construction.** Any
-   illustrative `path:line` or `§X.Y` snippet shown in a template is wrapped
-   in `<!-- VERIFIER:IGNORE START -->` / `<!-- VERIFIER:IGNORE END -->`.
-   `scripts/tools/verify-citations.sh` and `verify-doc-anchors.sh` skip these
-   regions.
-
-## Field index (canonical names)
-
-These names appear identically across every template and validator.
-
-### Frontmatter (markdown, stable)
-
-| Field | Type | Required | Notes |
-|---|---|---|---|
-| `project` | string | yes | Project / repo name |
-| `module` | string | yes | Module slug or `root` |
-| `track_id` | string | yes | Kebab-case track identifier |
-| `generated_by` | string | yes | Skill that last wrote the file (`draft:new-track`, `draft:decompose`, …) |
-| `generated_at` | ISO-8601 | yes | Timestamp of the last regenerate |
-| `links` | map | yes (hld/lld) | Cross-doc relative paths |
-
-### `metadata.json` (canonical, ephemeral)
-
-| Field | Type | Required | Notes |
-|---|---|---|---|
-| `id` | string | yes | Same as `track_id` |
-| `title` | string | yes | Human-readable |
-| `type` | enum | yes | `feature` / `bugfix` / `refactor` |
-| `status` | enum | yes | `draft` / `ready-for-review` / `in_progress` / `completed` / `archived` |
-| `template_version` | semver | yes (2.0+) | Schema version this track conforms to |
-| `git.branch` | string | yes | Source branch |
-| `git.remote` | string | optional | Upstream tracking |
-| `git.commit` | string | yes | Full SHA |
-| `git.commit_short` | string | optional | Render convenience |
-| `git.commit_date` | ISO-8601 | optional | |
-| `git.commit_message` | string | optional | |
-| `git.dirty` | bool | yes | Working tree dirty at sync |
-| `synced_to_commit` | string | yes | Anchors citation verifiers |
-| `classification.criticality` | enum | yes | `low` / `standard` / `high` / `mission-critical` |
-| `classification.data_classification` | enum | yes | `public` / `internal` / `confidential` / `regulated` |
-| `classification.deployment_surface` | enum | yes | `on-prem` / `SaaS` / `hybrid-cloud` / `IBM-cloud` / `mixed` |
-| `scope_includes` | array<string> | yes | Canonical problem-area tags |
-| `scope_excludes` | array<string> | optional | Tags explicitly out of scope |
-| `pre_deploy_status` | enum | optional | `unrun` / `passing` / `failing` / `bypassed` — written by deploy-checklist |
-| `phases.total`, `phases.completed` | int | yes | |
-| `tasks.total`, `tasks.completed` | int | yes | |
-| `impact.*` | various | optional | Written by `draft:implement` |
-
-### `draft/metadata.json` (project-level, ephemeral)
-
-| Field | Type | Required | Notes |
-|---|---|---|---|
-| `project` | string | yes | Repo / product name |
-| `schema_version` | semver | yes | `draft-metadata.json` schema version |
-| `generated_by` | string | yes | Skill that last wrote this file |
-| `generated_at` | ISO-8601 | yes | Timestamp of last write |
-| `git.branch` | string | yes | Branch at last sync |
-| `git.remote` | string | optional | Upstream tracking ref |
-| `git.commit` | string | yes | Full SHA at last sync |
-| `git.commit_short` | string | optional | Render convenience |
-| `git.commit_date` | ISO-8601 | optional | |
-| `git.commit_message` | string | optional | |
-| `git.dirty` | bool | yes | Working tree dirty at sync |
-| `git.base_branch` | string | optional | Default: `main` |
-| `git.commits_ahead_base` | int | optional | |
-| `git.commits_behind_base` | int | optional | |
-| `synced_to_commit` | string | yes | Anchor for all project-level citation verifiers and staleness checks |
-
-**Backward compatibility:** If `draft/metadata.json` is absent (pre-migration installs), fall back to reading `synced_to_commit` from `draft/architecture.md` YAML frontmatter. Write `draft/metadata.json` on the next `init` or `init refresh` to complete migration.
-
-### Per-table required columns (WS-7)
-
-**HLD component table:** `concurrency_model`, `aggregate_resource_cap`,
-`parallel_flag_interaction`.
-**HLD alternatives table:** `promote_to_adr` (boolean).
-**HLD flags/rollout:** `flag_name`, `cluster_feature_gate`, `kill_switch_test_id`,
-`runbook_link`.
-**LLD class table:** adds `lock_acquired`, `reentrant`.
-**LLD error table:** adds `fault_injection_site`.
-**LLD eligibility/cap table:** `derived_from`.
-**Spec eligibility table:** `derived_from`.
-**Spec risk table:** `mitigation_test_id`.
-**Spec acceptance criteria:** `test_id`.
-**Plan phase rows:** `entry_gate_command`, `exit_gate_command`, `owner`.
-
-## When to extend the contract
-
-- Adding a field: edit the relevant template, add an entry above, bump
-  `template_version` MINOR, append to `core/templates/CHANGELOG.md`.
-- Removing a field: bump MAJOR, ship a migration in
-  `scripts/tools/migrate-track-frontmatter.sh`, document in CHANGELOG.
-- Renaming a field: treat as remove+add; never silently rename.
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 </core-file>
 
@@ -19395,7 +18583,6 @@ These names appear identically across every template and validator.
 
 <core-file path="core/shared/template-hygiene.md">
 
-<<<<<<< HEAD
 ---
 shared: template-hygiene
 applies_to: quality + init + graph skills
@@ -19406,79 +18593,6 @@ applies_to: quality + init + graph skills
 Portable generalized stub per manifest §2.1. Full content will be expanded in later agent tranche or manual follow-up.
 
 See verification-gates.md and template-hygiene.md for usage contracts.
-=======
-# Template Hygiene Rules
-
-> Imported by every generator skill. Defines the hygiene contract enforced by
-> `scripts/tools/check-track-hygiene.sh` and surfaced by `draft:deploy-checklist`.
-
-## Forbidden patterns
-
-These strings must never appear in a generated artifact:
-
-| Pattern | Replace with |
-|---|---|
-| `Author1`, `Author2`, `Author3` | author from `git config user.name` |
-| `xxx@example.com`, `xxx@example.com`, `xxx@example.org` | author email from `git config user.email` |
-| `[name]` placeholder cell | `_TBD_<role>_` sentinel |
-| Pre-checked `Status: [x] Complete` (when work is not done) | `Status: [ ] _TBD_status_` |
-| Empty cell in an approval-bearing table | `_TBD_approver_<role>_` |
-
-## Sentinel placeholders
-
-- `_TBD_<field>_` — value missing, must be filled before `ready-for-review`.
-- `_PLACEHOLDER_<kind>_` — illustrative example for authors; not blocking.
-- `_NONE_FOUND_` — explicit "looked, nothing here"; requires adjacent justification.
-
-## Required vs optional markers
-
-Every authorable field in a template carries a marker the validator can read:
-
-- `<!-- REQUIRED -->` — counts as blocking for `ready-for-review` if it
-  contains a `_TBD_` sentinel.
-- `<!-- OPTIONAL -->` — never blocking; may carry a sentinel indefinitely.
-
-When neither marker is present, the validator defaults to OPTIONAL but logs
-a warning. New fields should always carry an explicit marker.
-
-## Status transitions
-
-| Status (in `metadata.json`) | Allowed `_TBD_` count (per doc) |
-|---|---|
-| `draft` | unlimited |
-| `ready-for-review` | ≤ 3 OPTIONAL, **0 REQUIRED** |
-| `in_progress` | inherits from `ready-for-review` |
-| `completed` | 0 of any |
-| `archived` | not checked |
-
-`metadata.json:status` is the single source of truth. Markdown `Status:` rows
-must be rendered from it, never authored independently. The hygiene validator
-fails on disagreement.
-
-## Author resolution
-
-The hygiene validator runs `git config user.name` and `git config user.email`
-in the track's working tree. If either is unset, validation fails — the user
-must configure git identity before generating tracks.
-
-## Approver placeholders
-
-Empty cells in any approval table render as `_TBD_approver_<role>_`. The role
-slug is lower-snake-case from the column header (e.g. `Technical Leads` →
-`tech_leads`). The validator forbids empty cells in any table whose first
-header is `Role`.
-
-## TBD budget gate
-
-The validator counts every occurrence of `_TBD_` per document. The default
-caps (configurable via `metadata.json:hygiene_budget`):
-
-- `draft`: no cap
-- `ready-for-review`: per-doc ≤ 3 OPTIONAL, **0 REQUIRED**
-
-If the cap is exceeded, the validator emits one line per offending sentinel
-with a file:line citation.
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 </core-file>
 
@@ -19489,7 +18603,6 @@ with a file:line citation.
 <core-file path="core/shared/tool-resolver.md">
 
 ---
-<<<<<<< HEAD
 shared: tool-resolver
 applies_to: quality + init + graph skills
 ---
@@ -19499,65 +18612,6 @@ applies_to: quality + init + graph skills
 Portable generalized stub per manifest §2.1. Full content will be expanded in later agent tranche or manual follow-up.
 
 See verification-gates.md and template-hygiene.md for usage contracts.
-=======
-title: Draft Tool Resolver Pattern
-purpose: Canonical bash snippet for resolving scripts/tools/*.sh paths across install layouts (Cursor plugin, Claude plugin, dev repo).
-audience: skill authors and core/shared/*.md docs
----
-
-# Tool resolver pattern
-
-Draft ships `scripts/tools/*.sh` inside the plugin archive. At runtime, skills run inside a target project — `scripts/tools/` is **not** on a relative path from `$PWD`. Use this resolver to find the tools deterministically.
-
-## The snippet
-
-Paste this verbatim before invoking any `scripts/tools/*.sh` script:
-
-```bash
-DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
-[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
-[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
-```
-
-Resolution order:
-
-1. `$DRAFT_PLUGIN_ROOT/scripts/tools/` — explicit override (set by install.sh or CI).
-2. `$HOME/.claude/plugins/draft/scripts/tools/` — Claude Code default install.
-3. `$HOME/.cursor/plugins/local/draft/scripts/tools/` — Cursor default install.
-4. `$PWD/scripts/tools/` — developer running from the draft repo itself.
-
-## Invocation forms
-
-**Required tool** (the skill cannot complete its work without it; fail loudly):
-
-```bash
-bash "$DRAFT_TOOLS/git-metadata.sh" --yaml --project "$PROJECT"
-```
-
-**Soft tool** (best-effort; skip silently if missing — telemetry, optional polish):
-
-```bash
-[ -x "$DRAFT_TOOLS/emit-skill-metrics.sh" ] && \
-  bash "$DRAFT_TOOLS/emit-skill-metrics.sh" '<payload>'
-```
-
-**Soft tool with explicit fallback prose**:
-
-```bash
-if [ -x "$DRAFT_TOOLS/fix-whitespace.sh" ]; then
-  bash "$DRAFT_TOOLS/fix-whitespace.sh" --draft
-fi
-# If absent, the model performs the same normalization manually.
-```
-
-## Why not a simpler form
-
-- **A bare `scripts/tools/<name>` path** breaks the moment the skill runs inside a project other than the draft repo (the common case). 3k+ engineers hit this.
-- **A wrapper script on PATH** would require an installer step we don't have on Cursor/Claude Code.
-- **A single env var pointing at the tool file** would multiply env vars per tool.
-
-The three-line resolver is the smallest correct form. Tested by `tests/test-skill-script-invocation.sh`.
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 </core-file>
 
@@ -19570,14 +18624,8 @@ The three-line resolver is the smallest correct form. Tested by `tests/test-skil
 # Verification Gates
 
 > Shared block defining the validator chain every track passes through
-<<<<<<< HEAD
 > before promoting status. Imported by quality and implementation flows
 > that gate on artifact correctness.
-=======
-> before promoting status. Imported by `skills/deploy-checklist`,
-> `skills/implement`, `skills/decompose`, and any other skill that gates on
-> artifact correctness.
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 ## The chain
 
@@ -19609,26 +18657,15 @@ After the chain runs, persist the outcome to `metadata.json:pre_deploy_status`:
 - `failing` — last run exited 1; details in CI log
 - `bypassed` — explicit override; requires `bypass_reason` in metadata
 
-<<<<<<< HEAD
 `draft deploy-checklist` reads this field and refuses to deploy a track
-=======
-`draft:deploy-checklist` reads this field and refuses to deploy a track
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 whose `pre_deploy_status != passing`.
 
 ## When to invoke
 
-<<<<<<< HEAD
 - `draft deploy-checklist` — mandatory before any production deploy.
 - `draft implement` — at the end of each phase before flipping
   `phases.completed`.
 - `draft decompose` — after rewriting `plan.md`, to catch plan-staleness
-=======
-- `draft:deploy-checklist` — mandatory before any production deploy.
-- `draft:implement` — at the end of each phase before flipping
-  `phases.completed`.
-- `draft:decompose` — after rewriting `plan.md`, to catch plan-staleness
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
   immediately.
 - CI hook — gate every merge that touches `tracks/**`.
 
@@ -22073,7 +21110,6 @@ DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
 
 <core-file path="core/templates/ai-context-export.md">
 
-<<<<<<< HEAD
 ---
 name: ai-context-export
 description: Foundations stub — will be expanded with export / summary logic
@@ -22082,73 +21118,6 @@ description: Foundations stub — will be expanded with export / summary logic
 # ai-context-export (Draft Foundations)
 
 Portable stub. Content generalized from proven internal patterns.
-=======
-# AI Context Export Template
-
-Template for the four cross-tool AI context files generated by `draft init` Step 8. All four files contain identical content — a thin index that points AI agents to the project's Draft context without duplicating it.
-
-**Generated files:**
-- `AGENTS.md` (root — used by Codex, OpenAI agents, and general agent frameworks)
-- `CLAUDE.md` (root — used by Claude Code)
-- `GEMINI.md` (root — used by Gemini CLI)
-- `.github/copilot-instructions.md` (used by GitHub Copilot)
-
-**Update policy:** Regenerated by `draft init refresh` if they exist. Never modified by other skills.
-
----
-
-## Template Content
-
-Use this template verbatim for all four files. Replace `{PROJECT_NAME}` with the project name from `draft/.ai-profile.md` `## Project` section. Replace `{AI_PROFILE_SUMMARY}` with the first 5–10 lines of `draft/.ai-profile.md` (the compact identity block, not the full file — just enough to orient a cold-start agent).
-
-```markdown
-# {PROJECT_NAME} — AI Agent Context
-
-> This file is generated by Draft. Edit `draft/.ai-profile.md` or `draft/.ai-context.md` to change AI context.
-> Do not edit this file directly.
-
-## Quick Identity
-
-{AI_PROFILE_SUMMARY}
-
-## Full Context
-
-For deep project understanding, read `draft/.ai-context.md` (200–400 lines, self-contained).
-For the compact always-loaded profile, read `draft/.ai-profile.md` (20–50 lines).
-
-## Key Conventions
-
-See `draft/guardrails.md` for project guardrails and learned anti-patterns.
-See `draft/workflow.md` for TDD, commit, and review preferences.
-See `draft/tech-stack.md` for accepted libraries, frameworks, and tooling.
-
-## Active Work
-
-See `draft/tracks.md` for active tracks and their status.
-```
-
----
-
-## Sourcing Rules
-
-When generating these files from `draft init` Step 8:
-
-1. Read `draft/.ai-profile.md` fully
-2. Extract the project name from the `## Project` or `# ` heading
-3. Extract the first compact block (typically: project name, type, primary language, brief purpose) — maximum 10 lines, no headers, no diagrams
-4. Fill the template: replace `{PROJECT_NAME}` and `{AI_PROFILE_SUMMARY}`
-5. Write identical content to all four files
-6. Create `.github/` directory if it doesn't exist
-
-## File Paths
-
-```
-AGENTS.md ← root
-CLAUDE.md ← root
-GEMINI.md ← root
-.github/copilot-instructions.md ← .github/ subdirectory
-```
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 </core-file>
 
@@ -22158,7 +21127,6 @@ GEMINI.md ← root
 
 <core-file path="core/templates/session-summary.md">
 
-<<<<<<< HEAD
 ---
 name: session-summary
 description: Foundations stub — will be expanded with export / summary logic
@@ -22167,82 +21135,6 @@ description: Foundations stub — will be expanded with export / summary logic
 # session-summary (Draft Foundations)
 
 Portable stub. Content generalized from proven internal patterns.
-=======
-# Session Summary Template
-
-Compact summary emitted by `draft implement` at the end of sessions where 3 or more tasks were completed. Saved to `draft/tracks/<id>/session-summary-<timestamp>.md`.
-
-**Called by:** `draft implement` Step 6 (track completion or end-of-session with ≥3 completed tasks)
-
----
-
-## Template
-
-```markdown
----
-track_id: "{TRACK_ID}"
-generated_by: "draft:implement"
-generated_at: "{ISO_TIMESTAMP}"
-synced_to_commit: "{FULL_SHA}"
----
-
-# Session Summary — {TRACK_TITLE}
-
-**Date:** {ISO_DATE}
-**Commit range:** {START_SHA}^..{END_SHA}
-
-## Tasks Completed
-
-| # | Task | Commit |
-|---|------|--------|
-| 1 | {task description} | `{sha}` |
-| 2 | {task description} | `{sha}` |
-| ... | | |
-
-**Total:** N tasks completed this session
-
-## Files Touched
-
-- `{path/to/file}` — {brief description of change}
-- `{path/to/file}` — {brief description of change}
-
-## Tests Run
-
-- **Suite:** {test command run}
-- **Result:** {pass count} passed / {fail count} failed / {skip count} skipped
-- **Coverage delta:** {+N%} (if available)
-
-## Drift Detected
-
-{One of:}
-- None
-- ⚠️ LLD interface conflict in task N: {description of conflict, resolution deferred}
-- ⚠️ Architecture drift: {description}
-
-## Blockers
-
-{One of:}
-- None
-- {Blocker description and recovery action}
-
-## Next Task
-
-{First pending `[ ]` task from plan.md, or "Track complete" if all tasks done}
-```
-
----
-
-## Emission Rules
-
-Emit when `draft implement` completes a session and **any** of these conditions are met:
-- 3 or more tasks completed in the current session
-- Track is fully complete (all tasks `[x]`)
-- A drift or blocker was detected and resolved
-
-**Do not emit** for sessions with fewer than 3 completed tasks and no track completion — use the standard Progress Report instead.
-
-**File naming:** `session-summary-{YYYYMMDD}-{HHMM}.md` in `draft/tracks/<id>/`
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 </core-file>
 
@@ -25394,7 +24286,6 @@ If `workflow.md` does not specify gates, skills detect the test framework via `s
 
 <core-file path="core/guardrails.md">
 
-<<<<<<< HEAD
 # Guardrails — Baseline Ruleset
 
 > **See also:** [`core/guardrails/README.md`](guardrails/README.md) for the full rule reference (SEC/CQ/DN/RC IDs) and precedence. This file contains the generalized systems programming guardrails and is loaded for C/C++ projects when language signals indicate. For other languages, see `core/guardrails/language-standards.md`. Generalized for public Draft (language-agnostic where possible) per manifest §2.1.
@@ -25412,246 +24303,11 @@ These guardrails are pre-seeded into every project's `draft/guardrails.md` by `d
 ### G1.1: No temporary strings in Printf-style trace APIs
 
 Passing `.c_str()` of a temporary to `Printf`-style APIs that store format arguments by reference creates a dangling pointer. The temporary is destroyed at the end of the statement; the stored pointer becomes invalid.
-=======
-# C++ Hard Guardrails — Systems Programming
-
-> **See also:** [`core/guardrails/README.md`](guardrails/README.md) for the full rule reference (SEC/CQ/DN/RC IDs) and precedence. This file contains the C++-specific `G1.x..G7.x` rules and is loaded for C/C++ projects only. For non-C++ language standards, see [`core/guardrails/language-standards.md`](guardrails/language-standards.md).
-
-Mandatory guardrails for C++ systems code at . All Draft quality commands (`draft bughunt`, `draft review`, `draft deep-review`, `draft quick-review`, `draft implement`, `draft debug`, `draft assist-review`) **must** enforce these rules. Violations are always flagged — no exceptions.
-
-These guardrails are pre-seeded into every project's `draft/guardrails.md` by `draft init` and loaded at runtime via `core/shared/draft-context-loading.md`.
-
-**Source:** C++ Pitfalls and General Guidelines (internal).
-
----
-
-## G1 — Object Lifecycle & Memory Safety
-
-### G1.1: No temporary strings in Printf-style trace APIs
-
-Passing `.c_str()` of a temporary (e.g., `proto.ShortDebugString().c_str()`) to `Printf`-style APIs that store format arguments by reference creates a dangling pointer. The temporary is destroyed at the end of the statement; the stored pointer becomes invalid.
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 - **Wrong:** `mem_tracer_->Printf("Bug: %s", my_proto->ShortDebugString().c_str());`
 - **Fix:** Use `Print(StringPrintf(...))` when arguments include short-lived `.c_str()` pointers.
 
-<<<<<<< HEAD
 (Additional G rules generalized/conditioned; full list in language-standards.md for non-C++ and the plugin guardrails sub-system.)
-=======
-### G1.2: No dangling references after object destruction
-
-Never hold references or raw pointers to members of an object that may be destroyed before the reference is used. This includes captured `this`, member pointers stored in callbacks, and iterator references across async boundaries.
-
-### G1.3: No capture-all-by-reference in async lambdas
-
-Capturing local variables by reference (`[&]`) in a lambda that may execute asynchronously (e.g., as a `done_cb` of another op) creates use-after-free when the enclosing scope exits before the callback fires.
-
-- **Fix:** Capture by value, use `shared_ptr`, or explicitly list captures.
-
-### G1.4: Every async functor must be wrapped with callback_muter
-
-A functor that accesses op members and may fire after the op is destroyed must be wrapped with `callback_muter_->Wrap()`. Omitting this causes use-after-free.
-
-### G1.5: Never wrap op's own done_cb in ClosureRunner when extracting result via raw pointer
-
-When extracting a result from an op using its raw pointer inside the op's own done callback, that callback must NOT be wrapped in a ClosureRunner. The ClosureRunner may destroy the op before the raw-pointer access, causing use-after-free.
-
-```cpp
-// CORRECT — no ClosureRunner on op_done_cb
-auto op = SomeOp::CreatePtr();
-op_done_cb = [raw_op = op.get()] { error = raw_op->error(); };
-op->Start(op_done_cb);
-```
-
-### G1.6: ClosureRunner and CallbackMuter must be wrapped in correct order
-
-The correct order is: `callback_muter_->Wrap()` first, then `cr_->Wrap()`. Reversing the order breaks cleanup semantics.
-
-### G1.7: Every async functor must be wrapped with cr_
-
-Omitting `cr_->Wrap()` on a functor can cause: (a) the op finishing in the wrong ClosureRunner triggering CHECK failures, or (b) stack overflow when control flow becomes too deep.
-
-### G1.8: No op member access after potential op destruction in loops
-
-If `DoWork(ii)` may destroy the op on the last iteration, the loop's subsequent access to op members (e.g., `count_`, `disk_id_set_`) is use-after-free.
-
-- **Wrong:** `for (int ii = 0; ii < count_; ++ii) DoWork(ii);` — if last iteration destroys op, `count_` access is UB.
-- **Fix:** Copy loop bounds to a local variable before the loop, or restructure to avoid self-destruction mid-loop.
-
-### G1.9: No code execution after Finish()
-
-After calling `Finish()`, the op may be destroyed. Any code executing after `Finish()` on the same path accesses a potentially destroyed object.
-
-- **Always** `return` immediately after `Finish()`.
-- In conditional blocks: add `return` even if the method appears to end after the block — guards against future code additions.
-
-### G1.10: No unintended deep copies via auto
-
-Using `auto` with map subscript returns a copy, not a reference:
-
-- **Wrong:** `auto my_proto = map_[key];` — deep-copies the value.
-- **Fix:** `auto& my_proto = map_[key];` or `const auto& my_proto = map_.at(key);`
-
-### G1.11: std::move discipline
-
-- **Always move** objects expensive to copy (large strings, protocol buffers) when the source is no longer needed.
-- **Never use** an object after it has been moved — this may trigger SEGV or undefined behavior.
-
-### G1.12: No shared_ptr binding to non-trivial objects in callbacks
-
-Binding `shared_ptr` to objects that hold EventDriver/ThreadPool references in callbacks creates circular references. The destructor runs inside the pool's own thread, causing deadlock or undefined behavior.
-
-- **Fix:** Bind raw pointers in the lambda and wrap with `callback_muter_` of the bound object.
-
----
-
-## G2 — Concurrency & Locking
-
-### G2.1: No mutable operations under shared (read) locks
-
-Calling mutable methods while holding a shared/read lock violates lock semantics and causes data races.
-
-- **Wrong:** `ScopedSpinLocker ssl(&sl_, false /* is_exclusive */); lru_cache_->Lookup(...);` (if Lookup mutates internal state)
-- **Fix:** Use exclusive lock for any operation that modifies state.
-
-### G2.2: Always release spinlock before invoking callbacks
-
-A callback may synchronously re-acquire the same spinlock, causing deadlock.
-
-- Release the lock explicitly before invoking any callback or `Finish()`.
-- Use `ScopedSpinLocker::RegisterReleaseOrDestructionCallback()` when appropriate.
-- **Corollary:** Always release spinlocks synchronizing owner-object state before calling `Finish()`, because `Finish()` may invoke a `done_cb` that creates another op acquiring the same lock — all synchronously.
-
-### G2.3: No object destruction under spinlock protection
-
-Destroying expensive objects (large protocol buffers, complex data structures) while holding a spinlock causes contention.
-
-- **Wrong:** `auto sl = sl_.GetScopedLocker(); lru_cache_.Insert(xx, yy);` — evicted objects destroyed before lock release.
-- **Fix:** Capture evicted objects, release lock, then let them destruct.
-
-### G2.4: Never sacrifice correctness for lock "optimization"
-
-Performing operations on shared member variables without locking to "optimize" around G2.3 is far more dangerous than the contention it avoids. Always choose correctness over performance when unsure of side-effects.
-
-### G2.5: No synchronous waits in async code paths
-
-Mixing `Trigger::Wait()` or other blocking synchronous primitives in otherwise asynchronous (e.g., networking) code can cause deadlock when all threads enter the wait state.
-
----
-
-## G3 — Control Flow & Error Handling
-
-### G3.1: Always return after Finish() in conditional blocks
-
-If `Finish()` is called inside an `if`/`else` or any conditional block, always add `return` — even if the method appears to end after the block. This protects against someone adding code after the block without noticing the `Finish()` call.
-
-### G3.2: CHECKs are for internal consistency only
-
-- CHECKs assert internal invariants where forward progress is impossible if violated (e.g., corrupt data structure).
-- External systems can always provide bad data — these must NOT be CHECKs. Use error handling and propagation.
-- Non-null pointer assertions must be CHECKs (not DCHECKs) — a FATAL is easier to debug than a SIGSEGV.
-
-### G3.3: DCHECKs must not contain side-effecting expressions
-
-`DCHECK(some_map.erase("key"))` — the erase does not execute in release builds. Never put actual logic inside DCHECK.
-
-- **Fix:** Execute the operation separately, then DCHECK the result.
-
-### G3.4: DCHECK vs CHECK vs LOG(DFATAL) selection
-
-| Scenario | Use |
-|----------|-----|
-| Internal consistency, forward progress impossible | `CHECK` |
-| Expensive consistency check, debug-only | `DCHECK` |
-| Fail in debug, log-and-continue in release | `LOG(DFATAL)` |
-| External input validation | Error handling (never CHECK) |
-
----
-
-## G4 — Format & API Correctness
-
-### G4.1: Printf format strings must match argument types
-
-Format specifier / argument type mismatches (e.g., `%s` for `int`, `%d` for `const char*`) cause undefined behavior. Verify every `Printf`-style call matches specifiers to argument types.
-
-### G4.2: MemTracer Print vs Printf selection
-
-| Situation | API | Reason |
-|-----------|-----|--------|
-| Format string with non-pointer args | `Printf` | Lazy construction — string built only when tracer is rendered |
-| Argument includes `.c_str()` of a stack variable | `Print(StringPrintf(...))` | Avoids dangling pointer — string is materialized immediately |
-| Long literal string | `Printf` with format | Avoids N copies of the string across tracer objects |
-| Dynamic string variable | `Print(str)` | Avoids `Printf(str.c_str())` dangling-pointer trap |
-
-### G4.3: Use Maybe-prefixed MemTracer variants when op may be finished
-
-- Use `MaybePrint`/`MaybePrintf` when the code path may execute after `Finish()` (e.g., `ReleaseLock` called from destructor as fail-safe).
-- Do NOT use Maybe variants when the code is not expected to run post-Finish — it suppresses the DCHECK that catches unexpected execution.
-
-### G4.4: String + integer does not concatenate
-
-`"foo: " + integer` performs pointer arithmetic, not string concatenation. GCC does not warn. Use `StringPrintf` or `absl::StrCat`.
-
-### G4.5: boost::optional<bool> tests presence, not value
-
-`if (xx)` where `xx` is `boost::optional<bool>` tests whether `xx` is *set*, not whether the contained value is `true`. Use `if (xx && *xx)` or `if (xx.value_or(false))` to test the value.
-
----
-
-## G5 — GFlags & Runtime Configuration
-
-### G5.1: Snapshot gflag values at op start
-
-A gflag may be flipped between two reads in the same op. Code like `if (FLAGS_xxx) DoStuff(); ... if (FLAGS_xxx) CHECK(StuffDone)` breaks if the flag changes between the two reads.
-
-- **Fix:** Read the flag once into a local variable at op start and use the local throughout.
-
----
-
-## G6 — Performance
-
-### G6.1: Avoid ByteSize() on proto objects in hot paths
-
-`ByteSize()` is expensive on protocol buffer objects. Cache the result if needed multiple times, or avoid calling it in tight loops.
-
-### G6.2: Prefer repeated fields over map fields in proto for serialization-sensitive paths
-
-Proto `map` fields are costlier than `repeated` fields for serialization and deserialization.
-
-### G6.3: No inline execution in SpawnWorkersAndJoin done_cb
-
-When using `ClosureUtil::SpawnWorkersAndJoin`, do not wrap the `done_cb` with `true /* can_execute_inline */`. This causes hard-to-debug correctness issues. Only use inline execution in performance-critical code where correctness has been verified.
-
----
-
-## G7 — Op Refresh
-
-### G7.1: Op refresh method selection
-
-| Method | Behavior | Risk |
-|--------|----------|------|
-| Timestamp refresh | Updates timestamp, op stays alive | None |
-| Finish-and-reissue | Marks finished, gets new op id | May break GC correctness |
-
-- Use `MaybeRefreshOperationId` for self-refresh.
-- Use `AddOpIdRefreshListener` on child ops for parent notification.
-- In snap_tree, snap_fs, and below: never use finish-and-reissue.
-
----
-
-## Enforcement
-
-All Draft commands must:
-
-1. **Load** this file (via `core/guardrails.md` inlined at runtime) alongside the project's `draft/guardrails.md`.
-2. **Flag** any violation of these guardrails in C++ code as a finding with the guardrail ID (e.g., `G1.3`, `G2.2`).
-3. **Classify** violations using standard severity:
-   - **Critical:** Use-after-free, data race, deadlock (G1.x, G2.1–G2.5)
-   - **High:** Incorrect CHECK/DCHECK usage, missing return after Finish (G3.x)
-   - **Medium:** Performance pitfalls, API misuse (G4.x, G5.x, G6.x)
-4. **Never suppress** these guardrails. They are not subject to learned-convention overrides.
-5. **Cross-reference** with `draft/guardrails.md` project-level entries for additional context.
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 </core-file>
 
@@ -25661,68 +24317,10 @@ All Draft commands must:
 
 <core-file path="core/guardrails/README.md">
 
-<<<<<<< HEAD
 # Guardrails — README (Foundations Stub)
 
 Generalized public Draft baseline. Full ruleset ported from internal systems in subsequent work.
 See core/guardrails.md for entry point and loading rules.
-=======
-# core/guardrails — Rules Reference
-
-This directory contains the authoritative ruleset that Draft skills cite. Skills reference rules by ID (e.g. `[SEC-03]`, `[CQ-007]`, `[RC-012]`, `[DN-004]`); reviewers and auditors trace those IDs back here.
-
-## Vocabulary
-
-We use one word — **rule** — throughout the system. Avoid the synonyms below in skill prose:
-
-| Use | Avoid |
-|---|---|
-| **rule** (with an ID) | guideline, principle, standard, check, norm, guardrail-item |
-| **guardrail file** (this directory) | rulebook, policy file, standards doc |
-| **guardrail breadcrumb** (`// guardrail: SEC-03 — reason`) | rule tag, policy comment, audit hint |
-
-"Guardrail" by itself refers to a *file* in this directory (e.g. `core/guardrails/security.md`); individual items inside are always **rules** with IDs.
-
-## Files & ID Prefixes
-
-| File | Prefix | Scope |
-|---|---|---|
-| `security.md` | `SEC-01..SEC-10` | Hard security red lines (never cross these) |
-| `code-quality.md` | `CQ-001..CQ-012` | Error handling, naming, error context, cleanup |
-| `design-norms.md` | `DN-001..DN-010` | Module boundaries, coupling, API shape |
-| `review-checks.md` | `RC-001..RC-015` | What reviewers verify per PR/track |
-| `secure-patterns.md` | (cross-cites SEC) | Language-specific implementations of SEC rules |
-| `dependency-triage.md` | `RC-014` (cross-cite) | Third-party dependency risk handling |
-| `language-standards.md` | (no IDs) | Per-language style and idioms |
-
-## Precedence (when rules conflict)
-
-Apply in this order, highest first:
-
-1. **Project-local guardrails** — `draft/guardrails.md` in the consuming repo. Project overrides ship-level defaults.
-2. **`SEC-*`** — security red lines. These trump everything else; safety beats convenience and even correctness style.
-3. **`RC-*`** — review checks. Anything a reviewer must verify before a PR merges.
-4. **`CQ-*`** — code quality. Applied during implementation; reviewers re-verify under `RC-*`.
-5. **`DN-*`** — design norms. Architectural guidance; only block a change if a clear `DN-*` rule is violated, not on stylistic preference.
-
-If a `SEC-*` rule conflicts with a `DN-*` or `CQ-*` rule, `SEC-*` wins. If two `SEC-*` rules conflict (rare), prefer the one that's more restrictive (deny vs allow).
-
-## How to cite a rule
-
-In skill prose: `[SEC-03]`, `[CQ-006, CQ-007]`, `[RC-012]`.
-
-In generated code (left by `implement` skill): `// guardrail: SEC-03 — parameterized query, no string interp`.
-
-In reports (left by `review`/`bughunt`/`deep-review`): include the rule ID in the finding header, e.g. `**Critical [SEC-04]:** Plaintext credentials in process env`.
-
-## Adding a new rule
-
-1. Choose the right file (security → `security.md`, etc.).
-2. Allocate the next ID in sequence — do not reuse retired IDs.
-3. Add a one-line statement of the rule, then a short rationale and a fix example.
-4. Update any skill that should reference it (`grep -rn "RC-014" skills/` for examples).
-5. Run `make test` — `test-cross-references.sh` and frontmatter checks must still pass.
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 </core-file>
 
@@ -25732,120 +24330,10 @@ In reports (left by `review`/`bughunt`/`deep-review`): include the rule ID in th
 
 <core-file path="core/guardrails/security.md">
 
-<<<<<<< HEAD
 # Guardrails — security (Foundations Stub)
 
 Generalized public Draft baseline. Full ruleset ported from internal systems in subsequent work.
 See core/guardrails.md for entry point and loading rules.
-=======
-# Security Guardrails
-
-Hard security constraints and reasoning chain for all Draft quality and generation commands. Structured in two parts: **Hard Red Lines** (absolute — no exceptions without an override annotation) and the **Security Reasoning Chain** (5-step process applied to every review).
-
-**Referenced by:** `core/guardrails/review-checks.md` (RC-001, RC-002, RC-003, RC-004, RC-005, RC-006, RC-011), `draft review`, `draft quick-review`, `draft bughunt`, `draft deep-review`, `draft implement`
-
-**Last updated:** 2026-05-16
-
----
-
-## Part 1: Hard Red Lines (SEC-01…SEC-10)
-
-These are **absolute**. A violation is always **Critical** severity. The reviewer must not silently pass code that violates a red line.
-
-**Override mechanism:** If a violation is intentional and justified (e.g., a test fixture using an obviously fake key, a local-only dev tool, a legacy path with a filed migration ticket), the developer must add an annotation on the same line or the line above:
-
-```
-// SECURITY-OVERRIDE: <ticket-id> <one-line justification>
-```
-
-An unannotated violation that cannot be resolved immediately blocks review approval. An annotated override is logged as an **Important** finding (not Critical) with the ticket referenced in the review report.
-
-| ID | Hard Red Line | Detection Signal |
-|----|--------------|-----------------|
-| SEC-01 | No hardcoded secrets, passwords, API keys, or private keys in source code | `password =`, `api_key =`, `secret =`, `-----BEGIN`, `token =` with non-variable RHS; high-entropy string literals |
-| SEC-02 | No `eval`, `exec`, `pickle.load`, `__import__`, `subprocess` with unsanitized user input | Presence of these calls with variables derived from external input |
-| SEC-03 | No raw string interpolation in database queries (SQL, NoSQL, search) | Query string construction using `+`, f-strings, `%s` (non-parameterized), template literals inside query builders |
-| SEC-04 | No disabled TLS/certificate verification | `verify=False`, `InsecureSkipVerify: true`, `rejectUnauthorized: false`, `ssl._create_unverified_context` in non-test code |
-| SEC-05 | No secrets or credentials in log output | Log calls containing `password`, `token`, `secret`, `apikey`, `private_key` as field names or in format strings with actual values |
-| SEC-06 | No `shell=True` (or equivalent) with user-controlled input | `subprocess.run(..., shell=True)`, `os.system(user_input)`, backtick execution with external data |
-| SEC-07 | No MD5 or SHA-1 for security operations (password hashing, HMAC, signatures) | `hashlib.md5`, `hashlib.sha1`, `MD5Digest`, `SHA1` in auth/crypto paths. Acceptable in non-security checksums with explicit comment. |
-| SEC-08 | No wildcard CORS in production endpoints | `Access-Control-Allow-Origin: *` on authenticated endpoints; `cors({ origin: '*' })` without environment gate |
-| SEC-09 | No internal stack traces, file paths, or version strings in external API responses | Raw exception objects serialized to HTTP responses; `traceback.format_exc()` in response bodies |
-| SEC-10 | No bypassed authentication or authorization checks | New handlers/endpoints without auth middleware invocation and no `// auth: N/A because <reason>` annotation |
-
----
-
-## Part 2: Security Reasoning Chain
-
-Apply this 5-step chain when reviewing any change that touches authentication, authorization, external input handling, SQL/NoSQL queries, subprocess calls, file I/O, cryptography, serialization, or configuration.
-
-### Step 1: Identify the Security Goal
-
-State what the code is trying to protect:
-- Confidentiality (data only accessible to authorized parties)?
-- Integrity (data cannot be tampered with)?
-- Availability (service cannot be denied or degraded by abuse)?
-- Non-repudiation (actions are auditable)?
-
-If the security goal is unclear from context, treat the risk as **High** by default.
-
-### Step 2: Check Hard Red Lines
-
-Run through SEC-01…SEC-10 for every changed file in scope. Flag any violation before continuing to Step 3. Hard red line violations are reported first in the security section, separate from other findings.
-
-### Step 3: Assess Blast Radius
-
-For each finding or suspected vulnerability, state:
-- **Who is affected?** (single user, all users of a tenant, all tenants, external parties)
-- **What is exploitable?** (read-only data exposure, data modification, code execution, denial of service)
-- **How likely is exploitation?** (actively exploited pattern, PoC available, theoretical)
-
-Use blast radius to set severity: `Critical` = full system or multi-tenant impact; `High` = single tenant; `Medium` = limited data exposure; `Low` = theoretical or very limited.
-
-### Step 4: Trace Generative Paths
-
-For code that handles external data, trace from source to sink across these paths:
-
-| Path | What to verify |
-|------|---------------|
-| **Input validation** | All entry points validate type, length, format, and reject unknown fields |
-| **Database queries** | Parameterized or ORM-abstracted; no string interpolation |
-| **Credential handling** | Sourced from environment/secrets manager; not logged; not compared with `==` (use constant-time) |
-| **Network calls** | TLS enforced; certificates verified; timeouts set |
-| **File operations** | Paths sanitized; no path traversal (`../`); permissions checked |
-| **Authentication** | Token/session validated; expiry enforced; revocation checked |
-| **Output rendering** | User content escaped before HTML/JS rendering |
-| **Cryptography** | Algorithms meet minimum key length; IVs are random; no reuse |
-| **Logging** | Sensitive fields redacted before write |
-| **Subprocess execution** | No shell injection; arguments passed as list, not string |
-
-### Step 5: Classify and Report
-
-For each security finding, report:
-
-```
-[SEC finding] <title> [SEC-## or RC-###]
-File: path/to/file:line
-Blast radius: <single user / tenant / all tenants / full system>
-Likelihood: <High / Medium / Low>
-Severity: <Critical / High / Medium / Low>
-Description: <what is wrong and why it is exploitable>
-Fix: <concrete remediation>
-Override annotation required: <Yes / No>
-```
-
----
-
-## Part 3: Security Context from Project Files
-
-When applying security analysis, also check these project-specific sources:
-
-- `draft/.ai-context.md` §Security Architecture — intended auth model, trust boundaries, data classification
-- `draft/tech-stack.md` — project's auth library, ORM, secrets manager (use these; do not introduce alternatives)
-- `draft/guardrails.md` §Hard Guardrails — any project-specific security rules added by the team
-
-Project-level security rules in `draft/guardrails.md` always take precedence over this file.
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 </core-file>
 
@@ -25855,97 +24343,10 @@ Project-level security rules in `draft/guardrails.md` always take precedence ove
 
 <core-file path="core/guardrails/code-quality.md">
 
-<<<<<<< HEAD
 # Guardrails — code-quality (Foundations Stub)
 
 Generalized public Draft baseline. Full ruleset ported from internal systems in subsequent work.
 See core/guardrails.md for entry point and loading rules.
-=======
-# Code Quality Guardrails
-
-Numbered rules for code authoring, structure, and developer experience. Applied by all Draft generation and implementation commands. Loaded alongside `draft/guardrails.md` (project-level); project rules take precedence on conflict.
-
-**Referenced by:** `draft implement`, `draft review`, `draft bughunt`, `draft deep-review`, `draft quick-review`
-
-**Last updated:** 2026-05-16 
-**Rule count:** 12
-
----
-
-## Rules
-
-### CQ-001: Follow the project's established style — never impose new conventions
-
-- **Rationale:** Consistency with existing code reduces cognitive load and merge friction. Style divergence is noise in reviews.
-- **Example:** If the project uses `snake_case` for functions, do not generate `camelCase`. Read existing files before generating.
-- **Source:** Clean Code (Martin); `draft/tech-stack.md ## Accepted Patterns`
-
-### CQ-002: One responsibility per function
-
-- **Rationale:** Multi-purpose functions are hard to test, debug, and review independently. Long functions hide logic branches.
-- **Example:** Extract validation, transformation, and persistence into separate functions rather than a single `processRequest()`.
-- **Source:** Clean Code (Martin); SOLID — Single Responsibility Principle
-
-### CQ-003: Prefer descriptive names over comments
-
-- **Rationale:** Comments rot when code changes. Self-documenting names are always current and reduce maintenance burden.
-- **Example:** Name a function `calculate_retry_backoff_ms` not `calc` with a comment explaining what it does.
-- **Source:** The Pragmatic Programmer (Hunt, Thomas); Clean Code (Martin)
-
-### CQ-004: Separate business logic from infrastructure
-
-- **Rationale:** Mixing domain logic with HTTP handlers, database calls, or queue consumers makes both untestable and non-portable.
-- **Example:** Domain functions accept plain types and return results. Handlers do transport parsing and response formatting. Never `SELECT` inside a route handler.
-- **Source:** Clean Architecture (Martin); 12-Factor App — Backing Services
-
-### CQ-005: Return early for preconditions — reduce nesting
-
-- **Rationale:** Deeply nested code hides the happy path and increases cognitive load. Each nesting level doubles the mental stack.
-- **Example:** Use guard clauses (`if err != nil { return err }`) at function entry rather than wrapping the entire body in conditionals.
-- **Source:** Clean Code (Martin); The Pragmatic Programmer
-
-### CQ-006: Include context in error messages
-
-- **Rationale:** "Error occurred" is not actionable. Operators and developers need to know what failed, with what input, and why.
-- **Example:** `fmt.Errorf("user %s not found in org %s: %w", userID, orgID, err)` — not `errors.New("not found")`.
-- **Source:** Release It! (Nygard); Google SRE — on-call ergonomics
-
-### CQ-007: Document the why, not the what
-
-- **Rationale:** Code shows what happens. Comments should explain non-obvious trade-offs, constraints, and intent that future maintainers cannot infer from code alone.
-- **Example:** `// Using retry=3: upstream API has ~2% transient failure rate (measured Q1 2026)` — not `// retry 3 times`.
-- **Source:** The Pragmatic Programmer; Working Effectively with Legacy Code (Feathers)
-
-### CQ-008: Update documentation alongside code in the same commit
-
-- **Rationale:** Stale docs are worse than no docs — they actively mislead. Documentation drift compounds over time.
-- **Example:** If changing an API endpoint signature, update the README, OpenAPI spec, and inline docstrings in the same commit.
-- **Source:** The Pragmatic Programmer — Orthogonality; DRY principle
-
-### CQ-009: Never expose internal stack traces in API responses
-
-- **Rationale:** Stack traces leak implementation details — file paths, library versions, internal module names — that aid attackers.
-- **Example:** Return `{"error": "internal_error", "message": "Request could not be processed"}` — not the raw exception with stack frames.
-- **Source:** OWASP Top 10 — Security Misconfiguration; Clean Architecture
-
-### CQ-010: Codebase analysis findings must be quantified
-
-- **Rationale:** "The code has some tech debt" is not actionable. Numbers enable prioritization and progress tracking.
-- **Example:** Report "23 functions exceed cyclomatic complexity 10" — not "high complexity detected."
-- **Source:** `core/knowledge-base.md` — Anti-Patterns: Cargo Cult
-
-### CQ-011: Remove imports and variables orphaned by your own changes
-
-- **Rationale:** Dead imports and unused variables introduced by a change are noise and may cause compilation errors or linter failures.
-- **Example:** If a refactor removes the only call to `parseToken()`, also remove the import of the token library in the same diff.
-- **Source:** Clean Code (Martin) — Dead Code
-
-### CQ-012: Changelogs and release notes must classify entries by type
-
-- **Rationale:** Consumers need to quickly locate breaking changes, new features, and security fixes without reading every line.
-- **Example:** Group entries under `Added`, `Changed`, `Deprecated`, `Removed`, `Fixed`, `Security` (Keep a Changelog format).
-- **Source:** Keep a Changelog standard; Semantic Versioning
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 </core-file>
 
@@ -25955,90 +24356,10 @@ Numbered rules for code authoring, structure, and developer experience. Applied 
 
 <core-file path="core/guardrails/design-norms.md">
 
-<<<<<<< HEAD
 # Guardrails — design-norms (Foundations Stub)
 
 Generalized public Draft baseline. Full ruleset ported from internal systems in subsequent work.
 See core/guardrails.md for entry point and loading rules.
-=======
-# Design Norms Guardrails
-
-Numbered rules governing HLD and LLD artifact depth, content split, diagram placement, traceability, and secrets handling. Applied by `draft decompose`, `draft review`, and `draft implement` when interacting with design artifacts.
-
-**Referenced by:** `draft decompose`, `draft implement`, `draft review`, `draft deep-review`, `draft change`
-
-**Last updated:** 2026-05-16 
-**Rule count:** 10
-
----
-
-## Rules
-
-### DN-001: HLD describes shape; LLD describes construction
-
-- **HLD** answers *what*: system boundaries, major components, data movement at narrative level, UI architecture, technology choices, dependencies, rollout intent, observability goals. No database DDL, no full API schemas, no class-level interfaces.
-- **LLD** answers *how*: modules, contracts, schemas, migrations, algorithms, error handling, configuration keys, test strategy, operational thresholds.
-- **Rationale:** Conflating depth in HLD bloats it for approvers who need architecture decisions, not implementation details.
-- **Source:** Clean Architecture (Martin); Designing Data-Intensive Applications (Kleppmann)
-
-### DN-002: HLD API surface is boundary-only
-
-- In HLD §Detailed Design, document boundary operations (REST paths, gRPC service/method names, event names) with one-line shape summaries only. Full request/response schemas, exhaustive error catalogs, and field-level constraints belong in LLD.
-- **Rationale:** Full schemas in HLD duplicate LLD and create two sources of truth that diverge.
-- **Source:** Building Microservices (Newman) — API boundary contracts
-
-### DN-003: Diagram placement by audience
-
-- **HLD §Architecture:** `flowchart`/container views showing system shape. No workflow sequence diagrams here.
-- **HLD §Detailed Design:** Mermaid sequence diagrams for critical cross-team happy paths only.
-- **LLD:** Sequences for non-trivial flows including material error branches, idempotency, and ordering. Split diagrams beyond ~12 steps.
-- **Rationale:** Architects reviewing HLD need structure diagrams. Implementers need sequence detail. Mixing both in HLD forces architects to read implementation noise.
-- **Source:** C4 Model (Brown) — level-appropriate diagrams
-
-### DN-004: Traceability from acceptance criteria to design
-
-- Link the track's `spec.md` acceptance criteria scorecard in design artifacts; do not paste the full spec body. Reference stable requirement IDs or AC labels in architecture summaries and component tables so reviewers can trace coverage.
-- **Rationale:** Without traceability, approvers cannot verify the design satisfies the spec without re-reading both documents in full.
-- **Source:** `draft/tracks/<id>/spec.md` — AC-linkage convention
-
-### DN-005: No secrets, PII, or live endpoints in design documents
-
-- Use placeholders (`<REDACTED>`, synthetic IDs, `<service-host>`). Diagrams and data model examples follow the same rule. Describe integration by system role and configuration key name — never production URLs, credentials, or real customer identifiers.
-- **Rationale:** Design docs are shared broadly (approvers, reviewers, docs systems). Secrets in docs are effectively leaked.
-- **Source:** OWASP — Sensitive Data Exposure; `core/guardrails/security.md` SEC-01
-
-### DN-006: LLD requires an approved HLD anchor
-
-- Before drafting LLD, verify an approved HLD exists for the same track. If none exists or approval is unclear, stop and list gaps and assumptions, or proceed only after explicit developer confirmation of a narrowed scope.
-- If LLD would contradict the HLD, call out the conflict explicitly — do not hide it or silently pick one.
-- **Rationale:** LLD written without an approved HLD optimizes implementation details before architecture decisions are settled — causing rework.
-- **Source:** `draft/tracks/<id>/hld.md` §Approvals gate
-
-### DN-007: HLD ↔ LLD mapping required
-
-- LLD must include a traceability table mapping each HLD component or section to the LLD section(s) covering it.
-- **Rationale:** Without explicit mapping, reviewers cannot verify LLD coverage of the HLD or detect scope gaps.
-- **Source:** `core/templates/lld.md` — traceability section
-
-### DN-008: LLD cites authoritative contract artifacts, not duplicates them
-
-- In LLD, cite repo paths to OpenAPI/protobuf/GraphQL/schema files as source of truth for interface contracts. Avoid pasting entire specs; a minimal excerpt is acceptable only when the file is not in the repo.
-- **Rationale:** Inlined specs diverge from the implementation faster than referenced ones.
-- **Source:** DRY — The Pragmatic Programmer
-
-### DN-009: Concurrency and ordering must be explicit in LLD
-
-- LLD §Data Model states invariants (keys, state machines, consistency levels). Add §Concurrency and Ordering where relevant: locks, idempotency keys, event delivery semantics and ordering guarantees.
-- **Rationale:** Concurrency bugs are the hardest to reproduce and the most expensive to fix in production. Documenting them forces explicit reasoning.
-- **Source:** Designing Data-Intensive Applications (Kleppmann) — consistency and consensus
-
-### DN-010: Observability detail belongs in LLD, intent belongs in HLD
-
-- **HLD:** What must be observed for the feature — SRE-facing goals, key metric categories, alert intent.
-- **LLD:** Concrete metric names, label dimensions, exemplar queries, thresholds where known.
-- **Rationale:** Approvers need to know *that* the design is observable; implementers need to know *how* to instrument it. These are different audiences at different review stages.
-- **Source:** Google SRE Book — SLO definition; `draft/tracks/<id>/hld.md` §Checklist / §Observability
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 </core-file>
 
@@ -26048,144 +24369,10 @@ Numbered rules governing HLD and LLD artifact depth, content split, diagram plac
 
 <core-file path="core/guardrails/review-checks.md">
 
-<<<<<<< HEAD
 # Guardrails — review-checks (Foundations Stub)
 
 Generalized public Draft baseline. Full ruleset ported from internal systems in subsequent work.
 See core/guardrails.md for entry point and loading rules.
-=======
-# Review Checks Guardrails
-
-Numbered cross-cutting checks that every Draft review command must apply regardless of language, scope, or track type. These are the non-negotiable baseline. Language-specific and project-specific guardrails (`core/guardrails/language-standards.md`, `draft/guardrails.md`) are additive on top of this baseline.
-
-**Referenced by:** `draft review`, `draft quick-review`, `draft bughunt`, `draft deep-review`, `draft assist-review`
-
-**Security red lines** (RC-SEC-01…RC-SEC-10) are a subset of these checks and are treated as absolute — see `core/guardrails/security.md` for the full enforcement mechanism.
-
-**Last updated:** 2026-05-16 
-**Rule count:** 15
-
----
-
-## Rules
-
-### RC-001: No hardcoded secrets or credentials
-
-- Source code must never contain passwords, API keys, tokens, private keys, or connection strings with credentials inline.
-- **Detection:** Grep for common patterns: `password =`, `api_key =`, `secret =`, `-----BEGIN`, `token =` with non-variable RHS; entropy analysis on string literals.
-- **Fix:** Use environment variables, secrets manager references, or config injection. Key name in code; value from environment.
-- **Severity if violated:** Critical — blocks review approval.
-- **Override:** `// SECURITY-OVERRIDE: <ticket> <justification>` annotation required if intentional (e.g., test fixture with non-real value clearly named `FAKE_KEY_FOR_TESTING`).
-- **Source:** `core/guardrails/security.md` SEC-01; OWASP Top 10 A07
-
-### RC-002: Parameterized queries for all database interactions
-
-- String concatenation or interpolation in SQL, NoSQL, or search queries is never acceptable regardless of perceived input safety.
-- **Detection:** Search for query string construction using `+`, f-strings, `%s %` (non-parameterized), template literals containing `SELECT`/`INSERT`/`UPDATE`/`DELETE`.
-- **Fix:** Use the ORM's parameterized API, prepared statements, or the framework's query builder.
-- **Severity if violated:** Critical.
-- **Source:** `core/guardrails/security.md` SEC-03; OWASP Top 10 A03 — Injection
-
-### RC-003: Validate and sanitize inputs at system boundaries
-
-- All external input (HTTP requests, CLI args, message queue payloads, file contents, webhook bodies, environment variables consumed at runtime) must be validated and rejected before reaching business logic.
-- **Detection:** Trace data flow from entry points to first use; check for schema validation, type coercion, and bounds checking.
-- **Fix:** Add schema validation (JSON Schema, Pydantic, Joi, etc.) at the handler layer. Reject unknown fields by default.
-- **Severity if violated:** High — blocking for new endpoints/handlers.
-- **Source:** `core/guardrails/security.md` SEC-03; OWASP ASVS V5
-
-### RC-004: TLS required for all external communication
-
-- HTTP clients must not disable certificate verification. `verify=False`, `InsecureSkipVerify: true`, `rejectUnauthorized: false` in non-test code is a hard block.
-- **Detection:** Search for the above patterns in changed files.
-- **Severity if violated:** Critical.
-- **Source:** `core/guardrails/security.md` SEC-04; OWASP Top 10 A02
-
-### RC-005: Authentication and authorization checks close to resource access
-
-- Access control checks must occur in the handler or service method, not only in middleware. Internal routes, background jobs, and direct service calls bypass middleware.
-- **Detection:** Review new handlers and service methods for presence of auth check or explicit `// auth: not required because <reason>` annotation.
-- **Severity if violated:** Critical for new endpoints; High for existing code paths.
-- **Source:** `core/guardrails/security.md` SEC-10; OWASP Top 10 A01 — Broken Access Control
-
-### RC-006: No PII or credentials in logs
-
-- Logs must not contain passwords, tokens, API keys, full credit card numbers, SSNs, or other sensitive personal data. User IDs (non-guessable) are acceptable; email addresses, names, and health data are not.
-- **Detection:** Search for log calls containing `password`, `token`, `secret`, `email`, `ssn`, `dob` as field names or in format strings.
-- **Fix:** Apply a sanitize/redact step before logging. Log opaque identifiers (user_id, request_id) not raw personal data.
-- **Severity if violated:** High.
-- **Source:** `core/guardrails/security.md` SEC-05; GDPR / CCPA; OWASP Logging Cheat Sheet
-
-### RC-007: Structured logging — no print or raw console statements in production code
-
-- Production code must use the project's structured logging library. `print()`, `console.log()`, `fmt.Println()` in production paths produce unstructured, unparseable output.
-- **Detection:** Grep for `print(`, `console.log(`, `console.error(`, `fmt.Print` in non-test files.
-- **Exception:** Test files and one-shot scripts are exempt.
-- **Severity if violated:** Medium.
-- **Source:** `draft/tech-stack.md` — project logging library; Google SRE — observability
-
-### RC-008: Handle errors explicitly — never swallow exceptions
-
-- Catch-all error handlers that log and return success, empty catch blocks, and ignored error return values are blocking findings.
-- **Detection:** Search for bare `catch {}`, `except: pass`, `_ = someFunc()` on error-returning calls, `err != nil` checks that only log without returning/propagating.
-- **Fix:** Catch specific exceptions; log once at the handling point with context (CQ-006); return an actionable error upstream.
-- **Severity if violated:** High — silent failures compound into data corruption.
-- **Source:** `core/guardrails/code-quality.md` CQ-006; Release It! (Nygard) — stability patterns
-
-### RC-009: Tests for new functionality — happy path and at least one failure path
-
-- Every new function, handler, or module must have at minimum one passing test and one failure/edge-case test. Unhappy paths catch the bugs that matter most in production.
-- **Detection:** Check for presence of test file changes alongside source changes. Flag if source-only diff adds exported behavior with zero test additions.
-- **Exception:** Pure refactors with no behavior change (verify via diff) are exempt if existing tests still pass.
-- **Severity if violated:** High for new public interfaces; Medium for internal helpers.
-- **Source:** Growing Object-Oriented Software, Guided by Tests (Freeman, Pryce); `draft/workflow.md` — TDD preference
-
-### RC-010: No dead code, commented-out blocks, or stale TODOs in submitted changes
-
-- Unused functions, commented-out code blocks, and TODO/FIXME/HACK comments introduced by the current change must not be submitted.
-- **Detection:** Grep the diff for `# TODO`, `// TODO`, `/* TODO`, `//commented`, `#commented`, large blocks of `//`-prefixed code.
-- **Exception:** TODOs with a linked issue ID (`// TODO(#1234): ...`) are acceptable if the issue is open.
-- **Severity if violated:** Low — non-blocking but must be listed.
-- **Source:** `core/guardrails/code-quality.md` CQ-011; Clean Code (Martin)
-
-### RC-011: Escape user content before rendering in UI
-
-- User-controlled data must not be inserted into the DOM via `innerHTML`, `dangerouslySetInnerHTML`, `v-html`, or equivalent without sanitization.
-- **Detection:** Search diff for those patterns with non-static content.
-- **Fix:** Use framework's safe rendering (React JSX text nodes, Angular binding). If raw HTML is required, sanitize with a vetted library (DOMPurify).
-- **Severity if violated:** Critical for user-facing content.
-- **Source:** `core/guardrails/security.md` SEC-08-adjacent; OWASP Top 10 A03 — XSS
-
-### RC-012: No breaking changes to public interfaces without a deprecation period
-
-- Exported function signatures, API response shapes, error codes, and serialization formats (protobuf field numbers, JSON field names) must not change in a backward-incompatible way without a versioning or deprecation strategy.
-- **Detection:** Compare exported symbol signatures and API contracts in the diff against the previous version.
-- **Fix:** Add a new overloaded version, bump the API version, or run a deprecation period with the old interface forwarding to the new one.
-- **Severity if violated:** Critical if consumed by other services; High for internal interfaces.
-- **Source:** Building Microservices (Newman) — API versioning; `core/guardrails/design-norms.md` DN-002
-
-### RC-013: Architecture boundary violations must be flagged
-
-- New cross-module imports must follow the established dependency direction from `draft/graph/module-graph.jsonl` (when present) or `draft/.ai-context.md` §Component Map. Reverse-direction dependencies and direct imports across non-adjacent layers are blocking.
-- **Detection:** For each new import in the diff, verify it does not invert an existing dependency edge.
-- **Severity if violated:** High — architecture violations are cheap to fix when caught at review, expensive after they proliferate.
-- **Source:** Clean Architecture (Martin) — Dependency Rule; `draft/.ai-context.md` §Cross-Module Integration Points
-
-### RC-014: Dependency manifest changes trigger vulnerability check
-
-- When a pull request modifies `package.json`, `requirements.txt`, `go.mod`, `Cargo.toml`, `pom.xml`, or `build.gradle`, a dependency vulnerability check must be run or recommended.
-- **Detection:** Check diff for changes to the above files.
-- **Action:** Run `npm audit`, `pip-audit`, `go list -m -json all | nancy`, `cargo audit`, or the project's configured scanner from `draft/tech-stack.md`. Include results in the review report.
-- **Severity:** Based on CVSS score of findings (Critical ≥9.0, High ≥7.0).
-- **Source:** `core/guardrails/security.md` — dependency triage; OWASP Top 10 A06 — Vulnerable Components
-
-### RC-015: Observability coverage for new code paths
-
-- New API endpoints, background jobs, event handlers, and scheduled tasks must include: at minimum one structured log at entry/exit and one metric emission point (or a comment explaining why observability is not applicable).
-- **Detection:** Check new handler/service additions in diff for log statements and metric increments.
-- **Severity if violated:** Medium.
-- **Source:** Google SRE Book — SLOs; Netflix Full Cycle Developers — observability
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 </core-file>
 
@@ -26195,160 +24382,10 @@ Numbered cross-cutting checks that every Draft review command must apply regardl
 
 <core-file path="core/guardrails/secure-patterns.md">
 
-<<<<<<< HEAD
 # Guardrails — secure-patterns (Foundations Stub)
 
 Generalized public Draft baseline. Full ruleset ported from internal systems in subsequent work.
 See core/guardrails.md for entry point and loading rules.
-=======
-# Secure Coding Patterns
-
-Language-specific secure coding patterns applied by `draft implement`, `draft review`, and `draft bughunt` when working with security-sensitive code paths. Loaded alongside `core/guardrails/security.md`.
-
-Each section covers the most common failure modes for the language. These are supplementary to the Hard Red Lines in `security.md` — the red lines apply to all languages; these patterns provide language-specific guidance on *how* to satisfy them.
-
-`draft/guardrails.md` project rules take precedence. `core/guardrails.md` C++ rules take precedence for C++ code.
-
-**Last updated:** 2026-05-16
-
----
-
-## Python
-
-### Credential Handling
-- Source secrets from `os.environ` or a secrets manager SDK; never inline. Use `os.environ["KEY"]` not `os.getenv("KEY", "default-secret")` for required secrets.
-- Compare password/token with `hmac.compare_digest()` — not `==`. Timing attacks exploit `==` short-circuit evaluation.
-- Hash passwords with `bcrypt`, `argon2-cffi`, or `hashlib.scrypt`. Never `hashlib.md5` or `hashlib.sha1` for passwords.
-
-### SQL / Database
-- Use the ORM's parameterized API (`cursor.execute("SELECT * FROM t WHERE id = %s", (uid,))`) — never f-strings or `.format()` in query strings.
-- Prefer ORM query builders (`User.objects.filter(id=uid)`) over raw SQL unless raw is required for performance with a documented justification.
-
-### Subprocess
-- Pass arguments as a list: `subprocess.run(["ls", "-la", path])` — never `subprocess.run(f"ls -la {path}", shell=True)`.
-- Validate `path` against an allowlist of acceptable values before any subprocess call that includes it.
-
-### Serialization
-- Never `pickle.load()` or `pickle.loads()` on untrusted data. Use JSON or a schema-validated format.
-- Validate JSON payloads with a schema (e.g., `pydantic`, `jsonschema`) before accessing fields.
-
-### Logging
-- Use `%s` placeholders: `logger.info("user %s logged in", user_id)` — not f-strings (prevents accidental eager evaluation of sensitive objects).
-- Apply a sanitize step before logging objects: strip `password`, `token`, `secret`, `key` fields.
-
----
-
-## Go
-
-### Credential Handling
-- Source secrets from environment variables (`os.Getenv`) or a secrets manager. Never hard-code default values that could be production-like.
-- Use `subtle.ConstantTimeCompare()` for HMAC or token comparison.
-- Use `bcrypt` (`golang.org/x/crypto/bcrypt`) for password hashing.
-
-### SQL / Database
-- Use `db.QueryContext(ctx, "SELECT ... WHERE id = ?", id)` with placeholders — never `fmt.Sprintf` in query strings.
-- Prefer the project's ORM or query builder if one is established in `draft/tech-stack.md`.
-
-### Subprocess / Exec
-- Use `exec.Command("cmd", arg1, arg2)` — not `exec.Command("sh", "-c", userInput)`.
-- Validate all file paths with `filepath.Clean` and check the result stays within the expected directory.
-
-### HTTP Clients
-- Always set `Timeout` on `http.Client{}`. An infinite timeout enables slow-loris DoS.
-- Do not set `InsecureSkipVerify: true` in `tls.Config` outside of test helpers explicitly tagged `// test-only`.
-
-### Logging
-- Use structured logging (e.g., `slog`, `zap`, `zerolog`). No `fmt.Println` in production code paths.
-- Redact sensitive fields before passing to logger: use a custom `Stringer` or explicit field masking.
-
----
-
-## TypeScript / JavaScript
-
-### Credential Handling
-- Source secrets from `process.env.VAR_NAME`. Never commit `.env` files with real values. Use `.env.example` for documentation.
-- Use `crypto.timingSafeEqual()` for comparing secrets.
-- Hash passwords with `bcrypt` or `argon2`. Never `crypto.createHash('md5')` for passwords.
-
-### SQL / Database
-- Use parameterized queries: `db.query("SELECT * FROM users WHERE id = $1", [userId])` — never template literals in query strings.
-- Use the ORM's safe query API (Prisma, TypeORM, Sequelize) — flag raw query usage for review.
-
-### Output Rendering
-- Never set `element.innerHTML = userInput` or use `dangerouslySetInnerHTML` with unsanitized data.
-- Use `textContent` for text, DOMPurify for HTML that must accept markup.
-- In React: JSX text nodes auto-escape; `{userInput}` is safe. `dangerouslySetInnerHTML` is always a flag.
-
-### Subprocess
-- Use `child_process.execFile(cmd, [arg1, arg2])` — not `exec(userInput)` or `exec(`cmd ${userInput}`)`.
-
-### Fetch / HTTP
-- Never disable TLS in `https.request` options. `rejectUnauthorized: false` in non-test code is SEC-04 violation.
-- Set explicit timeouts on all outbound HTTP calls using `AbortController` or library timeout option.
-
-### Logging
-- Use the project's structured logger. No `console.log` / `console.error` in production modules.
-- Never log `req.body`, `req.headers.authorization`, or any object that may contain credentials directly.
-
----
-
-## C / C++ (Supplement to `core/guardrails.md`)
-
-The authoritative C++ rules are in `core/guardrails.md` (G1–G8). These are supplementary security-specific patterns.
-
-### Memory Safety
-- Validate all buffer sizes before `memcpy`, `strcpy`, `sprintf` — prefer `memcpy_s`, `strncpy`, `snprintf` with explicit size bounds.
-- Treat all data from sockets, files, or IPC as untrusted. Validate length fields before using them as loop bounds or allocation sizes.
-
-### String Handling
-- Never use `sprintf(buf, format, userInput)` where `format` is user-controlled — format string injection.
-- Use `snprintf` with the buffer size always. Check the return value for truncation.
-
-### Integer Safety
-- Check for integer overflow before arithmetic used as array index or allocation size.
-- Prefer `size_t` for sizes and counts; be explicit about signed/unsigned boundary crossings.
-
-### Subprocess / System Calls
-- Never `system(userInput)` or `popen(userInput, "r")`. Use `execve` with explicit argument arrays.
-- Sanitize or reject strings containing `;`, `|`, `&`, `$`, `` ` `` before any shell-adjacent API.
-
----
-
-## Ruby
-
-### Credential Handling
-- Source secrets from `ENV['KEY']`. Use `Rails.application.credentials` or `dotenv` for local dev. Never commit secrets.
-- Use `ActiveSupport::SecurityUtils.secure_compare` for constant-time token comparison.
-- Hash passwords with `bcrypt` (`has_secure_password`). Never MD5 or SHA1 for auth.
-
-### SQL
-- Use ActiveRecord query methods: `User.where(id: uid)` — never string interpolation in `where` clauses: `where("id = #{uid}")`.
-- Use `sanitize_sql` when raw SQL is unavoidable.
-
-### ERB / Output
-- Use `<%= h(user_input) %>` or rely on Rails' automatic HTML escaping. Never `<%= raw(user_input) %>` without sanitization.
-- Use `sanitize(html, tags: [...])` (ActionView) when rich text input must be accepted.
-
----
-
-## Shell / Bash
-
-### Variable Quoting
-- Always double-quote variable expansions: `"$VAR"` not `$VAR` — unquoted variables undergo word-splitting and glob expansion.
-- Never use `eval "$USER_INPUT"` — use `case`, `[[ ]]`, or named dispatch tables instead.
-
-### Command Injection
-- Validate input against a strict allowlist before using in any command: `[[ "$input" =~ ^[a-zA-Z0-9_-]+$ ]]`.
-- Prefer passing data through files or environment variables rather than command arguments when handling untrusted content.
-
-### Privilege
-- Minimize use of `sudo`; document each use with a comment explaining why it is necessary.
-- Avoid `chmod 777`; use the minimum permissions required.
-
-### Secrets
-- Never echo secrets to stdout or log files. Redirect sensitive command output to `/dev/null` when the value is not needed.
-- Use `read -s` for interactive secret input. Source secrets from files with restricted permissions (`chmod 600`).
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 </core-file>
 
@@ -26358,112 +24395,10 @@ The authoritative C++ rules are in `core/guardrails.md` (G1–G8). These are sup
 
 <core-file path="core/guardrails/dependency-triage.md">
 
-<<<<<<< HEAD
 # Guardrails — dependency-triage (Foundations Stub)
 
 Generalized public Draft baseline. Full ruleset ported from internal systems in subsequent work.
 See core/guardrails.md for entry point and loading rules.
-=======
-# Dependency Vulnerability Triage
-
-Procedure for checking dependency manifests for known vulnerabilities during code review and bug hunting. Applied whenever a change modifies a dependency manifest file (`RC-014`).
-
-**Referenced by:** `draft review` Stage 1, `draft bughunt`, `draft deep-review` Phase 3
-
-**Last updated:** 2026-05-16
-
----
-
-## Trigger Condition
-
-Run this procedure when a diff or module scan includes changes to any of:
-
-| File | Ecosystem |
-|------|-----------|
-| `package.json`, `package-lock.json`, `yarn.lock`, `pnpm-lock.yaml` | Node.js / JavaScript |
-| `requirements.txt`, `pyproject.toml`, `Pipfile`, `Pipfile.lock`, `poetry.lock` | Python |
-| `go.mod`, `go.sum` | Go |
-| `Cargo.toml`, `Cargo.lock` | Rust |
-| `pom.xml`, `build.gradle`, `build.gradle.kts`, `gradle.properties` | JVM (Java, Kotlin, Scala) |
-| `Gemfile`, `Gemfile.lock` | Ruby |
-| `*.csproj`, `packages.config` | .NET |
-
-Also run during `draft deep-review` Phase 3 as a general dependency health check, regardless of whether manifest files changed.
-
----
-
-## Step 1: Check for Configured Scanner
-
-Read `draft/tech-stack.md` for a `## Security Tooling` or `## Dependency Scanning` section. If a scanner is configured (e.g., Trivy, Snyk, Dependabot), use that. Otherwise, use the ecosystem-default tools below.
-
----
-
-## Step 2: Run Vulnerability Scan
-
-Execute the appropriate scanner for the detected ecosystem. Use the results as-is — do not modify dependency files as part of review.
-
-| Ecosystem | Command |
-|-----------|---------|
-| Node.js | `npm audit --json` or `yarn audit --json` |
-| Python | `pip-audit --format=json` or `safety check --json` |
-| Go | `govulncheck ./...` or `nancy` (pipe `go list -m -json all \| nancy`) |
-| Rust | `cargo audit --json` |
-| JVM | `./gradlew dependencyCheckAnalyze` or `mvn dependency-check:check` |
-| Ruby | `bundle audit check --update` |
-| .NET | `dotnet list package --vulnerable` |
-| Multi-ecosystem | `trivy fs --scanners vuln .` (if Trivy is installed) |
-
-If the scanner is not installed, note: "Dependency scanner not available — recommend running `<command>` in CI."
-
----
-
-## Step 3: Classify Findings by CVSS Score
-
-| CVSS Range | Severity in Report |
-|------------|-------------------|
-| 9.0 – 10.0 | **Critical** — blocks review approval |
-| 7.0 – 8.9 | **High** — should fix before merge |
-| 4.0 – 6.9 | **Medium** — fix within the next sprint |
-| 0.1 – 3.9 | **Low** — note for backlog |
-
-For each finding, report: package name, installed version, fixed version, CVE ID(s), CVSS score, and a one-line description of the vulnerability.
-
----
-
-## Step 4: Assess Exploitability in Context
-
-Not every CVE applies to a project's actual usage. Before escalating a finding:
-
-1. Check if the vulnerable code path is actually reachable in the project (e.g., a CVE in an XML parser that the project doesn't use in a way that hits the vulnerable path).
-2. Check if the project's `draft/tech-stack.md` documents an accepted exception for the package (some transitive deps cannot be upgraded immediately).
-3. Check if the CVE is in a `devDependency` / test-only package that never ships to production.
-
-Findings that are not reachable, are in dev-only deps, or have a documented exception in `tech-stack.md` → downgrade by one severity level and note the reason.
-
----
-
-## Step 5: Report Format
-
-Include a **Dependency Vulnerabilities** subsection in the review or bug report:
-
-```markdown
-## Dependency Vulnerabilities [RC-014]
-
-Scanner: <tool used or "not available">
-Scan date: <ISO date>
-
-| Package | Installed | Fixed In | CVE | CVSS | Severity | Notes |
-|---------|-----------|----------|-----|------|----------|-------|
-| lodash | 4.17.4 | 4.17.21 | CVE-2021-23337 | 7.2 | High | Prototype pollution |
-| ... | | | | | | |
-
-Critical: N High: N Medium: N Low: N
-
-Recommendation: <upgrade command or note if scanner unavailable>
-```
-
-If no vulnerabilities are found, write: "No known vulnerabilities found in direct or transitive dependencies as of <date>."
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 </core-file>
 
@@ -26473,213 +24408,10 @@ If no vulnerabilities are found, write: "No known vulnerabilities found in direc
 
 <core-file path="core/guardrails/language-standards.md">
 
-<<<<<<< HEAD
 # Guardrails — language-standards (Foundations Stub)
 
 Generalized public Draft baseline. Full ruleset ported from internal systems in subsequent work.
 See core/guardrails.md for entry point and loading rules.
-=======
-# Language Standards
-
-Per-language code quality and style standards for Draft quality commands. Loaded selectively based on the detected language stack.
-
-**Loading:** `core/shared/draft-context-loading.md` Layer 0.5 specifies which commands load this file. The reviewing command identifies the project language from `draft/tech-stack.md` and applies only the relevant section(s).
-
-**Precedence:** For C/C++ code, `core/guardrails.md` (G1–G8) is the authoritative ruleset — this file's C++ section only supplements it with additional standards not covered by G1–G8. `draft/guardrails.md` project-level rules always take precedence over everything here.
-
-**Last updated:** 2026-05-16
-
----
-
-## Detecting the Project Stack
-
-Read `draft/tech-stack.md` `## Languages` and `## Primary Language` to identify the stack. Apply:
-- The matching section(s) below
-- `core/guardrails/secure-patterns.md` for the same language (when in security mode)
-- `core/guardrails.md` for C/C++ (always, if C/C++ detected)
-
----
-
-## C / C++
-
-**Authoritative:** `core/guardrails.md` G1–G8 (object lifecycle, ownership, async safety, type safety, const, test hooks, class design, STL). Apply all of those first.
-
-**Additional standards:**
-
-### Naming
-- Classes/structs: `PascalCase`
-- Functions and methods: `PascalCase` (matching G2 style conventions for the codebase)
-- Local variables and parameters: `snake_case` or `camelCase` — match the file's existing convention
-- Constants and macros: `kCamelCase` for constants; `SCREAMING_SNAKE_CASE` for macros (prefer `constexpr` over macros for values)
-- Member variables: `snake_case_` with trailing underscore (match existing file style)
-
-### Code Quality
-- No `using namespace std;` in header files — pollutes includer's namespace
-- No `#define` for magic numbers — use `constexpr` or `enum class`
-- Prefer `static_assert` over runtime assertions for compile-time verifiable invariants
-- Destructors that release resources must be declared virtual in base classes with virtual functions
-- Prefer `std::string_view` over `const std::string&` for read-only string parameters (avoids unnecessary copies)
-
-### Error Handling
-- Return error codes or status objects consistently — do not mix exception-based and code-based error handling within the same module
-- Log error context before returning an error: function name, relevant IDs, received vs expected values
-- Constructor failures: prefer factory functions that return `StatusOr<T>` over throwing constructors
-
----
-
-## Python
-
-### Naming
-- Modules and packages: `snake_case`
-- Classes: `PascalCase`
-- Functions, methods, variables: `snake_case`
-- Constants: `SCREAMING_SNAKE_CASE`
-- Private members: `_single_leading_underscore` (convention); `__double` only for name mangling
-
-### Code Quality
-- Prefer `pathlib.Path` over `os.path` string manipulation for file paths
-- Use `dataclasses`, `NamedTuple`, or `TypedDict` for structured data — avoid bare dicts for complex schemas
-- `f-strings` for formatting in Python 3.6+; no `.format()` or `%` formatting in new code unless the context requires it (logging — see below)
-- Avoid mutable default arguments: `def foo(items=[])` → `def foo(items=None): items = items or []`
-- Prefer explicit exception types over bare `except:` or `except Exception:` — catch what you can handle
-- Use type annotations (`typing` module or built-in generics in 3.10+) for all public function signatures
-
-### Error Handling
-- Raise specific exception subclasses with a message that includes context (what was expected, what was received)
-- Use `contextlib.suppress` only for truly ignorable errors — never suppress `Exception`, `BaseException`, or `OSError` broadly
-- Log exceptions with `logger.exception(msg)` (captures traceback) rather than `logger.error(msg)` in exception handlers
-
-### Imports
-- Standard library → third-party → local, separated by blank lines (isort convention)
-- No wildcard imports: `from module import *` — always import specific names
-- No circular imports — restructure to use dependency injection or move shared code to a shared module
-
----
-
-## Go
-
-### Naming
-- Packages: lowercase, single word, no underscores
-- Exported identifiers: `PascalCase`
-- Unexported identifiers: `camelCase`
-- Acronyms: treat as words — `userID` not `userId`; `parseURL` not `parseUrl`; `HttpServer` only if the whole name is an acronym
-- Interface names: single-method interfaces use the verb + `-er` suffix: `Reader`, `Writer`, `Closer`
-
-### Code Quality
-- Return errors as the last return value; name it `err` in call sites
-- Errors are values: construct with `fmt.Errorf("op %s: %w", name, err)` to wrap context
-- No panic in library code — only in `main` or clearly documented `Must*` functions
-- Use `context.Context` as the first argument of all functions that do I/O, make network calls, or may block
-- Prefer table-driven tests with `t.Run` sub-tests over duplicated test functions
-- Use `defer` for cleanup (files, locks, connections) immediately after the resource is acquired — not at the end of a long function
-
-### Error Handling
-- Always check and propagate errors — no `_ = err` except when semantically correct (e.g., `defer f.Close()` when the write has already succeeded)
-- Add context to errors: `fmt.Errorf("loading config from %s: %w", path, err)` — not just re-wrapping
-- Distinguish recoverable from terminal errors: use sentinel errors (`var ErrNotFound = errors.New(...)`) for expected conditions that callers handle
-
----
-
-## TypeScript
-
-### Naming
-- Types, interfaces, classes, enums: `PascalCase`
-- Variables, functions, methods: `camelCase`
-- Constants: `SCREAMING_SNAKE_CASE` for module-level constants; `camelCase` for local
-- Files: `kebab-case.ts` for modules; `PascalCase.tsx` for React components (match project convention)
-
-### Code Quality
-- Use `unknown` instead of `any` for untyped external data — force narrowing before use
-- Prefer `readonly` for arrays and object properties that should not be mutated
-- Use `interface` for object shapes that may be extended; `type` for unions, intersections, mapped types
-- Prefer strict null checking — no `!` (non-null assertion) unless you have a comment explaining why it is safe
-- Use `satisfies` operator (TS 4.9+) to validate literal objects against a type without widening
-- Never use `// @ts-ignore` — use `// @ts-expect-error: <reason>` with a specific reason, or fix the type
-
-### Error Handling
-- Use discriminated union result types for expected failure paths: `{ ok: true; value: T } | { ok: false; error: string }` — not throwing for control flow
-- Do not swallow errors in `catch` blocks — at minimum log with context before continuing
-- `async/await` over `.then().catch()` chains for readability; always `await` or explicitly handle the returned promise
-
----
-
-## JavaScript (Non-TypeScript)
-
-All TypeScript naming and error handling standards apply. Additionally:
-
-- Document expected types with JSDoc `@param {string}`, `@returns {Promise<User>}` on all public functions
-- Use `===` for all equality — never `==`
-- No `var` — use `const` by default, `let` only when reassignment is needed
-- Use optional chaining `?.` and nullish coalescing `??` over manual null guards
-
----
-
-## Ruby
-
-### Naming
-- Classes, modules: `PascalCase`
-- Methods, variables: `snake_case`
-- Constants: `SCREAMING_SNAKE_CASE`
-- Predicates (return boolean): end with `?`: `valid?`, `empty?`
-- Dangerous methods (mutate receiver or raise): end with `!`: `save!`, `update!`
-
-### Code Quality
-- Prefer `frozen_string_literal: true` at the top of every file
-- Use `Kernel#pp` only in development — never in production code
-- Prefer `map`, `select`, `reject`, `reduce` over imperative loops for collections
-- Use `Struct` or `Data.define` (Ruby 3.2+) for value objects instead of hash literals with known keys
-- Avoid `rescue Exception` — rescue specific error classes
-
-### Error Handling
-- Raise with a descriptive message: `raise ArgumentError, "expected positive integer, got #{value.inspect}"`
-- Use `rescue => e; log_error(e); raise` when catching and re-raising — never silently swallow
-- In Rails: use `rescue_from` in controllers to handle expected error types centrally
-
----
-
-## Rust
-
-### Naming
-- Structs, enums, traits: `PascalCase`
-- Functions, methods, variables, modules: `snake_case`
-- Constants and statics: `SCREAMING_SNAKE_CASE`
-- Type parameters: single capital letters (`T`, `E`) or short `PascalCase` names
-
-### Code Quality
-- Use `Result<T, E>` for fallible operations; `Option<T>` for optional values — never `unwrap()` or `expect()` in library code (acceptable in tests and `main`)
-- Prefer `?` operator for early error return over explicit `match`/`if let` for errors
-- Use `thiserror` for library error types; `anyhow` for application-level error aggregation
-- Follow ownership conventions: pass `&T` for read-only, `&mut T` for mutation, `T` to transfer ownership
-- Clippy clean: all new code must pass `clippy::all` or document exceptions with `#[allow(clippy::rule_name)] // reason`
-
-### Error Handling
-- Error types must implement `std::error::Error` — use `thiserror::Error` derive
-- Add context at each call site: `.context("reading config file")`, `.with_context(|| format!("processing record {id}"))`
-- Never `panic!` in library code — convert to `Result`
-
----
-
-## Shell / Bash
-
-### Style
-- Script header: `#!/usr/bin/env bash` and `set -euo pipefail` on the second line — no exceptions
-- Function names: `snake_case`
-- Variable names: local variables `snake_case`; exported/global variables `SCREAMING_SNAKE_CASE`
-- Constants: `readonly CONSTANT_NAME="value"`
-
-### Code Quality
-- Always quote variable expansions: `"$var"` — unquoted variables are a common source of bugs
-- Use `[[ ]]` for conditionals over `[ ]` — safer, more predictable
-- Use `$(command)` for command substitution over backticks
-- Check exit codes of critical commands: `if ! cmd; then ... fi` or `cmd || die "msg"`
-- No `which` to find executables — use `command -v` instead
-- `set -e` alone is not enough — always pair with `set -u` (unset variables as errors) and `set -o pipefail`
-
-### Error Handling
-- Define a `die()` function: `die() { echo "ERROR: $*" >&2; exit 1; }` and use it for all fatal errors
-- Print errors to stderr (`>&2`), normal output to stdout
-- Trap `ERR` and `EXIT` for cleanup: `trap cleanup EXIT`
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 </core-file>
 

@@ -27,7 +27,8 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 BUILD_SCRIPT="$ROOT_DIR/scripts/build-integrations.sh"
 COPILOT_OUTPUT="$ROOT_DIR/integrations/copilot/.github/copilot-instructions.md"
 BASELINE="$(mktemp)"
-trap 'rm -f "$BASELINE"' EXIT
+_errfile="$(mktemp)"
+trap 'rm -f "$BASELINE" "$_errfile"' EXIT
 
 source "$SCRIPT_DIR/test-helpers.sh"
 
@@ -41,12 +42,13 @@ assert "build-integrations.sh exists" \
 assert "build-integrations.sh is executable" \
     "$([[ -x "$BUILD_SCRIPT" ]] && echo true || echo false)"
 
-# --- Run the build ---
+# --- Run the build (single invocation; capture stdout and stderr separately) ---
 echo ""
 echo "## Running build..."
 if [[ -f "$BUILD_SCRIPT" && -x "$BUILD_SCRIPT" ]]; then
-    BUILD_OUTPUT=$("$BUILD_SCRIPT" 2>&1) || true
-    echo "$BUILD_OUTPUT" | head -5
+    BUILD_STDOUT="$("$BUILD_SCRIPT" 2>"$_errfile")" || true
+    BUILD_STDERR="$(cat "$_errfile")"
+    echo "$BUILD_STDOUT" | head -5
     echo ""
 fi
 
@@ -54,8 +56,7 @@ fi
 echo ""
 echo "## Build stderr check"
 if [[ -f "$BUILD_SCRIPT" && -x "$BUILD_SCRIPT" ]]; then
-    BUILD_STDERR=$("$BUILD_SCRIPT" 2>&1 >/dev/null) || true
-    HAS_WARNING=$(echo "$BUILD_STDERR" | grep -c -E 'WARNING|ERROR' || true)
+    HAS_WARNING=$(echo "${BUILD_STDERR:-}" | grep -c -E 'WARNING|ERROR' || true)
     assert "Build produces no WARNING or ERROR on stderr" \
         "$([[ "${HAS_WARNING:-0}" -eq 0 ]] && echo true || echo false)"
 fi

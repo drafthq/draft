@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # migrate-track-frontmatter.sh
 #
 # Idempotent rewriter that migrates a pre-2.0 Draft track to the WS-8
@@ -124,7 +125,7 @@ ensure_meta_field() {
     fi
     if command -v python3 >/dev/null 2>&1; then
         python3 - "$meta" "$key" "$default_value" <<'PY'
-import json, sys, ast
+import json, sys, ast, tempfile, os
 path, key, raw = sys.argv[1], sys.argv[2], sys.argv[3]
 with open(path) as f:
     data = json.load(f)
@@ -137,9 +138,11 @@ try:
 except Exception:
     value = raw.strip('"')
 data[key] = value
-with open(path, "w") as f:
+fd, tmp = tempfile.mkstemp(dir=os.path.dirname(path) or ".")
+with os.fdopen(fd, "w") as f:
     json.dump(data, f, indent=2)
     f.write("\n")
+os.replace(tmp, path)
 PY
     else
         # awk fallback: insert before the LAST line that is a closing `}` at
@@ -220,7 +223,7 @@ EOF
                 printf 'migrate: would strip ephemeral frontmatter from %s\n' "$path"
             else
                 (( BACKUP )) && cp "$path" "$path.bak"
-                printf '%s' "$after" > "$path"
+                local _tmp; _tmp="$(mktemp "${path}.XXXXXX")"; printf '%s' "$after" > "$_tmp" && mv -f "$_tmp" "$path"
                 printf 'migrate: stripped ephemeral frontmatter from %s\n' "$path"
             fi
         fi

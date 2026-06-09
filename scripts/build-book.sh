@@ -383,7 +383,11 @@ generate_landing_page() {
     local sidebar
     sidebar="$(generate_sidebar "" "./")"
 
-    cat > "$BOOK_DIR/index.html" <<'LANDING_HEAD'
+    local _out="$BOOK_DIR/index.html"
+    local _tmp
+    _tmp="$(mktemp "${_out}.XXXXXX")"
+
+    cat > "$_tmp" <<'LANDING_HEAD'
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -450,21 +454,21 @@ generate_landing_page() {
 LANDING_HEAD
 
     # Generate the known IDs array for the redirect script
-    printf ' (function() {\n' >> "$BOOK_DIR/index.html"
-    printf ' if (location.hash && location.hash.length > 1) {\n' >> "$BOOK_DIR/index.html"
-    printf ' var id = location.hash.slice(1);\n' >> "$BOOK_DIR/index.html"
-    printf ' var known = [' >> "$BOOK_DIR/index.html"
+    printf ' (function() {\n' >> "$_tmp"
+    printf ' if (location.hash && location.hash.length > 1) {\n' >> "$_tmp"
+    printf ' var id = location.hash.slice(1);\n' >> "$_tmp"
+    printf ' var known = [' >> "$_tmp"
     local first=true
     for id in "${CHAPTER_IDS[@]}"; do
-        if $first; then first=false; else printf ',' >> "$BOOK_DIR/index.html"; fi
-        printf '"%s"' "$id" >> "$BOOK_DIR/index.html"
+        if $first; then first=false; else printf ',' >> "$_tmp"; fi
+        printf '"%s"' "$id" >> "$_tmp"
     done
-    printf '];\n' >> "$BOOK_DIR/index.html"
-    printf ' if (known.indexOf(id) !== -1) { location.replace(id + "/"); }\n' >> "$BOOK_DIR/index.html"
-    printf ' }\n' >> "$BOOK_DIR/index.html"
-    printf ' })();\n' >> "$BOOK_DIR/index.html"
+    printf '];\n' >> "$_tmp"
+    printf ' if (known.indexOf(id) !== -1) { location.replace(id + "/"); }\n' >> "$_tmp"
+    printf ' }\n' >> "$_tmp"
+    printf ' })();\n' >> "$_tmp"
 
-    cat >> "$BOOK_DIR/index.html" <<'LANDING_REDIRECT_END'
+    cat >> "$_tmp" <<'LANDING_REDIRECT_END'
     </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -508,10 +512,10 @@ LANDING_HEAD
 LANDING_REDIRECT_END
 
     # Insert sidebar
-    echo "$sidebar" >> "$BOOK_DIR/index.html"
+    echo "$sidebar" >> "$_tmp"
 
     # Insert main content (TOC)
-    cat >> "$BOOK_DIR/index.html" <<'LANDING_MAIN_START'
+    cat >> "$_tmp" <<'LANDING_MAIN_START'
 
         <main class="book-content">
             <div class="chapter-wrapper">
@@ -544,17 +548,17 @@ LANDING_MAIN_START
 
         if [[ "$part" != "$current_part" ]]; then
             if [[ -n "$current_part" ]]; then
-                echo ' </ul></div>' >> "$BOOK_DIR/index.html"
+                echo ' </ul></div>' >> "$_tmp"
             fi
-            echo " <div class=\"book-toc-part\"><div class=\"book-toc-part-title\">$part</div><ul class=\"book-toc-list\">" >> "$BOOK_DIR/index.html"
+            echo " <div class=\"book-toc-part\"><div class=\"book-toc-part-title\">$part</div><ul class=\"book-toc-list\">" >> "$_tmp"
             current_part="$part"
         fi
 
-        echo " <li><a href=\"${id}/\" class=\"book-toc-entry\"><span class=\"book-toc-num\">${num}.</span><span class=\"book-toc-name\">${title}</span></a></li>" >> "$BOOK_DIR/index.html"
+        echo " <li><a href=\"${id}/\" class=\"book-toc-entry\"><span class=\"book-toc-num\">${num}.</span><span class=\"book-toc-name\">${title}</span></a></li>" >> "$_tmp"
     done
-    echo ' </ul></div>' >> "$BOOK_DIR/index.html"
+    echo ' </ul></div>' >> "$_tmp"
 
-    cat >> "$BOOK_DIR/index.html" <<'LANDING_FOOTER'
+    cat >> "$_tmp" <<'LANDING_FOOTER'
                 </div>
 
                 <div class="book-footer">
@@ -569,13 +573,17 @@ LANDING_MAIN_START
 </body>
 </html>
 LANDING_FOOTER
+    mv -f "$_tmp" "$_out"
 }
 
 # ============================================================
 # SITEMAP GENERATOR
 # ============================================================
 generate_sitemap() {
-    cat > "$SITEMAP_FILE" <<SITEMAP_HEAD
+    local _stmp
+    _stmp="$(mktemp "${SITEMAP_FILE}.XXXXXX")"
+
+    cat > "$_stmp" <<SITEMAP_HEAD
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
@@ -631,7 +639,7 @@ SITEMAP_HEAD
     for ((i=0; i<NUM_CHAPTERS; i++)); do
         local id="${CHAPTER_IDS[$i]}"
         local priority="${CHAPTER_PRIORITIES[$i]}"
-        cat >> "$SITEMAP_FILE" <<SITEMAP_ENTRY
+        cat >> "$_stmp" <<SITEMAP_ENTRY
     <url>
         <loc>https://getdraft.dev/book/${id}/</loc>
         <lastmod>${TODAY}</lastmod>
@@ -641,7 +649,8 @@ SITEMAP_HEAD
 SITEMAP_ENTRY
     done
 
-    echo '</urlset>' >> "$SITEMAP_FILE"
+    echo '</urlset>' >> "$_stmp"
+    mv -f "$_stmp" "$SITEMAP_FILE"
 }
 
 # ============================================================

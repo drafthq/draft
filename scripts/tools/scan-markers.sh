@@ -77,7 +77,8 @@ NOW_SEC="$(date -u +%s)"
 emit_array() {
     local first=true
     printf '['
-    while IFS=: read -r path linenum rest; do
+    while IFS= read -r _ln; do
+        path="${_ln%%:*}"; rest="${_ln#*:}"; linenum="${rest%%:*}"; rest="${rest#*:}"
         [[ -z "$path" || -z "$linenum" ]] && continue
         # Skip binaries or tool's own output directory.
         [[ "$path" == */.git/* ]] && continue

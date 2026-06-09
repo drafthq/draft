@@ -5,11 +5,7 @@ applies_to: all skills that load Draft project context
 
 # Verify Draft Context (Shared Subroutine)
 
-<<<<<<< HEAD
 Single-source `Verify Draft Context` subroutine. Replaces the duplicated 3–4 line blocks that appeared in skills that load project context.
-=======
-Single-source `Verify Draft Context` subroutine. Replaces the duplicated 3–4 line blocks that appeared in roughly 18 skills (`bughunt`, `review`, `quick-review`, `learn`, `tech-debt`, `deploy-checklist`, `debug`, `documentation`, `testing-strategy`, `coverage`, `regression`, `incident-response`, `change`, `revert`, `tour`, `assist-review`, `adr`, `epic-status`).
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 Referenced by: every skill that starts with a `Verify Draft Context` step.
 
@@ -45,8 +41,4 @@ This keeps each skill explicit about whether draft context is required, while ce
 
 ## Why This Exists
 
-<<<<<<< HEAD
 Duplicating the same `ls draft/ 2>/dev/null` snippet across skills costs tokens per duplicate after frontmatter and surrounding prose. Factoring removes the duplication without changing semantics.
-=======
-Duplicating the same `ls draft/ 2>/dev/null` snippet across 18 skills costs ~250 tokens per duplicate after frontmatter and surrounding prose — roughly **4.5K tokens of floor context across the catalog**. Factoring removes the duplication without changing semantics.
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c

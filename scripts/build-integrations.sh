@@ -440,7 +440,7 @@ COMMON_HEADER2
         fi
 
         # Validate skill name format (security: prevent path traversal)
-        if [[ ! "$skill" =~ ^[a-z][a-z0-9]*(-[a-z0-9]+)*$ ]]; then
+        if ! is_valid_skill_name "$skill"; then
             echo "ERROR: Invalid skill name '$skill' (must be kebab-case)" >&2
             exit 1
         fi
@@ -451,18 +451,8 @@ COMMON_HEADER2
             local skill_body
             skill_body=$(extract_body "$skill_file")
 
-            # Validate body format: line 1 blank, line 2 starts with #, line 3 blank
-            local line1 line2 line3
-            line1=$(echo "$skill_body" | sed -n '1p')
-            line2=$(echo "$skill_body" | sed -n '2p')
-            line3=$(echo "$skill_body" | sed -n '3p')
-            if [[ -n "$line1" ]] || [[ ! "$line2" =~ ^#\  ]] || [[ -n "$line3" ]]; then
-                echo "ERROR: Skill '$skill' body format invalid (expected: blank, '# Title', blank). Got:" >&2
-                echo "  Line 1: '${line1}'" >&2
-                echo "  Line 2: '${line2}'" >&2
-                echo "  Line 3: '${line3}'" >&2
-                exit 1
-            fi
+            # Validate body format (blank, '# Title', blank) via shared helper.
+            validate_skill_body_format "$skill" "$skill_file" || exit 1
 
             echo ""
             echo "---"
@@ -560,14 +550,16 @@ verify_output() {
         return 1
     fi
 
-    # Count skills included
-    local skill_count=0
+    # Count skills included (mirror build_copilot: 'draft' is excluded from output)
+    local skill_count=0 skill_total=0
     for skill in "${SKILL_ORDER[@]}"; do
+        [[ "$skill" == "draft" ]] && continue
+        skill_total=$((skill_total + 1))
         if [[ -f "$SKILLS_DIR/$skill/SKILL.md" ]]; then
             skill_count=$((skill_count + 1))
         fi
     done
-    echo "  Skills: $skill_count/${#SKILL_ORDER[@]}"
+    echo "  Skills: $skill_count/$skill_total (draft excluded — content in static header)"
 
     # Verify no /draft: references remain
     if [[ "$old_syntax_count" -gt 0 ]]; then

@@ -75,7 +75,7 @@ for f in "$@"; do
     fi
 
     section_start=$(grep -n '^## Graph Usage Report' "$f" | head -1 | cut -d: -f1)
-    section_body=$(awk -v start="$section_start" 'NR > start { print }' "$f")
+    section_body=$(awk -v start="$section_start" 'NR > start { if (/^## /) exit; print }' "$f")
 
     for bullet in "${REQUIRED_BULLETS[@]}"; do
         if ! printf '%s\n' "$section_body" | grep -qF -- "$bullet"; then

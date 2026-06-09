@@ -72,13 +72,14 @@ filter_json() {
         return
     fi
     local q='.'
-    if [[ -n "$module" ]]; then
-        q="$q | .hotspots |= map(select(.module == \"$module\"))"
-    fi
     if [[ "$top" -gt 0 ]]; then
         q="$q | .hotspots |= .[0:$top]"
     fi
-    jq "$q"
+    if [[ -n "$module" ]]; then
+        jq --arg mod "$module" "$q | .hotspots |= map(select(.module == \$mod))"
+    else
+        jq "$q"
+    fi
 }
 
 # Strategy 1: live query via graph binary

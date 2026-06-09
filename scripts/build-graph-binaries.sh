@@ -16,10 +16,6 @@
 #   --draft-root <path>                        Draft checkout root (default: dirname of script)
 #   --help                                     Show this message
 #
-# Environment (optional):
-#   DRAFT_GRAPH_RUST_SRC   Path to the graph crate source if you want in-tree cargo build
-#   CARGO, RUSTUP, CROSS   Toolchain overrides
-#
 # Creates arch directories and either copies real binaries or leaves placeholders.
 # See bin/README.md and scripts/tools/verify-graph-binary.sh.
 
@@ -50,7 +46,6 @@ Options:
 Examples:
   ./scripts/build-graph-binaries.sh
   ./scripts/build-graph-binaries.sh --targets "linux-amd64 darwin-arm64" --from /tmp/graph-release
-  DRAFT_GRAPH_RUST_SRC=../graph-rust ./scripts/build-graph-binaries.sh
 EOF
 }
 
@@ -105,16 +100,20 @@ os_part() {
   esac
 }
 
-for t in $TARGETS; do
+read -ra _TARGETS <<< "$TARGETS"
+[[ ${#_TARGETS[@]} -gt 0 ]] || { echo "No targets specified" >&2; exit 1; }
+for t in "${_TARGETS[@]}"; do
   arch_dir="$OUT_DIR/$t"
   mkdir -p "$arch_dir"
 
   if [[ -n "$FROM_DIR" && -f "$FROM_DIR/graph" ]]; then
     echo "  Staging $t from $FROM_DIR ..."
     cp -f "$FROM_DIR/graph" "$arch_dir/graph"
-    [[ -f "$FROM_DIR/graph-clang" ]] && cp -f "$FROM_DIR/graph-clang" "$arch_dir/graph-clang" || true
     chmod +x "$arch_dir/graph" 2>/dev/null || true
-    chmod +x "$arch_dir/graph-clang" 2>/dev/null || true
+    if [[ -f "$FROM_DIR/graph-clang" ]]; then
+      cp -f "$FROM_DIR/graph-clang" "$arch_dir/graph-clang"
+      chmod +x "$arch_dir/graph-clang"
+    fi
   else
     # Create or refresh minimal executable placeholders (text, will be overwritten by real LFS objects)
     if [[ ! -f "$arch_dir/graph" ]]; then

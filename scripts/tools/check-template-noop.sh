@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # check-template-noop.sh
 #
 # CI gate enforcing WS-0 contract: any commit that touches skills/** or

@@ -81,7 +81,7 @@ fi
 # 2. LFS materialization (critical for real binaries)
 echo "Materializing LFS objects for bin/**/graph* (canonical) + graph/bin/** (legacy) if tracked..."
 if command -v git-lfs >/dev/null 2>&1; then
-  (cd "$DRAFT_ROOT" && git lfs pull --include="bin/**/graph* graph/bin/**" 2>/dev/null || true)
+  (cd "$DRAFT_ROOT" && git lfs pull --include="bin/**/graph*,graph/bin/**" 2>/dev/null || true)
 else
   echo "  git-lfs absent — packaged tree will contain placeholder scripts only (see bin/README.md)"
 fi
@@ -101,19 +101,24 @@ fi
 
 # 5. Copy the tree (exclude heavy dev artifacts)
 echo "Assembling clean draft/ tree at $OUT_DIR ..."
-rsync -a --delete \
-  --exclude '.git' \
-  --exclude 'node_modules' \
-  --exclude 'target' \
-  --exclude 'dist' \
-  --exclude '.draft-install-path' \
-  --exclude '*.log' \
-  "$DRAFT_ROOT/" "$OUT_DIR/" 2>/dev/null || {
-    # Fallback pure shell copy if no rsync
-    rm -rf "$OUT_DIR"
-    mkdir -p "$OUT_DIR"
-    tar -cf - -C "$DRAFT_ROOT" --exclude '.git' --exclude node_modules --exclude target --exclude dist . | tar -xf - -C "$OUT_DIR"
-  }
+if command -v rsync >/dev/null 2>&1; then
+  # rsync present — let real errors surface (do not mask with 2>/dev/null)
+  rsync -a --delete \
+    --exclude '.git' \
+    --exclude 'node_modules' \
+    --exclude 'target' \
+    --exclude 'dist' \
+    --exclude '.draft-install-path' \
+    --exclude '*.log' \
+    "$DRAFT_ROOT/" "$OUT_DIR/"
+else
+  # Fallback pure shell copy if no rsync (same exclusions as rsync path)
+  rm -rf "$OUT_DIR"
+  mkdir -p "$OUT_DIR"
+  tar -cf - -C "$DRAFT_ROOT" \
+    --exclude '.git' --exclude node_modules --exclude target --exclude dist \
+    --exclude '.draft-install-path' --exclude '*.log' . | tar -xf - -C "$OUT_DIR"
+fi
 
 # 6. Embed version metadata (public)
 cat > "$OUT_DIR/draft/version.txt" <<EOF

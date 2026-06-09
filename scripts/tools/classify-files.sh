@@ -63,7 +63,7 @@ EXCLUDE_DIRS=(
 
 lang_for() {
     local path="$1"
-    local base="$(basename "$path")"
+    local base; base="$(basename "$path")"
     local ext="${base##*.}"
     [[ "$ext" == "$base" ]] && ext=""
 
@@ -114,7 +114,7 @@ lang_for() {
 
 is_test_file() {
     local path="$1"
-    local base="$(basename "$path")"
+    local base; base="$(basename "$path")"
 
     # Path segment
     case "/$path/" in

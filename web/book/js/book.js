@@ -130,6 +130,7 @@ function initSidebar() {
 function toggleMobileSidebar() {
     const sidebar = document.getElementById('book-sidebar');
     const backdrop = document.getElementById('sidebar-backdrop');
+    if (!sidebar || !backdrop) return;
     const isOpen = sidebar.classList.toggle('open');
 
     backdrop.classList.toggle('visible', isOpen);

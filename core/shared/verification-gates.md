@@ -1,14 +1,8 @@
 # Verification Gates
 
 > Shared block defining the validator chain every track passes through
-<<<<<<< HEAD
 > before promoting status. Imported by quality and implementation flows
 > that gate on artifact correctness.
-=======
-> before promoting status. Imported by `skills/deploy-checklist`,
-> `skills/implement`, `skills/decompose`, and any other skill that gates on
-> artifact correctness.
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 
 ## The chain
 
@@ -40,25 +34,14 @@ After the chain runs, persist the outcome to `metadata.json:pre_deploy_status`:
 - `failing` — last run exited 1; details in CI log
 - `bypassed` — explicit override; requires `bypass_reason` in metadata
 
-<<<<<<< HEAD
 `/draft:deploy-checklist` reads this field and refuses to deploy a track
-=======
-`draft:deploy-checklist` reads this field and refuses to deploy a track
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 whose `pre_deploy_status != passing`.
 
 ## When to invoke
 
-<<<<<<< HEAD
 - `/draft:deploy-checklist` — mandatory before any production deploy.
 - `/draft:implement` — at the end of each phase before flipping
   `phases.completed`.
 - `/draft:decompose` — after rewriting `plan.md`, to catch plan-staleness
-=======
-- `draft:deploy-checklist` — mandatory before any production deploy.
-- `draft:implement` — at the end of each phase before flipping
-  `phases.completed`.
-- `draft:decompose` — after rewriting `plan.md`, to catch plan-staleness
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
   immediately.
 - CI hook — gate every merge that touches `tracks/**`.

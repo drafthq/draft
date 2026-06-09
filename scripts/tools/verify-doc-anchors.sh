@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
 # verify-doc-anchors.sh
 
-if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
-    echo "verify-doc-anchors.sh — verify cross-document § and #anchor references in tracks"
-    exit 0
-fi
 #
 # Verify cross-document references in a track:
 # - §X.Y or §X numbered-section references → target document must contain
@@ -26,11 +22,6 @@ fi
 # 2 usage / runtime error
 
 set -euo pipefail
-
-if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
-    echo "${0##*/} — Foundations quality tool (see core/ docs for full behavior)"
-    exit 0
-fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
@@ -128,7 +119,7 @@ scan_md() {
         # 2. Markdown anchor references like ./hld.md#section-name
         if echo "$line" | grep -qE '\([^)]*\.md#[A-Za-z0-9_-]+\)'; then
             local m
-            for m in $(echo "$line" | grep -oE '\([^)]*\.md#[A-Za-z0-9_-]+\)'); do
+            while IFS= read -r m; do
                 m="${m#(}"; m="${m%)}"
                 local path="${m%%#*}"
                 local anchor="${m##*#}"
@@ -147,7 +138,7 @@ scan_md() {
                     record "$rel_track" "missing-anchor" "$rel_md" "$lineno" \
                         "$path has no slug '$anchor'"
                 fi
-            done
+            done < <(echo "$line" | grep -oE '\([^)]*\.md#[A-Za-z0-9_-]+\)')
         fi
 
         # 3. (planned) / [New file ...] annotations: the path mentioned on the

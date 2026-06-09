@@ -72,6 +72,7 @@ GIT_ARGS+=("$BRANCH")
 # Read a commit block (metadata line + files) and emit one JSON record.
 process_commit() {
     local sha="$1" author="$2" ts="$3" subject="$4" files_changed="$5"
+    local type scope breaking clean_subject cc_re track_id token inner scope_val
     [[ -z "$sha" ]] && return
 
     # Parse conventional commit: type(scope)!: subject OR type: subject
@@ -100,7 +101,7 @@ process_commit() {
     fi
     # Look for [TRACK-XXX] or (TRACK-XXX) tokens in subject
     if [[ "$track_id" == "null" ]]; then
-        token="$(printf '%s' "$clean_subject" | grep -oE '[[(][A-Z]+-[0-9]+[])]' | head -1 || true)"
+        token="$(printf '%s' "$clean_subject" | grep -oE '(\[[A-Z]+-[0-9]+\]|\([A-Z]+-[0-9]+\))' | head -1 || true)"
         if [[ -n "$token" ]]; then
             inner="${token#?}"
             inner="${inner%?}"

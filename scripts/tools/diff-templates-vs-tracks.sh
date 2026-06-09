@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # diff-templates-vs-tracks.sh
 #
 # Surface tracks whose artifact set drifts from the current template schema.

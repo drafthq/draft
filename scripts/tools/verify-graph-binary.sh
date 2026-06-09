@@ -120,7 +120,7 @@ if [[ -z "$GRAPH_BIN" ]]; then
       "$HOME/.claude-plugin/../.draft-install-path" \
       "$HOME/.claude/plugins/draft/.draft-install-path"; do
     if [[ -f "$bc" ]]; then
-      local pr; pr="$(cat "$bc" 2>/dev/null || true)"
+      pr="$(cat "$bc" 2>/dev/null || true)"
       [[ -n "$pr" && -d "$pr" ]] && local_roots+=("$pr")
     fi
   done
@@ -169,7 +169,13 @@ fi
 # --- Verification & Report ---
 if [[ -z "$GRAPH_BIN" ]]; then
   if [[ $EMIT_JSON -eq 1 ]]; then
-    echo '{"status":"unavailable","graph_bin":null,"graph_clang_bin":null,"source":null,"arch":"'"$ARCH"'","message":"No graph binary found in PATH or bundled bin/<arch>/ (or legacy graph/bin/)"}'
+    if [[ $STRICT -eq 1 ]]; then
+      echo '{"status":"none","graph_bin":null,"graph_clang_bin":null,"source":null,"arch":"'"$ARCH"'","message":"strict mode: no graph binary found"}'
+    else
+      echo '{"status":"unavailable","graph_bin":null,"graph_clang_bin":null,"source":null,"arch":"'"$ARCH"'","message":"No graph binary found in PATH or bundled bin/<arch>/ (or legacy graph/bin/)"}'
+    fi
+  elif [[ $STRICT -eq 1 ]]; then
+    echo "STRICT: No graph binary found (native required; looked in bin/<arch>/ and graph/bin/<arch>/)." >&2
   else
     echo "ERROR: No Draft graph binary located (tried PATH and bin/$ARCH/ or graph/bin/$ARCH/)." >&2
     echo "        Install native binary or ensure it is on PATH." >&2
@@ -180,18 +186,9 @@ fi
 # Final liveness (already passed most, but re-check for strict)
 if ! "$GRAPH_BIN" --help >/dev/null 2>&1 && ! "$GRAPH_BIN" --version >/dev/null 2>&1; then
   log "Selected binary failed --help/--version"
+  echo "ERROR: graph binary $GRAPH_BIN found but failed --help/--version (wrong OS/arch or corrupt?)." >&2
   if [[ $EMIT_JSON -eq 1 ]]; then
     echo '{"status":"unusable","graph_bin":"'"$GRAPH_BIN"'","graph_clang_bin":"'"${GRAPH_CLANG_BIN:-}"'","source":"'"$SOURCE"'","arch":"'"$ARCH"'"}'
-  fi
-  exit 2
-fi
-
-# Strict mode: simply require that we found something
-if [[ $STRICT -eq 1 && -z "$GRAPH_BIN" ]]; then
-  if [[ $EMIT_JSON -eq 1 ]]; then
-    echo '{"status":"none","graph_bin":null,"graph_clang_bin":null,"source":null,"arch":"'"$ARCH"'","message":"strict mode: no graph binary found"}'
-  else
-    echo "STRICT: No graph binary found (native required; looked in bin/<arch>/ and graph/bin/<arch/>)." >&2
   fi
   exit 2
 fi
@@ -202,8 +199,10 @@ SOURCE="${SOURCE:-bundled}"
 report() {
   local g="$1" c="$2" s="$3" a="$4" st="$5"
   if [[ $EMIT_JSON -eq 1 ]]; then
-    printf '{"status":"%s","graph_bin":"%s","graph_clang_bin":"%s","source":"%s","arch":"%s"}\n' \
-      "$st" "$g" "${c:-}" "$s" "$a"
+    local cfield
+    if [[ -n "$c" ]]; then cfield="\"$(json_escape "$c")\""; else cfield="null"; fi
+    printf '{"status":"%s","graph_bin":"%s","graph_clang_bin":%s,"source":"%s","arch":"%s"}\n' \
+      "$(json_escape "$st")" "$(json_escape "$g")" "$cfield" "$(json_escape "$s")" "$(json_escape "$a")"
   else
     echo "Draft graph binary: $g"
     echo "  source: $s (arch=$a)"
@@ -217,14 +216,19 @@ report "$GRAPH_BIN" "$GRAPH_CLANG_BIN" "$SOURCE" "$ARCH" "$status"
 # Also write a small usage report side-effect if in a draft/ context (for future graph-usage-report tooling)
 if [[ -d "$REPO/draft" ]]; then
   mkdir -p "$REPO/draft"
+  if [[ -n "${GRAPH_CLANG_BIN:-}" ]]; then
+    clang_field="\"$(json_escape "$GRAPH_CLANG_BIN")\""
+  else
+    clang_field="null"
+  fi
   cat > "$REPO/draft/.graph-binary-report.json" <<EOF
 {
   "detected_at": "$(date -Iseconds 2>/dev/null || date)",
-  "graph_bin": "$GRAPH_BIN",
-  "graph_clang_bin": "${GRAPH_CLANG_BIN:-null}",
-  "source": "$SOURCE",
-  "arch": "$ARCH",
-  "status": "$status"
+  "graph_bin": "$(json_escape "$GRAPH_BIN")",
+  "graph_clang_bin": $clang_field,
+  "source": "$(json_escape "$SOURCE")",
+  "arch": "$(json_escape "$ARCH")",
+  "status": "$(json_escape "$status")"
 }
 EOF
   log "Wrote draft/.graph-binary-report.json (usage report contract)"

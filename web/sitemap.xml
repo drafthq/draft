@@ -2,261 +2,157 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
         <loc>https://getdraft.dev/</loc>
-<<<<<<< HEAD
         <lastmod>2026-05-19</lastmod>
-=======
-        <lastmod>2026-05-18</lastmod>
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
     </url>
     <url>
         <loc>https://getdraft.dev/book/</loc>
-<<<<<<< HEAD
         <lastmod>2026-05-19</lastmod>
-=======
-        <lastmod>2026-05-18</lastmod>
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         <changefreq>weekly</changefreq>
         <priority>0.9</priority>
     </url>
     <url>
         <loc>https://getdraft.dev/book/what-is-draft/</loc>
-<<<<<<< HEAD
         <lastmod>2026-05-19</lastmod>
-=======
-        <lastmod>2026-05-18</lastmod>
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
         <loc>https://getdraft.dev/book/the-problem/</loc>
-<<<<<<< HEAD
         <lastmod>2026-05-19</lastmod>
-=======
-        <lastmod>2026-05-18</lastmod>
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
         <loc>https://getdraft.dev/book/context-driven-development/</loc>
-<<<<<<< HEAD
         <lastmod>2026-05-19</lastmod>
-=======
-        <lastmod>2026-05-18</lastmod>
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
         <loc>https://getdraft.dev/book/getting-started/</loc>
-<<<<<<< HEAD
         <lastmod>2026-05-19</lastmod>
-=======
-        <lastmod>2026-05-18</lastmod>
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
         <loc>https://getdraft.dev/book/specs-and-plans/</loc>
-<<<<<<< HEAD
         <lastmod>2026-05-19</lastmod>
-=======
-        <lastmod>2026-05-18</lastmod>
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
         <loc>https://getdraft.dev/book/implementation/</loc>
-<<<<<<< HEAD
         <lastmod>2026-05-19</lastmod>
-=======
-        <lastmod>2026-05-18</lastmod>
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
         <loc>https://getdraft.dev/book/review-pipeline/</loc>
-<<<<<<< HEAD
         <lastmod>2026-05-19</lastmod>
-=======
-        <lastmod>2026-05-18</lastmod>
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
         <loc>https://getdraft.dev/book/managing-tracks/</loc>
-<<<<<<< HEAD
         <lastmod>2026-05-19</lastmod>
-=======
-        <lastmod>2026-05-18</lastmod>
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
         <loc>https://getdraft.dev/book/decomposition/</loc>
-<<<<<<< HEAD
         <lastmod>2026-05-19</lastmod>
-=======
-        <lastmod>2026-05-18</lastmod>
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
         <loc>https://getdraft.dev/book/adrs/</loc>
-<<<<<<< HEAD
         <lastmod>2026-05-19</lastmod>
-=======
-        <lastmod>2026-05-18</lastmod>
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
         <loc>https://getdraft.dev/book/context-tiering/</loc>
-<<<<<<< HEAD
         <lastmod>2026-05-19</lastmod>
-=======
-        <lastmod>2026-05-18</lastmod>
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
         <loc>https://getdraft.dev/book/agent-system/</loc>
-<<<<<<< HEAD
         <lastmod>2026-05-19</lastmod>
-=======
-        <lastmod>2026-05-18</lastmod>
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
         <loc>https://getdraft.dev/book/signal-classification/</loc>
-<<<<<<< HEAD
         <lastmod>2026-05-19</lastmod>
-=======
-        <lastmod>2026-05-18</lastmod>
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
         <loc>https://getdraft.dev/book/incremental-refresh/</loc>
-<<<<<<< HEAD
         <lastmod>2026-05-19</lastmod>
-=======
-        <lastmod>2026-05-18</lastmod>
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
         <loc>https://getdraft.dev/book/deep-review/</loc>
-<<<<<<< HEAD
         <lastmod>2026-05-19</lastmod>
-=======
-        <lastmod>2026-05-18</lastmod>
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
         <loc>https://getdraft.dev/book/bug-hunt/</loc>
-<<<<<<< HEAD
         <lastmod>2026-05-19</lastmod>
-=======
-        <lastmod>2026-05-18</lastmod>
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
         <loc>https://getdraft.dev/book/coverage/</loc>
-<<<<<<< HEAD
         <lastmod>2026-05-19</lastmod>
-=======
-        <lastmod>2026-05-18</lastmod>
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
         <loc>https://getdraft.dev/book/pattern-learning/</loc>
-<<<<<<< HEAD
         <lastmod>2026-05-19</lastmod>
-=======
-        <lastmod>2026-05-18</lastmod>
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
         <loc>https://getdraft.dev/book/monorepo-federation/</loc>
-<<<<<<< HEAD
         <lastmod>2026-05-19</lastmod>
-=======
-        <lastmod>2026-05-18</lastmod>
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
         <loc>https://getdraft.dev/book/jira-integration/</loc>
-<<<<<<< HEAD
         <lastmod>2026-05-19</lastmod>
-=======
-        <lastmod>2026-05-18</lastmod>
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
         <loc>https://getdraft.dev/book/multi-ide-support/</loc>
-<<<<<<< HEAD
         <lastmod>2026-05-19</lastmod>
-=======
-        <lastmod>2026-05-18</lastmod>
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
     <url>
         <loc>https://getdraft.dev/book/philosophy-references/</loc>
-<<<<<<< HEAD
         <lastmod>2026-05-19</lastmod>
-=======
-        <lastmod>2026-05-18</lastmod>
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         <changefreq>monthly</changefreq>
         <priority>0.5</priority>
     </url>
     <url>
         <loc>https://getdraft.dev/book/command-reference/</loc>
-<<<<<<< HEAD
         <lastmod>2026-05-19</lastmod>
-=======
-        <lastmod>2026-05-18</lastmod>
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
     <url>
         <loc>https://getdraft.dev/book/file-reference/</loc>
-<<<<<<< HEAD
         <lastmod>2026-05-19</lastmod>
-=======
-        <lastmod>2026-05-18</lastmod>
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>

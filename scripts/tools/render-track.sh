@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # render-track.sh
 #
 # Render a Draft track's markdown set into a single HTML viewer artifact
@@ -24,6 +25,14 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=/dev/null
 source "$SCRIPT_DIR/_lib.sh"
+
+html_escape() {
+    local s="$1"
+    s="${s//&/&amp;}"
+    s="${s//</&lt;}"
+    s="${s//>/&gt;}"
+    printf '%s' "$s"
+}
 
 usage() {
     local stream=2 code=2
@@ -92,7 +101,7 @@ render_minimal() {
     done
     (( ${#files[@]} > 0 )) || return 1
     printf '<!doctype html>\n<html><head><meta charset="utf-8">'
-    printf '<title>%s</title>' "$(json_escape "$title")"
+    printf '<title>%s</title>' "$(html_escape "$title")"
     cat <<'CSS'
 <style>
 body{font:14px/1.5 system-ui,sans-serif;max-width:920px;margin:2em auto;padding:0 1em;color:#222}
@@ -105,15 +114,15 @@ hr.docsep{margin:3em 0;border:0;border-top:2px dashed #ccc}
 .meta{color:#888;font-size:.9em}
 </style></head><body>
 CSS
-    printf '<h1>%s</h1>\n<nav class="toc"><strong>Documents</strong><ul>\n' "$(json_escape "$title")"
+    printf '<h1>%s</h1>\n<nav class="toc"><strong>Documents</strong><ul>\n' "$(html_escape "$title")"
     for f in "${files[@]}"; do
         local n; n="$(basename "$f")"
-        printf '<li><a href="#%s">%s</a></li>\n' "$n" "$n"
+        printf '<li><a href="#%s">%s</a></li>\n' "$(html_escape "$n")" "$(html_escape "$n")"
     done
     printf '</ul></nav>\n'
     for f in "${files[@]}"; do
         local n; n="$(basename "$f")"
-        printf '<hr class="docsep"><section id="%s"><p class="meta">— %s —</p>\n<pre><code>' "$n" "$n"
+        printf '<hr class="docsep"><section id="%s"><p class="meta">— %s —</p>\n<pre><code>' "$(html_escape "$n")" "$(html_escape "$n")"
         sed -e 's/&/\&amp;/g' -e 's/</\&lt;/g' -e 's/>/\&gt;/g' "$f"
         printf '</code></pre></section>\n'
     done

@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # fix-whitespace.sh — strip trailing whitespace and blank lines at EOF from
 # AI-generated markdown files.
 #
@@ -69,7 +70,14 @@ fix_file() {
         return 1 # already clean
     fi
 
-    printf '%s' "$fixed" > "$file"
+    local _tmp
+    _tmp="$(mktemp "${file}.XXXXXX")"
+    if printf '%s' "$fixed" > "$_tmp"; then
+        mv -f "$_tmp" "$file"
+    else
+        rm -f "$_tmp"
+        return 2
+    fi
     return 0
 }
 
@@ -82,6 +90,7 @@ REPO_ROOT=""
 
 if [[ $# -eq 0 ]]; then
     usage
+    exit 0
 fi
 
 case "$1" in

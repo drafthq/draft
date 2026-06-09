@@ -15,13 +15,21 @@
             targetY = e.clientY;
         });
 
+        var orbRaf;
         function updateOrb() {
             orbX += (targetX - orbX) * 0.08;
             orbY += (targetY - orbY) * 0.08;
             orb.style.left = orbX + 'px';
             orb.style.top = orbY + 'px';
-            requestAnimationFrame(updateOrb);
+            orbRaf = requestAnimationFrame(updateOrb);
         }
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                cancelAnimationFrame(orbRaf);
+            } else {
+                orbRaf = requestAnimationFrame(updateOrb);
+            }
+        });
         updateOrb();
     } else if (orb) {
         orb.style.display = 'none';
@@ -33,22 +41,24 @@
     var topNav = document.getElementById('top-nav');
     var scrollThreshold = 80;
 
-    function updateNavScroll() {
-        if (window.scrollY > scrollThreshold) {
-            topNav.classList.add('scrolled');
-        } else {
-            topNav.classList.remove('scrolled');
+    if (topNav) {
+        function updateNavScroll() {
+            if (window.scrollY > scrollThreshold) {
+                topNav.classList.add('scrolled');
+            } else {
+                topNav.classList.remove('scrolled');
+            }
         }
-    }
 
-    window.addEventListener('scroll', updateNavScroll, { passive: true });
-    updateNavScroll();
+        window.addEventListener('scroll', updateNavScroll, { passive: true });
+        updateNavScroll();
+    }
 
     // ============================================================
     // MOBILE NAV TOGGLE
     // ============================================================
     var navToggle = document.getElementById('nav-toggle');
-    if (navToggle) {
+    if (navToggle && topNav) {
         navToggle.addEventListener('click', function() {
             topNav.classList.toggle('open');
         });
@@ -131,7 +141,7 @@
     // HANDLE URL HASH ON LOAD
     // ============================================================
     if (window.location.hash) {
-        var hashTarget = document.querySelector(window.location.hash);
+        var hashTarget = document.getElementById(window.location.hash.slice(1));
         if (hashTarget) {
             setTimeout(function() {
                 hashTarget.scrollIntoView({ behavior: 'smooth' });

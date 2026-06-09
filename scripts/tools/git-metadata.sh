@@ -126,7 +126,8 @@ if (( WRITE_PROJECT_METADATA )); then
         exit 1
     fi
     CMD="${GENERATED_BY:-draft:init}"
-    cat > "$META_FILE" <<EOF
+    _tmp="$(mktemp "${META_FILE}.XXXXXX")"
+    cat > "$_tmp" <<EOF
 {
   "\$schema": "Draft Project Metadata Schema",
   "\$description": "Single source of truth for project-level git state. Read by all project-level skills. Written by $CMD.",
@@ -149,6 +150,7 @@ if (( WRITE_PROJECT_METADATA )); then
   "synced_to_commit": "$FULL_SHA"
 }
 EOF
+    mv -f "$_tmp" "$META_FILE"
     echo "Written: $META_FILE (synced_to_commit=$FULL_SHA)"
     exit 0
 fi

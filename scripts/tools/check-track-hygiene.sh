@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # check-track-hygiene.sh
 #
 # Hygiene validator for Draft tracks. Enforces WS-1 contract from
@@ -116,7 +117,7 @@ scan_one_track() {
             case "$line" in
                 Status:*|*"**Status:**"*|*"Status: [x] Complete"*)
                     # Heuristic: if metadata says draft but doc says Complete, mismatch.
-                    if [[ "$meta_status" != "completed" ]] && echo "$line" | grep -Fq '[x] Complete'; then
+                    if [[ "$meta_status" != "completed" ]] && [[ "$line" == *'[x] Complete'* ]]; then
                         record "$rel_track" "status-mismatch" "$rel_file" "$n" \
                             "metadata.status=$meta_status, doc says Complete"
                     fi
@@ -144,7 +145,7 @@ scan_one_track() {
         while IFS= read -r line; do
             n=$((n + 1))
             # Detect a markdown table header starting with | Role |
-            if echo "$line" | grep -Eiq '^\| *Role *\|'; then
+            if [[ "${line,,}" =~ ^\|[[:space:]]*role[[:space:]]*\| ]]; then
                 in_table=1
                 continue
             fi
@@ -153,7 +154,7 @@ scan_one_track() {
                 in_table=0
                 continue
             fi
-            if ((in_table)) && echo "$line" | grep -Eq "$EMPTY_APPROVAL_ROW_RE"; then
+            if ((in_table)) && [[ "$line" =~ $EMPTY_APPROVAL_ROW_RE ]]; then
                 record "$rel_track" "empty-approver" "$rel_file" "$n" "$line"
             fi
         done < "$f"

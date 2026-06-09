@@ -68,13 +68,13 @@ latest_name="$KIND-report-latest.md"
 
 # Exclude the latest symlink itself from selection.
 newest=""
-while IFS= read -r f; do
+while IFS= read -r -d '' f; do
     base="$(basename "$f")"
     [[ "$base" == "$latest_name" ]] && continue
     # File-only (not symlink we already manage)
     if [[ -L "$f" ]]; then continue; fi
     newest="$base"
-done < <(find "$DIR" -maxdepth 1 -name "$pattern" | sort)
+done < <(find "$DIR" -maxdepth 1 -name "$pattern" -print0 | sort -z)
 
 if [[ -z "$newest" ]]; then
     echo "No matching $pattern files in $DIR" >&2

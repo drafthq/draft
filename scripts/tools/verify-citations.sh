@@ -96,9 +96,11 @@ extract_citations() {
         /\(planned\)|\[New file/ { next }
         {
             # Match either `path:N` or `path:N-M`. Path = no spaces, must
-            # contain a dot or slash. Disallow URLs by requiring path not
-            # starting with http.
+            # contain a dot or slash. Strip scheme URLs first so their
+            # path-like fragments (e.g. host/foo.js:42) are not mistaken
+            # for local citations.
             s = $0
+            gsub(/https?:\/\/[^[:space:]]*/, "", s)
             while (match(s, /[A-Za-z0-9_./-]+\.[A-Za-z0-9]+:[0-9]+(-[0-9]+)?/)) {
                 cite = substr(s, RSTART, RLENGTH)
                 # Strip leading slash / quote noise.

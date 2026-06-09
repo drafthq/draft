@@ -52,8 +52,6 @@ fi
 
 cd "$ROOT"
 
-RESULTS=()
-
 emit_lang() {
     local language="$1" framework="$2" runner="$3" globs="$4" config="$5"
     printf '{"language":"%s","framework":"%s","runner_command":"%s","test_globs":%s,"config_file":%s}' \

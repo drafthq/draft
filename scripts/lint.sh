@@ -17,7 +17,7 @@ exit_code=0
 if command -v shellcheck &> /dev/null; then
     echo "[*] Running shellcheck..."
     while IFS= read -r -d '' file; do
-        if ! shellcheck --severity=warning -e SC1091,SC1090,SC2155,SC2034,SC2164,SC2143 "$file"; then
+        if ! shellcheck --severity=warning -e SC1091,SC1090,SC2034,SC2164,SC2143 "$file"; then
             echo "✗ Shellcheck failed for $file"
             exit_code=1
         fi

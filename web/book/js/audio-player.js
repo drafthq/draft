@@ -168,13 +168,16 @@ class DraftAudioPlayer {
         if (this.isPlaying) {
             this.audio.pause();
             this.isPlaying = false;
+            this.updateIcons();
         } else {
             this.audio.play().then(() => {
                 this.isPlaying = true;
                 this.updateIcons();
-            }).catch(() => {});
+            }).catch(() => {
+                this.isPlaying = false;
+                this.updateIcons();
+            });
         }
-        this.updateIcons();
     }
 
     stop() {

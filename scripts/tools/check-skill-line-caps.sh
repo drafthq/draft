@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # check-skill-line-caps.sh
 #
 # Enforces per-skill line-count caps (WS-10 prompt-economy budget). Walks
@@ -7,7 +8,7 @@
 #
 # Modes:
 # default warn-only (exit 0 regardless; report on stderr)
-# --enforce strict (exit 1 on any over-cap skill not in --allow list)
+# --enforce strict (exit 1 on any over-cap skill)
 #
 # Usage:
 # scripts/tools/check-skill-line-caps.sh # warn-only
@@ -16,8 +17,7 @@
 #
 # Exit codes:
 # 0 clean (or warn-only mode regardless of findings)
-# 1 --enforce and at least one skill exceeds its cap without being on
-# the explicit allowlist
+# 1 --enforce and at least one skill exceeds its cap
 # 2 usage / runtime error
 
 set -euo pipefail
@@ -61,7 +61,6 @@ done
 # Lines starting with '#' or blank are ignored. A `*` skill-name sets the
 # global default cap.
 declare -A CAPS
-declare -A ALLOWLIST
 GLOBAL_CAP=600
 
 if [[ -f "$CAPS_CONF" ]]; then

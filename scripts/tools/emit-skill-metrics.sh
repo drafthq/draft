@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # emit-skill-metrics.sh — Append a NDJSON metrics record to ~/.draft/metrics.jsonl
 #
 # Usage: emit-skill-metrics.sh <json-payload>
@@ -7,11 +8,6 @@
 # Concurrency: uses flock on the metrics file to prevent interleaved writes
 
 set -euo pipefail
-
-if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
-    echo "${0##*/} — Foundations quality tool (see core/ docs for full behavior)"
-    exit 0
-fi
 
 if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
   cat <<'EOF'

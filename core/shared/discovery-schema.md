@@ -1,12 +1,7 @@
 # Discovery Artifact Schema
 
-<<<<<<< HEAD
 > Schema for the `discovery.md` artifact produced by discovery flows (as part of
 > new-track). The artifact captures the AI's pre-spec code-spike
-=======
-> Schema for the `discovery.md` artifact produced by `draft:discover` (Phase 0
-> of `draft:new-track`). The artifact captures the AI's pre-spec code-spike
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 > findings as a first-class output.
 
 ## Why this is first-class
@@ -73,11 +68,7 @@ appear with line numbers elsewhere.
 ## Renaming / archiving
 
 Discovery is created once per track at spec time. Subsequent
-<<<<<<< HEAD
 decompose runs DO NOT regenerate `discovery.md` — its job is to
-=======
-`draft:decompose` runs DO NOT regenerate `discovery.md` — its job is to
->>>>>>> a79c14023e16774c77463870ac3510b728e8a91c
 capture the moment in time when the spec was written, anchored to
 `metadata.json:synced_to_commit`. Re-running discovery is a deliberate
 re-spike; the previous file should be renamed `discovery-<isodate>.md`
