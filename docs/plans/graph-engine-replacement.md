@@ -1,6 +1,6 @@
 # Plan: Replace the Aether graph engine with codebase-memory-mcp (CLI mode)
 
-> Status: **In progress** — Phase 0 (spike) complete; Phases 1, 3, 5 (engine layer) landed; Phases 2 & 4 remaining.
+> Status: **Implemented** — Phases 0–5 landed (Aether fully retired; engine, tools, snapshot, contract, and all skill/doc references migrated). Remaining: vendor binaries for the 3 non-Linux arches into the fetch flow, and an end-to-end init run on a real polyglot repo.
 > Branch: `claude/seekdb-draft-artifacts-xukf1v`
 > Scope: Fully retire the vendored Aether `graph` binary (`bin/<arch>/graph`, `graph-clang`) and replace it with [DeusData/codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp), used **via its CLI** (`codebase-memory-mcp cli <tool> '<json>'`). MCP-server mode is explicitly **out of scope for now**.
 
