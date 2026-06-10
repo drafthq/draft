@@ -151,17 +151,13 @@ Do NOT apply relevance scoring for commands that need full context (`/draft:init
 
 3. **Score graph files** (if `draft/graph/` exists) against the task concepts:
 
-| Graph File | Load When Task Involves... |
+| Graph source | Use When Task Involves... |
 |------------|--------------------------|
-| `module-graph.jsonl` | Module boundary changes, cross-module work, architecture analysis |
-| `hotspots.jsonl` | Performance work, refactoring, changes to high-fanIn files |
-| `proto-index.jsonl` | API changes, new RPCs, service contract modifications |
-| `go-index.jsonl` | Implementation or debugging in Go modules |
-| `python-index.jsonl` | Implementation or debugging in Python modules |
-| `ts-index.jsonl` | Implementation or debugging in TypeScript/JavaScript modules |
-| `c-index.jsonl` | Implementation or debugging in C/C++ modules |
-| `call-index.jsonl` | Tracing call paths, root cause analysis, function-level impact assessment |
-| `modules/<name>.jsonl` | Working within a specific module (implementation, debug, review) |
+| `architecture.json` | Module boundary changes, cross-module work, architecture analysis, API/route surface |
+| `hotspots.jsonl` | Performance work, refactoring, changes to high-fanIn symbols |
+| `scripts/tools/graph-callers.sh --symbol <name>` | Enumerating callers before a change |
+| `scripts/tools/graph-impact.sh --file <path>` / `--symbol <name>` | Tracing call paths, root cause analysis, function-level impact |
+| `scripts/tools/cycle-detect.sh` | Checking for call cycles |
 
 4. **Always include**: `META`, `INVARIANTS`, `TEST`, `FILES` (minimum context floor)
 5. **Include if relevant**: All other sections scored against task concepts

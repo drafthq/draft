@@ -11,7 +11,7 @@ You are conducting a structured debugging session following systematic investiga
 
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. During Steps 3–4 (Isolate, Diagnose):
 
-1. Locate the suspect file's module via `draft/graph/module-graph.jsonl` before tracing data flow.
+1. Locate the suspect file's module via `draft/graph/architecture.json` (`.packages`) before tracing data flow.
 2. Use `scripts/tools/graph-callers.sh --repo . --symbol <fn>` to enumerate call sites of suspect functions — not `grep`.
 3. Use `scripts/tools/graph-impact.sh --repo . --file <path>` to size the blast radius before proposing a fix.
 4. Cross-check `draft/graph/hotspots.jsonl` to know whether the file is high-fanIn (any fix needs extra caution).

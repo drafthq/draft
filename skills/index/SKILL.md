@@ -378,9 +378,9 @@ Analyze extracted data to build dependency graph:
 2. Look for API client imports or service URLs in tech-stack.md
 3. Look for mentions in product.md that reference other services
 4. **Graph-enriched detection** (if individual services have `draft/graph/` directories):
-   - Read each service's `draft/graph/proto-index.jsonl` to map which service defines vs consumes which RPCs
+   - Read each service's `draft/graph/architecture.json` `.routes` to map which service defines vs consumes which endpoints
    - Cross-reference proto consumers with proto producers to build precise inter-service dependency edges
-   - Read `draft/graph/module-graph.jsonl` per service for internal module structure
+   - Read `draft/graph/architecture.json` (`.packages`) per service for internal module structure
    - This provides deterministic, code-level dependency data that supplements the heuristic name-matching above
 
 Build a dependency map:

@@ -135,7 +135,7 @@ If one of these applies, route directly to the specialist workflow and stop this
 9. **Load graph context** (if `draft/graph/schema.yaml` exists):
    - Read `draft/graph/hotspots.jsonl` — check if any files this task will modify appear as hotspots
    - If modifying a hotspot file (high fanIn), warn: "This task modifies {file} (fanIn={N}). Changes here affect many downstream files. Consider running a graph impact query."
-   - Read `draft/graph/modules/<module>.jsonl` for the module(s) being modified — gives file-level dependency context
+   - Query `scripts/tools/graph-impact.sh`/`graph-callers.sh` for the module(s) being modified — gives file-level dependency context
    - See `core/shared/graph-query.md` for on-demand query subroutines (callers, impact)
 10. Update the track's entry in `draft/tracks.md` from `[ ]` to `[~]` In Progress
 

@@ -52,7 +52,7 @@ Initialize a Draft project for Context-Driven Development.
 
 ## Graph Fidelity & Diagram-First Priority (MANDATORY)
 
-The knowledge graph in `draft/graph/` (module-graph.jsonl, hotspots.jsonl, proto-index.jsonl, per-module *.jsonl files, public API tables, and edge weights) is the **deterministic structural ground truth** for the system's actual architecture.
+The knowledge graph in `draft/graph/` (architecture.json with packages, languages, routes, and fan-in/out; hotspots.jsonl) is the **deterministic structural ground truth** for the system's actual architecture.
 
 **You are running inside a powerful agentic coding environment** (Cursor, Claude Code, Copilot, Windsurf, etc.) that maintains its own rich, continuously updated index of the entire codebase. **Use that indexed knowledge aggressively** in addition to the explicit graph data and direct source reads. Your environment's index often captures higher-level intent, naming patterns, cross-file workflows, and architectural signals that the static graph may not fully express yet. Combine both sources:
 - Graph = authoritative modules, edges, public surfaces, hotspots, call relationships.
@@ -506,8 +506,8 @@ If the snapshot succeeds, `draft/graph/` is populated and later steps consume th
 
 Read these files to get structural context for all subsequent phases:
 - `draft/graph/schema.yaml` — module count, file count, edge count, language stats per module
-- `draft/graph/module-graph.jsonl` — all module nodes + weighted dependency edges
-- `draft/graph/proto-index.jsonl` — all proto services, RPCs, messages, enums
+- `draft/graph/architecture.json` — module list (`.packages`) with fan-in/out
+- `draft/graph/architecture.json` `.routes` — detected service endpoints
 - `draft/graph/hotspots.jsonl` — all complexity hotspots (files ranked by lines + fanIn * 50)
 
 ### 3. Use graph data to accelerate Step 1.5
@@ -541,7 +541,7 @@ Hold tier in memory. This governs: architecture.md length minimum, .ai-context.m
 
 **Step 1.4.6 — Build Module Priority List:**
 From `draft/graph/hotspots.jsonl`: count hotspot files per module (group by `module` field).
-From `draft/graph/module-graph.jsonl`: count incoming edges per module (fan-in, from `kind: "edge"` records).
+From `draft/graph/architecture.json` `.packages[]`: read `fan_in` per module.
 Rank modules by: `(hotspot_count × 2) + fan_in_count`.
 Top-ranked modules drive Section 6 deep-dive ordering and depth. Modules ranked zero on both: summary treatment only.
 Hold ranked list in memory — it replaces directory scanning for module discovery.
@@ -620,7 +620,7 @@ Perform a **one-time, exhaustive analysis** of the existing codebase. This is NO
 
 If the codebase is large (200+ files), focus on the module boundaries but still enumerate exhaustively within each module.
 
-> **Large codebase guardrail:** If the codebase exceeds 500 source files, limit Section 7 deep dives to the top 20 most-imported modules and summarize others in a table. Rank modules by the number of unique files that import/reference them (descending) — use `draft/graph/module-graph.jsonl` hub weights if graph data is available. For dynamic languages where static import counting is impractical, rank by file count within each module directory (larger modules first). **Even for summarized modules, enumerate immediate sub-directories with file counts** (one-line per sub-dir) — this is cheap with graph data and provides essential navigation context.
+> **Large codebase guardrail:** If the codebase exceeds 500 source files, limit Section 7 deep dives to the top 20 most-imported modules and summarize others in a table. Rank modules by the number of unique files that import/reference them (descending) — use `draft/graph/architecture.json` `.packages[].fan_in` if graph data is available. For dynamic languages where static import counting is impractical, rank by file count within each module directory (larger modules first). **Even for summarized modules, enumerate immediate sub-directories with file counts** (one-line per sub-dir) — this is cheap with graph data and provides essential navigation context.
 
 ### Parallel Analysis Protocol (Tiers 3–5)
 
@@ -649,14 +649,14 @@ For tier 3+, readers run simultaneously; wall clock = slowest reader, not the su
 
 The graph binary has already run. Use its output throughout this protocol:
 - `draft.tmp/graph/schema.yaml` — module list, file counts, tier metrics
-- `draft.tmp/graph/module-graph.jsonl` — fan-in counts per module (for grouping)
+- `draft.tmp/graph/architecture.json` — `.packages[].fan_in` per module (for grouping)
 - `draft.tmp/graph/hotspots.jsonl` — top hotspot files per module (feed to readers)
 
 #### Phase 1: Spawn Parallel Module Readers
 
 **Step 1: Group modules.**
 
-From `draft.tmp/graph/module-graph.jsonl`, extract all module names and their fan-in counts.
+From `draft.tmp/graph/architecture.json` `.packages[]`, extract all module names and their `fan_in` counts.
 Apply dependency-aware grouping (see `core/shared/parallel-analysis.md`).
 Use the modules-per-agent count from the tier table above (4 for tier 4/5; all modules in one agent for tier 1):
 - Assign highest fan-in modules to separate readers (tier 3+)
@@ -672,7 +672,7 @@ Hotspot files:
   execution/engine.go (847 lines, fanIn=12)
   execution/router.go (412 lines, fanIn=8)
   fill_processor/handler.go (623 lines, fanIn=5)
-Module edges (from module-graph.jsonl):
+Module edges (from architecture.json .packages fan-in/out):
   execution → [risk, data, services]
   fill_processor → [execution, persistence]
 ```
@@ -833,7 +833,7 @@ For every module that received a `#### 7.X` section, verify the following and re
 ```
 
 **Rules (new priority):**
-- Every module that appears in `draft/graph/module-graph.jsonl` must have its deterministic `<!-- GRAPH:module-deep/... -->` block rendered.
+- Every module in `draft/graph/architecture.json` `.packages` must have its deterministic `<!-- GRAPH:module-deep/... -->` block rendered (see init/references/architecture-spec.md).
 - Every architecturally significant module (top 20 by fan-in or any module with >1 clear internal boundary in the graph) must contain **at least one synthesized Mermaid workflow, state, or sequence diagram** that visualizes the dominant control/data flow derived from the graph + source reads.
 - Synthesis prose must not contradict the graph record for that module. If a discrepancy is discovered during source reading, it is noted explicitly; the graph remains the structural authority.
 - A FAIL row means you must add or correct the missing diagram (or remove the contradicting sentence) before proceeding. Re-reading source is allowed only to improve diagram accuracy or resolve a real contradiction.
@@ -977,7 +977,7 @@ Follow these steps in order. The specific files to look for depend on the langua
 
 2. **Read build / dependency files**: These reveal the module structure, dependencies, and targets. (See language guide above for which files.)
 
-3. **Read API definition files**: These define the module's data model and service interfaces. (See language guide above for which files. If Step 1.4 succeeded, `draft.tmp/graph/proto-index.jsonl` already has all proto services, RPCs, and message definitions.)
+3. **Read API definition files**: These define the module's data model and service interfaces. (See language guide above for which files. If Step 1.4 succeeded, `draft.tmp/graph/architecture.json` `.routes` already has all detected service endpoints.)
 
 4. **Read interface / type definition files**: Class declarations, interface definitions, and type annotations reveal the public API and design intent.
 

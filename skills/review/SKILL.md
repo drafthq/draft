@@ -11,7 +11,7 @@ You are conducting a code review using Draft's Context-Driven Development method
 
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Stage 1 (Automated Validation) **starts from the graph**:
 
-1. Run blast-radius assessment from `draft/graph/hotspots.jsonl` and `draft/graph/module-graph.jsonl` (see Stage 1).
+1. Run blast-radius assessment from `draft/graph/hotspots.jsonl` and `scripts/tools/graph-impact.sh` (see Stage 1).
 2. For each changed file with non-trivial diff size, run `scripts/tools/graph-impact.sh --repo . --file <path>` to obtain the affected module set deterministically.
 3. For each public symbol modified, run `scripts/tools/graph-callers.sh --repo . --symbol <name>` to enumerate downstream callers before judging breaking-change severity.
 
@@ -368,20 +368,20 @@ Load plugin guardrails before scanning: `core/guardrails/review-checks.md` (RC-#
 
 For the files changed in the diff, perform static checks using `grep` or similar tools:
 
-- **Blast Radius Assessment** (if `draft/graph/hotspots.jsonl` or `draft/graph/module-graph.jsonl` exists):
+- **Blast Radius Assessment** (if the `draft/graph/` snapshot exists):
    - List all changed files from the diff
    - For each changed file, check if it appears in `hotspots.jsonl` — if yes, record its `fanIn` value
    - Classify: files with fanIn in the top 20% of the hotspots list = **HIGH IMPACT**; top 21–50% = **MEDIUM**; below 50% or not in list = **STANDARD**
-   - For any file in a HIGH or MEDIUM module, check `module-graph.jsonl` for its reverse-edge count (how many modules import this module)
+   - For any file in a HIGH or MEDIUM module, check `architecture.json` `.packages[].fan_in` (how many modules depend on this module)
    - Include a `Blast Radius` line in the Stage 1 report summary: `Blast Radius: HIGH | MEDIUM | STANDARD — <N> changed files affect high-fanIn modules: [file list]`
    - If any changed file is HIGH IMPACT: escalate Stage 3 thoroughness (check all callers of changed functions) and note this in the report header
 - **Architecture Conformance:** Search for pattern violations documented in `draft/.ai-context.md`. (e.g. `import * from 'database'` in a React component).
 - **Dead Code:** Check for newly exported functions/classes in the diff that have 0 references across the codebase.
 - **Dependency Cycles:** Trace the import chains for new imports to ensure no circular dependencies (e.g., A → B → C → A) are introduced.
-- **Graph Boundary Check** (if `draft/graph/module-graph.jsonl` exists) `[RC-013]`:
+- **Graph Boundary Check** (if `draft/graph/architecture.json` exists) `[RC-013]`:
    - For each changed file, identify its module from the graph
    - Check if any new cross-module includes were added in the diff
-   - Verify they follow the established dependency direction from `module-graph.jsonl` edges
+   - Verify they follow the established dependency direction from `architecture.json` package fan-in/out
    - Flag reverse-direction dependencies (module A now depends on module B, but only B→A existed before) as "Potential architecture violation — new dependency direction"
    - Check if changes introduce files in modules listed in graph cycles — flag as higher risk
 - **Security Scan** `[RC-001, RC-002, RC-003, RC-011]`:

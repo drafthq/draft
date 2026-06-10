@@ -94,45 +94,43 @@ Transform each `architecture.md` section into machine-optimized format using thi
 
 #### Step 3.5: Generate Graph Summary Sections
 
-If `draft/graph/schema.yaml` exists, generate these three sections from graph JSONL:
+If `draft/graph/schema.yaml` exists, generate these sections from the snapshot (`draft/graph/architecture.json`, `draft/graph/hotspots.jsonl`) and the live query tools:
 
 **GRAPH:MODULES** (tier ≥ 2 only):
-- Read `draft/graph/module-graph.jsonl`, extract `kind: "node"` records and `kind: "edge"` records
-- For each node: `{name}|{sizeKB}KB|{lang_counts} → {comma-separated target modules}`
-- `lang_counts` = `go:N,proto:N,cc:N` from node.files (omit zero-count languages)
-- `deps` = edge targets where `source == this module name`
-- Order by sizeKB descending
+- Read `draft/graph/architecture.json` → `.packages[]` (each has `name`, `node_count`, `fan_in`, `fan_out`)
+- Format: `{name}|{node_count} nodes|fan_in:{fan_in} fan_out:{fan_out}`
+- Order by `node_count` descending
 - Omit this section entirely for tier-1 codebases (≤5 modules) where Component Graph is sufficient
 
 **GRAPH:HOTSPOTS** (all tiers):
-- Read `draft/graph/hotspots.jsonl`, take top 10 by score (score = lines + fanIn × 50)
-- Format: `{file}|{lines}L|fanIn:{fanIn}`
+- Read `draft/graph/hotspots.jsonl` (already fan-in-ranked), take top 10
+- Format: `{name}|fanIn:{fanIn}` (use `id` for disambiguation when names collide)
 - Always include regardless of tier
 
 **GRAPH:CYCLES** (all tiers):
-- Inspect `draft/graph/module-graph.jsonl` edges; detect cycles using DFS (same logic as `graph/src/query.js` detectCycles)
-- Output `None ✓` if no cycles
-- Otherwise output each cycle path on its own line: `"A → B → C → A"`
-- Always include — absence is positive signal that architecture is acyclic
+- Run `scripts/tools/cycle-detect.sh --repo .`; read `.cycles[]` (each is an array of qualified symbol names)
+- Output `None ✓` if empty
+- Otherwise output each cycle on its own line: `"A → B → C → A"`
+- Always include — absence is positive signal that the call graph is acyclic
 
 **GRAPH:MODULE-HOTSPOTS** (tier ≥ 3 only):
-- Read `draft/graph/hotspots.jsonl`, group records by `module` field
-- For each module: take top 3 files by score (lines + fanIn×50), format as indented lines under the module name
-- Format: `{module}: {file}|{lines}L|fanIn:{N}` with subsequent files indented to align
-- Order modules by their highest-scoring file, descending
+- Read `draft/graph/hotspots.jsonl`; group by the package segment of each `id` (the qualified name minus the leaf symbol)
+- For each module: take its top 3 symbols by `fanIn`, format as indented lines under the module name
+- Format: `{module}: {name}|fanIn:{N}` with subsequent symbols indented to align
+- Order modules by their highest-fanIn symbol, descending
 - Omit modules with no hotspot entries; omit entire section for tier 1–2 (covered by global GRAPH:HOTSPOTS)
 
 **GRAPH:FAN-IN** (tier ≥ 3 only):
-- Read `draft/graph/module-graph.jsonl`, count `kind: "edge"` records by target module name to get per-module incoming edge count
-- Format: `{module}|fanIn:{N}|callers:{comma-separated source modules}`
-- Order by fanIn descending; include only modules with fanIn ≥ 2; cap at 15 rows
+- Read `architecture.json` → `.packages[]`, use the `fan_in` field per module
+- Format: `{name}|fanIn:{fan_in}|fanOut:{fan_out}`
+- Order by `fan_in` descending; include only modules with `fan_in ≥ 2`; cap at 15 rows
 - Omit entire section for tier 1–2 (trivially small graph)
 
-**GRAPH:PROTO-MAP** (only when `stats.proto_rpcs > 0` in schema.yaml):
-- Read `draft/graph/proto-index.jsonl`, extract service name, rpc name, request type, response type, source file
-- Format: `{ServiceName}: {rpc}({RequestType}) → {ResponseType} @{file}`
-- Group entries by service name; one line per RPC
-- Omit entire section if `stats.proto_rpcs == 0` — do not write an empty section
+**GRAPH:PROTO-MAP** (only when `architecture.json` `.routes` is non-empty):
+- Read `architecture.json` → `.routes[]` (each has `method`, `path`, `handler`)
+- Format: `{method} {path} → {handler}`
+- One line per route
+- Omit entire section if `.routes` is empty — do not write an empty section
 
 #### Step 4: Apply Compression
 
