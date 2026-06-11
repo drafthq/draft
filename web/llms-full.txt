@@ -4,7 +4,7 @@
 
 Draft is a plugin that adds three things to AI coding agents: a knowledge graph engine that maps your repo, spec-driven planning that produces git-tracked specs and phased plans, and a three-stage review pipeline that validates work against the plan. Together, they force AI to execute pre-approved work — grounded in real codebase understanding — instead of guessing.
 
-Draft works with Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Google Gemini. 5 primary routers + 20+ specialist commands (still directly callable), 7 specialized agents, 14-dimension bug hunting, ACID-style module audits, knowledge graph with six query modes, 14 deterministic shell helpers. MIT license, no telemetry, no paid tiers.
+Draft works with Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Google Gemini. 5 primary routers + 20+ specialist commands (still directly callable), 7 specialized agents, 14-dimension bug hunting, ACID-style module audits, knowledge graph with query tools, 14 deterministic shell helpers. MIT license, no telemetry, no paid tiers.
 
 ## Installation
 
@@ -174,11 +174,11 @@ draft/
     run memory          — Cross-session continuity with resumable checkpoints
   graph/                — Knowledge-graph output (when graph engine is run)
     schema.yaml         — Build metadata + module list
-    module-graph.jsonl  — Inter-module dependency edges (always-load)
+    architecture.json  — Inter-module dependency edges (always-load)
     hotspots.jsonl      — Complexity x fan-in ranking (always-load)
-    proto-index.jsonl   — Proto services, RPCs, messages, enums
+    architecture.json   — Proto services, RPCs, messages, enums
     *-index.jsonl       — Per-language indexes (go, python, ts, c)
-    call-index.jsonl    — Intra-file call edges (with confidence: direct|inferred)
+    architecture.json    — Intra-file call edges (with confidence: direct|inferred)
     modules/<name>.jsonl — Per-module file graph
 ```
 
@@ -186,26 +186,20 @@ Status markers in tracks: `[ ]` Pending, `[~]` In Progress, `[x]` Completed, `[!
 
 ## Knowledge Graph Engine
 
-Draft ships a built-in graph engine (`graph/`) — pure Node.js + tree-sitter WASM, no daemon, no external service. Languages: Go, Python, TypeScript/JS, C/C++, proto (tree-sitter); Java, Rust, Ruby, Swift, Kotlin, PHP (universal-ctags fallback).
+Draft installs codebase-memory-mcp, a single-binary local graph engine (tree-sitter + LSP across 159 languages), no daemon, no external service, no API key. The committed snapshot lives in `draft/graph/`.
 
 CLI:
 
 ```
-graph --repo <path>                     # Build graph from scratch
-graph --repo <path> --incremental       # Skip unchanged modules (per-module SHA-256)
-graph --repo <path> --query --mode <m>  # Query existing graph
-
-# Query modes
-graph --query --file src/auth/login.go --mode callers     # Who depends on this file
-graph --query --symbol buildIndex      --mode callers     # Who calls this function
-graph --query --file src/auth/login.go --mode impact      # Blast radius (with by_category)
-graph --query --mode hotspots                              # Top complexity files
-graph --query --mode modules                               # Inter-module dependency graph
-graph --query --mode cycles                                # Circular dependencies
-graph --query --mode mermaid                               # Module-deps + proto-map diagrams
+/draft:graph [path]                                  # Build / refresh the committed snapshot
+scripts/tools/graph-callers.sh --symbol buildIndex   # Who calls this function
+scripts/tools/graph-impact.sh  --file src/auth/login.go   # Blast radius (by_category)
+scripts/tools/hotspot-rank.sh --top 10               # Top symbols by fan-in
+scripts/tools/cycle-detect.sh                        # Circular call dependencies
+scripts/tools/mermaid-from-graph.sh --diagram module-deps  # Architecture diagrams
 ```
 
-Each call edge in the call-index carries a confidence marker: `direct` (bare-identifier callee) or `inferred` (member call where the receiver collapses). Skills weight findings accordingly.
+Call edges carry confidence signals (resolved vs. inferred); skills weight findings accordingly.
 
 ## Deterministic Helper Tools
 

@@ -133,24 +133,25 @@ The authoritative Draft implementation skills are located at:
 
 ## Built-in Code Intelligence
 
-Draft ships with a **knowledge graph engine** that gives every command precise structural context — module boundaries, call graphs, dependencies, hotspots — without you having to install or configure anything.
+Draft is powered by a **local knowledge graph engine** ([codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp)) that gives every command precise structural context — module boundaries, call graphs, dependencies, hotspots. It's 100% local (no API key, no SaaS), installed on first use.
 
 ```bash
-graph --repo . --query --file src/auth/login.go --mode impact
-# → blast radius: which files, which modules, which tests/docs/configs
+/draft:graph                                  # build / refresh the snapshot
+scripts/tools/graph-impact.sh --file src/auth/login.go
+# → blast radius: which files, which symbols, which tests/docs/configs
 ```
 
 | Capability | What it provides |
 |---|---|
-| **Multi-language extraction** | Tree-sitter parsers for Go, Python, TypeScript/JS, C/C++, proto + ctags fallback for Java/Rust/Ruby/Swift |
-| **Call graph with confidence** | Every call edge tagged `direct` (bare identifier) or `inferred` (member call) so review/bughunt can weight findings |
-| **Impact analysis** | Blast-radius BFS with file-class dimension (code/test/doc/config) — answers *"what breaks if I change this?"* |
-| **Cycle detection** | Iterative DFS — flags circular module dependencies before they bite |
-| **Hotspot ranking** | Complexity × fan-in score so high-risk files get extra scrutiny |
-| **Atomic incremental builds** | Per-module SHA-256 hashing; only changed modules re-extract |
+| **Multi-language extraction** | Tree-sitter + LSP-grade resolution across 159 languages, 100% local |
+| **Call graph** | Callers/callees with confidence signals so review/bughunt can weight findings |
+| **Impact analysis** | Blast-radius with file-class dimension (code/test/doc/config) — answers *"what breaks if I change this?"* |
+| **Cycle detection** | Flags circular call dependencies before they bite |
+| **Hotspot ranking** | Fan-in score so high-risk symbols get extra scrutiny |
+| **Incremental indexing** | git-aware, content-based; only changed code re-indexes |
 | **Track impact memory** | `metadata.json.impact` snapshots each completed track's blast radius — `/draft:new-track` flags overlap with recent work |
 
-The graph powers `/draft:impact`, enriches `/draft:bughunt` and `/draft:review`, and is consumed by skills via `core/shared/graph-query.md`. See [graph/](graph/) for the engine source.
+The graph powers `/draft:graph` and `/draft:impact`, enriches `/draft:bughunt` and `/draft:review`, and is consumed by skills via `core/shared/graph-query.md`. The engine is installed via [`scripts/fetch-memory-engine.sh`](scripts/fetch-memory-engine.sh); the deterministic shell helpers live under [`scripts/tools/`](scripts/tools/).
 
 ### Deterministic helper tools
 

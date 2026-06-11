@@ -52,7 +52,7 @@ Initialize a Draft project for Context-Driven Development.
 
 ## Graph Fidelity & Diagram-First Priority (MANDATORY)
 
-The knowledge graph in `draft/graph/` (module-graph.jsonl, hotspots.jsonl, proto-index.jsonl, per-module *.jsonl files, public API tables, and edge weights) is the **deterministic structural ground truth** for the system's actual architecture.
+The knowledge graph in `draft/graph/` (architecture.json with packages, languages, routes, and fan-in/out; hotspots.jsonl) is the **deterministic structural ground truth** for the system's actual architecture.
 
 **You are running inside a powerful agentic coding environment** (Cursor, Claude Code, Copilot, Windsurf, etc.) that maintains its own rich, continuously updated index of the entire codebase. **Use that indexed knowledge aggressively** in addition to the explicit graph data and direct source reads. Your environment's index often captures higher-level intent, naming patterns, cross-file workflows, and architectural signals that the static graph may not fully express yet. Combine both sources:
 - Graph = authoritative modules, edges, public surfaces, hotspots, call relationships.
@@ -478,125 +478,36 @@ If **Greenfield**: skip to Step 2 (Product Definition).
 
 **CRITICAL ORDERING**: Phase 0 (this step) MUST complete before writing any section of architecture.md. The graph provides: (a) exhaustive module list, (b) hotspot-ranked module priority, (c) authoritative proto API surface, (d) mermaid diagrams ready for slot injection, (e) codebase tier for .ai-context.md budget.
 
-### 1. Detect and run graph binary
+### 1. Build the graph snapshot
 
-**Native binary only** (Aether graph): 
+The knowledge-graph engine is `codebase-memory-mcp`, resolved by `scripts/tools/_lib.sh:find_memory_bin` (`DRAFT_MEMORY_BIN` > PATH > `~/.cache/draft/bin` > vendored `bin/<arch>/`). `scripts/install.sh` fetches it; install manually with `scripts/fetch-memory-engine.sh`. Set `DRAFT_MEMORY_DISABLE=1` to opt out.
 
-- First choice: `graph` found on `$PATH` (via `command -v graph`)
-- Second choice: vendored binary under `bin/<arch>/graph` (canonical layout) or legacy `graph/bin/<arch>/graph` where `<arch>` is computed from `uname` to match one of the directories that actually exist (e.g. `darwin-arm64`, `linux-amd64`, `linux-arm64`).
-
-The AI **must** correctly figure out the architecture string so it picks the right pre-copied binary from the directories present under the plugin root (`bin/darwin-arm64/...` etc).
-
-The legacy Node wrapper has been removed. Graceful degradation when no binary is present.
+One command resolves the engine, indexes the repo, and writes the committed snapshot under `draft/graph/`:
 
 ```bash
-GRAPH_BIN=""
-GRAPH_CLANG_BIN=""
-
-# 1. Prefer the canonical verifier (PATH > bundled arch)
-if command -v scripts/tools/verify-graph-binary.sh >/dev/null 2>&1 || \
-   [ -x "./scripts/tools/verify-graph-binary.sh" ]; then
-    VERIFY="./scripts/tools/verify-graph-binary.sh"
-    if REPORT="$($VERIFY --repo . --json 2>/dev/null)"; then
-        GRAPH_BIN=$(echo "$REPORT" | sed -n 's/.*"graph_bin":"\([^"]*\)".*/\1/p')
-        GRAPH_CLANG_BIN=$(echo "$REPORT" | sed -n 's/.*"graph_clang_bin":"\([^"]*\)".*/\1/p' | grep -v '^null$' || true)
-        echo "Graph binary selected via verifier (source=$(echo "$REPORT" | sed -n 's/.*"source":"\([^"]*\)".*/\1/p')): $GRAPH_BIN"
-        [ -n "$GRAPH_CLANG_BIN" ] && echo "  graph-clang companion: $GRAPH_CLANG_BIN (high-fidelity C/C++ enabled)"
-    fi
-fi
-
-# 2. Direct PATH + arch fallback (when verifier not yet available)
-if [ -z "$GRAPH_BIN" ]; then
-    if command -v graph >/dev/null 2>&1; then
-        GRAPH_BIN="$(command -v graph)"
-        echo "Using graph from PATH: $GRAPH_BIN"
-        command -v graph-clang >/dev/null 2>&1 && GRAPH_CLANG_BIN="$(command -v graph-clang)"
-    fi
-fi
-
-if [ -z "$GRAPH_BIN" ]; then
-    # Compute architecture directory name that matches what exists under bin/<arch>/
-    # Supported layout examples: darwin-arm64, linux-amd64, linux-arm64, darwin-x86_64
-    # Canonical layout is bin/<arch>/ (correct); graph/bin/<arch>/ supported for transition
-    os=$(uname -s | tr '[:upper:]' '[:lower:]')
-    machine=$(uname -m)
-    case "$machine" in
-        x86_64|amd64)   arch="amd64" ;;
-        arm64|aarch64)  arch="arm64" ;;
-        *)              arch="$machine" ;;
-    esac
-    ARCH="${os}-${arch}"
-
-    echo "Resolved arch for bundled graph: $ARCH (from uname: $os + $machine)"
-
-    for root in \
-        "$HOME/.cursor/plugins/local/draft" \
-        "$HOME/.claude-plugin/.." \
-        "." \
-        "$HOME/.claude/plugins/draft" \
-        "$HOME/.claude/plugins/local/draft"; do
-        for base in bin graph/bin; do
-            cand="$root/$base/$ARCH/graph"
-            if [ -x "$cand" ]; then
-                GRAPH_BIN="$cand"
-                echo "Using bundled native graph for $ARCH: $GRAPH_BIN (via $base)"
-                clang_cand="$root/$base/$ARCH/graph-clang"
-                [ -x "$clang_cand" ] && GRAPH_CLANG_BIN="$clang_cand"
-                break 2
-            fi
-        done
-    done
-
-    # If the exact ARCH dir didn't exist, try to pick any available arch dir as last resort
-    if [ -z "$GRAPH_BIN" ]; then
-        for root in \
-            "$HOME/.cursor/plugins/local/draft" \
-            "$HOME/.claude-plugin/.." \
-            "." \
-            "$HOME/.claude/plugins/draft"; do
-            for base in bin graph/bin; do
-                if [ -d "$root/$base" ]; then
-                    for d in "$root/$base"/*/; do
-                        [ -d "$d" ] || continue
-                        cand="$d/graph"
-                        if [ -x "$cand" ]; then
-                            GRAPH_BIN="$cand"
-                            ARCH=$(basename "$d")
-                            echo "Falling back to first available bundled graph: $GRAPH_BIN (arch=$ARCH)"
-                            clang_cand="$d/graph-clang"
-                            [ -x "$clang_cand" ] && GRAPH_CLANG_BIN="$clang_cand"
-                            break 3
-                        fi
-                    done
-                fi
-            done
-        done
-    fi
-fi
-
-# Execute
-if [ -n "$GRAPH_BIN" ]; then
-    echo "Running graph build with: $GRAPH_BIN"
-    [ -n "$GRAPH_CLANG_BIN" ] && echo "  (graph-clang: $GRAPH_CLANG_BIN)"
-    "$GRAPH_BIN" --repo . --out draft/graph/ || {
-        echo "WARNING: graph build failed (exit $?) — continuing with manual discovery."
-        GRAPH_BIN=""
-    }
+if scripts/tools/graph-snapshot.sh --repo .; then
+    echo "Graph snapshot written to draft/graph/ (schema.yaml, architecture.json, hotspots.jsonl, *.mermaid)."
 else
-    echo "Graph binary not found — skipping automated graph analysis. Downstream skills degrade gracefully."
+    echo "Graph engine unavailable — skipping automated graph analysis. Downstream skills degrade gracefully."
 fi
 ```
 
-See `core/shared/graph-query.md` and `bin/README.md` for the query contract and binary layout. When a native binary (or `graph-clang`) is chosen, explicit selection messages are printed.
+Optionally record which engine was selected (usage-report contract):
 
-If the build succeeds, `draft/graph/` is populated and later steps consume the always-load artifacts + injection slots exactly as before.
+```bash
+scripts/tools/verify-graph-binary.sh --repo . --json 2>/dev/null || true
+```
+
+See `core/shared/graph-query.md` and `bin/README.md` for the query contract and engine resolution.
+
+If the snapshot succeeds, `draft/graph/` is populated and later steps consume the always-load artifacts + injection slots.
 
 ### 2. If graph build succeeds, load the always-load artifacts
 
 Read these files to get structural context for all subsequent phases:
 - `draft/graph/schema.yaml` — module count, file count, edge count, language stats per module
-- `draft/graph/module-graph.jsonl` — all module nodes + weighted dependency edges
-- `draft/graph/proto-index.jsonl` — all proto services, RPCs, messages, enums
+- `draft/graph/architecture.json` — module list (`.packages`) with fan-in/out
+- `draft/graph/architecture.json` `.routes` — detected service endpoints
 - `draft/graph/hotspots.jsonl` — all complexity hotspots (files ranked by lines + fanIn * 50)
 
 ### 3. Use graph data to accelerate Step 1.5
@@ -630,7 +541,7 @@ Hold tier in memory. This governs: architecture.md length minimum, .ai-context.m
 
 **Step 1.4.6 — Build Module Priority List:**
 From `draft/graph/hotspots.jsonl`: count hotspot files per module (group by `module` field).
-From `draft/graph/module-graph.jsonl`: count incoming edges per module (fan-in, from `kind: "edge"` records).
+From `draft/graph/architecture.json` `.packages[]`: read `fan_in` per module.
 Rank modules by: `(hotspot_count × 2) + fan_in_count`.
 Top-ranked modules drive Section 6 deep-dive ordering and depth. Modules ranked zero on both: summary treatment only.
 Hold ranked list in memory — it replaces directory scanning for module discovery.
@@ -640,34 +551,31 @@ Query for diagram content and write into architecture.md slots using the standar
 
 For Section 4.4 (module-deps slot):
 ```bash
-"$GRAPH_BIN" --repo . --out draft/graph --query --mode mermaid --symbol module-deps
+scripts/tools/mermaid-from-graph.sh --repo . --diagram module-deps
 ```
-Parse JSON response: extract `.mermaid` string and `filtered` flag. Write between the markers:
+The tool emits a ready-to-inject ` ```mermaid ``` ` block (or an empty stub on exit 2). Write between the markers:
 ```
 <!-- GRAPH:module-deps:START -->
-```mermaid
-{diagram content}
-```
-{if filtered: Note: diagram filtered to top edges by weight — N of M total edges shown}
+{mermaid block from the tool}
 <!-- GRAPH:module-deps:END -->
 ```
 
 For Section 20 (hotspots slot):
-Read `draft/graph/hotspots.jsonl`, take top 10 by score, build markdown table:
+Read `draft/graph/hotspots.jsonl` (or run `scripts/tools/hotspot-rank.sh --repo . --top 10`), take the top 10 by fanIn, build a markdown table:
 ```
 <!-- GRAPH:hotspots:START -->
-| File | Lines | fanIn | Score |
-|------|-------|-------|-------|
-| {path} | {lines} | {fanIn} | {score} |
+| Symbol | fanIn |
+|--------|-------|
+| {name} | {fanIn} |
 ...
 <!-- GRAPH:hotspots:END -->
 ```
 
 For Appendix E (proto-map slot):
 ```bash
-"$GRAPH_BIN" --repo . --out draft/graph --query --mode mermaid --symbol proto-map
+scripts/tools/mermaid-from-graph.sh --repo . --diagram proto-map
 ```
-Parse JSON response: extract `.mermaid` string. If no proto files (`stats.services == 0`), write placeholder. Otherwise write:
+The tool emits a ` ```mermaid ``` ` block from detected routes (empty stub if none). Write:
 ```
 <!-- GRAPH:proto-map:START -->
 ```mermaid
@@ -712,7 +620,7 @@ Perform a **one-time, exhaustive analysis** of the existing codebase. This is NO
 
 If the codebase is large (200+ files), focus on the module boundaries but still enumerate exhaustively within each module.
 
-> **Large codebase guardrail:** If the codebase exceeds 500 source files, limit Section 7 deep dives to the top 20 most-imported modules and summarize others in a table. Rank modules by the number of unique files that import/reference them (descending) — use `draft/graph/module-graph.jsonl` hub weights if graph data is available. For dynamic languages where static import counting is impractical, rank by file count within each module directory (larger modules first). **Even for summarized modules, enumerate immediate sub-directories with file counts** (one-line per sub-dir) — this is cheap with graph data and provides essential navigation context.
+> **Large codebase guardrail:** If the codebase exceeds 500 source files, limit Section 7 deep dives to the top 20 most-imported modules and summarize others in a table. Rank modules by the number of unique files that import/reference them (descending) — use `draft/graph/architecture.json` `.packages[].fan_in` if graph data is available. For dynamic languages where static import counting is impractical, rank by file count within each module directory (larger modules first). **Even for summarized modules, enumerate immediate sub-directories with file counts** (one-line per sub-dir) — this is cheap with graph data and provides essential navigation context.
 
 ### Parallel Analysis Protocol (Tiers 3–5)
 
@@ -741,14 +649,14 @@ For tier 3+, readers run simultaneously; wall clock = slowest reader, not the su
 
 The graph binary has already run. Use its output throughout this protocol:
 - `draft.tmp/graph/schema.yaml` — module list, file counts, tier metrics
-- `draft.tmp/graph/module-graph.jsonl` — fan-in counts per module (for grouping)
+- `draft.tmp/graph/architecture.json` — `.packages[].fan_in` per module (for grouping)
 - `draft.tmp/graph/hotspots.jsonl` — top hotspot files per module (feed to readers)
 
 #### Phase 1: Spawn Parallel Module Readers
 
 **Step 1: Group modules.**
 
-From `draft.tmp/graph/module-graph.jsonl`, extract all module names and their fan-in counts.
+From `draft.tmp/graph/architecture.json` `.packages[]`, extract all module names and their `fan_in` counts.
 Apply dependency-aware grouping (see `core/shared/parallel-analysis.md`).
 Use the modules-per-agent count from the tier table above (4 for tier 4/5; all modules in one agent for tier 1):
 - Assign highest fan-in modules to separate readers (tier 3+)
@@ -764,7 +672,7 @@ Hotspot files:
   execution/engine.go (847 lines, fanIn=12)
   execution/router.go (412 lines, fanIn=8)
   fill_processor/handler.go (623 lines, fanIn=5)
-Module edges (from module-graph.jsonl):
+Module edges (from architecture.json .packages fan-in/out):
   execution → [risk, data, services]
   fill_processor → [execution, persistence]
 ```
@@ -925,7 +833,7 @@ For every module that received a `#### 7.X` section, verify the following and re
 ```
 
 **Rules (new priority):**
-- Every module that appears in `draft/graph/module-graph.jsonl` must have its deterministic `<!-- GRAPH:module-deep/... -->` block rendered.
+- Every module in `draft/graph/architecture.json` `.packages` must have its deterministic `<!-- GRAPH:module-deep/... -->` block rendered (see init/references/architecture-spec.md).
 - Every architecturally significant module (top 20 by fan-in or any module with >1 clear internal boundary in the graph) must contain **at least one synthesized Mermaid workflow, state, or sequence diagram** that visualizes the dominant control/data flow derived from the graph + source reads.
 - Synthesis prose must not contradict the graph record for that module. If a discrepancy is discovered during source reading, it is noted explicitly; the graph remains the structural authority.
 - A FAIL row means you must add or correct the missing diagram (or remove the contradicting sentence) before proceeding. Re-reading source is allowed only to improve diagram accuracy or resolve a real contradiction.
@@ -1069,7 +977,7 @@ Follow these steps in order. The specific files to look for depend on the langua
 
 2. **Read build / dependency files**: These reveal the module structure, dependencies, and targets. (See language guide above for which files.)
 
-3. **Read API definition files**: These define the module's data model and service interfaces. (See language guide above for which files. If Step 1.4 succeeded, `draft.tmp/graph/proto-index.jsonl` already has all proto services, RPCs, and message definitions.)
+3. **Read API definition files**: These define the module's data model and service interfaces. (See language guide above for which files. If Step 1.4 succeeded, `draft.tmp/graph/architecture.json` `.routes` already has all detected service endpoints.)
 
 4. **Read interface / type definition files**: Class declarations, interface definitions, and type annotations reveal the public API and design intent.
 

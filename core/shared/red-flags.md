@@ -24,7 +24,7 @@ Referenced by: `/draft:decompose`, `/draft:implement`, `/draft:review`, `/draft:
 These enforce [graph-query.md](graph-query.md) §Ground-Truth Discipline. Graph identifies candidates; Read confirms them. Shipping unread claims is the dominant correctness failure mode observed in Draft output.
 
 - **Wrote a `path:line` / `func()` / `symbol` reference into a deliverable without opening the file in this run.** Graph hit ≠ Read. (G1)
-- **Declared something in-scope or out-of-scope without Reading at least one file in that path.** Module names from `module-graph.jsonl` are a candidate set, not proof that the candidate contains the named cost. (G2)
+- **Declared something in-scope or out-of-scope without Reading at least one file in that path.** Module names from `architecture.json` are a candidate set, not proof that the candidate contains the named cost. (G2)
 - **Shipped `Citation: TBD` / `Path: TBD` / `Symbol: TBD` on a row whose Status is `Modified` or `Existing`.** TBD is reserved for `Status: New` rows with a planned path filled in. (G3)
 - **Claimed code behavior (writes / blocks / loops / fails / is the only path) from graph metadata alone.** Fan-in / fan-out / complexity scores are necessary signal, not sufficient evidence. (G4)
 - **Promoted a spec / generated an HLD or LLD / closed a review without checking that the in-scope file set covers every cost term in the problem statement.** Silent scope narrowing that excludes the named cost is the highest-impact failure class. (G5)
@@ -34,7 +34,7 @@ When in doubt, prefer "not yet validated against source" over an unbacked assert
 
 ## Graph-First Lookup Order (non-negotiable)
 
-1. **Graph artifacts first** — `draft/graph/module-graph.jsonl`, `draft/graph/hotspots.jsonl`, `draft/graph/modules/<name>.jsonl`, `draft/graph/proto-index.jsonl`, `draft/graph/{go,python,ts,c,call}-index.jsonl`.
+1. **Graph first** — the committed snapshot (`draft/graph/architecture.json`, `draft/graph/hotspots.jsonl`) and the live query tools (`scripts/tools/graph-callers.sh`, `graph-impact.sh`, `cycle-detect.sh`, `hotspot-rank.sh`).
 2. **Generated context second** — `draft/.ai-context.md`, relevant `draft/architecture.md` slices, track-level `hld.md`/`lld.md`.
 3. **Source file reads third** — only narrowed targets identified via graph or generated context.
 4. **Filesystem `grep`/`find` last** — only after a graph miss, with the explicit fallback sentence above.

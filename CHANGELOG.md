@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Graph engine replaced with [codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp)** — Draft's knowledge graph is now powered by codebase-memory-mcp (tree-sitter + LSP across 159 languages, 100% local, no API key). The previous in-house Node.js + tree-sitter-WASM engine is retired. The engine is fetched on install (`scripts/fetch-memory-engine.sh`, checksum-verified) into `~/.cache/draft/bin` rather than vendored, and resolved via `scripts/tools/_lib.sh:find_memory_bin` (`DRAFT_MEMORY_BIN` > PATH > managed > vendored). Set `DRAFT_MEMORY_DISABLE=1` to opt out.
+- **Graph artifacts** — `draft/graph/` now holds a lightweight committed snapshot (`schema.yaml`, `architecture.json`, `hotspots.jsonl`, `*.mermaid`) instead of the per-language JSONL indexes. Live structural queries run on demand against the engine.
+
 ### Added
+- **`/draft:graph` command** — Initialize or refresh the `draft/graph/` snapshot for a repo (optional `<path>` argument). Ensures the engine is present (fetching if needed), then builds and reports counts/hotspots/cycles.
+- **New graph tools** — `graph-snapshot.sh` (committed snapshot), `graph-impact.sh` (file/symbol blast radius), `graph-callers.sh` (caller enumeration), plus `fetch-memory-engine.sh` (pinned, checksum-verified engine install).
 - **Two-tier command architecture** — 4 primary workflow commands (`init`, `new-track`, `implement`, `review`) + 5 routers (`plan`, `ops`, `docs`, `discover`, `jira`) as the recommended public interface. 22 specialist commands are dispatched underneath the routers.
 - **Unified `/draft:jira` router** — Single entry point replacing the previous flat `/draft:jira-preview` and `/draft:jira-create`. Supports `preview [track]`, `create [track] [--epic]`, and the advanced `review <JIRA-ID>` qualification subcommand.
 - **Full Jira qualification pipeline** — 7-phase deep engine (context loading → collection → synthesis → code changes → deep-review + bughunt + coverage + test-gap analysis) now public. Produces `qualification-report.md` + `remediation-plan.md` with QUALIFIED / PARTIALLY QUALIFIED / NOT QUALIFIED verdict. Pipeline lives in `skills/jira/references/review.md` for correct inlining into integrations.

@@ -135,7 +135,7 @@ If one of these applies, route directly to the specialist workflow and stop this
 9. **Load graph context** (if `draft/graph/schema.yaml` exists):
    - Read `draft/graph/hotspots.jsonl` — check if any files this task will modify appear as hotspots
    - If modifying a hotspot file (high fanIn), warn: "This task modifies {file} (fanIn={N}). Changes here affect many downstream files. Consider running a graph impact query."
-   - Read `draft/graph/modules/<module>.jsonl` for the module(s) being modified — gives file-level dependency context
+   - Query `scripts/tools/graph-impact.sh`/`graph-callers.sh` for the module(s) being modified — gives file-level dependency context
    - See `core/shared/graph-query.md` for on-demand query subroutines (callers, impact)
 10. Update the track's entry in `draft/tracks.md` from `[ ]` to `[~]` In Progress
 
@@ -627,7 +627,7 @@ After a phase passes review, refresh `metadata.json.impact` so future tracks can
 
 2. **Compute downstream blast radius (graph-aware, optional):** If `draft/graph/schema.yaml` exists, for each file in `files_touched` query:
    ```bash
-   graph --repo . --out draft/graph --query --file <path> --mode impact
+   scripts/tools/graph-impact.sh --repo . --file <path>
    ```
    Aggregate across all files: `downstream_files` = total unique downstream files (deduped), `downstream_modules` = union of `affected_modules`, `max_depth` = max across queries, `by_category` = sum of each query's `by_category`. If the graph is absent, leave these fields as zeros / empty arrays — the snapshot still records the directly-touched files.
 

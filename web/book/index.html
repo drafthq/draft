@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Draft Book — Context-Driven Development Deep Dive</title>
-    <meta name="description" content="A comprehensive guide to Draft's Context-Driven Development methodology. 22 chapters covering specs, plans, TDD, code review, bug hunting, ACID audits, and more.">
+    <meta name="description" content="A comprehensive guide to Draft's Context-Driven Development methodology. 24 chapters covering specs, plans, TDD, code review, bug hunting, ACID audits, and more.">
     <meta name="author" content="Mayur Pise">
     <meta name="theme-color" content="#2563eb">
     <meta name="keywords" content="context-driven development book, ai coding methodology, claude code guide, spec driven development, ai code review, tdd enforcement, ai architecture discovery, bug hunting methodology, copilot best practices, ai development workflow">
@@ -80,6 +80,11 @@
     </noscript>
 
     <link rel="stylesheet" href="css/book.css">
+
+    <!-- Theme: apply early to prevent flash of wrong theme -->
+    <script>
+    (function(){try{var t=localStorage.getItem('draft-theme');if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
+    </script>
 </head>
 <body>
 
@@ -280,5 +285,6 @@
     </div>
 
     <script src="js/book.js"></script>
+    <script src="../js/theme-toggle.js"></script>
 </body>
 </html>

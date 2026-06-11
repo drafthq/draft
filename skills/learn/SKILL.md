@@ -11,7 +11,7 @@ Scan the codebase to discover recurring coding patterns and update `draft/guardr
 
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Use the graph to:
 
-1. Enumerate source files per module from `draft/graph/modules/<name>.jsonl` (preferred over `find`).
+1. Enumerate a module's symbols/files via `scripts/tools/graph-callers.sh`/`graph-impact.sh` and `architecture.json` (preferred over `find`).
 2. Prioritize hotspots from `draft/graph/hotspots.jsonl` — patterns in high-fanIn files are more impactful when learned.
 3. For TS/Python/Go/C/C++, use `*-index.jsonl` to identify class/function definitions rather than re-discovering them via regex.
 
@@ -467,7 +467,7 @@ This creates a **continuous improvement loop**:
 
 Before printing the completion summary, internally verify and report:
 
-1. **Graph files queried** — JSONL files loaded plus any live `graph --query` invocations.
+1. **Graph files queried** — JSONL files loaded plus any live graph query-tool invocations.
 2. **Layer 1 files deliberately skipped** — list any context sections skipped.
 3. **Filesystem find/grep fallback justification** — for every `find`/`grep` run for source discovery, state which languages or extensions were not covered by the graph indexes (e.g. Ruby without ctags).
 

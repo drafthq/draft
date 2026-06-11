@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Test suite for scripts/tools/verify-graph-binary.sh (graph binary selection + usage report skeleton)
+# Test suite for scripts/tools/verify-graph-binary.sh (codebase-memory-mcp engine resolver)
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -14,79 +14,47 @@ echo ""
 FIXTURE="$(mktemp -d)"
 trap 'rm -rf "$FIXTURE"' EXIT
 
-# --- Test 1: fallback when nothing present (no PATH graph, no bundled native) ---
-# Hide real repo binaries during this test so the "absent" path is exercised (verifier always probes SCRIPT_DIR parent)
-REAL_BIN_DIR=""
-if [[ -d "$ROOT_DIR/bin" ]]; then
-    REAL_BIN_DIR="$(mktemp -d)"
-    mv "$ROOT_DIR/bin" "$REAL_BIN_DIR/bin-hidden" 2>/dev/null || true
-fi
+# --- Test 1: engine disabled → exit 2, JSON reports unavailable ---
 set +e
-out="$("$TOOL" --repo "$FIXTURE" --json 2>/dev/null)"
+out="$(DRAFT_MEMORY_DISABLE=1 "$TOOL" --repo "$FIXTURE" --json 2>/dev/null)"
 rc=$?
 set -e
-assert "Missing binary → exit 2" "$([[ "$rc" == "2" ]] && echo true || echo false)"
-if echo "$out" | grep -q '"status":"unavailable"'; then
-    assert "JSON reports unavailable" "true"
-else
-    assert "JSON reports unavailable" "false"
-fi
-# Restore real binaries
-if [[ -n "$REAL_BIN_DIR" && -d "$REAL_BIN_DIR/bin-hidden" ]]; then
-    mv "$REAL_BIN_DIR/bin-hidden" "$ROOT_DIR/bin" 2>/dev/null || true
-    rmdir "$REAL_BIN_DIR" 2>/dev/null || true
-fi
+assert "Missing engine → exit 2" "$([[ "$rc" == "2" ]] && echo true || echo false)"
+assert "JSON reports unavailable" "$(echo "$out" | grep -q '"status":"unavailable"' && echo true || echo false)"
 
-# --- Test 2: bundled arch-specific native detection ---
-ARCH=$(uname -s | tr '[:upper:]' '[:lower:]')-$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
-mkdir -p "$FIXTURE/bin/$ARCH"
-cat > "$FIXTURE/bin/$ARCH/graph" <<'NAT'
-#!/bin/sh
-echo "graph v1-native (test)"
-exit 0
-NAT
-chmod +x "$FIXTURE/bin/$ARCH/graph"
-
+# --- Test 2: engine present (mock) → exit 0, status ok ---
+MOCK="$(make_mock_memory_engine "$FIXTURE/mockbin")"
 set +e
-out="$("$TOOL" --repo "$FIXTURE" --json 2>/dev/null)"
+out="$(DRAFT_MEMORY_BIN="$MOCK" "$TOOL" --repo "$FIXTURE" --json 2>/dev/null)"
 rc=$?
 set -e
-assert "Bundled native present → exit 0" "$([[ "$rc" == "0" ]] && echo true || echo false)"
-if echo "$out" | grep -q '"source":"bundled'; then
-    assert "Source reports bundled" "true"
-else
-    assert "Source reports bundled" "false"
-fi
+assert "Engine present → exit 0" "$([[ "$rc" == "0" ]] && echo true || echo false)"
+assert "JSON reports status ok" "$(echo "$out" | grep -q '"status":"ok"' && echo true || echo false)"
+assert "JSON reports engine_bin" "$(echo "$out" | grep -q '"engine_bin"' && echo true || echo false)"
 
-# --- Test 3: usage report side-effect ---
+# --- Test 3: usage report side-effect written in draft/ context ---
+mkdir -p "$FIXTURE/draft"
+DRAFT_MEMORY_BIN="$MOCK" "$TOOL" --repo "$FIXTURE" --json >/dev/null 2>&1 || true
 if [[ -f "$FIXTURE/draft/.graph-binary-report.json" ]]; then
     assert "Usage report JSON written" "true"
-    if grep -q '"source":"bundled' "$FIXTURE/draft/.graph-binary-report.json"; then
-        assert "Report contains source=bundled" "true"
-    else
-        assert "Report contains source=bundled" "false"
-    fi
+    assert "Report contains engine_bin" "$(grep -q '"engine_bin"' "$FIXTURE/draft/.graph-binary-report.json" && echo true || echo false)"
 else
-    assert "Usage report JSON written (may be skipped outside draft context)" "true"
+    assert "Usage report JSON written" "false"
 fi
 
-# --- Test 4: --strict with a binary present succeeds (native-only world) ---
+# --- Test 4: --strict with engine present → exit 0 ---
 set +e
-"$TOOL" --repo "$FIXTURE" --strict --json >/dev/null 2>&1
+DRAFT_MEMORY_BIN="$MOCK" "$TOOL" --repo "$FIXTURE" --strict --json >/dev/null 2>&1
 rc=$?
 set -e
-assert "Strict + native present → exit 0" "$([[ "$rc" == "0" ]] && echo true || echo false)"
+assert "Strict + engine present → exit 0" "$([[ "$rc" == "0" ]] && echo true || echo false)"
 
-# --- Test 5: verbose output mentions selection ---
+# --- Test 5: --strict, engine disabled → exit 2 ---
 set +e
-vout="$("$TOOL" --repo "$FIXTURE" --verbose 2>&1)"
+DRAFT_MEMORY_DISABLE=1 "$TOOL" --repo "$FIXTURE" --strict --json >/dev/null 2>&1
 rc=$?
 set -e
-if echo "$vout" | grep -qi 'bundled\|PATH\|graph binary'; then
-    assert "Verbose mentions selection" "true"
-else
-    assert "Verbose mentions selection" "false"
-fi
+assert "Strict + no engine → exit 2" "$([[ "$rc" == "2" ]] && echo true || echo false)"
 
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="

@@ -131,17 +131,13 @@ log lines are unstructured and missing actor identity.
   Changes here affect many downstream files.
   Consider running a graph impact query before writing code.
 
-  graph --repo . --out draft/graph \
-        --query --file internal/db/transaction.go \
-        --mode impact</code></pre>
+  scripts/tools/graph-impact.sh --file internal/db/transaction.go</code></pre>
                 <p>This warning is in <code>skills/implement/SKILL.md</code> at line 48. The graph's <code>hotspots.jsonl</code> was built from <code>lines + fanIn * 50</code> &mdash; complexity weighted by how many other files include or import the file. <code>transaction.go</code> isn't large; it's <em>central</em>. Thirty-one direct dependents.</p>
                 <p>Most AI assistants ignore this kind of signal. The Draft skill stops and waits.</p>
 
                 <h2>Step 2: The Impact Query &mdash; What Actually Breaks</h2>
                 <p>Run the suggested command:</p>
-<pre><code>graph --repo . --out draft/graph \
-      --query --file internal/db/transaction.go \
-      --mode impact</code></pre>
+<pre><code>scripts/tools/graph-impact.sh --file internal/db/transaction.go</code></pre>
                 <p>Output (trimmed for the post):</p>
 <pre><code>{
   "target": "internal/db/transaction.go",
@@ -281,15 +277,13 @@ log lines are unstructured and missing actor identity.
 
                 <h2>Try It</h2>
 <pre><code># In a Draft-initialized repo with a built graph
-graph --repo . --out draft/graph \
-      --query --file path/to/your/file.go \
-      --mode impact | jq
+scripts/tools/graph-impact.sh --file path/to/your/file.go | jq
 
 # Then start a track and let /draft:implement
 # wire up the warning + memory loops
 /draft:new-track "your next change"
 /draft:implement</code></pre>
-                <p>The graph is local, deterministic, and version-controlled &mdash; same engine the <a href="../local-graph-engine/">previous post</a> walked through. Impact mode is one of six query modes; the rest are documented in <code>core/shared/graph-query.md</code>. No SaaS, no embeddings, no API key &mdash; just a JSON answer to the most expensive question in code review.</p>
+                <p>The graph is local, deterministic, and version-controlled &mdash; same engine the <a href="../local-graph-engine/">previous post</a> walked through. Impact mode is one of query tools; the rest are documented in <code>core/shared/graph-query.md</code>. No SaaS, no cloud, no API key &mdash; just a JSON answer to the most expensive question in code review.</p>
                 <p>The graph is not a planner. It is a memory. Use it before you write code, after you ship code, and the next time someone is about to retrace your steps.</p>
             </div>
 

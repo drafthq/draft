@@ -71,32 +71,24 @@ If `draft/graph/schema.yaml` exists, the project has automated graph analysis da
 
 | File | Purpose | Content |
 |------|---------|---------|
-| `draft/graph/schema.yaml` | Graph metadata, module list, stats | YAML, ~50 lines |
-| `draft/graph/module-graph.jsonl` | Module nodes + inter-module dependency edges with weights | JSONL, one record per line |
-| `draft/graph/hotspots.jsonl` | Files ranked by complexity score (lines + fanIn * 50). Includes C++, Go, and Python files. Go/Python files have fanIn=0 (include-graph fan-in only applies to C++). | JSONL |
-| `draft/graph/proto-index.jsonl` | All proto services, RPCs, messages, enums | JSONL |
+| `draft/graph/schema.yaml` | Snapshot metadata (engine, project, node/edge counts) | YAML, ~15 lines |
+| `draft/graph/architecture.json` | Node labels, edge types, languages, packages (fan-in/out), entry points, routes, hotspots | JSON |
+| `draft/graph/hotspots.jsonl` | Fan-in-ranked symbols, one object per line: `{id, name, fanIn}` | JSONL |
 
-Note: `.ai-context.md` now embeds a condensed graph summary (`GRAPH:MODULES`, `GRAPH:HOTSPOTS`, `GRAPH:CYCLES`) for first-pass structural ground truth. The full JSONL files in Layer 1.5 remain authoritative for deep queries.
+Note: `.ai-context.md` embeds a condensed graph summary (`GRAPH:MODULES`, `GRAPH:HOTSPOTS`, `GRAPH:CYCLES`) for first-pass structural ground truth. `architecture.json` is authoritative for deep structure.
 
-Note: The canonical embedded mermaid diagrams are in architecture.md injection slots (`<!-- GRAPH:module-deps:START/END -->`, `<!-- GRAPH:proto-map:START/END -->`), refreshed by `draft:index`. The static `.mermaid` files are build artifacts — prefer the injection slots or `graph --query --mode mermaid` for current data.
+Note: The canonical embedded mermaid diagrams are in architecture.md injection slots (`<!-- GRAPH:module-deps:START/END -->`, `<!-- GRAPH:proto-map:START/END -->`), refreshed by `draft:index`. For current data, regenerate via `scripts/tools/mermaid-from-graph.sh`.
 
-**Language-specific files** (load when task involves that language):
+**Live structural queries** (run on demand — no per-language index files; the engine's model is unified):
 
-| File | Load When... |
+| Tool | Use When... |
 |------|-------------|
-| `draft/graph/go-index.jsonl` | Task modifies Go files or works in a Go-heavy module |
-| `draft/graph/python-index.jsonl` | Task modifies Python files |
-| `draft/graph/ts-index.jsonl` | Task modifies TypeScript or JavaScript files |
-| `draft/graph/c-index.jsonl` | Task modifies C or C++ files (symbol-level context; supplement with include-graph data) |
-| `draft/graph/call-index.jsonl` | Tracing call chains, impact analysis, debugging call paths across functions |
+| `scripts/tools/graph-callers.sh --symbol <name>` | Enumerating callers of a function |
+| `scripts/tools/graph-impact.sh --file <path>` / `--symbol <name>` | Sizing blast radius before a change |
+| `scripts/tools/cycle-detect.sh` | Checking for call cycles |
+| `scripts/tools/hotspot-rank.sh` | Fan-in ranking (live) |
 
-**Per-module files** (load on demand):
-
-| File | Load When... |
-|------|-------------|
-| `draft/graph/modules/<name>.jsonl` | Task modifies files in that module, or debugging/reviewing that module |
-
-Load at most 2-3 module files per task to stay within token budget. See `core/shared/graph-query.md` for live query subroutines.
+See `core/shared/graph-query.md` for the full query contract.
 
 **Fallback**: If `draft/graph/` does not exist, skip — no degradation.
 
@@ -159,17 +151,13 @@ Do NOT apply relevance scoring for commands that need full context (`/draft:init
 
 3. **Score graph files** (if `draft/graph/` exists) against the task concepts:
 
-| Graph File | Load When Task Involves... |
+| Graph source | Use When Task Involves... |
 |------------|--------------------------|
-| `module-graph.jsonl` | Module boundary changes, cross-module work, architecture analysis |
-| `hotspots.jsonl` | Performance work, refactoring, changes to high-fanIn files |
-| `proto-index.jsonl` | API changes, new RPCs, service contract modifications |
-| `go-index.jsonl` | Implementation or debugging in Go modules |
-| `python-index.jsonl` | Implementation or debugging in Python modules |
-| `ts-index.jsonl` | Implementation or debugging in TypeScript/JavaScript modules |
-| `c-index.jsonl` | Implementation or debugging in C/C++ modules |
-| `call-index.jsonl` | Tracing call paths, root cause analysis, function-level impact assessment |
-| `modules/<name>.jsonl` | Working within a specific module (implementation, debug, review) |
+| `architecture.json` | Module boundary changes, cross-module work, architecture analysis, API/route surface |
+| `hotspots.jsonl` | Performance work, refactoring, changes to high-fanIn symbols |
+| `scripts/tools/graph-callers.sh --symbol <name>` | Enumerating callers before a change |
+| `scripts/tools/graph-impact.sh --file <path>` / `--symbol <name>` | Tracing call paths, root cause analysis, function-level impact |
+| `scripts/tools/cycle-detect.sh` | Checking for call cycles |
 
 4. **Always include**: `META`, `INVARIANTS`, `TEST`, `FILES` (minimum context floor)
 5. **Include if relevant**: All other sections scored against task concepts

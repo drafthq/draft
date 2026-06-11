@@ -12,9 +12,9 @@ You are conducting a technical debt analysis to catalog, prioritize, and plan re
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Tech-debt prioritization is fundamentally driven by graph data:
 
 1. Load `draft/graph/hotspots.jsonl` — **rank candidates by `fanIn × complexity`** to surface high-leverage debt first.
-2. Load `draft/graph/module-graph.jsonl` — flag debt in modules involved in cycles as higher priority.
-3. Run `graph --query --mode cycles` to enumerate dependency cycles — every cycle is a candidate architecture-debt entry.
-4. For each catalogued finding, run `graph --query --file <path> --mode impact` so the remediation plan includes blast-radius.
+2. Read `draft/graph/architecture.json` (`.packages`) and run `scripts/tools/cycle-detect.sh --repo .` — flag debt in modules involved in cycles as higher priority.
+3. Run `scripts/tools/cycle-detect.sh --repo .` to enumerate dependency cycles — every cycle is a candidate architecture-debt entry.
+4. For each catalogued finding, run `scripts/tools/graph-impact.sh --repo . --file <path>` so the remediation plan includes blast-radius.
 
 Filesystem `grep` (e.g. `scan-markers.sh`) is still primary for TODO/FIXME marker discovery — markers are source-text, not graph-derived. The graph governs **prioritization**, the marker scan governs **discovery**.
 
@@ -292,7 +292,7 @@ Rules:
 
 Before printing the final debt report, internally verify and report:
 
-1. **Graph files queried** — JSONL files loaded plus any live `graph --query` invocations (especially `cycles` and `impact`).
+1. **Graph files queried** — JSONL files loaded plus any live graph query-tool invocations (especially `cycles` and `impact`).
 2. **Layer 1 files deliberately skipped** — list any context sections skipped as irrelevant to the categories scanned.
 3. **Filesystem grep fallback justification** — for every `grep`/`find` run beyond `scan-markers.sh`, name the concept it searched for.
 

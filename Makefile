@@ -28,6 +28,9 @@ TEST_SCRIPTS = \
 	./tests/test-tools-adr-index.sh \
 	./tests/test-tools-manage-symlinks.sh \
 	./tests/test-tools-mermaid-from-graph.sh \
+	./tests/test-tools-graph-snapshot.sh \
+	./tests/test-tools-graph-impact.sh \
+	./tests/test-tools-graph-callers.sh \
 	./tests/test-tools-validate-frontmatter.sh \
 	./tests/test-tools-check-scope-conflicts.sh \
 	./tests/test-tools-check-skill-line-caps.sh \

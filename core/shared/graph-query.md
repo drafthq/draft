@@ -10,7 +10,7 @@ Referenced by: `/draft:init`, `/draft:implement`, `/draft:bughunt`, `/draft:revi
 
 Any code-touching skill that needs to discover files, modules, symbols, callers, or blast-radius **MUST** follow this lookup order whenever `draft/graph/schema.yaml` exists:
 
-1. **Graph artifacts first** — `module-graph.jsonl`, `hotspots.jsonl`, `modules/<name>.jsonl`, `proto-index.jsonl`, `{go,python,ts,c,call}-index.jsonl`.
+1. **Graph first** — the committed snapshot (`architecture.json`, `hotspots.jsonl`) and the live query tools (`scripts/tools/graph-callers.sh`, `graph-impact.sh`, `cycle-detect.sh`, `hotspot-rank.sh`).
 2. **Generated context second** — `draft/.ai-context.md`, relevant `draft/architecture.md` slices, track-level `hld.md`/`lld.md`.
 3. **Source file reads third** — narrow via tiers 1–2, then **Read** the candidate files. Reading is **not optional**: see §Ground-Truth Discipline below.
 4. **Filesystem `grep`/`find`/`rg` last** — only after an explicit graph miss.
@@ -55,10 +55,10 @@ A single "no" / "list" answer is a halt — fix and re-check before output.
 
 Use this recipe whenever the user names a concept, feature, or domain term ("in-memory shuffle", "auth flow", "ingest pipeline") and you need to locate the implementing files. **Run it before any filesystem search.**
 
-1. **Concept → modules** — `grep` the concept token against `draft/graph/module-graph.jsonl` (`name`, `description` fields) and `draft/.ai-context.md` (module headings). Record the candidate module list.
-2. **Modules → files/symbols** — for each candidate module, load `draft/graph/modules/<name>.jsonl`. Enumerate `file`, `*-func`, `*-class`, `ctags-sym` records. This is the authoritative file list for the module.
-3. **Modules → risk ranking** — cross-reference `draft/graph/hotspots.jsonl`. High-fanIn files in the candidate modules are the most likely entry points for impact.
-4. **Modules → public API** — for API-shaped concepts, consult `draft/graph/proto-index.jsonl` to find RPCs/services whose names or descriptions match.
+1. **Concept → modules** — `grep` the concept token against `draft/graph/architecture.json` (`.packages[].name`) and `draft/.ai-context.md` (module headings). Record the candidate module list.
+2. **Concept → symbols/callers** — for a named function, run `scripts/tools/graph-callers.sh --repo . --symbol <name>` to find call sites, and `scripts/tools/graph-impact.sh --repo . --symbol <name>` for transitive dependents. These are the authoritative structural answers.
+3. **Modules → risk ranking** — cross-reference `draft/graph/hotspots.jsonl` (or `scripts/tools/hotspot-rank.sh`). High-fanIn symbols are the most likely entry points for impact.
+4. **Concept → public API** — for API-shaped concepts, consult `architecture.json` `.routes` (detected HTTP/gRPC/GraphQL routes) for matching service surface.
 5. **Graph miss → grep fallback** — only if steps 1–4 return nothing relevant, emit the fallback sentence and use `grep`/`find`. Narrow the search by file extension and exclude `node_modules`, `vendor`, `dist`, `build`, `.git`.
 
 ## Graph Usage Report (Mandatory Footer)
@@ -68,7 +68,7 @@ Every code-touching skill output MUST end with this footer block. The lint check
 ```md
 ## Graph Usage Report
 
-- Graph files queried: <comma-separated list, e.g. `module-graph.jsonl, hotspots.jsonl, modules/scribe.jsonl` — or `NONE` with justification below>
+- Graph files queried: <comma-separated list, e.g. `architecture.json, hotspots.jsonl` and/or query tools like `graph-callers.sh` — or `NONE` with justification below>
 - Modules identified via graph: <comma-separated module names, or `none`>
 - Files identified via graph: <integer count>
 - Filesystem grep fallbacks: <list of `<pattern>` searches with one-line justification each, or `none`>
@@ -83,7 +83,7 @@ Skills that emit telemetry via [emit-skill-metrics.sh](../../scripts/tools/emit-
 
 | Field | Type | Description |
 |---|---|---|
-| `graph_queries` | int | Number of graph artifacts loaded plus live `graph --query` invocations during the run |
+| `graph_queries` | int | Number of graph artifacts loaded plus live graph query-tool invocations during the run |
 | `fallback_grep_count` | int | Number of `grep`/`find` fallbacks invoked after an explicit graph miss |
 
 These fields are appended to `~/.draft/metrics.jsonl` along with the existing skill fields (`skill`, `track_id`, etc.) — no new state file is needed. Run `tail -100 ~/.draft/metrics.jsonl | jq -s 'group_by(.skill) | map({skill: .[0].skill, runs: length, avg_graph_queries: ([.[].graph_queries] | add / length), avg_grep_fallbacks: ([.[].fallback_grep_count] | add / length)})'` to monitor adherence per skill.
@@ -118,219 +118,122 @@ ls draft/graph/schema.yaml 2>/dev/null
 
 If absent, **skip all graph operations silently**. Graph enriches analysis — it never gates it. All skills must work identically without graph data.
 
-## Graph Artifacts
+## Engine + snapshot model
 
-When `draft/graph/` exists, it contains:
+The graph is produced by the **codebase-memory-mcp** engine (a single binary; see [bin/README.md](../../bin/README.md)). There are two ways skills consume it:
+
+1. **Live queries** (preferred when the engine is resolvable) — the shell tools under `scripts/tools/` drive the engine on demand (it auto-indexes into its own cache). No committed files required.
+2. **Committed snapshot** (`draft/graph/`) — a small, derived, PR-reviewable snapshot written by `scripts/tools/graph-snapshot.sh`. It exists for reviewability and for the Copilot/Gemini integrations, which cannot run the engine but can read committed files. Git remains the source of truth.
+
+When `draft/graph/` exists, the snapshot contains:
 
 | File | Load | Content |
 |------|------|---------|
-| `schema.yaml` | Always | Metadata, stats, module list with file counts |
-| `module-graph.jsonl` | Always | Module nodes + weighted inter-module dependency edges |
-| `hotspots.jsonl` | Always | Files ranked by complexity score (lines + fanIn * 50) |
-| `proto-index.jsonl` | Always | All proto services, RPCs, messages, enums |
-| `go-index.jsonl` | When working in Go | Go functions, types, imports, `go-call` edges |
-| `python-index.jsonl` | When working in Python | Python functions, classes, imports, `py-call` edges |
-| `ts-index.jsonl` | When working in TS/JS | TypeScript/JS functions, classes, imports, `ts-call` edges |
-| `c-index.jsonl` | When working in C/C++ | C/C++ functions, types, `c-call` edges |
-| `call-index.jsonl` | When tracing call paths | All intra-file call edges across all languages |
-| `hashes.json` | Never (build artifact) | Per-module SHA-256 hashes for `--incremental` builds |
-| `modules/<name>.jsonl` | On demand | Per-module file graph: file nodes, include edges, cross-module edges, all language symbols + call edges |
+| `schema.yaml` | Always | Engine + project metadata, node/edge counts, artifact list. Its presence **gates** graph use (see Pre-Check). |
+| `architecture.json` | Always | `get_architecture(all)` output: node labels, edge types, languages, packages (with fan-in/out), entry points, routes, hotspots. |
+| `hotspots.jsonl` | Always | Fan-in-ranked symbols, one JSON object per line: `{id, name, fanIn}`. |
+| `module-deps.mermaid` | Diagram injection | File co-change coupling diagram (`FILE_CHANGES_WITH`). |
+| `proto-map.mermaid` | Diagram injection | Detected service-route diagram (`Route` nodes). |
 
-### Per-Module JSONL Record Schema
+The engine uses a **unified, language-agnostic** node model — `Function`, `Method`, `Class`, `Module`, `File`, `Folder`, `Route`, `Section`, `Variable` (language is inferred from file extension) — and edges `CALLS`, `DEFINES`, `CONTAINS_FILE`, `IMPORTS`, `HTTP_CALLS`, `FILE_CHANGES_WITH`, `SEMANTICALLY_RELATED`, `SIMILAR_TO`. There are **no** per-language index files and no `ctags-sym` fallback; that detail is served by live queries against the unified model.
 
-All records in `modules/<name>.jsonl` have a `kind` field. Defined kinds:
+**Always-load files** are compact and should be read during context loading for any task that touches code structure.
 
-| kind | Fields | Description |
-|----------------|--------|-------------|
-| `module` | `name, sizeKB, files` | Module metadata header (first record) |
-| `file` | `id, lines, module, sizeKB` | C++ source file node |
-| `include` | `source, target` | Intra-module C++ include edge |
-| `cross-include`| `source, target` | Cross-module C++ include edge |
-| `go-func` | `name, receiver, qualified, file, module, package, line, lines` | Go function/method (`receiver=null` for top-level) |
-| `go-type` | `name, file, module, package, line, kind` | Go type (kind: struct/interface/alias/type) |
-| `go-call` | `from, to, fromFile, module, line, resolved: false, confidence` | Go intra-file call edge (tree-sitter only). `confidence: direct` for bare identifier callees, `inferred` for selector calls (`obj.Foo`) where the receiver is collapsed away. |
-| `py-func` | `name, receiver, file, module, line, lines` | Python function/method (receiver=null for top-level) |
-| `py-class` | `name, bases[], file, module, line` | Python class definition |
-| `py-call` | `from, to, fromFile, module, line, resolved: false, confidence` | Python intra-file call edge (tree-sitter only). `confidence: direct` for bare identifier callees, `inferred` for attribute calls (`obj.foo`). |
-| `ts-func` | `name, file, module, line, lines, exported, class, async` | TypeScript/JS function, method, or arrow function |
-| `ts-class` | `name, file, module, line, lines, exported, kind` | TS/JS class/interface/type (kind: class/interface/type) |
-| `ts-call` | `from, to, fromFile, module, line, resolved: false, confidence` | TS/JS intra-file call edge (tree-sitter only). `confidence: direct` for bare identifier callees, `inferred` for member calls (`obj.foo`). |
-| `c-func` | `name, file, module, line, lines, language, namespace` | C/C++ function definition |
-| `c-type` | `name, file, module, line, kind, language` | C/C++ struct/class/enum definition |
-| `c-call` | `from, to, fromFile, module, line, resolved: false, confidence` | C/C++ intra-file call edge (tree-sitter only). `confidence: direct` for bare identifier or qualified (`Foo::bar`) callees, `inferred` for field calls (`obj.foo` / `ptr->foo`). |
-| `ctags-sym` | `name, file, module, line, ctagsKind, language` | Symbol from universal-ctags (Java, Rust, Ruby, etc.) |
+## Query Tools
 
-**Call edge notes**: All `*-call` records have `resolved: false` — callee names are syntactic (as written in source), with no type resolution. The same logical call may appear multiple times if the same function calls the target repeatedly. Call edges are **intra-file only** — cross-file resolution requires type information not available in tree-sitter.
+Live queries go through the shell tools under `scripts/tools/`, which drive the engine and shape results into stable JSON. Each tool resolves the engine (see Finding the Engine), indexes the repo on demand, and emits `source: "memory-graph"` on success or `source: "unavailable"` (non-zero exit) when the engine cannot be resolved. Set `DRAFT_MEMORY_DISABLE=1` to force the engine off; all tools then degrade gracefully.
 
-**Confidence field**: Each `*-call` record carries a `confidence` value:
-- `direct` — callee is a bare identifier (e.g. `foo()` in Go/Python/TS/C, or `Foo::bar()` in C++). Higher signal: the name appeared as written without receiver collapsing.
-- `inferred` — callee is the trailing name of a member/selector/attribute/field expression (`obj.foo()`, `ptr->foo()`, `bar.foo()`). Receivers with different types collapse to the same name, so name collisions across distinct functions are likely. Treat as a candidate set, not an authoritative edge.
-
-Skills consuming call edges (`bughunt`, `review`, `debug`) should weight `direct` edges more strongly and treat `inferred` edges as exploratory leads rather than confirmed call paths.
-
-**Always-load files** are compact and should be read during context loading for any task that touches code structure. **Per-module files** are loaded only when working within a specific module — limit to 2-3 module files per task.
-
-## Query Modes
-
-The graph binary supports live queries against the built graph. Use these when you need precise answers beyond what the always-load files provide.
-
-### Callers — who depends on this file or calls this function?
-
-**File callers** (path with `/` or extension — uses include-edge graph):
+### Callers — who calls this function?
 
 ```bash
-graph --repo . --out draft/graph --query --file auth/auth.h --mode callers
+scripts/tools/graph-callers.sh --repo . --symbol <name>
 ```
 
-Output: `{target, callers[{file, module, type}], summary{intra, cross, total}}`
+Output: `{symbol, callers[{name, file}], source}`. Use when enumerating call sites before claiming "no other usages" or judging breaking-change severity.
 
-Use when: tracing who will be affected by changing a header or interface file.
-
-**Function callers** (bare symbol name — uses call-index.jsonl):
+### Impact — blast radius of a file or symbol
 
 ```bash
-graph --repo . --out draft/graph --query --symbol buildGoIndex --mode callers
+scripts/tools/graph-impact.sh --repo . --file <path>      # changed-file impact (working-tree diff)
+scripts/tools/graph-impact.sh --repo . --symbol <name>    # transitive callers of a function
 ```
 
-Output: `{target, callers[{func, file, module, line, kind}], total, by_module{}, note}`
+Output: `{target, kind, impacted[{name, file, hop}], source}`. Use when sizing risk before modifying a file or symbol, especially high-fan-in hotspots.
 
-Use when: finding all functions that call a specific function, across all languages. Requires call-index.jsonl (generated during full graph build with tree-sitter enabled). Results are intra-file only — cross-file callers are not resolved.
-
-### Impact — blast radius of changing a file
+### Hotspots — fan-in ranking
 
 ```bash
-graph --repo . --out draft/graph --query --file <path> --mode impact
+scripts/tools/hotspot-rank.sh --repo . [--top N]
 ```
 
-Output: `{target, impact{files, modules, affected_modules[], by_category{code,test,doc,config}, files_by_depth{}, files_by_category{}}, warning}`
+Output: `{hotspots[{id, name, fanIn}], source}` (server-computed by the engine).
 
-Each impacted file is classified as `code | test | doc | config` (matching `scripts/tools/classify-files.sh`). `by_category` gives counts; `files_by_category` gives the file lists. Use the test bucket to size regression work, the doc bucket to flag stale references, and the config bucket to spot deployment-time risk.
-
-Use when: assessing risk before modifying a file, especially hotspot files with high fanIn.
-
-### Hotspots — complexity ranking
+### Cycles — call-cycle detection
 
 ```bash
-graph --repo . --out draft/graph --query --mode hotspots
+scripts/tools/cycle-detect.sh --repo .
 ```
 
-Output: `{hotspots[{id, module, lines, fanIn}]}`
+Output: `{cycles[[a,b],[a,b,c]], source}` — fixed-length 2- and 3-node `CALLS` cycles (mutual recursion / tight coupling).
 
-Optionally filter to a module: `--symbol <module_name>`
+### Modules — dependency overview
 
-### Modules — dependency overview with cycles
+Read `draft/graph/architecture.json` (`.packages` for module fan-in/out, `.node_labels`/`.edge_types` for shape, `.routes` for service surface), or regenerate it with `scripts/tools/graph-snapshot.sh --repo .`.
+
+### Mermaid — diagram text
 
 ```bash
-graph --repo . --out draft/graph --query --mode modules
+scripts/tools/mermaid-from-graph.sh --repo . --diagram module-deps   # co-change coupling
+scripts/tools/mermaid-from-graph.sh --repo . --diagram proto-map     # detected routes
 ```
 
-Output: `{modules[], dependencies[], cycles[], summary{modules, edges, cycles, hub_modules[]}}`
+Emits a ready-to-inject ` ```mermaid ``` ` block, or an empty stub (exit 2) when the engine is unavailable. The committed `draft/graph/*.mermaid` snapshots are written by `graph-snapshot.sh`.
 
-### Cycles — circular dependency detection
+### Building / refreshing the snapshot
 
 ```bash
-graph --repo . --out draft/graph --query --mode cycles
+scripts/tools/graph-snapshot.sh --repo .
 ```
 
-Output: `{cycles[], count, warning}`
+Writes the committed `draft/graph/` snapshot (`schema.yaml`, `architecture.json`, `hotspots.jsonl`, `*.mermaid`). Run during `/draft:init` and `/draft:index`, or whenever the reviewable graph state should be refreshed.
 
-### Mermaid — generate diagram text from existing graph
+## Finding the Engine (Resolution + Usage Report)
+
+The engine is the `codebase-memory-mcp` binary. Resolution order (implemented by `scripts/tools/_lib.sh:find_memory_bin`):
+
+1. `DRAFT_MEMORY_BIN` — explicit override (pinned installs, testing).
+2. `codebase-memory-mcp` on `$PATH` — global/dev installs.
+3. `~/.cache/draft/bin/codebase-memory-mcp` — the Draft-managed location (`scripts/fetch-memory-engine.sh` installs it here; `scripts/install.sh` runs that on install).
+4. `bin/<os>-<arch>/codebase-memory-mcp` under the plugin/repo root — optional vendored fallback (air-gapped only).
+
+`DRAFT_MEMORY_DISABLE=1` forces the engine off. There is **no** legacy `graph`/`graph-clang` fallback.
+
+The canonical verifier is `scripts/tools/verify-graph-binary.sh` (`--json --verbose --strict`). It resolves and liveness-checks the engine and, in a `draft/` context, writes the usage-report side-effect:
 
 ```bash
-# Both diagrams as markdown-ready fenced blocks (raw text output)
-graph --repo . --out draft/graph --query --mode mermaid
-
-# Specific diagram as JSON with metadata
-graph --repo . --out draft/graph --query --mode mermaid --symbol module-deps
-graph --repo . --out draft/graph --query --mode mermaid --symbol proto-map
+ENGINE_INFO="$(scripts/tools/verify-graph-binary.sh --repo . --json 2>/dev/null || true)"
+# {"status":"ok","engine_bin":"...","source":"managed|path|bundled:<arch>|override","arch":"..."}
 ```
-
-**Output format split** — important for skills consuming this mode:
-
-| Invocation | Output format | Fields |
-|---|---|---|
-| No `--symbol` | Raw Markdown text | Fenced ` ```mermaid ``` ` blocks ready for injection into `.ai-context.md` |
-| `--symbol module-deps` | JSON | `{ mermaid: string, filtered: boolean, stats: { nodes, edges, totalNodes, totalEdges } }` |
-| `--symbol proto-map` | JSON | `{ mermaid: string, stats: { services, rpcs, modules } }` |
-
-Use the no-`--symbol` form for direct injection. Use `--symbol` forms when you need metadata (whether the diagram was filtered, edge counts) alongside the diagram text.
-
-Note: `draft/graph/module-deps.mermaid` and `draft/graph/proto-map.mermaid` are static files written only during a full graph build (`graph --repo`). Running `--query --mode mermaid` reads the current JSONL and is always current — prefer it over the static files.
-
-## Finding the Graph Binary (Binary Preference + Usage Report)
-
-**Preference order** (native first for performance/fidelity):
-1. `graph` (and `graph-clang`) on `$PATH` — allows system-wide or user native installs to take precedence.
-2. Bundled arch-specific native under the Draft plugin tree: `bin/<arch>/graph` (and `graph-clang` — canonical correct layout), where `<arch>` is `linux-amd64`, `darwin-arm64`, etc. (resolved from `uname`).
-3. Legacy locations: `graph/bin/<arch>/graph` or flat `graph/bin/graph` (transition support only).
-
-The canonical resolver is `scripts/tools/verify-graph-binary.sh` (see its `--json --verbose --strict` modes). It:
-- Implements the exact order above.
-- Probes liveness (`--help` / `--version`).
-- Locates the optional `graph-clang` companion using sibling/PATH/bundled rules.
-- On success, optionally writes `draft/.graph-binary-report.json` — the **usage report contract** consumed by status, hygiene, and `graph-usage-report` tooling for auditing which binary (and clang) was active during an init/refresh.
-
-Skills and wrappers should prefer:
-```bash
-# Preferred (new skeleton)
-GRAPH_INFO="$(scripts/tools/verify-graph-binary.sh --repo . --json 2>/dev/null || true)"
-GRAPH_BIN="$(echo "$GRAPH_INFO" | grep -o '"graph_bin":"[^"]*"' | cut -d'"' -f4 || true)"
-# Fallback to legacy inline detection only if verify script absent (keeps all prior behavior working)
-```
-
-When the verify script (or equivalent) is unavailable, the legacy detection still functions unchanged for backward compatibility.
-
-```bash
-# Legacy inline detection (still supported; PATH now checked early)
-GRAPH_BIN=""
-# 1. PATH (native preference)
-if [ -z "$GRAPH_BIN" ]; then
-    GRAPH_BIN="$(command -v graph 2>/dev/null || true)"
-fi
-# 2. Bundled arch-specific (bin/<arch>/graph canonical, or legacy graph/bin/<arch>/graph) via breadcrumb or known paths
-if [ -z "$GRAPH_BIN" ]; then
-    # ... (arch resolution + $PLUGIN_ROOT/bin/$ARCH/graph or graph/bin/...) ...
-fi
-# 3. Legacy graph/bin/graph (Node era flat wrapper)
-if [ -z "$GRAPH_BIN" ]; then
-    # breadcrumb + common paths to graph/bin/graph (Node) or transitional flat locations
-fi
-```
-
-`install.sh` writes the `.draft-install-path` breadcrumb so bundled resolution works after marketplace install.
-
-See `bin/README.md` for the exact (canonical bin/<arch>) layout, Git LFS requirements, and placeholder rules. Legacy Node wrapper references remain for historical context.
 
 ## Usage Report Contract
 
-After successful detection:
-- `draft/.graph-binary-report.json` contains: `detected_at`, `graph_bin`, `graph_clang_bin`, `source` ("path"|"bundled:<arch>"|"legacy"), `arch`, `status`.
-- This enables later tools (e.g. `check-graph-usage-report.sh`) to surface "you are using the fast native binary on darwin-arm64 with graph-clang" or warn on legacy-only in large C++ codebases.
-- The report is a derived artifact (safe to gitignore or prune); it is regenerated on each graph-using command that calls the verifier.
+After successful detection, `draft/.graph-binary-report.json` contains: `detected_at`, `engine_bin`, `source` (`path` | `managed` | `bundled:<arch>` | `override`), `arch`, `status`. It is a derived artifact (safe to prune), regenerated by each graph-using command that calls the verifier.
 
-## Building the Graph
+## Building the Snapshot
 
-Run during `draft:init` or manually:
+Run during `draft:init` / `draft:index`, or manually:
 
 ```bash
-"$GRAPH_BIN" --repo . --out draft/graph/
+scripts/tools/graph-snapshot.sh --repo .
 ```
 
-This analyzes C/C++, Go, Python, TypeScript/JS, and Proto source files. For Java/Rust/Ruby/Swift, universal-ctags is used if installed. Excludes generated files (`*.pb.*`, `*_generated*`), test files (`*_test.cc`, `*_test.go`), and vendored code.
-
-**Incremental rebuild** (skip unchanged modules):
-
-```bash
-"$GRAPH_BIN" --repo . --out draft/graph/ --incremental
-```
-
-Uses `hashes.json` to detect which modules changed (content-based SHA-256, not mtime). Only changed modules are re-extracted. Always-load files (module-graph, hotspots, call-index, schema) are always recomputed.
+The engine indexes C/C++, Go, Python, TypeScript/JS, and more (tree-sitter, 159 languages) plus LSP-assisted resolution for the major ones, and detects HTTP/gRPC/GraphQL routes. Indexing is incremental in the engine (content-based, git-aware); the snapshot is re-derived on each run.
 
 ## Graceful Degradation
 
 | Scenario | Behavior |
 |----------|----------|
-| No graph binary | Skip graph build in init; all skills proceed without graph data |
-| Graph binary but build fails | Warn and proceed; skills work without graph data |
-| `draft/graph/` exists | Load always-load files during context loading; use on-demand queries as needed |
-| Stale graph data | Graph data is still useful — structural changes are infrequent. Suggest re-running init to refresh. |
+| No engine resolvable (or `DRAFT_MEMORY_DISABLE=1`) | Skip graph build in init; all skills proceed without graph data; tools emit `source: unavailable` |
+| Engine present but a query fails | Warn and proceed; skills work without graph data |
+| `draft/graph/` snapshot exists | Load always-load files during context loading; use live query tools as needed |
+| Stale snapshot | Still useful — structural changes are infrequent. Re-run `graph-snapshot.sh` (or init) to refresh. |

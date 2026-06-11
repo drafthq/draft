@@ -34,3 +34,4 @@ Draft commands can be invoked using natural language. If you describe your goal 
 | "preview jira", "export jira issues", "jira draft" | `/draft:jira-preview` | Generate Jira markdown export from plan |
 | "create jira", "push to jira board" | `/draft:jira-create` | Create actual Jira issues via MCP integrations |
 | "index services", "aggregate context", "monorepo setup" | `/draft:index` | Aggregate multi-service context at the root |
+| "build graph", "refresh graph", "rebuild the knowledge graph", "index this repo's structure" | `/draft:graph` | Initialize/refresh the `draft/graph/` snapshot (optionally `draft graph <path>`) |

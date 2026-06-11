@@ -378,9 +378,9 @@ Analyze extracted data to build dependency graph:
 2. Look for API client imports or service URLs in tech-stack.md
 3. Look for mentions in product.md that reference other services
 4. **Graph-enriched detection** (if individual services have `draft/graph/` directories):
-   - Read each service's `draft/graph/proto-index.jsonl` to map which service defines vs consumes which RPCs
+   - Read each service's `draft/graph/architecture.json` `.routes` to map which service defines vs consumes which endpoints
    - Cross-reference proto consumers with proto producers to build precise inter-service dependency edges
-   - Read `draft/graph/module-graph.jsonl` per service for internal module structure
+   - Read `draft/graph/architecture.json` (`.packages`) per service for internal module structure
    - This provides deterministic, code-level dependency data that supplements the heuristic name-matching above
 
 Build a dependency map:
@@ -760,9 +760,9 @@ For each initialized service with both `draft/architecture.md` AND `draft/graph/
 **A. Read current `architecture.md` into memory.**
 
 **B. Regenerate slot content from graph JSONL:**
-- `GRAPH:module-deps` → run `graph --repo . --out draft/graph --query --mode mermaid --symbol module-deps`
+- `GRAPH:module-deps` → run `scripts/tools/mermaid-from-graph.sh --repo . --diagram module-deps`
   Parse JSON response, extract `.mermaid` string + `filtered` flag + stats
-- `GRAPH:proto-map` → run `graph --repo . --out draft/graph --query --mode mermaid --symbol proto-map`
+- `GRAPH:proto-map` → run `scripts/tools/mermaid-from-graph.sh --repo . --diagram proto-map`
   Parse JSON response, extract `.mermaid` string + stats
 - `GRAPH:hotspots` → read `draft/graph/hotspots.jsonl`, build top-10 markdown table:
   `| File | Lines | fanIn | Score |` with one row per hotspot, ordered by score descending

@@ -35,6 +35,7 @@ get_skill_header() {
         draft)             echo "Draft Overview" ;;
         init)              echo "Init Command" ;;
         index)             echo "Index Command" ;;
+        graph)             echo "Graph Command" ;;
         new-track)         echo "New Track Command" ;;
         decompose)         echo "Decompose Command" ;;
         implement)         echo "Implement Command" ;;
@@ -78,6 +79,7 @@ get_copilot_trigger() {
         draft)             echo "\"help\" or \"draft\"" ;;
         init)              echo "\"init draft\" or \"draft init [refresh]\"" ;;
         index)             echo "\"index services\" or \"draft index [--init-missing]\"" ;;
+        graph)             echo "\"build graph\", \"refresh graph\", or \"draft graph [path]\"" ;;
         new-track)         echo "\"new feature\" or \"draft new-track <description>\"" ;;
         decompose)         echo "\"break into modules\" or \"draft decompose\"" ;;
         implement)         echo "\"implement\" or \"draft implement\"" ;;

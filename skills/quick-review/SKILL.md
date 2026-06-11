@@ -12,7 +12,7 @@ You are performing a lightweight, ad-hoc code review. This is the fast alternati
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Quick-review keeps the graph load light:
 
 1. Always check `draft/graph/hotspots.jsonl` for every changed file (Step 2 blast-radius pre-check below).
-2. If a finding spans more than one file, run `graph --query --symbol <name> --mode callers` to enumerate the call sites before claiming "no other usages".
+2. If a finding spans more than one file, run `scripts/tools/graph-callers.sh --repo . --symbol <name>` to enumerate the call sites before claiming "no other usages".
 
 Filesystem `grep` is reserved for source-text scans (literal strings, regex patterns). Symbol and caller discovery go through the graph.
 
@@ -190,7 +190,7 @@ Include the report header table immediately after frontmatter:
 
 Before printing the review report, internally verify and report:
 
-1. **Graph files queried** — JSONL files loaded plus any live `graph --query` invocations.
+1. **Graph files queried** — JSONL files loaded plus any live graph query-tool invocations.
 2. **Layer 1 files deliberately skipped** — list any context sections skipped.
 3. **Filesystem grep fallback justification** — for every `grep`/`find` run, state the concept it searched for.
 

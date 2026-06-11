@@ -18,8 +18,8 @@
 #   ./scripts/package.sh --version 0.1.0-skel
 #   ./scripts/package.sh --out /tmp/draft-pkg --tarball
 #
-# The resulting tree contains bin/<arch>/ (canonical) or graph/bin/ with arch-specific native binaries (or LFS placeholders),
-# all skills, core/, scripts/, Makefile, etc. — exactly what a consumer needs.
+# The resulting tree contains all skills, core/, scripts/, Makefile, etc. The
+# knowledge-graph engine is fetched on install (not vendored) — see bin/README.md.
 
 set -euo pipefail
 
@@ -70,21 +70,10 @@ echo
 
 mkdir -p "$OUT_DIR" "$(dirname "$OUT_DIR")"
 
-# 1. Stage graph binaries (populates arch dirs or refreshes placeholders)
-if [[ -x "$DRAFT_ROOT/scripts/build-graph-binaries.sh" ]]; then
-  echo "Staging graph binaries..."
-  "$DRAFT_ROOT/scripts/build-graph-binaries.sh" --draft-root "$DRAFT_ROOT" --targets "linux-amd64 darwin-arm64"
-else
-  echo "  (build-graph-binaries.sh not executable — ensure arch dirs exist manually)"
-fi
-
-# 2. LFS materialization (critical for real binaries)
-echo "Materializing LFS objects for bin/**/graph* (canonical) + graph/bin/** (legacy) if tracked..."
-if command -v git-lfs >/dev/null 2>&1; then
-  (cd "$DRAFT_ROOT" && git lfs pull --include="bin/**/graph*,graph/bin/**" 2>/dev/null || true)
-else
-  echo "  git-lfs absent — packaged tree will contain placeholder scripts only (see bin/README.md)"
-fi
+# 1. Graph engine: no longer vendored. The codebase-memory-mcp binary is fetched
+#    on install (scripts/fetch-memory-engine.sh) into ~/.cache/draft/bin, so the
+#    packaged tree carries no native binaries or LFS objects. See bin/README.md.
+echo "Graph engine is fetched on install (not vendored) — nothing to stage."
 
 # 3. Optional full build + lint (public hygiene)
 if [[ $RUN_BUILD -eq 1 ]]; then
@@ -124,7 +113,7 @@ fi
 cat > "$OUT_DIR/draft/version.txt" <<EOF
 Draft packaged: $(date -Iseconds)
 Version: $VERSION
-Graph engine: native (bin/<arch>/graph canonical + optional graph-clang; legacy graph/bin/ supported)
+Graph engine: codebase-memory-mcp, fetched on install into ~/.cache/draft/bin (not vendored)
 See bin/README.md for binary details and LFS.
 EOF
 

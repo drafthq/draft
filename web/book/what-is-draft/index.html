@@ -4,21 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>What is Draft? — Draft Book</title>
-    <meta name="description" content="What Draft is, what it is not, who it is for, and what you get — 28 commands and 7 specialized agents for structured AI development.">
+    <meta name="description" content="What Draft is, what it is not, who it is for, and what you get — 33 commands and 7 specialized agents for structured AI development.">
     <meta name="author" content="Mayur Pise">
     <meta name="theme-color" content="#2563eb">
     <meta name="keywords" content="what is draft, ai coding plugin, context-driven development, claude code plugin, ai development methodology">
     <meta name="robots" content="index, follow">
     <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
     <meta property="og:title" content="What is Draft? — Draft Book">
-    <meta property="og:description" content="What Draft is, what it is not, who it is for, and what you get — 28 commands and 7 specialized agents for structured AI development.">
+    <meta property="og:description" content="What Draft is, what it is not, who it is for, and what you get — 33 commands and 7 specialized agents for structured AI development.">
     <meta property="og:type" content="article">
     <meta property="og:url" content="https://getdraft.dev/book/what-is-draft/">
     <meta property="og:image" content="https://getdraft.dev/social-preview.png">
     <meta property="og:image:alt" content="What is Draft? — Draft Book">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="What is Draft? — Draft Book">
-    <meta name="twitter:description" content="What Draft is, what it is not, who it is for, and what you get — 28 commands and 7 specialized agents for structured AI development.">
+    <meta name="twitter:description" content="What Draft is, what it is not, who it is for, and what you get — 33 commands and 7 specialized agents for structured AI development.">
     <meta name="twitter:image" content="https://getdraft.dev/social-preview.png">
     <meta name="twitter:image:alt" content="What is Draft? — Draft Book">
     <link rel="canonical" href="https://getdraft.dev/book/what-is-draft/">
@@ -28,7 +28,7 @@
       "@context": "https://schema.org",
       "@type": "Article",
       "headline": "What is Draft?",
-      "description": "What Draft is, what it is not, who it is for, and what you get — 28 commands and 7 specialized agents for structured AI development.",
+      "description": "What Draft is, what it is not, who it is for, and what you get — 33 commands and 7 specialized agents for structured AI development.",
       "url": "https://getdraft.dev/book/what-is-draft/",
       "isPartOf": { "@type": "Book", "name": "The Draft Book", "url": "https://getdraft.dev/book/" },
       "author": { "@type": "Person", "name": "Mayur Pise", "url": "https://github.com/mayurpise" },
@@ -56,6 +56,11 @@
     </noscript>
 
     <link rel="stylesheet" href="../css/book.css">
+
+    <!-- Theme: apply early to prevent flash of wrong theme -->
+    <script>
+    (function(){try{var t=localStorage.getItem('draft-theme');if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
+    </script>
 </head>
 <body data-chapter="what-is-draft">
 
@@ -266,7 +271,7 @@
     <p>Draft is for developers and teams who use AI coding assistants and have experienced the gap between "it generated code" and "it generated the right code." If you've ever had an AI assistant introduce a dependency your team doesn't use, violate your project's naming conventions, or build a feature that doesn't match what was actually needed &mdash; Draft addresses that gap structurally.</p>
 
     <h2>What You Get</h2>
-    <p><strong>33 commands</strong> covering the full development lifecycle:</p>
+    <p><strong>4 primary commands + 5 routers</strong> (recommended interface) + 22 specialists covering the full development lifecycle:</p>
     <ul>
         <li><strong>Context</strong> &mdash; <code>/draft:init</code> performs Phase 0 graph build (tree-sitter knowledge graph) followed by 5-phase deep analysis. <code>/draft:tour</code> for exploratory walkthroughs. Generates architecture docs, AI context files, and state tracking.</li>
         <li><strong>Planning</strong> &mdash; <code>/draft:plan</code> orchestrates feature planning: routes to <code>/draft:new-track</code>, <code>/draft:decompose</code>, or <code>/draft:change</code>.</li>
@@ -289,7 +294,7 @@
                     <filter id="shadowCat" x="-4%" y="-4%" width="108%" height="116%"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.08"/></filter>
                 </defs>
                 <!-- Title -->
-                <text x="360" y="28" text-anchor="middle" fill="#1a1a2e" font-size="14" font-weight="700">33 Commands Across 8 Categories</text>
+                <text x="360" y="28" text-anchor="middle" fill="#1a1a2e" font-size="14" font-weight="700">4 Primaries + 5 Routers + Specialists</text>
 
                 <!-- Row 1 -->
                 <!-- Context -->
@@ -367,7 +372,7 @@
                 <text x="360" y="278" text-anchor="middle" fill="#718096" font-size="11" font-style="italic">Supporting categories provide operational, knowledge, authoring, and integration capabilities</text>
             </svg>
         </div>
-        <div class="figure-caption">Draft's 33 commands organized into 8 categories. The primary workflow flows from Context through Quality; supporting categories extend the lifecycle.</div>
+        <div class="figure-caption">Draft's command surface: 7 primary workflow parents + 5 intent routers (plan, ops, docs, discover, jira) dispatching to 20+ specialists. Prefer routers for most usage.</div>
     </div>
 
     <h2>Platform Support</h2>
@@ -399,5 +404,6 @@
     </div>
 
     <script src="../js/book.js"></script>
+    <script src="../../js/theme-toggle.js"></script>
 </body>
 </html>

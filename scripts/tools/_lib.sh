@@ -35,16 +35,41 @@ get_yaml_field() {
     ' "$file"
 }
 
-# Locate the `graph` binary (Draft knowledge graph CLI, native only).
-# Sets GRAPH_BIN globally; returns 0 if found, 1 otherwise.
-# Preference: PATH > bundled bin/<arch>/graph (canonical) > legacy graph/bin/<arch>/ under known roots.
-find_graph_bin() {
+# Locate the `codebase-memory-mcp` binary (Draft knowledge-graph engine).
+# Sets MEMORY_BIN globally; returns 0 if found, 1 otherwise.
+# Preference: PATH > Draft-managed install (~/.cache/draft/bin) > vendored bin/<arch> under known roots.
+# No legacy fallbacks: the Aether `graph`/`graph-clang` binaries are retired.
+find_memory_bin() {
     local repo_abs="$1"
     local self_repo="$2"
-    GRAPH_BIN=""
-    GRAPH_CLANG_BIN=""
+    MEMORY_BIN=""
+    local bin_name="codebase-memory-mcp"
 
-    # Resolve arch for vendored layout (linux-amd64, darwin-arm64, ...)
+    # 0. Hard opt-out: force the graph engine off (tests, air-gapped, opt-out users).
+    if [[ -n "${DRAFT_MEMORY_DISABLE:-}" ]]; then
+        return 1
+    fi
+
+    # 1. Explicit override (testing / pinned install).
+    if [[ -n "${DRAFT_MEMORY_BIN:-}" && -x "${DRAFT_MEMORY_BIN}" ]]; then
+        MEMORY_BIN="$DRAFT_MEMORY_BIN"
+        return 0
+    fi
+
+    # 2. PATH (highest for dev / global installs).
+    if command -v "$bin_name" >/dev/null 2>&1; then
+        MEMORY_BIN="$bin_name"
+        return 0
+    fi
+
+    # 3. Draft-managed install location (install.sh fetches the binary here).
+    local managed="$HOME/.cache/draft/bin/$bin_name"
+    if [[ -x "$managed" ]]; then
+        MEMORY_BIN="$managed"
+        return 0
+    fi
+
+    # 4. Optional vendored arch-specific binary under known roots.
     local os arch norm
     os=$(uname -s | tr '[:upper:]' '[:lower:]')
     arch=$(uname -m)
@@ -55,59 +80,67 @@ find_graph_bin() {
     esac
     local ARCH="${os}-${norm}"
 
-    # 1. PATH (highest)
-    if command -v graph >/dev/null 2>&1; then
-        GRAPH_BIN="graph"
-        if command -v graph-clang >/dev/null 2>&1; then
-            GRAPH_CLANG_BIN="graph-clang"
-        fi
-        return 0
-    fi
-
-    # 2. Breadcrumb + common roots, looking for arch-specific native (bin/ first = correct)
     local roots=()
+    [[ -n "$repo_abs" && -d "$repo_abs" ]] && roots+=("$repo_abs")
+    [[ -n "$self_repo" && -d "$self_repo" ]] && roots+=("$self_repo")
     for bc in \
         "$HOME/.cursor/plugins/local/draft/.draft-install-path" \
-        "$HOME/.claude-plugin/../.draft-install-path" \
         "$HOME/.claude/plugins/draft/.draft-install-path"; do
         if [[ -f "$bc" ]]; then
             local pr; pr="$(cat "$bc" 2>/dev/null || true)"
             [[ -n "$pr" && -d "$pr" ]] && roots+=("$pr")
         fi
     done
-    [[ -n "$repo_abs" && -d "$repo_abs" ]] && roots+=("$repo_abs")
-    [[ -n "$self_repo" && -d "$self_repo" ]] && roots+=("$self_repo")
 
     for pr in "${roots[@]}"; do
-        for base in bin graph/bin; do
-            local cand="$pr/$base/$ARCH/graph"
-            if [[ -x "$cand" ]]; then
-                GRAPH_BIN="$cand"
-                local clang_cand="$pr/$base/$ARCH/graph-clang"
-                [[ -x "$clang_cand" ]] && GRAPH_CLANG_BIN="$clang_cand"
-                return 0
-            fi
-        done
-    done
-
-    # Last resort: pick the first executable graph binary under any arch dir (bin/ or graph/bin)
-    for pr in "${roots[@]}"; do
-        for base in bin graph/bin; do
-            if [[ -d "$pr/$base" ]]; then
-                for d in "$pr/$base"/*/; do
-                    [[ -d "$d" ]] || continue
-                    local cand="$d/graph"
-                    if [[ -x "$cand" ]]; then
-                        GRAPH_BIN="$cand"
-                        GRAPH_CLANG_BIN=""
-                        local clang_cand="$d/graph-clang"
-                        [[ -x "$clang_cand" ]] && GRAPH_CLANG_BIN="$clang_cand"
-                        return 0
-                    fi
-                done
-            fi
-        done
+        local cand="$pr/bin/$ARCH/$bin_name"
+        if [[ -x "$cand" ]]; then
+            MEMORY_BIN="$cand"
+            return 0
+        fi
     done
 
     return 1
+}
+
+# Run a codebase-memory-mcp CLI tool. Echoes the JSON result (stdout); the engine's
+# `level=...` log lines go to stderr and are discarded unless DRAFT_MEMORY_DEBUG is set.
+# Usage: memory_cli <tool> [json-args]
+memory_cli() {
+    local tool="$1"
+    local args="${2:-{\}}"
+    if [[ -z "${MEMORY_BIN:-}" ]]; then
+        return 1
+    fi
+    if [[ -n "${DRAFT_MEMORY_DEBUG:-}" ]]; then
+        "$MEMORY_BIN" cli "$tool" "$args"
+    else
+        "$MEMORY_BIN" cli "$tool" "$args" 2>/dev/null
+    fi
+}
+
+# Resolve the engine's project name for a repository absolute path via list_projects.
+# Echoes the project name, or nothing if the repo has not been indexed yet.
+memory_project_for_repo() {
+    local repo_abs="$1"
+    command -v jq >/dev/null 2>&1 || return 1
+    memory_cli list_projects '{}' 2>/dev/null \
+        | jq -r --arg p "$repo_abs" '.projects[]? | select(.root_path == $p) | .name' 2>/dev/null \
+        | head -1
+}
+
+# Ensure a repository is indexed in the engine; echo its project name.
+# Indexes on demand when absent. Returns 1 if the engine is unavailable.
+memory_ensure_index() {
+    local repo_abs="$1"
+    [[ -n "${MEMORY_BIN:-}" ]] || return 1
+    command -v jq >/dev/null 2>&1 || return 1
+    local proj
+    proj="$(memory_project_for_repo "$repo_abs" 2>/dev/null || true)"
+    if [[ -z "$proj" ]]; then
+        proj="$(memory_cli index_repository "{\"repo_path\":\"$repo_abs\"}" 2>/dev/null \
+            | jq -r '.project // empty' 2>/dev/null || true)"
+    fi
+    [[ -n "$proj" ]] || return 1
+    printf '%s' "$proj"
 }
