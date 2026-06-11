@@ -34,6 +34,10 @@ For Cursor, Copilot, Gemini, and Antigravity IDE, see the getting started guide.
 - **Knowledge Graph Engine:** codebase-memory-mcp: tree-sitter + LSP, 159 languages, 100% local. Query tools: callers, callees, impact, cycles, hotspots, mermaid. Incremental, git-aware indexing.
 - **Deterministic Tools:** 30 shell helpers under `scripts/tools/` for mechanical work — git metadata, file classification, hotspot ranking, freshness checks, ADR indexing.
 
+## Graph Engine
+
+Draft's knowledge graph is powered by [codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) by [DeusData](https://github.com/DeusData) — a tree-sitter + LSP-grade, 159-language, 100% local graph engine with no API key required. Fetched and checksum-verified on install. The `/draft:graph` command builds the `draft/graph` snapshot.
+
 ## Links
 
 - Homepage: https://getdraft.dev
@@ -41,6 +45,7 @@ For Cursor, Copilot, Gemini, and Antigravity IDE, see the getting started guide.
 - Getting Started: https://getdraft.dev/book/getting-started/
 - Command Reference: https://getdraft.dev/book/command-reference/
 - GitHub: https://github.com/mayurpise/draft
+- Graph Engine: https://github.com/DeusData/codebase-memory-mcp
 - Methodology: https://github.com/mayurpise/draft/blob/main/core/methodology.md
 - Full LLM context: https://getdraft.dev/llms-full.txt
 

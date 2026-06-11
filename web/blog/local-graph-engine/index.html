@@ -125,6 +125,7 @@
 ├── hotspots.jsonl           # symbols ranked by fan-in
 ├── module-deps.mermaid      # module co-change coupling diagram
 └── proto-map.mermaid        # detected routes (HTTP / gRPC / GraphQL)
+</code></pre>
                 <p>Every file is plain text (JSON / JSONL / Mermaid). <strong>The whole thing is meant to be checked into git.</strong></p>
 
                 <h2>Five Properties That Change How AI Reasons About Your Code</h2>
@@ -177,6 +178,7 @@
 <pre><code>hotspot-rank --top 10                  # symbols ranked by fan-in
 cycle-detect                           # circular call dependencies
 mermaid-from-graph --diagram module-deps   # ready-to-paste architecture diagrams
+</code></pre>
                 <p>This is the kind of thing teams used to commission a consultant to produce as a PDF. It now runs in seconds, on every commit, for free, locally.</p>
 
                 <h2>How the AI Actually Uses This</h2>

@@ -1592,3 +1592,16 @@ a { color: inherit; text-decoration: none; }
 }
 [data-theme="dark"] .theme-toggle .icon-sun  { display: block; }
 [data-theme="dark"] .theme-toggle .icon-moon { display: none; }
+
+/* Site-wide footer credit (engine co-brand) */
+.footer-bottom {
+    max-width: 860px;
+    margin: 2.5rem auto 0;
+    padding: 1.5rem 2rem 2.5rem;
+    border-top: 1px solid var(--border, rgba(127, 127, 127, 0.18));
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--text-muted, #8a8a8a);
+}
+.footer-bottom a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
+.footer-bottom a:hover { color: var(--accent-cyan, #2563eb); }

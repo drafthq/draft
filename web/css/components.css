@@ -1408,3 +1408,20 @@
     border-radius: 4px;
     border: 1px solid var(--border);
 }
+
+/* Engine co-brand credits (hero + bento) */
+.hero-powered-by {
+    margin-top: 1.25rem;
+    font-size: 0.8rem;
+    color: var(--text-muted, #8a8a8a);
+    text-align: center;
+}
+.hero-powered-by a { color: var(--accent-cyan, #2563eb); text-decoration: none; font-weight: 500; }
+.hero-powered-by a:hover { text-decoration: underline; }
+.bento-credit {
+    margin-top: 0.75rem;
+    font-size: 0.8rem;
+    color: var(--text-muted, #8a8a8a);
+}
+.bento-credit a { color: var(--accent-cyan, #2563eb); text-decoration: none; }
+.bento-credit a:hover { text-decoration: underline; }

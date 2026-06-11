@@ -6,13 +6,22 @@
     <description>A comprehensive guide to Draft's Context-Driven Development methodology. 24 chapters covering specs, plans, TDD enforcement, 3-stage code review, 14-dimension bug hunting, and ACID audits for AI coding agents.</description>
     <language>en-us</language>
     <managingEditor>mayur@getdraft.dev (Mayur Pise)</managingEditor>
-    <lastBuildDate>Mon, 11 May 2026 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 11 Jun 2026 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://getdraft.dev/feed.xml" rel="self" type="application/rss+xml"/>
     <image>
       <url>https://getdraft.dev/social-preview.png</url>
       <title>Draft -- Context-Driven Development</title>
       <link>https://getdraft.dev</link>
     </image>
+
+    <item>
+      <title>Draft v2.6: Graph Engine Upgrade — codebase-memory-mcp Now Powers All Code Intelligence</title>
+      <link>https://getdraft.dev/changelog/</link>
+      <description>Draft v2.6 replaces the bundled graph engine with codebase-memory-mcp by DeusData — a tree-sitter + LSP-grade, 159-language, 100% local knowledge-graph engine. No API key, no external service, checksum-verified on install. The /draft:graph command builds and refreshes the draft/graph snapshot. All 33 commands and 30 deterministic tools now route graph queries through codebase-memory-mcp.</description>
+      <pubDate>Wed, 11 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>https://getdraft.dev/changelog/</guid>
+      <category>Release</category>
+    </item>
 
     <item>
       <title>The Tool Tax: How Claude Code, Cursor, Copilot, and Codex Handle 200 MCP Tools</title>
@@ -61,7 +70,7 @@
     <item>
       <title>Chapter 0: What is Draft?</title>
       <link>https://getdraft.dev/book/what-is-draft/</link>
-      <description>What Draft is, what it is not, who it is for, and what you get. An overview of 32 commands and 7 specialized agents for structured AI development.</description>
+      <description>What Draft is, what it is not, who it is for, and what you get. An overview of 33 commands and 7 specialized agents for structured AI development.</description>
       <pubDate>Sat, 05 Apr 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/book/what-is-draft/</guid>
     </item>

@@ -9,6 +9,11 @@
   <a href="https://github.com/mayurpise/draft/releases"><img src="https://img.shields.io/github/v/release/mayurpise/draft?include_prereleases&style=for-the-badge" alt="GitHub release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="MIT License"></a>
   <a href="https://github.com/mayurpise/draft/stargazers"><img src="https://img.shields.io/github/stars/mayurpise/draft?style=for-the-badge" alt="Stars"></a>
+  <a href="https://github.com/DeusData/codebase-memory-mcp" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/graph_engine-codebase--memory--mcp-8A2BE2?style=for-the-badge" alt="Graph engine: codebase-memory-mcp"></a>
+</p>
+
+<p align="center">
+  Powered by <a href="https://github.com/DeusData/codebase-memory-mcp" target="_blank" rel="noopener noreferrer">codebase-memory-mcp</a> by <a href="https://github.com/DeusData" target="_blank" rel="noopener noreferrer">DeusData</a> — a 159-language, 100% local knowledge-graph engine.
 </p>
 
 <p align="center">
@@ -241,7 +246,7 @@ Each layer narrows the solution space. By the time AI writes code, decisions are
 
 ---
 
-<p align="center">MIT License</p>
+<p align="center">MIT License &middot; Graph engine: <a href="https://github.com/DeusData/codebase-memory-mcp" target="_blank" rel="noopener noreferrer">codebase-memory-mcp</a> by <a href="https://github.com/DeusData" target="_blank" rel="noopener noreferrer">DeusData</a></p>
 
 <p align="center">
   <strong>Credits:</strong> Inspired by <a href="https://github.com/gemini-cli-extensions/conductor">gemini-cli-extensions/conductor</a>

@@ -58,7 +58,7 @@ For better discoverability, use the consolidated router commands instead of the 
 
 All specialist commands remain directly callable for compatibility.
 
-## All Commands (28)
+## All Commands (33)
 
 ### Primary Workflow
 - `/draft` — Overview, intent mapping, and command reference
@@ -66,6 +66,13 @@ All specialist commands remain directly callable for compatibility.
 - `/draft:new-track` — Collaborative spec and plan with AI-guided refinement
 - `/draft:implement` — TDD workflow with checkpoints
 - `/draft:review` — 3-stage review (validation + spec compliance + code quality)
+
+### Routers (recommended entry points)
+- `/draft:plan` — Planning & architecture router (new-track, decompose, adr, tech-debt, change)
+- `/draft:ops` — Operations & lifecycle router (deploy-checklist, incident-response, standup, status, revert)
+- `/draft:docs` — Authoring router (documentation)
+- `/draft:discover` — Investigation & quality router (debug, bughunt, quick/deep-review, coverage, testing-strategy, learn, index, tour, impact, assist-review)
+- `/draft:integrations` — External exports & syncs router (Jira)
 
 ### Quality
 - `/draft:deep-review` — Enterprise-grade module lifecycle and ACID audit
@@ -76,6 +83,7 @@ All specialist commands remain directly callable for compatibility.
 - `/draft:tech-debt` — Technical debt analysis across 6 dimensions
 
 ### Architecture & Planning
+- `/draft:graph` — Build or refresh the knowledge-graph snapshot (codebase-memory-mcp)
 - `/draft:decompose` — Module decomposition with dependency mapping
 - `/draft:adr` — Architecture Decision Records
 - `/draft:change` — Handle mid-track requirement changes
@@ -267,6 +275,10 @@ A comprehensive guide to Context-Driven Development, available at https://getdra
 - A. Command Reference — https://getdraft.dev/book/command-reference/
 - B. File Reference — https://getdraft.dev/book/file-reference/
 
+## Graph Engine
+
+Draft's knowledge graph is powered by [codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp) by [DeusData](https://github.com/DeusData) — a tree-sitter + LSP-grade, 159-language, 100% local graph engine with no API key required. Fetched and checksum-verified on install. The `/draft:graph` command builds the `draft/graph` snapshot.
+
 ## Links
 
 - Homepage: https://getdraft.dev
@@ -275,6 +287,7 @@ A comprehensive guide to Context-Driven Development, available at https://getdra
 - Command Reference: https://getdraft.dev/book/command-reference/
 - File Reference: https://getdraft.dev/book/file-reference/
 - GitHub: https://github.com/mayurpise/draft
+- Graph Engine: https://github.com/DeusData/codebase-memory-mcp
 - Methodology: https://github.com/mayurpise/draft/blob/main/core/methodology.md
 - Concise LLM context: https://getdraft.dev/llms.txt
 
