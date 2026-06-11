@@ -4,7 +4,7 @@
 
 Draft is a plugin that adds a knowledge graph engine, spec-driven planning, and a three-stage review pipeline to AI coding agents — so they stop guessing and start executing pre-approved work, grounded in real understanding of your codebase.
 
-Draft works with Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Google Gemini. It provides 32 slash commands, 7 specialized agents, 14-dimension bug hunting, ACID-style module audits, and a built-in **knowledge graph engine** (codebase-memory-mcp: tree-sitter + LSP, 159 languages, 100% local) with query tools — callers, impact, hotspots, modules, cycles, mermaid.
+Draft works with Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Google Gemini. It provides 33 slash commands, 7 specialized agents, 14-dimension bug hunting, ACID-style module audits, and a built-in **knowledge graph engine** (codebase-memory-mcp: tree-sitter + LSP, 159 languages, 100% local) with query tools — callers, impact, hotspots, modules, cycles, mermaid.
 
 ## Installation
 
@@ -32,7 +32,7 @@ For Cursor, Copilot, Gemini, and Antigravity IDE, see the getting started guide.
 - **ACID Compliance:** Enterprise-grade module lifecycle audits
 - **Incremental Refresh:** File-hash-based re-analysis of only changed files
 - **Knowledge Graph Engine:** codebase-memory-mcp: tree-sitter + LSP, 159 languages, 100% local. Query tools: callers, callees, impact, cycles, hotspots, mermaid. Incremental, git-aware indexing.
-- **Deterministic Tools:** 14 shell helpers under `scripts/tools/` for mechanical work — git metadata, file classification, hotspot ranking, freshness checks, ADR indexing.
+- **Deterministic Tools:** 30 shell helpers under `scripts/tools/` for mechanical work — git metadata, file classification, hotspot ranking, freshness checks, ADR indexing.
 
 ## Links
 

@@ -4,7 +4,7 @@
 
 Draft is a plugin that adds three things to AI coding agents: a knowledge graph engine that maps your repo, spec-driven planning that produces git-tracked specs and phased plans, and a three-stage review pipeline that validates work against the plan. Together, they force AI to execute pre-approved work — grounded in real codebase understanding — instead of guessing.
 
-Draft works with Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Google Gemini. 5 primary routers + 20+ specialist commands (still directly callable), 7 specialized agents, 14-dimension bug hunting, ACID-style module audits, knowledge graph with query tools, 14 deterministic shell helpers. MIT license, no telemetry, no paid tiers.
+Draft works with Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Google Gemini. 5 primary routers + 20+ specialist commands (still directly callable), 7 specialized agents, 14-dimension bug hunting, ACID-style module audits, knowledge graph with query tools, 30 deterministic shell helpers. MIT license, no telemetry, no paid tiers.
 
 ## Installation
 
@@ -203,11 +203,13 @@ Call edges carry confidence signals (resolved vs. inferred); skills weight findi
 
 ## Deterministic Helper Tools
 
-Skills delegate mechanical work to 14 shell helpers under `scripts/tools/`:
+Skills delegate mechanical work to 30 shell helpers under `scripts/tools/`, including:
 
 - `git-metadata.sh`, `parse-git-log.sh` — git introspection
 - `classify-files.sh` — language + category (code/test/doc/config) classification
 - `hotspot-rank.sh`, `cycle-detect.sh`, `mermaid-from-graph.sh` — graph wrappers
+- `graph-snapshot.sh`, `graph-impact.sh`, `graph-callers.sh` — codebase-memory-mcp graph queries (committed snapshot, blast radius, callers)
+- `check-track-hygiene.sh`, `check-scope-conflicts.sh`, `verify-citations.sh`, `render-track.sh` — track-hygiene and verification helpers
 - `freshness-check.sh` — file-hash freshness verification
 - `manage-symlinks.sh` — keep `*-latest.md` symlinks pointing at the newest report
 - `parse-reports.sh` — extract structured findings from skill reports
@@ -228,7 +230,7 @@ All emit JSON, follow uniform exit-code contract (0 = success, 1 = invocation er
 - **Platform-agnostic:** Same methodology across Claude Code, Cursor, Copilot, Gemini, Antigravity IDE
 - **TDD enforcement:** RED → GREEN → REFACTOR cycle with verification
 - **14-dimension bug hunting:** Exhaustive defect discovery beyond simple linting
-- **Built-in code intelligence:** Knowledge graph engine + 14 deterministic helpers — no external services required
+- **Built-in code intelligence:** Knowledge graph engine + 30 deterministic helpers — no external services required
 - **Track impact memory:** Each completed track records its blast radius; new tracks get overlap warnings during context load
 - **ACID compliance audits:** Enterprise-grade module lifecycle reviews
 - **7 specialized agents:** Purpose-built behaviors for architecture, debugging, planning, review, RCA, operations, and documentation
