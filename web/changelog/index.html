@@ -210,12 +210,37 @@
     <!-- Changelog entries -->
     <main class="changelog-content">
 
+        <!-- v2.6 -->
+        <article class="changelog-entry">
+            <div class="changelog-entry-header">
+                <span class="changelog-version">v2.6</span>
+                <span class="changelog-date">2026-06-11</span>
+                <span class="changelog-tag changelog-tag--latest">Latest</span>
+                <span class="changelog-tag">Knowledge Graph</span>
+            </div>
+            <div class="changelog-category">Knowledge Graph</div>
+            <ul class="changelog-changes">
+                <li><strong>New graph engine &mdash; <code>codebase-memory-mcp</code></strong> &mdash; Draft's knowledge graph now runs on <a href="https://github.com/DeusData/codebase-memory-mcp" target="_blank" rel="noopener noreferrer">codebase-memory-mcp</a>: tree-sitter + LSP-grade resolution across <strong>159 languages</strong>, 100% local, no API key. The previous in-house Node.js + tree-sitter-WASM engine is retired.</li>
+                <li><strong>Fetch-on-install</strong> &mdash; the engine is downloaded and checksum-verified into <code>~/.cache/draft/bin</code> at install time (<code>scripts/fetch-memory-engine.sh</code>) instead of being vendored. Resolution order: <code>DRAFT_MEMORY_BIN</code> &rsaquo; PATH &rsaquo; managed cache &rsaquo; vendored. Opt out with <code>DRAFT_MEMORY_DISABLE=1</code>.</li>
+                <li><strong>New <code>/draft:graph</code> command</strong> &mdash; initialize or refresh the <code>draft/graph/</code> snapshot for any repo, ensure the engine is present, then report module counts, hotspots, and cycles.</li>
+                <li><strong>Lightweight committed snapshot</strong> &mdash; <code>draft/graph/</code> now holds <code>schema.yaml</code>, <code>architecture.json</code>, <code>hotspots.jsonl</code>, and <code>*.mermaid</code> instead of the per-language JSONL indexes. Live structural queries run on demand against the engine.</li>
+            </ul>
+            <div class="changelog-category">Tooling</div>
+            <ul class="changelog-changes">
+                <li><strong>New graph tools</strong> &mdash; <code>graph-snapshot.sh</code> (committed snapshot), <code>graph-impact.sh</code> (file/symbol blast radius), <code>graph-callers.sh</code> (caller enumeration), plus <code>fetch-memory-engine.sh</code> (pinned, checksum-verified install).</li>
+                <li>New test suites for the graph tools; all 25+ suites plus <code>make build</code> and <code>make lint</code> pass clean.</li>
+            </ul>
+            <div class="changelog-category">Infrastructure</div>
+            <ul class="changelog-changes">
+                <li>Hardened the GitHub Pages deploy &mdash; added <code>web/CNAME</code> and <code>web/.nojekyll</code> and pinned <code>actions/configure-pages</code> to a full-length commit SHA to unblock the custom-domain deploy.</li>
+            </ul>
+        </article>
+
         <!-- v2.5 -->
         <article class="changelog-entry">
             <div class="changelog-entry-header">
                 <span class="changelog-version">v2.5</span>
                 <span class="changelog-date">2026-05-17</span>
-                <span class="changelog-tag changelog-tag--latest">Latest</span>
             </div>
             <div class="changelog-category">Workflow & Architecture</div>
             <ul class="changelog-changes">
