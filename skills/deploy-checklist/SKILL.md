@@ -11,8 +11,8 @@ You are generating a pre-deployment verification checklist customized to this pr
 
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Use the graph to validate module boundaries before the deploy:
 
-1. For each file in the deploy diff, run `graph --query --file <path> --mode impact` to enumerate the modules affected — flag any module **not** declared in `hld.md` §Detailed Design as a deployment-scope miss.
-2. Run `graph --query --mode cycles` and `--mode modules` to ensure no fresh cycles were introduced after HLD sign-off.
+1. For each file in the deploy diff, run `scripts/tools/graph-impact.sh --repo . --file <path>` to enumerate the modules affected — flag any module **not** declared in `hld.md` §Detailed Design as a deployment-scope miss.
+2. Run `scripts/tools/cycle-detect.sh --repo .` (and read `draft/graph/architecture.json` for the module overview) to ensure no fresh cycles were introduced after HLD sign-off.
 3. Load `draft/graph/hotspots.jsonl` — any hotspot in the diff escalates the Resiliency row of Phase 0.
 
 Filesystem `grep` is reserved for source-text scans (migration file names, flag-key strings). Module/impact discovery goes through the graph.
@@ -231,7 +231,7 @@ ln -sf deploy-checklist-${TIMESTAMP}.md draft/deploy-checklist-latest.md
 
 Before saving the checklist file, internally verify and report:
 
-1. **Graph files queried** — JSONL files loaded plus any live `graph --query` invocations (`impact`, `cycles`, `modules`).
+1. **Graph files queried** — JSONL files loaded plus any live graph query-tool invocations (`impact`, `cycles`, `modules`).
 2. **Layer 1 files deliberately skipped** — list any context sections skipped.
 3. **Filesystem grep fallback justification** — for every `grep`/`find` run, name the concept it searched for.
 

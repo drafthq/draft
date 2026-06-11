@@ -11,9 +11,9 @@ You are conducting a structured debugging session following systematic investiga
 
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. During Steps 3–4 (Isolate, Diagnose):
 
-1. Locate the suspect file's module via `draft/graph/module-graph.jsonl` before tracing data flow.
-2. Use `graph --query --symbol <fn> --mode callers` to enumerate call sites of suspect functions — not `grep`.
-3. Use `graph --query --file <path> --mode impact` to size the blast radius before proposing a fix.
+1. Locate the suspect file's module via `draft/graph/architecture.json` (`.packages`) before tracing data flow.
+2. Use `scripts/tools/graph-callers.sh --repo . --symbol <fn>` to enumerate call sites of suspect functions — not `grep`.
+3. Use `scripts/tools/graph-impact.sh --repo . --file <path>` to size the blast radius before proposing a fix.
 4. Cross-check `draft/graph/hotspots.jsonl` to know whether the file is high-fanIn (any fix needs extra caution).
 
 Filesystem `grep` is reserved for source-text scans (literal error strings, stack-trace symbols when the graph misses). Use the fallback sentence on graph miss.
@@ -62,7 +62,7 @@ Key context for debugging:
 - `.ai-context.md` — Module boundaries, data flows, invariants (crucial for tracing)
 - `tech-stack.md` — Language-specific debugging tools and techniques
 - `guardrails.md` — Known anti-patterns that may be causing the issue
-- `draft/graph/` (MANDATORY when present) — Load `module-graph.jsonl` for dependency context, `hotspots.jsonl` for complexity awareness, and `modules/<module>.jsonl` for the suspect module. Use `graph --query --symbol <fn> --mode callers` to find all callers, and `--mode impact` to size blast radius before any fix. See [core/shared/graph-query.md](../../core/shared/graph-query.md).
+- `draft/graph/` (MANDATORY when present) — Load `architecture.json` for dependency/module context and `hotspots.jsonl` for complexity awareness. Use `scripts/tools/graph-callers.sh --repo . --symbol <fn>` to find all callers, and `scripts/tools/graph-impact.sh --repo . --file <path>` to size blast radius before any fix. See [core/shared/graph-query.md](../../core/shared/graph-query.md).
 
 ## Step 1: Parse Arguments
 
@@ -174,7 +174,7 @@ ln -sf debug-report-${TIMESTAMP}.md draft/debug-report-latest.md
 
 Before printing the debug report, internally verify and report:
 
-1. **Graph files queried** — JSONL files loaded plus any live `graph --query` invocations.
+1. **Graph files queried** — JSONL files loaded plus any live graph query-tool invocations.
 2. **Layer 1 files deliberately skipped** — list any context sections skipped.
 3. **Filesystem grep fallback justification** — for every `grep`/`find` run, name the concept it searched for.
 

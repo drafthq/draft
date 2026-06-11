@@ -1,7 +1,5 @@
-bin/*/*/graph* filter=lfs diff=lfs merge=lfs -text
-bin/*/*/graph-clang* filter=lfs diff=lfs merge=lfs -text
-bin/darwin-amd64/graph filter=lfs diff=lfs merge=lfs -text
-bin/darwin-arm64/graph filter=lfs diff=lfs merge=lfs -text
-bin/linux-amd64/graph filter=lfs diff=lfs merge=lfs -text
-bin/linux-arm64/graph filter=lfs diff=lfs merge=lfs -text
-bin/linux-arm64/graph-clang filter=lfs diff=lfs merge=lfs -text
+# Draft no longer vendors native graph binaries in-repo. The knowledge-graph
+# engine (codebase-memory-mcp) is fetched on install into ~/.cache/draft/bin
+# via scripts/fetch-memory-engine.sh (checksum-verified). See bin/README.md.
+#
+# No Git LFS objects are required for the graph engine.

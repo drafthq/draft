@@ -53,7 +53,7 @@
   "reviewCount": 0,
   "lastReviewVerdict": "PASS|PASS_WITH_NOTES|FAIL",
 
-  "$impact_description": "Blast-radius memory — written by /draft:implement on phase complete, read by /draft:new-track to flag overlap. Sourced from `git diff --name-only <track_first_sha>^..HEAD` plus `graph --query --mode impact` for each touched file. Optional — absent if graph data unavailable.",
+  "$impact_description": "Blast-radius memory — written by /draft:implement on phase complete, read by /draft:new-track to flag overlap. Sourced from `git diff --name-only <track_first_sha>^..HEAD` plus `scripts/tools/graph-impact.sh --repo . --file <path>` for each touched file. Optional — absent if graph data unavailable.",
   "impact": {
     "files_touched": [],
     "modules_touched": [],

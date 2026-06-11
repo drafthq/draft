@@ -29,9 +29,9 @@ graph:
     go: "{approximate | high}"
   stats:
     modules: "{N from schema.yaml}"
-    edges: "{N from module-graph.jsonl}"
+    edges: "{total_edges from architecture.json}"
     hotspots: "{N}"
-  notes: "{explicit fidelity summary, e.g. 'Python: stub (0 edges, dir-level only); C++: high from graph-clang'}"
+  notes: "{explicit fidelity summary from architecture.json languages/packages}"
 generation_notes: "{High existing context detected via audit — see §10 Relationship for deference | Standard graph-primary generation}"
 ---
 
@@ -113,7 +113,7 @@ Each backed by:
 
 ## 4. Module & Dependency Map (Primarily Graph-Derived)
 
-- Module dependency graph rendered from `draft/graph/module-graph.jsonl`
+- Module dependency graph rendered from `draft/graph/architecture.json` (`.packages`) + `module-deps.mermaid`
 - High fan-in / fan-out modules highlighted
 - Cyclic dependencies called out
 - Cross-language boundaries (FFI, RPC, shared memory) explicitly surfaced with coverage notes

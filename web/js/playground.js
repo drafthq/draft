@@ -14,7 +14,7 @@
        schema; the data is illustrative. */
     var fixtures = {
         impact: {
-            cmd: 'graph --query --file src/auth/login.ts --mode impact',
+            cmd: 'graph-impact --file src/auth/login.ts',
             json: {
                 target: 'src/auth/login.ts',
                 impact: {
@@ -45,7 +45,7 @@
             }
         },
         callers: {
-            cmd: 'graph --query --symbol verifyJWT --mode callers',
+            cmd: 'graph-callers --symbol verifyJWT',
             json: {
                 target: 'verifyJWT',
                 callers: [
@@ -61,7 +61,7 @@
             }
         },
         hotspots: {
-            cmd: 'graph --query --mode hotspots',
+            cmd: 'hotspot-rank --top 10',
             json: {
                 hotspots: [
                     { id: 'src/lib/db/connection.ts',          module: 'lib',         lines:  624, fanIn: 38 },
@@ -76,7 +76,7 @@
             }
         },
         cycles: {
-            cmd: 'graph --query --mode cycles',
+            cmd: 'cycle-detect',
             json: {
                 cycles: [
                     ['lib', 'api', 'lib'],
@@ -87,7 +87,7 @@
             }
         },
         modules: {
-            cmd: 'graph --query --mode modules',
+            cmd: 'graph-snapshot --modules',
             json: {
                 modules: [
                     { kind: 'node', id: 'src',         sizeKB: 1284 },
@@ -121,7 +121,7 @@
             }
         },
         mermaid: {
-            cmd: 'graph --query --mode mermaid',
+            cmd: 'mermaid-from-graph --diagram module-deps',
             // Mermaid mode emits markdown text, not JSON. Show a fenced block.
             text:
                 '## Module Dependencies\n\n' +

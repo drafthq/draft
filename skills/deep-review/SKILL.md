@@ -11,9 +11,9 @@ Perform an exhaustive end-to-end lifecycle review of a service, component, or mo
 
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Deep-review uses the graph to **narrow review scope** — a key 30–50% scope reduction:
 
-1. Load `draft/graph/modules/<module>.jsonl` for the authoritative file list of the audited module — do not enumerate via `find`.
-2. Run `graph --query --file <each-changed-file> --mode impact` per file in the diff (or per file in the module if no diff) to obtain the affected module set deterministically.
-3. Run `graph --query --mode cycles` and flag any cycle that includes the audited module as Architecture Resilience finding.
+1. Use `scripts/tools/graph-impact.sh`/`graph-callers.sh` and `architecture.json` for the audited module's structure — do not enumerate via `find`.
+2. Run `scripts/tools/graph-impact.sh --repo . --file <each-changed-file>` per file in the diff (or per file in the module if no diff) to obtain the affected module set deterministically.
+3. Run `scripts/tools/cycle-detect.sh --repo .` and flag any cycle that includes the audited module as Architecture Resilience finding.
 4. Cross-check `draft/graph/hotspots.jsonl` to identify high-fanIn files inside the module — these get deeper inspection.
 
 Filesystem `grep` is reserved for source-text scans (API contract strings, secret patterns, log message audits). Module enumeration and caller tracing go through the graph.
@@ -288,7 +288,7 @@ After deep-review audit completion:
 
 Before printing the final report, internally verify and report:
 
-1. **Graph files queried** — JSONL files loaded plus any live `graph --query` invocations (especially `impact` per file in scope).
+1. **Graph files queried** — JSONL files loaded plus any live graph query-tool invocations (especially `impact` per file in scope).
 2. **Layer 1 files deliberately skipped** — list any context sections skipped.
 3. **Filesystem grep fallback justification** — for every `grep`/`find` run, name the concept it searched for. Source-text scans for API contract strings, secrets, or log audits are exempt.
 

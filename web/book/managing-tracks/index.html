@@ -56,6 +56,11 @@
     </noscript>
 
     <link rel="stylesheet" href="../css/book.css">
+
+    <!-- Theme: apply early to prevent flash of wrong theme -->
+    <script>
+    (function(){try{var t=localStorage.getItem('draft-theme');if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
+    </script>
 </head>
 <body data-chapter="managing-tracks">
 
@@ -508,5 +513,6 @@ Next: Run /draft:status to see project overview.</code></pre>
     </div>
 
     <script src="../js/book.js"></script>
+    <script src="../../js/theme-toggle.js"></script>
 </body>
 </html>

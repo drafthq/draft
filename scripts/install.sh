@@ -45,14 +45,12 @@ trap 'rm -rf "$INSTALL_TMPDIR"' EXIT
 echo "Downloading Draft..."
 git clone --quiet --depth 1 "$REPO_URL" "$INSTALL_TMPDIR/draft"
 
-# Materialize native graph binaries (Git LFS) before copying into the target.
-# Canonical layout is bin/<arch>/graph* — see bin/README.md.
-if command -v git-lfs >/dev/null 2>&1; then
-    (cd "$INSTALL_TMPDIR/draft" && git lfs install --local >/dev/null 2>&1 || true)
-    (cd "$INSTALL_TMPDIR/draft" && git lfs pull --include="bin/**/graph*" 2>/dev/null \
-        || echo "  (LFS pull skipped or partial — graph binaries may be placeholders)")
-else
-    echo "  git-lfs not found — native graph binaries (if LFS-tracked) will be placeholders."
+# Fetch the knowledge-graph engine (codebase-memory-mcp) into the Draft-managed
+# location (~/.cache/draft/bin). Network-gated and best-effort — graph features
+# degrade gracefully when the engine is absent. See bin/README.md.
+if [[ -x "$INSTALL_TMPDIR/draft/scripts/fetch-memory-engine.sh" ]]; then
+    "$INSTALL_TMPDIR/draft/scripts/fetch-memory-engine.sh" \
+        || echo "  (graph engine fetch skipped — install later with scripts/fetch-memory-engine.sh)"
 fi
 
 case "$TARGET" in

@@ -233,7 +233,7 @@
             </div>
             <div class="changelog-category">Code Intelligence</div>
             <ul class="changelog-changes">
-                <li><strong>Knowledge graph engine</strong> &mdash; tree-sitter parsers for Go, Python, TS/JS, C/C++ + ctags fallback for Java/Rust/Ruby/Swift. Six query modes: callers, impact, hotspots, modules, cycles, mermaid.</li>
+                <li><strong>Knowledge graph engine</strong> &mdash; tree-sitter + LSP-grade resolution across 159 languages, 100% local. Query tools: callers, impact, hotspots, modules, cycles, mermaid.</li>
                 <li><strong>Confidence-tagged call edges</strong> &mdash; every call edge marked <code>direct</code> (bare identifier) or <code>inferred</code> (member call) so review/bughunt can weight findings.</li>
                 <li><strong>Atomic incremental builds</strong> via per-module SHA-256 hashing &mdash; only changed modules re-extract.</li>
                 <li><strong>Track impact memory</strong> in <code>metadata.json</code> &mdash; each completed track records files touched, modules affected, downstream count, by-category breakdown. <code>/draft:new-track</code> surfaces overlap warnings during context load.</li>
