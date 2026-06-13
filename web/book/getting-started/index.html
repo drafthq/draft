@@ -242,29 +242,31 @@
     </div>
 
     <h2>Installation</h2>
-    <p>Draft installs with a single command. No API keys, no accounts, no hosted services.</p>
+    <p>Draft installs with a single npm command. No API keys, no accounts, no hosted services.</p>
+
+    <pre class="terminal"><code>$ npx @drafthq/draft install &lt;host&gt;   # claude-code | cursor | codex | opencode</code></pre>
+    <p>Prefer a persistent CLI? <code>npm install -g @drafthq/draft</code>, then <code>draft install &lt;host&gt;</code>. Run <code>draft list</code> to see every host and where it installs.</p>
 
     <h3>Claude Code (Recommended)</h3>
-    <pre class="terminal"><code>$ /plugin marketplace add drafthq/draft
-$ /plugin install draft</code></pre>
-    <p>That's it. You now have the 4 primary commands + 5 routers (recommended entry points) plus all specialists available as <code>/draft:*</code> slash commands.</p>
+    <pre class="terminal"><code>$ npx @drafthq/draft install claude-code</code></pre>
+    <p>You now have the 4 primary commands + 5 routers (recommended entry points) plus all specialists available as <code>/draft:*</code> slash commands. Prefer the native marketplace? <code>/plugin marketplace add drafthq/draft</code> then <code>/plugin install draft</code>.</p>
 
     <h3>Cursor</h3>
-    <p>Cursor natively supports the <code>.claude/</code> plugin structure. Use the universal install script:</p>
-    <pre class="terminal"><code>$ curl -fsSL https://raw.githubusercontent.com/drafthq/draft/main/scripts/install.sh | bash -s -- --cursor</code></pre>
-    <p>Commands use <code>@draft init</code>, <code>@draft new-track</code>, <code>@draft implement</code> syntax.</p>
+    <p>Cursor natively supports the <code>.claude-plugin/</code> structure. Installs to <code>~/.cursor/plugins/local/draft</code>:</p>
+    <pre class="terminal"><code>$ npx @drafthq/draft install cursor</code></pre>
 
-    <h3>GitHub Copilot</h3>
-    <p>Copilot uses a <code>copilot-instructions.md</code> file in your project:</p>
-    <pre class="terminal"><code>$ curl -fsSL https://raw.githubusercontent.com/drafthq/draft/main/scripts/install.sh | bash -s -- --copilot</code></pre>
+    <h3>Codex</h3>
+    <p>Writes an <code>AGENTS.md</code> to your repo root, which Codex reads automatically:</p>
+    <pre class="terminal"><code>$ npx @drafthq/draft install codex</code></pre>
 
-    <h3>Gemini</h3>
-    <p>Gemini uses a <code>.gemini.md</code> bootstrap file:</p>
-    <pre class="terminal"><code>$ curl -fsSL https://raw.githubusercontent.com/drafthq/draft/main/scripts/install.sh | bash -s -- --gemini</code></pre>
+    <h3>opencode</h3>
+    <p>Writes <code>AGENTS.md</code> and bundles Draft's skills under <code>~/.agents/skills/draft</code>:</p>
+    <pre class="terminal"><code>$ npx @drafthq/draft install opencode</code></pre>
 
-    <h3>Antigravity IDE</h3>
-    <p>Install Draft globally for all projects:</p>
-    <pre class="terminal"><code>$ curl -fsSL https://raw.githubusercontent.com/drafthq/draft/main/scripts/install.sh | bash -s -- --antigravity</code></pre>
+    <h3>GitHub Copilot &amp; Gemini</h3>
+    <p>These read a committed instructions file rather than a plugin &mdash; copy it directly (not a <code>draft install</code> host):</p>
+    <pre class="terminal"><code>$ curl -o .github/copilot-instructions.md https://raw.githubusercontent.com/drafthq/draft/main/integrations/copilot/.github/copilot-instructions.md
+$ curl -o .gemini.md https://raw.githubusercontent.com/drafthq/draft/main/integrations/gemini/.gemini.md</code></pre>
 
     <div class="callout callout-tip">
         <div class="callout-title">Cross-Platform</div>

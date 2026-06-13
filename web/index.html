@@ -1065,9 +1065,9 @@
             <div class="install-tabs">
                 <button class="install-tab active" data-target="claude-code">Claude Code</button>
                 <button class="install-tab" data-target="cursor">Cursor</button>
-                <button class="install-tab" data-target="copilot">GitHub Copilot</button>
-                <button class="install-tab" data-target="antigravity">Antigravity IDE</button>
-                <button class="install-tab" data-target="gemini">Gemini</button>
+                <button class="install-tab" data-target="codex">Codex</button>
+                <button class="install-tab" data-target="opencode">opencode</button>
+                <button class="install-tab" data-target="more">Copilot / Gemini</button>
             </div>
 
             <div class="install-panels">
@@ -1077,14 +1077,13 @@
                             <div class="terminal-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
                             <span class="code-filename">Claude Code CLI</span>
                         </div>
-                        <pre><code><span class="c-comment"># Install from marketplace</span>
-<span class="c-cmd">/plugin marketplace add</span> <span class="c-str">drafthq/draft</span>
-<span class="c-cmd">/plugin install</span> <span class="c-str">draft</span>
+                        <pre><code><span class="c-comment"># Install Draft with one command</span>
+<span class="c-cmd">npx</span> <span class="c-str">@drafthq/draft</span> install <span class="c-flag">claude-code</span>
 
-<span class="c-comment"># Start using</span>
+<span class="c-comment"># Then start using</span>
 <span class="c-cmd">/draft:init</span></code></pre>
                     </div>
-                    <p class="install-note">Prerequisites: Claude Code CLI, Git, Node.js 18+</p>
+                    <p class="install-note">Or the native marketplace: <code>/plugin marketplace add drafthq/draft</code>. Prerequisites: Node.js 18+, Git.</p>
                 </div>
                 <div class="install-panel" id="panel-cursor">
                     <div class="code-block glass-card">
@@ -1092,45 +1091,48 @@
                             <div class="terminal-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
                             <span class="code-filename">Cursor</span>
                         </div>
-                        <pre><code><span class="c-comment"># Universal install script</span>
-<span class="c-cmd">curl</span> -fsSL <span class="c-str">https://raw.githubusercontent.com/drafthq/draft/main/scripts/install.sh</span> | <span class="c-cmd">bash</span> -s -- <span class="c-flag">--cursor</span>
+                        <pre><code><span class="c-comment"># Install Draft into Cursor</span>
+<span class="c-cmd">npx</span> <span class="c-str">@drafthq/draft</span> install <span class="c-flag">cursor</span></code></pre>
+                    </div>
+                    <p class="install-note">Installs to <code>~/.cursor/plugins/local/draft</code>. Restart Cursor to detect it.</p>
+                </div>
+                <div class="install-panel" id="panel-codex">
+                    <div class="code-block glass-card">
+                        <div class="code-header">
+                            <div class="terminal-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+                            <span class="code-filename">OpenAI Codex</span>
+                        </div>
+                        <pre><code><span class="c-comment"># Install Draft into Codex</span>
+<span class="c-cmd">npx</span> <span class="c-str">@drafthq/draft</span> install <span class="c-flag">codex</span></code></pre>
+                    </div>
+                    <p class="install-note">Writes <code>AGENTS.md</code> to your repo root — Codex reads it automatically.</p>
+                </div>
+                <div class="install-panel" id="panel-opencode">
+                    <div class="code-block glass-card">
+                        <div class="code-header">
+                            <div class="terminal-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+                            <span class="code-filename">opencode</span>
+                        </div>
+                        <pre><code><span class="c-comment"># Install Draft into opencode</span>
+<span class="c-cmd">npx</span> <span class="c-str">@drafthq/draft</span> install <span class="c-flag">opencode</span></code></pre>
+                    </div>
+                    <p class="install-note">Writes <code>AGENTS.md</code> + bundles skills under <code>~/.agents/skills/draft</code>.</p>
+                </div>
+                <div class="install-panel" id="panel-more">
+                    <div class="code-block glass-card">
+                        <div class="code-header">
+                            <div class="terminal-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+                            <span class="code-filename">GitHub Copilot / Gemini</span>
+                        </div>
+                        <pre><code><span class="c-comment"># GitHub Copilot — copy the instructions file</span>
+<span class="c-cmd">curl</span> -o <span class="c-str">.github/copilot-instructions.md</span> \
+  <span class="c-str">https://raw.githubusercontent.com/drafthq/draft/main/integrations/copilot/.github/copilot-instructions.md</span>
 
-<span class="c-comment"># Then use:</span>
-<span class="c-cmd">@draft init</span>
-<span class="c-cmd">@draft plan</span></code></pre>
+<span class="c-comment"># Gemini</span>
+<span class="c-cmd">curl</span> -o <span class="c-str">.gemini.md</span> \
+  <span class="c-str">https://raw.githubusercontent.com/drafthq/draft/main/integrations/gemini/.gemini.md</span></code></pre>
                     </div>
-                    <p class="install-note">Cursor natively supports .claude/ plugin structure</p>
-                </div>
-                <div class="install-panel" id="panel-copilot">
-                    <div class="code-block glass-card">
-                        <div class="code-header">
-                            <div class="terminal-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
-                            <span class="code-filename">GitHub Copilot</span>
-                        </div>
-                        <pre><code><span class="c-comment"># Universal install script</span>
-<span class="c-cmd">curl</span> -fsSL <span class="c-str">https://raw.githubusercontent.com/drafthq/draft/main/scripts/install.sh</span> | <span class="c-cmd">bash</span> -s -- <span class="c-flag">--copilot</span></code></pre>
-                    </div>
-                    <p class="install-note">Works in VS Code, JetBrains, Neovim</p>
-                </div>
-                <div class="install-panel" id="panel-antigravity">
-                    <div class="code-block glass-card">
-                        <div class="code-header">
-                            <div class="terminal-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
-                            <span class="code-filename">Antigravity IDE</span>
-                        </div>
-                        <pre><code><span class="c-comment"># Universal install script</span>
-<span class="c-cmd">curl</span> -fsSL <span class="c-str">https://raw.githubusercontent.com/drafthq/draft/main/scripts/install.sh</span> | <span class="c-cmd">bash</span> -s -- <span class="c-flag">--antigravity</span></code></pre>
-                    </div>
-                </div>
-                <div class="install-panel" id="panel-gemini">
-                    <div class="code-block glass-card">
-                        <div class="code-header">
-                            <div class="terminal-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
-                            <span class="code-filename">Gemini</span>
-                        </div>
-                        <pre><code><span class="c-comment"># Universal install script</span>
-<span class="c-cmd">curl</span> -fsSL <span class="c-str">https://raw.githubusercontent.com/drafthq/draft/main/scripts/install.sh</span> | <span class="c-cmd">bash</span> -s -- <span class="c-flag">--gemini</span></code></pre>
-                    </div>
+                    <p class="install-note">Copilot &amp; Gemini read a committed instructions file — copy it directly (not a <code>draft install</code> host).</p>
                 </div>
             </div>
 

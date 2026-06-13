@@ -46,28 +46,57 @@ Free. No API keys. No paid tier. No vendor lock-in. Catches the 3 bugs you misse
 
 ---
 
-## Install — Claude Code (30 seconds)
+## Install (30 seconds)
+
+One command installs Draft into your agent. No clone, no config.
 
 ```bash
-/plugin marketplace add drafthq/draft
-/plugin install draft
+npx @drafthq/draft install <host>      # claude-code | cursor | codex | opencode
+```
+
+…or install the CLI once and reuse it:
+
+```bash
+npm install -g @drafthq/draft
+draft install <host>
+draft list                             # show every host + where it installs
+```
+
+| Host | `draft install …` | Lands in |
+|------|-------------------|----------|
+| **Claude Code** | `claude-code` | `./.claude-plugin/` + `skills/` `core/` (project) |
+| **Cursor** | `cursor` | `~/.cursor/plugins/local/draft/` (global) |
+| **Codex** | `codex` | `./AGENTS.md` (project) |
+| **opencode** | `opencode` | `./AGENTS.md` + `~/.agents/skills/draft/` |
+
+Flags: `--global` / `--project` to pick scope, `--dry-run` to preview writes, `--force` to overwrite, `--no-graph` to skip the graph-engine fetch.
+
+Then, in Claude Code:
+
+```bash
 /draft:init       # 5-phase codebase analysis (one-time)
 /draft:review     # ← run this on every branch before you push
 ```
 
-That's it. Run `/draft` for the full command map.
+Run `/draft` for the full command map.
 
 <details>
-<summary><strong>Also works with Cursor, GitHub Copilot, Antigravity, and Gemini →</strong></summary>
+<summary><strong>Other ways to install →</strong></summary>
 
-### Cursor
-Cursor natively supports the `.claude/` plugin structure. Add via *Settings > Rules, Skills, Subagents > Rules > New > Add from Github*:
+### Claude Code — native marketplace
+```bash
+/plugin marketplace add drafthq/draft
+/plugin install draft
+```
+
+### Cursor — from GitHub
+Cursor natively supports the `.claude-plugin/` structure. Add via *Settings > Rules, Skills, Subagents > Rules > New > Add from Github*:
 ```
 https://github.com/drafthq/draft.git
 ```
-Then use: `@draft init`, `@draft new-track`, `@draft implement`.
 
 ### GitHub Copilot
+Copilot reads a committed instructions file — copy it directly (not a `draft install` host):
 ```bash
 mkdir -p .github && curl -o .github/copilot-instructions.md \
   https://raw.githubusercontent.com/drafthq/draft/main/integrations/copilot/.github/copilot-instructions.md
@@ -76,16 +105,6 @@ mkdir -p .github && curl -o .github/copilot-instructions.md \
 ### Gemini
 ```bash
 curl -o .gemini.md https://raw.githubusercontent.com/drafthq/draft/main/integrations/gemini/.gemini.md
-```
-
-### Antigravity IDE
-Draft is used globally by installing skills to a central location:
-1. Clone Draft to `~/.gemini/antigravity/skills/draft`
-2. Configure `~/.gemini.md` to point to the global skills:
-```markdown
-**Skill Locations:**
-The authoritative Draft implementation skills are located at:
-`/Users/mayurpise/.gemini/antigravity/skills/draft/skills`
 ```
 
 </details>

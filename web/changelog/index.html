@@ -210,12 +210,28 @@
     <!-- Changelog entries -->
     <main class="changelog-content">
 
+        <!-- v2.7 -->
+        <article class="changelog-entry">
+            <div class="changelog-entry-header">
+                <span class="changelog-version">v2.7</span>
+                <span class="changelog-date">2026-06-13</span>
+                <span class="changelog-tag changelog-tag--latest">Latest</span>
+                <span class="changelog-tag">Install</span>
+            </div>
+            <div class="changelog-category">Installation</div>
+            <ul class="changelog-changes">
+                <li><strong>One-command npm install &mdash; <code>draft install &lt;host&gt;</code></strong> &mdash; Installation is now an npm CLI (<code>@drafthq/draft</code>). Run <code>npx @drafthq/draft install &lt;host&gt;</code> (or <code>npm install -g @drafthq/draft</code> then <code>draft install &lt;host&gt;</code>), where <code>&lt;host&gt;</code> is <code>claude-code</code>, <code>cursor</code>, <code>codex</code>, or <code>opencode</code>. <code>draft list</code> shows every host and where it installs.</li>
+                <li><strong>Self-contained installs</strong> &mdash; the CLI bundles all assets, so there is no runtime <code>git clone</code>. Flags: <code>--global</code>/<code>--project</code> for scope, <code>--dry-run</code> to preview, <code>--force</code> to overwrite, <code>--no-graph</code> to skip the engine fetch.</li>
+                <li><strong>New cross-host <code>AGENTS.md</code></strong> &mdash; the build pipeline now also generates <code>integrations/agents/AGENTS.md</code> (full inlined methodology, native agent names preserved), used by the Codex and opencode installers.</li>
+                <li><strong>Retired <code>scripts/install.sh</code></strong> &mdash; the <code>curl | bash</code> universal installer is removed. GitHub Copilot and Gemini are no longer installable hosts; copy their committed instructions file directly.</li>
+            </ul>
+        </article>
+
         <!-- v2.6 -->
         <article class="changelog-entry">
             <div class="changelog-entry-header">
                 <span class="changelog-version">v2.6</span>
                 <span class="changelog-date">2026-06-11</span>
-                <span class="changelog-tag changelog-tag--latest">Latest</span>
                 <span class="changelog-tag">Knowledge Graph</span>
             </div>
             <div class="changelog-category">Knowledge Graph</div>

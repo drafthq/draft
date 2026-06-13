@@ -94,6 +94,26 @@ else
     assert "Copilot output is idempotent (rebuild produces same result)" "false"
 fi
 
+# --- AGENTS.md output tests ---
+echo ""
+echo "## AGENTS.md output"
+AGENTS_OUTPUT="$ROOT_DIR/integrations/agents/AGENTS.md"
+assert "AGENTS.md generated" \
+    "$([[ -f "$AGENTS_OUTPUT" ]] && echo true || echo false)"
+if [[ -f "$AGENTS_OUTPUT" ]]; then
+    A_LINES=$(wc -l < "$AGENTS_OUTPUT" | tr -d ' ')
+    assert "AGENTS.md has content (>100 lines)" \
+        "$([[ "$A_LINES" -gt 100 ]] && echo true || echo false)"
+    A_DRAFT_COLON=$(grep -c '/draft:' "$AGENTS_OUTPUT" 2>/dev/null || true)
+    assert "AGENTS.md contains no /draft: references" \
+        "$([[ "${A_DRAFT_COLON:-0}" -eq 0 ]] && echo true || echo false)"
+    A_WORKSPACE=$(grep -c '@workspace' "$AGENTS_OUTPUT" 2>/dev/null || true)
+    assert "AGENTS.md contains no @workspace (Copilot-only) references" \
+        "$([[ "${A_WORKSPACE:-0}" -eq 0 ]] && echo true || echo false)"
+    assert "AGENTS.md contains Draft methodology header" \
+        "$(grep -q '# Draft - Context-Driven Development' "$AGENTS_OUTPUT" && echo true || echo false)"
+fi
+
 # --- Removed Gemini tests ---
 
 # --- Summary ---

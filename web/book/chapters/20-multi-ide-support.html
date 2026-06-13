@@ -45,19 +45,25 @@
         <div class="figure-caption">Hub-and-spoke architecture: Draft's core methodology radiates to all supported IDEs through a build pipeline that adapts syntax while preserving identical functionality.</div>
     </div>
 
-    <h2>Claude Code (Native)</h2>
-    <p>Claude Code is Draft's native environment. The plugin is installed directly via the marketplace:</p>
+    <h2>One installer, every host</h2>
+    <p>All hosts install through the npm CLI. <code>&lt;host&gt;</code> is one of <code>claude-code</code>, <code>cursor</code>, <code>codex</code>, or <code>opencode</code>:</p>
 
-    <pre><code>/plugin marketplace add drafthq/draft
-/plugin install draft</code></pre>
+    <pre><code>npx @drafthq/draft install &lt;host&gt;
+# or: npm install -g @drafthq/draft &amp;&amp; draft install &lt;host&gt;</code></pre>
+
+    <h2>Claude Code (Native)</h2>
+    <p>Claude Code is Draft's native environment:</p>
+
+    <pre><code>npx @drafthq/draft install claude-code
+# alternative: /plugin marketplace add drafthq/draft &amp;&amp; /plugin install draft</code></pre>
 
     <p>The full command surface (4 primaries + 5 routers as recommended interface + 22 specialists) is available as <code>/draft:*</code> slash commands. Skills are loaded from the <code>.claude-plugin/plugin.json</code> manifest, which points to the <code>skills/</code> directory. Each skill's <code>SKILL.md</code> file is read at invocation time, giving Claude Code direct access to the full methodology without any transformation.</p>
 
     <p>The 7 specialized agents (Architect, Debugger, Planner, RCA, Reviewer, Ops, Writer) are referenced as <code>@architect</code>, <code>@debugger</code>, etc., and resolved from <code>core/agents/</code>.</p>
 
-    <p>Commands use <code>@draft</code> syntax: <code>@draft init</code>, <code>@draft new-track</code>, <code>@draft implement</code>. The same plugin.json, the same skill files, the same agent definitions &mdash; no separate build step required. Or use the universal install script:</p>
-
-    <pre><code>curl -fsSL https://raw.githubusercontent.com/drafthq/draft/main/scripts/install.sh | bash -s -- --cursor</code></pre>
+    <h2>Cursor</h2>
+    <p>Cursor natively understands the <code>.claude-plugin/</code> structure. The CLI installs the full plugin tree to <code>~/.cursor/plugins/local/draft</code>:</p>
+    <pre><code>npx @drafthq/draft install cursor</code></pre>
 
     <h2>GitHub Copilot</h2>
     <p>Copilot does not have a plugin system that can read skill files at runtime. Instead, Draft uses a <code>.github/copilot-instructions.md</code> file &mdash; a single, large generated file (15,000+ lines) that encodes the entire Draft methodology inline.</p>
@@ -81,20 +87,21 @@
         </tbody>
     </table>
 
-    <p>Installation uses the universal install script:</p>
-    <pre><code>curl -fsSL https://raw.githubusercontent.com/drafthq/draft/main/scripts/install.sh | bash -s -- --copilot</code></pre>
+    <p>Copilot is not a <code>draft install</code> host — copy the generated instructions file directly:</p>
+    <pre><code>curl -o .github/copilot-instructions.md https://raw.githubusercontent.com/drafthq/draft/main/integrations/copilot/.github/copilot-instructions.md</code></pre>
+
+    <h2>Codex &amp; opencode (AGENTS.md)</h2>
+    <p>Codex and opencode both read an <code>AGENTS.md</code> from the repo root. Draft ships a generated <code>AGENTS.md</code> (the full inlined methodology, with native agent names preserved) and the CLI drops it in place:</p>
+
+    <pre><code>npx @drafthq/draft install codex      # writes ./AGENTS.md
+npx @drafthq/draft install opencode   # writes ./AGENTS.md + ~/.agents/skills/draft</code></pre>
+
+    <p>opencode additionally bundles Draft's skills under the cross-host <code>~/.agents/skills/draft</code> convention.</p>
 
     <h2>Gemini</h2>
-    <p>Gemini uses a <code>.gemini.md</code> bootstrap file that instructs Gemini where to find Draft's skill files. Rather than inlining all content (as Copilot requires), the bootstrap points to the skills directory and lets Gemini read files as needed.</p>
+    <p>Gemini uses a <code>.gemini.md</code> bootstrap file that points to Draft's skill files. Like Copilot, it is not a <code>draft install</code> host — copy the file directly:</p>
 
-    <pre><code>curl -fsSL https://raw.githubusercontent.com/drafthq/draft/main/scripts/install.sh | bash -s -- --gemini</code></pre>
-
-    <h2>Antigravity IDE</h2>
-    <p>Antigravity IDE supports global skill installation. Use the universal install script:</p>
-
-    <pre><code>curl -fsSL https://raw.githubusercontent.com/drafthq/draft/main/scripts/install.sh | bash -s -- --antigravity</code></pre>
-
-    <p>This makes Draft available across all projects without per-project setup.</p>
+    <pre><code>curl -o .gemini.md https://raw.githubusercontent.com/drafthq/draft/main/integrations/gemini/.gemini.md</code></pre>
 
     <h2>The Build Pipeline</h2>
     <p>The transformation from source skills to platform-specific integrations is handled by <code>scripts/build-integrations.sh</code>, a ~700-line bash script that is the critical path for multi-IDE support.</p>

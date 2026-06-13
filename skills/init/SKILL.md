@@ -480,7 +480,7 @@ If **Greenfield**: skip to Step 2 (Product Definition).
 
 ### 1. Build the graph snapshot
 
-The knowledge-graph engine is `codebase-memory-mcp`, resolved by `scripts/tools/_lib.sh:find_memory_bin` (`DRAFT_MEMORY_BIN` > PATH > `~/.cache/draft/bin` > vendored `bin/<arch>/`). `scripts/install.sh` fetches it; install manually with `scripts/fetch-memory-engine.sh`. Set `DRAFT_MEMORY_DISABLE=1` to opt out.
+The knowledge-graph engine is `codebase-memory-mcp`, resolved by `scripts/tools/_lib.sh:find_memory_bin` (`DRAFT_MEMORY_BIN` > PATH > `~/.cache/draft/bin` > vendored `bin/<arch>/`). `draft install` fetches it (skip with `--no-graph`); install manually with `scripts/fetch-memory-engine.sh`. Set `DRAFT_MEMORY_DISABLE=1` to opt out.
 
 One command resolves the engine, indexes the repo, and writes the committed snapshot under `draft/graph/`:
 

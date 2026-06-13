@@ -10,6 +10,7 @@ TEST_SCRIPTS = \
 	./tests/test-core-files.sh \
 	./tests/test-plugin-manifest.sh \
 	./tests/test-build-integrations.sh \
+	./tests/test-cli.sh \
 	./tests/test-syntax-transforms.sh \
 	./tests/test-trigger-functions.sh \
 	./tests/test-error-handling.sh \

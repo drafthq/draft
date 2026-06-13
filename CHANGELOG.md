@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.0] - 2026-06-13
+
+### Changed
+- **Installation rewritten as an npm CLI (`@drafthq/draft`)** — `draft install <host>` replaces the previous `curl | bash scripts/install.sh` flow. Run `npx @drafthq/draft install <host>` (or install globally with `npm install -g @drafthq/draft`), where `<host>` is `claude-code`, `cursor`, `codex`, or `opencode`. `draft list` shows every host and its target; flags: `--global`/`--project`, `--dry-run`, `--force`, `--no-graph`. The CLI bundles all assets, so installs are self-contained (no runtime `git clone`).
+
+### Added
+- **Cross-host `AGENTS.md` integration** — `scripts/build-integrations.sh` now also generates `integrations/agents/AGENTS.md` (the full inlined methodology with native agent names preserved), consumed by the `codex` and `opencode` installers.
+
+### Removed
+- **`scripts/install.sh`** — the `curl | bash` universal installer is removed in favor of the npm CLI. GitHub Copilot and Gemini are no longer installable "hosts"; copy their committed instructions file directly (see README).
+
 ## [2.6.0] - 2026-06-11
 
 ### Changed

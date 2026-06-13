@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Build integration files from skill sources
-# Generates: GitHub Copilot copilot-instructions.md
+# Generates: GitHub Copilot copilot-instructions.md, cross-host AGENTS.md
 #
 # Note: Cursor integration removed - Cursor now supports .claude-plugin/ structure natively.
 #
@@ -21,6 +21,7 @@ ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 SKILLS_DIR="$ROOT_DIR/skills"
 CORE_DIR="$ROOT_DIR/core"
 COPILOT_OUTPUT="$ROOT_DIR/integrations/copilot/.github/copilot-instructions.md"
+AGENTS_OUTPUT="$ROOT_DIR/integrations/agents/AGENTS.md"
 
 # Source shared library for SKILL_ORDER, CORE_FILES, extract_body
 source "$SCRIPT_DIR/lib.sh"
@@ -133,6 +134,19 @@ transform_copilot_syntax() {
         -e 's#`@draft #`draft #g' \
         -e 's#@(architect|debugger|planner|rca|reviewer|ops|writer)([^[:alnum:]_-])#@workspace\2#g' \
         -e 's#@(architect|debugger|planner|rca|reviewer|ops|writer)$#@workspace#g'
+}
+
+# Cross-host AGENTS.md transform: same `/draft:` → `draft` and `@draft` → `draft`
+# normalization as Copilot, but agent references (@architect, @debugger, …) are
+# left intact — generic agent CLIs (codex, opencode) keep the named agents.
+transform_agents_syntax() {
+    sed -E \
+        -e 's#/draft:(<[a-z-]+>)#draft \1#g' \
+        -e 's#/draft:([a-z][a-z0-9-]*)#draft \1#g' \
+        -e 's#(^|[^[:alnum:]_.-])@draft([^[:alnum:]_.-])#\1draft\2#g' \
+        -e 's#(^|[^[:alnum:]_.-])@draft$#\1draft#g' \
+        -e 's#`@draft`#`draft`#g' \
+        -e 's#`@draft #`draft #g'
 }
 
 # ─────────────────────────────────────────────────────────
@@ -298,10 +312,14 @@ PROACTIVE
 }
 
 # ─────────────────────────────────────────────────────────
-# Build the copilot-instructions.md
+# Build a combined-instructions integration (Copilot or AGENTS.md).
+# $1 = syntax transform function (transform_copilot_syntax | transform_agents_syntax).
+# The body, command tables, and core inlining are identical across hosts; only
+# the syntax transform differs.
 # ─────────────────────────────────────────────────────────
 
-build_copilot() {
+build_integration() {
+    local transform_fn="${1:-transform_copilot_syntax}"
     # ── Header ────────────────────────────────────────────
     cat << 'COMMON_HEADER'
 # Draft - Context-Driven Development
@@ -466,7 +484,7 @@ COMMON_HEADER2
             echo "When user says $(get_copilot_trigger "$skill"):"
             echo ""
             # Emit body from line 4 onward (skip blank, title, blank)
-            echo "$skill_body" | transform_copilot_syntax | tail -n +4
+            echo "$skill_body" | "$transform_fn" | tail -n +4
 
             # Inline progressive-disclosure references (skills/<skill>/references/*.md)
             # Sorted alphabetically for determinism. Skills with no references/ dir are skipped.
@@ -475,7 +493,7 @@ COMMON_HEADER2
                 local ref_file
                 while IFS= read -r -d '' ref_file; do
                     echo ""
-                    transform_copilot_syntax < "$ref_file"
+                    "$transform_fn" < "$ref_file"
                 done < <(find "$refs_dir" -maxdepth 1 -type f -name '*.md' -print0 | sort -z)
             fi
         else
@@ -514,7 +532,7 @@ COMMON_HEADER2
     emit_proactive
 
     # ── Inline core files ─────────────────────────────────
-    emit_core_files "transform_copilot_syntax"
+    emit_core_files "$transform_fn"
 
     # Completeness sentinel — verified by verify_output
     echo ""
@@ -596,8 +614,8 @@ main() {
     echo "Building integrations from skills..."
     echo ""
 
-    # Ensure output directory exists
-    mkdir -p "$(dirname "$COPILOT_OUTPUT")"
+    # Ensure output directories exist
+    mkdir -p "$(dirname "$COPILOT_OUTPUT")" "$(dirname "$AGENTS_OUTPUT")"
 
     local start_seconds=$SECONDS
 
@@ -606,13 +624,30 @@ main() {
     local copilot_tmp
     copilot_tmp=$(mktemp "${COPILOT_OUTPUT}.XXXXXX")
     trap 'rm -f "$copilot_tmp"' EXIT
-    build_copilot > "$copilot_tmp"
+    build_integration transform_copilot_syntax > "$copilot_tmp"
     echo "  Generated: $COPILOT_OUTPUT"
     if verify_output "$copilot_tmp"; then
         mv "$copilot_tmp" "$COPILOT_OUTPUT"
         trap - EXIT
     else
         rm -f "$copilot_tmp"
+        trap - EXIT
+        exit 1
+    fi
+    echo ""
+
+    # Generate cross-host AGENTS.md (codex, opencode, and other AGENTS.md hosts)
+    echo "── AGENTS.md ───────────────────────────────────"
+    local agents_tmp
+    agents_tmp=$(mktemp "${AGENTS_OUTPUT}.XXXXXX")
+    trap 'rm -f "$agents_tmp"' EXIT
+    build_integration transform_agents_syntax > "$agents_tmp"
+    echo "  Generated: $AGENTS_OUTPUT"
+    if verify_output "$agents_tmp"; then
+        mv "$agents_tmp" "$AGENTS_OUTPUT"
+        trap - EXIT
+    else
+        rm -f "$agents_tmp"
         trap - EXIT
         exit 1
     fi

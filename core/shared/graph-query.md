@@ -203,7 +203,7 @@ The engine is the `codebase-memory-mcp` binary. Resolution order (implemented by
 
 1. `DRAFT_MEMORY_BIN` — explicit override (pinned installs, testing).
 2. `codebase-memory-mcp` on `$PATH` — global/dev installs.
-3. `~/.cache/draft/bin/codebase-memory-mcp` — the Draft-managed location (`scripts/fetch-memory-engine.sh` installs it here; `scripts/install.sh` runs that on install).
+3. `~/.cache/draft/bin/codebase-memory-mcp` — the Draft-managed location (`scripts/fetch-memory-engine.sh` installs it here; `draft install claude-code`/`draft install cursor` run that on install unless `--no-graph`).
 4. `bin/<os>-<arch>/codebase-memory-mcp` under the plugin/repo root — optional vendored fallback (air-gapped only).
 
 `DRAFT_MEMORY_DISABLE=1` forces the engine off. There is **no** legacy `graph`/`graph-clang` fallback.

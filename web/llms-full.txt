@@ -8,32 +8,44 @@ Draft works with Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Googl
 
 ## Installation
 
-### Claude Code (primary)
+One npm command installs Draft into any supported host:
 ```
-/plugin marketplace add drafthq/draft
-/plugin install draft
+npx @drafthq/draft install <host>     # claude-code | cursor | codex | opencode
+# or: npm install -g @drafthq/draft && draft install <host>
+draft list                            # show every host + where it installs
+```
+
+### Claude Code
+```
+npx @drafthq/draft install claude-code
 /draft:init
 ```
+Alternative (native marketplace): `/plugin marketplace add drafthq/draft` then `/plugin install draft`.
 
 ### Cursor
-Cursor > Settings > Rules, Skills, Subagents > Rules > New > Add from Github:
 ```
-https://github.com/drafthq/draft.git
+npx @drafthq/draft install cursor
 ```
-Then use: `@draft init`, `@draft new-track`, `@draft implement`
+Installs the plugin tree to `~/.cursor/plugins/local/draft`.
 
-### GitHub Copilot
+### Codex
 ```
-mkdir -p .github && curl -o .github/copilot-instructions.md https://raw.githubusercontent.com/drafthq/draft/main/integrations/copilot/.github/copilot-instructions.md
+npx @drafthq/draft install codex
 ```
+Writes `AGENTS.md` to the repo root, which Codex reads automatically.
 
-### Gemini
+### opencode
 ```
+npx @drafthq/draft install opencode
+```
+Writes `AGENTS.md` and bundles skills under `~/.agents/skills/draft`.
+
+### GitHub Copilot & Gemini
+Not `draft install` hosts — copy the committed instructions file directly:
+```
+curl -o .github/copilot-instructions.md https://raw.githubusercontent.com/drafthq/draft/main/integrations/copilot/.github/copilot-instructions.md
 curl -o .gemini.md https://raw.githubusercontent.com/drafthq/draft/main/integrations/gemini/.gemini.md
 ```
-
-### Antigravity IDE
-Clone Draft to `~/.gemini/antigravity/skills/draft` and configure `~/.gemini.md` to point to the global skills.
 
 ## Core Workflow
 

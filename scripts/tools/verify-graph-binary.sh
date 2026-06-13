@@ -106,7 +106,7 @@ if ! find_memory_bin "$REPO_ABS" "$SELF_REPO"; then
     echo "STRICT: No codebase-memory-mcp engine found." >&2
   else
     echo "ERROR: No Draft graph engine located (codebase-memory-mcp)." >&2
-    echo "        Install it (scripts/install.sh) or put it on PATH." >&2
+    echo "        Install it (scripts/fetch-memory-engine.sh) or put it on PATH." >&2
   fi
   exit 2
 fi

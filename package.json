@@ -1,0 +1,50 @@
+{
+  "name": "@drafthq/draft",
+  "version": "2.7.0",
+  "description": "Context-Driven Development for AI coding agents — install Draft into Claude Code, Cursor, Codex, or opencode.",
+  "bin": {
+    "draft": "cli/bin/draft.js"
+  },
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "cli/",
+    "skills/",
+    "core/",
+    ".claude-plugin/",
+    "integrations/",
+    "bin/",
+    "scripts/tools/",
+    "scripts/fetch-memory-engine.sh",
+    "scripts/lib.sh",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "bash tests/test-cli.sh",
+    "prepublishOnly": "bash scripts/build-integrations.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/drafthq/draft.git"
+  },
+  "homepage": "https://github.com/drafthq/draft",
+  "bugs": {
+    "url": "https://github.com/drafthq/draft/issues"
+  },
+  "license": "MIT",
+  "author": "mayurpise",
+  "keywords": [
+    "claude-code",
+    "cursor",
+    "codex",
+    "opencode",
+    "ai",
+    "agents",
+    "context-driven-development",
+    "draft",
+    "spec-driven-development"
+  ]
+}

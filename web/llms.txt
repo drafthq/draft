@@ -8,14 +8,14 @@ Draft works with Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Googl
 
 ## Installation
 
-Install as a Claude Code plugin:
+Install with the npm CLI (host = claude-code | cursor | codex | opencode):
 
 ```
-/plugin marketplace add drafthq/draft
-/plugin install draft
+npx @drafthq/draft install <host>
+# or: npm install -g @drafthq/draft && draft install <host>
 ```
 
-For Cursor, Copilot, Gemini, and Antigravity IDE, see the getting started guide.
+For Claude Code you can alternatively use the native marketplace (`/plugin marketplace add drafthq/draft` then `/plugin install draft`). GitHub Copilot and Gemini read a committed instructions file copied directly from the repo. See the getting started guide.
 
 ## Core Workflow
 
