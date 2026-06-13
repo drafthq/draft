@@ -593,6 +593,18 @@ generate_sitemap() {
         <priority>1.0</priority>
     </url>
     <url>
+        <loc>https://getdraft.dev/what-is-draft/</loc>
+        <lastmod>${TODAY}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.9</priority>
+    </url>
+    <url>
+        <loc>https://getdraft.dev/changelog/</loc>
+        <lastmod>${TODAY}</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.8</priority>
+    </url>
+    <url>
         <loc>https://getdraft.dev/book/</loc>
         <lastmod>${TODAY}</lastmod>
         <changefreq>weekly</changefreq>
@@ -648,6 +660,15 @@ SITEMAP_HEAD
     </url>
 SITEMAP_ENTRY
     done
+
+    cat >> "$_stmp" <<SITEMAP_AUDIO
+    <url>
+        <loc>https://getdraft.dev/book/audio/</loc>
+        <lastmod>${TODAY}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.5</priority>
+    </url>
+SITEMAP_AUDIO
 
     echo '</urlset>' >> "$_stmp"
     mv -f "$_stmp" "$SITEMAP_FILE"
