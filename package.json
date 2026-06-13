@@ -36,6 +36,9 @@
   },
   "license": "MIT",
   "author": "mayurpise",
+  "publishConfig": {
+    "access": "public"
+  },
   "keywords": [
     "claude-code",
     "cursor",
