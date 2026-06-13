@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.1] - 2026-06-13
+
+### Fixed
+- **`draft install claude-code` now actually registers the plugin.** The 2.7.0
+  installer copied the plugin into the project folder, but Claude Code only
+  loads plugins from its own registry — so `/draft:*` commands never appeared
+  ("Unknown command: /draft:init"). The installer now runs `claude plugin
+  marketplace add drafthq/draft` + `claude plugin install draft@draft-plugins`
+  (user scope by default; `--project` for project scope). If the Claude Code
+  CLI isn't on PATH, it prints the two `/plugin` commands to run instead.
+  The other hosts (cursor, codex, opencode) already installed to their
+  auto-loaded locations and are unchanged.
+
 ## [2.7.0] - 2026-06-13
 
 ### Changed

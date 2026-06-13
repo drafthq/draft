@@ -62,16 +62,18 @@ draft install <host>
 draft list                             # show every host + where it installs
 ```
 
-| Host | `draft install …` | Lands in |
-|------|-------------------|----------|
-| **Claude Code** | `claude-code` | `./.claude-plugin/` + `skills/` `core/` (project) |
-| **Cursor** | `cursor` | `~/.cursor/plugins/local/draft/` (global) |
-| **Codex** | `codex` | `./AGENTS.md` (project) |
-| **opencode** | `opencode` | `./AGENTS.md` + `~/.agents/skills/draft/` |
+Each host installs the way that host actually loads extensions — no manual steps after the command:
 
-Flags: `--global` / `--project` to pick scope, `--dry-run` to preview writes, `--force` to overwrite, `--no-graph` to skip the graph-engine fetch.
+| Host | `draft install …` | What it does |
+|------|-------------------|--------------|
+| **Claude Code** | `claude-code` | Registers the plugin via `claude plugin marketplace add` + `claude plugin install` (user scope). Restart Claude Code. |
+| **Cursor** | `cursor` | Copies the plugin into `~/.cursor/plugins/local/draft/` (auto-loaded). Restart Cursor. |
+| **Codex** | `codex` | Writes `./AGENTS.md`, which Codex reads automatically. |
+| **opencode** | `opencode` | Writes `./AGENTS.md` + `~/.agents/skills/draft/`, both auto-discovered. |
 
-Then, in Claude Code:
+Flags: `--global` / `--project` to pick scope, `--dry-run` to preview, `--force` to overwrite, `--no-graph` to skip the graph-engine fetch.
+
+Then, in Claude Code (after restarting):
 
 ```bash
 /draft:init       # 5-phase codebase analysis (one-time)

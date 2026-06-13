@@ -1,45 +1,46 @@
 'use strict';
 
-const path = require('path');
-const { asset } = require('../lib/paths');
-
-// Draft's native plugin shape: the .claude-plugin manifest + skills/core/bin and
-// the deterministic shell helpers the skills invoke. Copied into the project root
-// so Claude Code (and Cursor, which shares the format) discovers it locally.
-const ITEMS = [
-  { p: '.claude-plugin', kind: 'copyTree' },
-  { p: 'skills', kind: 'copyTree' },
-  { p: 'core', kind: 'copyTree' },
-  { p: 'bin', kind: 'copyTree' },
-  { p: 'scripts/tools', kind: 'copyTree' },
-  { p: 'scripts/fetch-memory-engine.sh', kind: 'copyFile' },
-  { p: 'scripts/lib.sh', kind: 'copyFile' },
-];
+// Claude Code loads plugins from its own registry (via a marketplace), NOT from
+// an arbitrary project directory — so copying files into the cwd never registers
+// the /draft:* commands. The correct install is the `claude plugin` CLI:
+//   claude plugin marketplace add drafthq/draft
+//   claude plugin install draft@draft-plugins --scope <user|project>
+// Default scope is `user` (global, available in every project). If the `claude`
+// CLI isn't on PATH, we print the equivalent in-session slash commands.
+const MARKETPLACE_REPO = 'drafthq/draft';
+const PLUGIN_REF = 'draft@draft-plugins'; // name@<marketplace name from marketplace.json>
 
 module.exports = {
   id: 'claude-code',
   label: 'Claude Code',
   aliases: ['claude', 'claudecode'],
-  defaultScope: 'project',
+  defaultScope: 'global',
 
   plan(ctx) {
-    const root = ctx.cwd;
-    const actions = ITEMS.map((it) => ({
-      kind: it.kind,
-      src: asset(it.p),
-      dest: path.join(root, it.p),
-      label: it.p,
-      // Guard on the manifest dir: its presence marks a prior Draft install.
-      guard: it.p === '.claude-plugin',
-    }));
-
+    const scope = ctx.scope === 'project' ? 'project' : 'user'; // --global -> user
     return {
-      targetSummary: `${root} (project)`,
-      actions,
-      graph: true,
-      done: 'Draft plugin copied into the project. Run /draft in Claude Code to see the commands.',
-      notes: [
-        'Alternative (no npm): /plugin marketplace add drafthq/draft  then  /plugin install draft',
+      targetSummary: `Claude Code plugin registry (scope: ${scope})`,
+      requires: 'claude',
+      actions: [
+        {
+          kind: 'exec',
+          cmd: 'claude',
+          args: ['plugin', 'marketplace', 'add', MARKETPLACE_REPO],
+          label: `claude plugin marketplace add ${MARKETPLACE_REPO}`,
+        },
+        {
+          kind: 'exec',
+          cmd: 'claude',
+          args: ['plugin', 'install', PLUGIN_REF, '--scope', scope],
+          label: `claude plugin install ${PLUGIN_REF} --scope ${scope}`,
+        },
+      ],
+      graph: false, // /draft:init fetches the graph engine on first use
+      done: 'Installed draft. Restart Claude Code (or start a new session), then run /draft:init.',
+      fallbackTitle: 'Claude Code CLI not found. Run these in Claude Code instead:',
+      fallback: [
+        '/plugin marketplace add drafthq/draft',
+        '/plugin install draft',
       ],
     };
   },

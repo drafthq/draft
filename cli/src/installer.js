@@ -1,10 +1,29 @@
 'use strict';
 
+const { spawnSync } = require('child_process');
 const fsx = require('./lib/fsx');
 const log = require('./lib/log');
 const { fetchGraph } = require('./lib/graph');
 
+function hasBinary(name) {
+  // ENOENT on the error means the binary is not on PATH.
+  const r = spawnSync(name, ['--version'], { stdio: 'ignore' });
+  return !(r.error && r.error.code === 'ENOENT');
+}
+
 function execAction(act, ctx) {
+  const printable = `${act.cmd} ${act.args.join(' ')}`;
+  log.plan(`${ctx.dryRun ? 'would run' : 'running'}: ${printable}`);
+  if (ctx.dryRun) return 0;
+  const r = spawnSync(act.cmd, act.args, { stdio: 'inherit' });
+  if (r.error) {
+    log.error(`failed to run ${act.cmd}: ${r.error.message}`);
+    return 1;
+  }
+  return r.status == null ? 1 : r.status;
+}
+
+function fsAction(act, ctx) {
   log.plan(`${ctx.dryRun ? 'would write' : 'writing'}: ${act.dest}`);
   if (ctx.dryRun) return;
   switch (act.kind) {
@@ -22,13 +41,28 @@ function execAction(act, ctx) {
   }
 }
 
+function printFallback(plan) {
+  if (plan.fallbackTitle) log.warn(plan.fallbackTitle);
+  (plan.fallback || []).forEach((line) => log.info('    ' + line));
+}
+
 function install(host, ctx) {
   const plan = host.plan(ctx);
   log.step(`Installing Draft -> ${host.label}  [${plan.targetSummary}]${ctx.dryRun ? '  (dry run)' : ''}`);
 
-  // Pre-flight: every bundled source must exist, and guarded targets must not
-  // already exist unless --force. Checked up front so a failure writes nothing.
+  // A plan may require an external CLI (e.g. claude). If it's missing, print
+  // the manual fallback and stop — but only when actually installing; a
+  // dry run still shows the planned commands.
+  if (plan.requires && !ctx.dryRun && !hasBinary(plan.requires)) {
+    printFallback(plan);
+    return 0;
+  }
+
+  // Pre-flight: for file copies, every bundled source must exist and guarded
+  // targets must not already exist unless --force. Checked up front so a
+  // failure writes nothing.
   for (const act of plan.actions) {
+    if (act.kind === 'exec') continue;
     if (!fsx.exists(act.src)) {
       log.error(`Bundled asset missing: ${act.src}`);
       log.error('Reinstall @drafthq/draft — the package looks incomplete.');
@@ -41,7 +75,16 @@ function install(host, ctx) {
   }
 
   for (const act of plan.actions) {
-    execAction(act, ctx);
+    if (act.kind === 'exec') {
+      const code = execAction(act, ctx);
+      if (code !== 0) {
+        log.error(`Step failed (exit ${code}): ${act.label || act.cmd}`);
+        if (plan.fallback) printFallback(plan);
+        return code;
+      }
+    } else {
+      fsAction(act, ctx);
+    }
   }
 
   if (plan.graph && ctx.graph && !ctx.dryRun) {
@@ -58,4 +101,4 @@ function install(host, ctx) {
   return 0;
 }
 
-module.exports = { install };
+module.exports = { install, hasBinary };

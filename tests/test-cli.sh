@@ -105,15 +105,17 @@ fi
 assert "re-install with --force succeeds (exit 0)" "$FORCE_OK"
 rm -rf "$CDX_TMP"
 
-# --- Real claude-code install lands the plugin manifest ---
+# --- claude-code install drives the `claude plugin` CLI (no file copy) ---
 echo ""
-echo "## claude-code install"
+echo "## claude-code install (plugin registry)"
 CC_TMP="$(mktemp -d)"
-( cd "$CC_TMP" && node "$CLI" install claude-code --no-graph >/dev/null 2>&1 )
-assert "claude-code install writes .claude-plugin/plugin.json" \
-    "$([[ -f "$CC_TMP/.claude-plugin/plugin.json" ]] && echo true || echo false)"
-assert "claude-code install writes skills/" \
-    "$([[ -d "$CC_TMP/skills" ]] && echo true || echo false)"
+CC_PLAN="$( cd "$CC_TMP" && node "$CLI" install claude-code --dry-run 2>&1 )"
+assert "claude-code --dry-run runs 'claude plugin marketplace add'" \
+    "$(echo "$CC_PLAN" | grep -q 'claude plugin marketplace add drafthq/draft' && echo true || echo false)"
+assert "claude-code --dry-run runs 'claude plugin install draft@draft-plugins'" \
+    "$(echo "$CC_PLAN" | grep -q 'claude plugin install draft@draft-plugins' && echo true || echo false)"
+assert "claude-code --dry-run writes no files to cwd" \
+    "$([[ "$(find "$CC_TMP" -type f | wc -l | tr -d ' ')" -eq 0 ]] && echo true || echo false)"
 rm -rf "$CC_TMP"
 
 # --- Old installer is gone ---
