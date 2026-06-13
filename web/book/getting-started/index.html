@@ -78,7 +78,7 @@
         </div>
         <div class="book-topbar-right">
             <a href="https://getdraft.dev" class="book-topbar-link">Home</a>
-            <a href="https://github.com/mayurpise/draft" target="_blank" rel="noopener noreferrer" class="topbar-github">
+            <a href="https://github.com/drafthq/draft" target="_blank" rel="noopener noreferrer" class="topbar-github">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
                 GitHub
             </a>
@@ -245,26 +245,26 @@
     <p>Draft installs with a single command. No API keys, no accounts, no hosted services.</p>
 
     <h3>Claude Code (Recommended)</h3>
-    <pre class="terminal"><code>$ /plugin marketplace add mayurpise/draft
+    <pre class="terminal"><code>$ /plugin marketplace add drafthq/draft
 $ /plugin install draft</code></pre>
     <p>That's it. You now have the 4 primary commands + 5 routers (recommended entry points) plus all specialists available as <code>/draft:*</code> slash commands.</p>
 
     <h3>Cursor</h3>
     <p>Cursor natively supports the <code>.claude/</code> plugin structure. Use the universal install script:</p>
-    <pre class="terminal"><code>$ curl -fsSL https://raw.githubusercontent.com/mayurpise/draft/main/scripts/install.sh | bash -s -- --cursor</code></pre>
+    <pre class="terminal"><code>$ curl -fsSL https://raw.githubusercontent.com/drafthq/draft/main/scripts/install.sh | bash -s -- --cursor</code></pre>
     <p>Commands use <code>@draft init</code>, <code>@draft new-track</code>, <code>@draft implement</code> syntax.</p>
 
     <h3>GitHub Copilot</h3>
     <p>Copilot uses a <code>copilot-instructions.md</code> file in your project:</p>
-    <pre class="terminal"><code>$ curl -fsSL https://raw.githubusercontent.com/mayurpise/draft/main/scripts/install.sh | bash -s -- --copilot</code></pre>
+    <pre class="terminal"><code>$ curl -fsSL https://raw.githubusercontent.com/drafthq/draft/main/scripts/install.sh | bash -s -- --copilot</code></pre>
 
     <h3>Gemini</h3>
     <p>Gemini uses a <code>.gemini.md</code> bootstrap file:</p>
-    <pre class="terminal"><code>$ curl -fsSL https://raw.githubusercontent.com/mayurpise/draft/main/scripts/install.sh | bash -s -- --gemini</code></pre>
+    <pre class="terminal"><code>$ curl -fsSL https://raw.githubusercontent.com/drafthq/draft/main/scripts/install.sh | bash -s -- --gemini</code></pre>
 
     <h3>Antigravity IDE</h3>
     <p>Install Draft globally for all projects:</p>
-    <pre class="terminal"><code>$ curl -fsSL https://raw.githubusercontent.com/mayurpise/draft/main/scripts/install.sh | bash -s -- --antigravity</code></pre>
+    <pre class="terminal"><code>$ curl -fsSL https://raw.githubusercontent.com/drafthq/draft/main/scripts/install.sh | bash -s -- --antigravity</code></pre>
 
     <div class="callout callout-tip">
         <div class="callout-title">Cross-Platform</div>
@@ -275,7 +275,7 @@ $ /plugin install draft</code></pre>
     <p>Navigate to your project root and run:</p>
     <pre class="terminal"><code>$ /draft:init</code></pre>
 
-    <p>Draft first builds a <strong>tree-sitter knowledge graph</strong> of your codebase (Phase 0), powered by <a href="https://github.com/DeusData/codebase-memory-mcp" target="_blank" rel="noopener noreferrer">codebase-memory-mcp</a> (159 languages, 100% local, no API key), then performs a five-phase analysis. This is not a quick scan &mdash; it is an exhaustive, deep analysis designed to produce a permanent reference document that future AI sessions and human engineers will use instead of re-reading source code.</p>
+    <p>Draft first builds a <strong>tree-sitter knowledge graph</strong> of your codebase (Phase 0), then performs a five-phase analysis. This is not a quick scan &mdash; it is an exhaustive, deep analysis designed to produce a permanent reference document that future AI sessions and human engineers will use instead of re-reading source code.</p>
 
     <h3>Phase 1: Discovery (Broad Scan)</h3>
     <p>Draft maps your entire project structure. It reads the directory tree, identifies the file layout, and processes your build and dependency files &mdash; <code>package.json</code>, <code>go.mod</code>, <code>Cargo.toml</code>, <code>requirements.txt</code>, <code>pom.xml</code>, or whatever applies to your stack.</p>
@@ -532,9 +532,6 @@ $ /plugin install draft</code></pre>
         </nav>
     </div>
 
-    <div class="footer-bottom">
-        <p>MIT License &middot; Made by <a href="https://www.linkedin.com/in/mayurpise/" target="_blank" rel="noopener noreferrer">Mayur Pise</a> &middot; Graph engine: <a href="https://github.com/DeusData/codebase-memory-mcp" target="_blank" rel="noopener noreferrer">codebase-memory-mcp</a> by <a href="https://github.com/DeusData" target="_blank" rel="noopener noreferrer">DeusData</a></p>
-    </div>
     <script src="../js/book.js"></script>
     <script src="../../js/theme-toggle.js"></script>
 </body>

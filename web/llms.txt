@@ -11,7 +11,7 @@ Draft works with Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Googl
 Install as a Claude Code plugin:
 
 ```
-/plugin marketplace add mayurpise/draft
+/plugin marketplace add drafthq/draft
 /plugin install draft
 ```
 
@@ -44,9 +44,9 @@ Draft's knowledge graph is powered by [codebase-memory-mcp](https://github.com/D
 - Book: https://getdraft.dev/book/
 - Getting Started: https://getdraft.dev/book/getting-started/
 - Command Reference: https://getdraft.dev/book/command-reference/
-- GitHub: https://github.com/mayurpise/draft
+- GitHub: https://github.com/drafthq/draft
 - Graph Engine: https://github.com/DeusData/codebase-memory-mcp
-- Methodology: https://github.com/mayurpise/draft/blob/main/core/methodology.md
+- Methodology: https://github.com/drafthq/draft/blob/main/core/methodology.md
 - Full LLM context: https://getdraft.dev/llms-full.txt
 
 ## License

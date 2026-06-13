@@ -893,87 +893,14 @@ If any reader agent fails to produce valid JSON after one retry:
 
 ---
 
-### Sequential Generation Protocol (Primary for Tiers 1–2; Fallback for Tiers 3–5)
+### Sequential Fallback (when parallel IR pipeline unavailable)
 
-**Use this protocol for tiers 1–2 (micro/small) as the primary path.** At small scale, direct sequential analysis produces deeper output than the parallel IR pipeline with less overhead.
+When the Agent tool is unavailable or reader agents fail after retry, write `draft/architecture.md` using the **10-section graph-primary structure** (checklist above + `core/templates/architecture.md`). Do not use legacy 28-section or Pass 1/2/3 volume protocols.
 
-**Also use this protocol as fallback for tiers 3–5** if the Agent tool is unavailable, or if a reader agent fails entirely after retry. For 500+ file codebases running the fallback, limit sequential analysis to the top 20 modules by fan-in rank — the output will be shallower than parallel but still useful.
-
-#### Pass 1: Foundation (Sections 1–6)
-
-Generate Sections 1–6 (Executive Summary through Data Flow). Write the result to `draft/architecture.md`. These sections establish the structural skeleton: identity, topology diagrams, component map, and data flow diagrams. **Minimum 400 lines for Pass 1.**
-
-#### Pass 2: Module Deep Dives (Section 7) — One Module at a Time, with Sub-Modules
-
-**MANDATORY (graph-first)**: Use the ranked module list from Step 1.4.6 — do NOT re-discover modules by directory scanning if Phase 0 succeeded. The graph list is exhaustive. Read the top-3 hotspot files per module (from `draft/graph/hotspots.jsonl`) before writing its deep-dive.
-
-For each module in ranked order (hotspot_count × 2 + fan_in_count, descending), up to top 20:
-
-**Step A — Top-level module analysis:**
-1. **READ** `draft/graph/modules/{module_name}.jsonl` — extract sub-directory structure, file list with line counts
-2. **READ** `draft/graph/hotspots.jsonl` — identify high-complexity files in this module
-3. **READ** at least 3 key source files for this module: the interface/header, the main implementation, and one representative op/handler. For modules with 200+ files, read at least 5 source files.
-4. **CLASSIFY** each sub-directory by tier: Large (50+ files → full deep-dive), Medium (10-49 files → summary), Small (< 10 files → table row), Ops/Handler (→ operation catalog)
-5. **WRITE** the top-level module deep-dive: role, sub-module structure table, responsibilities, internal architecture diagram (showing sub-module relationships), notable mechanisms, error handling, thread safety
-
-**Step B — Sub-module deep-dives (within the same module):**
-
-**CRITICAL — Sub-modules get the SAME depth as top-level modules.** A sub-module with 200+ files is as complex as many standalone services. Do NOT abbreviate. There is NO page limit.
-
-For each Large sub-module (50+ files):
-1. **READ** 2-3 key source files from this sub-module (interface header, main impl, one op/handler). For sub-modules with 200+ files, read at least 5 source files.
-2. **WRITE** full sub-module deep-dive (`##### 7.X.Y`) using the SAME template as top-level modules: role, source files list, sub-sub-module structure table (if nested dirs exist), responsibilities (ALL, numbered), key operations/methods table (with signatures), state machine (if stateful), internal architecture diagram (if 100+ files), notable mechanisms, error handling, thread safety
-3. **RECURSE** — if the sub-module itself has Large sub-sub-modules (50+ files), apply this same step recursively at `###### 7.X.Y.Z` level
-
-For each Medium sub-module (10-49 files):
-1. **READ** 1-2 key source files (interface, one impl)
-2. **WRITE** summary sub-module deep-dive (`##### 7.X.Y`): role (2-3 sentences), key operations table (5+ entries with source file references), notable mechanisms, one interface/header code snippet
-
-For each Ops/Handler directory:
-1. **READ** file list from graph JSONL (no need to read each file — names and line counts are sufficient for the catalog)
-2. **WRITE** numbered operation catalog table enumerating ALL operations — no sampling, no "and others"
-
-**Step C — Verify and append:**
-1. **VERIFY** the complete module section (top-level + all sub-modules) is at least 100 lines (150+ for modules with 200+ files), contains UNIQUE description text, and all Large/Medium sub-modules have their own subsections
-2. **APPEND** the entire module section to `draft/architecture.md`
-
-Do NOT batch all 20 modules into one write. Process them sequentially so each module and its sub-modules get dedicated analysis attention. **No upper limit on Pass 2 length** — it scales with codebase complexity. A 14-module C++ codebase with deep sub-module hierarchies may produce 5000+ lines in Pass 2 alone. That is correct and expected.
-
-#### Pass 2 Completion Gate — Graph Fidelity + Diagram Check (MANDATORY before Pass 3)
-
-**YOU MUST PRODUCE THIS VERIFICATION before writing Pass 3.** Do not skip it.
-
-For every module that received a `#### 7.X` section, verify the following and record the result:
-
-```
-## Pass 2 Graph Fidelity & Diagram Report
-| Module | Graph block present? | Workflow/State diagram present & accurate? | Synthesis contradicts graph? | PASS / FAIL |
-|--------|----------------------|--------------------------------------------|------------------------------|-------------|
-| foo/bar | Yes | Yes (stateDiagram of lifecycle) | No | PASS |
-| foo/baz | Yes | Partial (only dependency list) | No | FAIL — add one primary flow diagram |
-```
-
-**Rules (new priority):**
-- Every module in `draft/graph/architecture.json` `.packages` must have its deterministic `<!-- GRAPH:module-deep/... -->` block rendered (see init/references/architecture-spec.md).
-- Every architecturally significant module (top 20 by fan-in or any module with >1 clear internal boundary in the graph) must contain **at least one synthesized Mermaid workflow, state, or sequence diagram** that visualizes the dominant control/data flow derived from the graph + source reads.
-- Synthesis prose must not contradict the graph record for that module. If a discrepancy is discovered during source reading, it is noted explicitly; the graph remains the structural authority.
-- A FAIL row means you must add or correct the missing diagram (or remove the contradicting sentence) before proceeding. Re-reading source is allowed only to improve diagram accuracy or resolve a real contradiction.
-- **Passing the gate with a correct graph block + one good diagram + 40 words of synthesis is better than a 200-line prose dump that ignores the graph.**
-
-This gate enforces the new priority: the graph defines structure; diagrams make it usable; prose is minimal supporting narrative. The old 100-line volume targets are retired.
-
-#### Pass 3: Cross-Cutting Sections + Mandatory Gaps & Relationship
-
-Synthesize the remaining high-value cross-cutting sections using the graph + targeted reads. The focus is on invariants with provenance, failure modes, data truth sources, extension patterns, and (always) the two mandatory closing sections:
-
-- §9 Graph Coverage Gaps & Known Limitations
-- §10 Relationship to Other Authoritative Documentation (when Context Audit detected high/medium context)
-
-No volume targets. No legacy appendices. Quality is measured by fidelity declarations, provenance tags, diagram accuracy, and honest gap reporting — not line counts.
-
-#### Pass 4: Quality Gate Verification
-
-Run the (now signal-quality) Completion Verification defined later in this skill. Only the hard fidelity / provenance / gaps / relationship checks are blocking. Expand only where those checks fail. Proceed to condensation only when they pass.
+1. Use the ranked module list from Step 1.4.6 (graph-first — do not re-scan by directory if Phase 0 succeeded).
+2. For each top module (up to 20 by fan-in), read `draft/graph/modules/{name}.jsonl`, hotspot files, and 3–5 key sources; embed graph blocks and at least one workflow/state diagram per significant module inside §4–§8 as appropriate.
+3. Always include §9 Graph Coverage Gaps and §10 Relationship when the Context Audit requires them.
+4. Run Completion Verification (defined later in this skill) before condensation. Fidelity, provenance, and gap honesty block completion — not line counts.
 
 ---
 
@@ -1203,13 +1130,15 @@ The document is:
 **Full details, per-section guidance, provenance rules, and examples** live in:
 - `core/templates/architecture.md` (the source of truth for the 10 sections + Generation Contract)
 - `docs/research/proposed-graph-backed-architecture-template.md` (design rationale and fidelity rules)
-- `references/architecture-spec.md` (supplementary per-section notes, kept in sync with the template)
+- `references/architecture-spec.md` (deprecated legacy notes — **10-section template wins on any conflict**)
 
-There is no legacy 28-section, no volume targets, and no Pass 1/2/3 protocol. The template itself is the contract.
+There is no legacy 28-section structure and no volume targets. The template itself is the contract.
 
 **After completing analysis AND passing verification**, write to `draft/architecture.md`. This is the PRIMARY output. Then run the Condensation Subroutine.
 
 ## .ai-context.md Specification
+
+**Authoritative procedure:** [core/shared/condensation.md](../../core/shared/condensation.md). Git state lives in `draft/metadata.json` only — do not copy `git.*` into `.ai-context.md` frontmatter.
 
 Generate `draft/.ai-context.md` — a **machine-optimized** context file for AI/LLM consumption (200-400 lines).
 
@@ -1975,21 +1904,21 @@ Debugging & Operations:
 
 If Jira MCP is available and a project ticket is linked, sync initialization artifacts via `core/shared/jira-sync.md`.
 
-## architecture.md Specification
+## architecture.md Specification (Supplementary Notes)
 
-Generate `draft/architecture.md` — a comprehensive human-readable engineering reference.
+> **DEPRECATED for structure.** The authoritative contract is `core/templates/architecture.md` (10-section graph-primary). If anything below conflicts with that template or `skills/init/SKILL.md`, the template wins.
+
+Generate `draft/architecture.md` — a graph-primary human-readable engineering reference.
 
 **Output format**:
 - Markdown report with Mermaid diagrams, tables, and code blocks
-- **Target length: fidelity-first** — cover all 28 sections + 5 appendices with graph-grounded accuracy and diagram correctness. Prose volume is secondary to correctness; short sections that are faithful to the graph + diagrams are preferred over padded exhaustive text.
-- Include a **Table of Contents** with numbered sections
+- **Target length: fidelity-first** — cover all 10 mandatory sections with graph-grounded accuracy and diagram correctness
 - End the document with: `"End of analysis. Queries should reference the .ai-context.md file for token efficiency."`
 
 **CRITICAL — Template Structure Compliance:**
-- The output MUST use the EXACT 28-section numbered structure defined below (## 1. through ## 28. plus Appendix A–E)
-- Do NOT create freeform/custom section names (e.g., "## Module deep-dive: X", "## Key architectural patterns")
-- Do NOT collapse multiple template sections into one
-- Do NOT skip section numbers — if a section does not apply, include the heading with "N/A — {reason}"
+- The output MUST use the EXACT 10-section structure from `core/templates/architecture.md` (§1–§10)
+- Do NOT create freeform/custom section names or resurrect 28-section numbering
+- Do NOT skip mandatory sections — if a section does not apply, include the heading with "N/A — {reason}"
 - The knowledge graph (`draft/graph/`) is the **deterministic ground truth** for structure (modules, dependencies, public surfaces, edges, hotspots). LLM synthesis exists to interpret the graph into actionable behavioral understanding — primarily through accurate diagrams — plus minimal narrative that does not contradict the graph.
 - **Diagrams over prose volume.** Prefer one correct workflow/state/sequence diagram per major module or operational model over long responsibility paragraphs. A 20-line Mermaid diagram that faithfully reflects real call paths and state transitions from the graph is more valuable for downstream code generation than 300 words of generic description.
 - **Accuracy and fidelity to graph + host index > historical length targets.** It is acceptable (and preferred) for sections to be short when the graph block + diagrams already convey the design.
@@ -5301,7 +5230,7 @@ Template selection depends on scope:
 - Project-wide: Update `draft/architecture.md` with the module changes, then run the Condensation Subroutine (defined in `core/shared/condensation.md`) to regenerate `draft/.ai-context.md`.
 - Track-scoped: write to `draft/tracks/<id>/hld.md` and (when triggered) `draft/tracks/<id>/lld.md`.
 
-> ** context:** HLD and LLD are design-mandated review artifacts. HLD is approved by Technical Leads / Architecture Review Board / Cloud Operations / QA / PM Leads before significant implementation; LLD is approved by Team Leads / Technical Leads / QA before code review begins. `draft upload` gates `git upload` for high-criticality tracks on the HLD Approvals table being populated.
+> **Context:** HLD and LLD are design-mandated review artifacts. HLD is approved by Technical Leads / Architecture Review Board / Cloud Operations / QA / PM Leads before significant implementation; LLD is approved by Team Leads / Technical Leads / QA before code review begins. `draft upload` gates `git upload` for high-criticality tracks on the HLD Approvals table being populated.
 
 ### Step 5a: HLD Generation (Track-Scoped, Always)
 
@@ -7057,7 +6986,7 @@ If `draft/graph/schema.yaml` does not exist, set `Graph files queried: NONE` and
 
 ## Graph Usage Report (append to checklist)
 
-Emit the canonical footer from [core/shared/graph-usage-report.md](../../core/shared/graph-usage-report.md) §Canonical footer. The lint hook `scripts/tools/check-graph-usage-report.sh` validates the section on save.
+Emit the canonical footer from [core/shared/graph-usage-report.md](../../core/shared/graph-usage-report.md). The lint hook `scripts/tools/check-graph-usage-report.sh` validates the section on save.
 ## Cross-Skill Dispatch
 
 - **Auto-invoked by:** `draft upload` (pre-upload verification)
@@ -9223,7 +9152,8 @@ If `draft/graph/schema.yaml` does not exist, set `Graph files queried: NONE` and
 
 ## Graph Usage Report (append to review report)
 
-Emit the canonical footer from [core/shared/graph-usage-report.md](../../core/shared/graph-usage-report.md) §Canonical footer. The lint hook `scripts/tools/check-graph-usage-report.sh` validates the section on save.
+Emit the canonical footer from [core/shared/graph-usage-report.md](../../core/shared/graph-usage-report.md). The lint hook `scripts/tools/check-graph-usage-report.sh` validates the section on save.
+
 ## Skill Telemetry
 
 As the last step after saving the review report, emit a metrics record. Best-effort — never block.
@@ -9251,6 +9181,123 @@ DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
 [ -x "$DRAFT_TOOLS/emit-skill-metrics.sh" ] && bash "$DRAFT_TOOLS/emit-skill-metrics.sh" \
   '{"skill":"review","track_id":"<id_or_null>","stage_reached":"<stage>","verdict":"<v>","critical_count":<N>,"important_count":<N>,"blast_radius":"<br>","graph_queries":<N>,"fallback_grep_count":<N>}'
 ```
+
+---
+
+## Upload Command
+
+When user says "upload for review" or "draft upload [track <id>]":
+
+Gate track completion before `git upload`, `git push`, or opening a PR for human review.
+
+## Red Flags — STOP if you're:
+
+See [shared red flags](../../core/shared/red-flags.md).
+
+Skill-specific:
+- Uploading without a passing `draft review` on the track
+- Skipping HLD §Approvals for `criticality ∈ {high, mission-critical}` tracks
+- Treating a deploy checklist with `status: BLOCKED` as passing
+- Pushing when validator tools report hygiene or citation drift
+
+**Upload is a gate, not a shortcut around review.**
+
+---
+
+## Step 1: Resolve Track
+
+1. Parse `track <id|name>` from arguments, or auto-detect the active `[~]` track from `draft/tracks.md`.
+2. Load `draft/tracks/<id>/spec.md`, `plan.md`, `metadata.json`, and `hld.md` when present.
+3. If no track resolves, error: "No track to upload. Specify `track <id>` or activate a track."
+
+---
+
+## Step 2: Pre-Upload Verification
+
+### 2.1 Review gate
+
+- Require `review-report-latest.md` on the track with verdict `PASS` or `PASS WITH NOTES`.
+- If missing or `FAIL`, stop and instruct: run `draft review track <id>` first.
+
+### 2.2 Deploy checklist (auto-invoke)
+
+Run `draft deploy-checklist track <id>` when no fresh passing checklist exists.
+
+### 2.5 Checklist status
+
+- Read `draft/tracks/<id>/deploy-checklist-latest.md` (or timestamped sibling).
+- If frontmatter contains `status: BLOCKED`, **stop** — checklist is not a passing gate.
+- Critical unchecked items block upload.
+
+### 2.3 Validator chain
+
+Run the WS-9 chain from [verification-gates.md](../../core/shared/verification-gates.md) against the track directory. Any non-zero exit aborts upload.
+
+```bash
+TRACK_DIR="draft/tracks/<id>"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+
+"$DRAFT_TOOLS/check-track-hygiene.sh" "$TRACK_DIR"
+"$DRAFT_TOOLS/verify-citations.sh" "$TRACK_DIR"
+"$DRAFT_TOOLS/verify-doc-anchors.sh" "$TRACK_DIR"
+"$DRAFT_TOOLS/diff-templates-vs-tracks.sh" "$TRACK_DIR"
+```
+
+---
+
+## Step 3: HLD / LLD Approval Gate
+
+### 3.1 HLD §Approvals (high-criticality)
+
+When `spec.md` frontmatter `classification.criticality` is `high` or `mission-critical`:
+
+- Every required row in `hld.md` §Approvals must have a populated **Date** column.
+- If HLD was edited after the latest signed Date, stop — re-circulate for sign-off.
+- For `low` / unset criticality, warn if approvers are placeholders but do not block.
+
+### 3.2 LLD presence
+
+When LLD was generated for the track, ensure Team Lead / QA approval rows are populated before upload (same Date rule as HLD).
+
+---
+
+## Step 4: Upload Execution
+
+After all gates pass:
+
+1. Confirm branch and commit range with the user.
+2. Run the project's upload command (`git upload`, `git push`, or `gh pr create` per `draft/workflow.md`).
+3. Capture the review URL or change ID.
+
+Update `draft/tracks/<id>/metadata.json`:
+
+```json
+{
+  "lastUploaded": "<ISO-8601>",
+  "uploadCount": <N+1>
+}
+```
+
+---
+
+## Step 5: Post-Upload
+
+- If Jira is linked, sync via [jira-sync.md](../../core/shared/jira-sync.md): comment "Code uploaded for review. {URL}".
+- If new public APIs lack docs, suggest `draft documentation api`.
+
+---
+
+## Cross-Skill Dispatch
+
+- **Auto-invokes:** `draft deploy-checklist`
+- **Requires:** `draft review` PASS (or PASS WITH NOTES)
+- **Suggested by:** `draft implement` (track completion), `draft documentation` (pre-upload API docs)
+
+## Graph Usage Report
+
+Emit the canonical footer from [graph-usage-report.md](../../core/shared/graph-usage-report.md) when graph queries were used during validation.
 
 ---
 
@@ -9334,6 +9381,7 @@ Intent keywords drive deterministic dispatch. Multi-intent requests are sequence
 
 | User Intent Keywords                     | Dispatches To              | Purpose |
 |------------------------------------------|----------------------------|---------|
+| upload for review, git upload, submit code, open PR | `draft upload` | Pre-upload gate: review, approvals, validators, then push |
 | deploy checklist, pre-deploy, release check, readiness | `draft deploy-checklist` | Pre-deployment verification with rollback triggers |
 | incident, outage, sev, postmortem, triage | `draft incident-response` | Full incident lifecycle (triage → mitigate → postmortem) |
 | standup, daily summary, what did I do, activity report | `draft standup` | Git activity standup summary (read-only) |
@@ -9442,7 +9490,8 @@ Strong keyword and phrase matching with fallback to a menu when intent is broad 
 | learn patterns, discover conventions, update guardrails, anti-patterns | `draft learn` | Pattern mining + guardrail evolution |
 | index services, aggregate context, monorepo index | `draft index` | Monorepo service context aggregation |
 | tour, walkthrough, onboard me, getting started tour | `draft tour` | Guided interactive project tour |
-| impact, blast radius, change impact, analytics | `draft impact` | Telemetry-driven change impact reports |
+| blast radius, code impact, affected modules, downstream callers | `draft review` or `scripts/tools/graph-impact.sh` | Graph-derived blast-radius before merge |
+| impact, delivery telemetry, track analytics, CDD effectiveness | `draft impact` | Project-wide track delivery telemetry |
 | assist review, help reviewer, PR architectural audit | `draft assist-review` | Risk audit to support human reviewers |
 
 ## Dispatch Examples
@@ -9493,7 +9542,7 @@ Parse `$ARGUMENTS` and dispatch:
 | `(no args)`, `preview`, `preview <track-id>` | **preview** (default) | Generate `jira-export-<timestamp>.md` — **one Story** containing all phases/tasks |
 | `preview --epic ...` | **preview --epic** | Generate rich export: 1 Epic + 1–3 Stories (max) |
 | `create`, `create <track-id>` | **create** | Create **1 Story** (default) via MCP |
-| `review <JIRA_ID>` | **review** | Full qualification review of any Jira ticket — delegates to [review.md](review.md) |
+| `review <JIRA_ID>` | **review** | Full qualification review of any Jira ticket — delegates to [references/review.md](references/review.md) |
 
 - `preview` is the default when no subcommand is supplied.
 - `review` requires a Jira ID as the next argument. Validate format `<PROJECT>-<NUMBER>` (e.g., `ENG-446236`). If numeric-only, prompt for project prefix — do NOT assume.
@@ -11387,8 +11436,8 @@ It handles connectors and exports to external systems like Jira.
 
 Specialist integration workflows remain available as named modes:
 
-- `draft integrations jira-preview` (formerly `draft jira-preview`)
-- `draft integrations jira-create` (formerly `draft jira-create`)
+- `draft jira preview` (or `draft integrations jira-preview`)
+- `draft jira create` (or `draft integrations jira-create`)
 
 ## Step 1: Parse Intent and Route
 
@@ -11398,8 +11447,8 @@ Examine the user's input and route to the correct integrations workflow.
 
 If the user explicitly invokes a specialist mode, route directly:
 
-- `draft integrations jira-preview` → follow `draft jira-preview`
-- `draft integrations jira-create` → follow `draft jira-create`
+- `draft integrations jira-preview` → follow `draft jira preview`
+- `draft integrations jira-create` → follow `draft jira create`
 
 ### Intent Routing
 
@@ -11407,8 +11456,8 @@ If no explicit mode is specified, infer the intent from the user's prompt:
 
 | Intent | Action | Route |
 |--------|--------|-------|
-| "Export to Jira", "Preview Jira issues", "Show me what you'll create in Jira" | Jira Preview | `draft jira-preview` |
-| "Create Jira issues", "Sync to Jira", "Make tickets" | Jira Create | `draft jira-create` |
+| "Export to Jira", "Preview Jira issues", "Show me what you'll create in Jira" | Jira Preview | `draft jira preview` |
+| "Create Jira issues", "Sync to Jira", "Make tickets" | Jira Create | `draft jira create` |
 
 ## Step 2: Bare Parent Command Fallback
 
@@ -17101,24 +17150,18 @@ Start `draft/.ai-context.md` with a stable frontmatter block. Git state is centr
 
 Transform each `architecture.md` section into machine-optimized format using this mapping:
 
-| architecture.md Section | .ai-context.md Section | Transformation |
-|------------------------|------------------------|----------------|
-| Executive Summary | META | Extract key-value pairs only (type, lang, pattern, build, test, entry, config) |
-| Architecture Overview (Mermaid) | GRAPH:COMPONENTS | Convert Mermaid diagrams to tree notation using `├─` / `└─` |
-| Component Map | GRAPH:COMPONENTS | Merge into the same tree |
-| **Core Operational Flows, Lifecycles & State Machines** (§6) | **GRAPH:OPERATIONAL** + GRAPH:DATAFLOW | Highest fidelity requirement. Extract primary behavioral models (states, transitions, error/recovery paths) in compact structured form. |
-| Data Flow (Mermaid) | GRAPH:DATAFLOW | Convert to `FLOW:{Name}` with arrow notation (merge with OPERATIONAL where appropriate) |
-| External Dependencies | GRAPH:DEPENDENCIES | Convert to `A -[protocol]-> B` format |
-| Dependency Injection | WIRING | Extract mechanism + tokens/getters lists |
-| Critical Invariants | INVARIANTS | One line per invariant: `[CATEGORY] name: rule @file:line` |
-| Framework/Extension Points | INTERFACES + EXTEND | Condensed signatures + cookbook steps |
-| Full Catalog | CATALOG:{Category} | Pipe-separated rows: `id|type|file|purpose` |
-| Concurrency Model | THREADS + CONCURRENCY | Pipe-separated rows + rules with violation consequences |
-| Configuration | CONFIG | Pipe-separated rows: `param|default|critical:Y/N|purpose` |
-| Error Handling | ERRORS | Key-value pairs: `scenario: recovery` |
-| Build/Test | TEST + META | Extract exact commands |
-| File Structure | FILES | Concept-to-path mappings: `entry: path`, `config: path`, etc. |
-| Glossary | VOCAB | `term: definition` pairs |
+| architecture.md Section (10-section graph-primary) | .ai-context.md Section | Transformation |
+|--------------------------------------------------|------------------------|----------------|
+| §1 Executive Summary + Graph Health Dashboard | META + GRAPH:HEALTH | Extract key-value pairs; dashboard metrics as compact rows |
+| §2 Critical Invariants & Safety Rules | INVARIANTS | One line per invariant: `[CATEGORY] name: rule @file:line` |
+| §3 Primary Control & Data Flows | GRAPH:OPERATIONAL + GRAPH:DATAFLOW | Convert Mermaid to `FLOW:{Name}` arrow notation |
+| §4 Module & Dependency Map | GRAPH:COMPONENTS + GRAPH:MODULES | Tree notation `├─` / `└─`; module fan-in/out from graph |
+| §5 Concurrency, Ownership & Isolation | THREADS + CONCURRENCY | Pipe-separated rows + isolation rules |
+| §6 Error Handling & Failure Mode Catalog | ERRORS | Key-value pairs: `scenario: recovery` |
+| §7 State & Data Truth Sources | GRAPH:DATAFLOW + STATE | Truth sources and reconciliation paths |
+| §8 Extension Points & Safe Mutation | INTERFACES + EXTEND | Condensed signatures + cookbook steps |
+| §9 Graph Coverage Gaps | GRAPH:GAPS | Bullet list of known limitations |
+| §10 Relationship to Other Docs | META:DOCS | Pointer map to authoritative files |
 
 #### Step 3.5: Generate Graph Summary Sections
 
@@ -18094,29 +18137,25 @@ derive from IR fields and reader deep-dives. Do not read source files for these.
 
 ## Output
 
-Write the full draft/architecture.md following the standard 28-section template.
-Begin immediately with the YAML frontmatter, then Section 1. Do not explain your plan first.
-Section 7 must contain the reader deep-dives in full — paste them, don't summarize.
+Write the full `draft/architecture.md` following the **10-section graph-primary template** in `core/templates/architecture.md`.
+Begin immediately with the YAML frontmatter, then the mandatory section headings. Do not explain your plan first.
 
 MANDATORY output structure (in this exact order):
-1. YAML frontmatter (---project/git metadata---)
-2. # Architecture: {PROJECT_NAME}
-3. ## Table of Contents (numbered 1-28 + Appendices A-E)
-4. ## 1. Executive Summary
-5. ## 2. AI Agent Quick Reference
-6. ## 3. System Identity & Purpose
-7. ## 4. Architecture Overview (with 4.1 High-Level Topology diagram, 4.2 Process Lifecycle, 4.3 Initialization Sequence diagram, 4.4 Module Dependency Graph slot)
-8. ## 5. Component Map & Interactions (with 5.1 Orchestrator table, 5.2 DI Pattern, 5.3 Interaction Matrix)
-9. ## 6. Core Operational Flows, Lifecycles & State Machines (2–5 high-fidelity behavioral diagrams from graph + full indexed knowledge)
-10. ## 7. Core Modules Deep Dive (reader deep-dives pasted verbatim — one #### per module, ##### per sub-module only when graph shows clear boundary; graph block + one workflow/state diagram per module is primary)
-11. ## 8. Concurrency Model & Thread Safety (thread pool table, locking strategy, execution topology diagram)
-12. ## 9. Framework & Extension Points (plugin types table, registry mechanism, core interfaces with REAL code)
-13. ## 10. Full Catalog of Implementations (architecturally significant implementations and extension points surfaced by graph; no exhaustive enumeration requirement)
-14. ## 11–28: All remaining sections per template
-15. ## Appendix A–E: All appendices per template
+1. YAML frontmatter (`project`, `module`, `generated_by`, `generated_at`, graph fidelity block when available)
+2. `# Architecture: {PROJECT_NAME}`
+3. `## 1. Executive Summary + Graph Health Dashboard`
+4. `## 2. Critical Invariants & Safety Rules (with provenance)`
+5. `## 3. Primary Control & Data Flows (Graph + Synthesis)`
+6. `## 4. Module & Dependency Map (Primarily Graph-Derived)`
+7. `## 5. Concurrency, Ownership & Isolation Model`
+8. `## 6. Error Handling & Failure Mode Catalog`
+9. `## 7. State & Data Truth Sources + Reconciliation`
+10. `## 8. Extension Points & Safe Mutation Patterns`
+11. `## 9. Graph Coverage Gaps & Known Limitations (MANDATORY)`
+12. `## 10. Relationship to Other Authoritative Documentation` (when Context Audit is high/medium)
 
-Do NOT produce freeform sections like "## Module deep-dive: X" or "## Key architectural patterns".
-Every section heading MUST match the template numbering exactly.
+Embed reader IR insights inside §3–§8 as graph-grounded diagrams and concise synthesis — not as a separate legacy Section 7 volume.
+Do NOT produce freeform sections or resurrect 28-section numbering.
 ```
 
 ---
@@ -18369,12 +18408,23 @@ shared: graph-usage-report
 applies_to: quality + init + graph skills
 ---
 
-# graph-usage-report (Foundations Stub)
+# Graph Usage Report (Canonical Footer)
 
-Portable generalized stub per manifest §2.1. Full content will be expanded in later agent tranche or manual follow-up.
+Every code-touching skill output that performs graph or filesystem discovery MUST end with this footer block. The lint hook `scripts/tools/check-graph-usage-report.sh` validates the section on save.
 
-See verification-gates.md and template-hygiene.md for usage contracts.
+See [graph-query.md](graph-query.md) §Graph Usage Report (Mandatory Footer) for the full lookup contract. Emit this block verbatim:
 
+```md
+## Graph Usage Report
+
+- Graph files queried: <comma-separated list, e.g. `architecture.json, hotspots.jsonl` and/or query tools like `graph-callers.sh` — or `NONE` with justification below>
+- Modules identified via graph: <comma-separated module names, or `none`>
+- Files identified via graph: <integer count>
+- Filesystem grep fallbacks: <list of `<pattern>` searches with one-line justification each, or `none`>
+- Justification (only when `Graph files queried: NONE`): <required — `graph data unavailable` | `non-code task` | `<explicit reason>`>
+```
+
+**Gate:** `Graph files queried: NONE` without a populated justification line is a hard failure.
 </core-file>
 
 ---
@@ -18474,12 +18524,23 @@ shared: template-contract
 applies_to: quality + init + graph skills
 ---
 
-# template-contract (Foundations Stub)
+# Template Contract
 
-Portable generalized stub per manifest §2.1. Full content will be expanded in later agent tranche or manual follow-up.
+Tracks under `draft/tracks/<id>/` must conform to the artifact set and section headers in `core/templates/`. Enforcement tools:
 
-See verification-gates.md and template-hygiene.md for usage contracts.
+| Tool | Purpose |
+|------|---------|
+| `scripts/tools/diff-templates-vs-tracks.sh` | Missing files, section headers, removed 2.0 fields |
+| `scripts/tools/check-track-hygiene.sh` | Status parity, author placeholders, TBD budget, plan staleness |
+| `scripts/tools/check-scope-conflicts.sh` | Overlapping `scope_includes` without mutual exclusion |
+| `scripts/tools/verify-citations.sh` | `path:line` citations vs `synced_to_commit` |
+| `scripts/tools/verify-doc-anchors.sh` | Internal `§` / `#anchor` references |
 
+See [verification-gates.md](verification-gates.md) for the canonical WS-9 gate chain and [template-hygiene.md](template-hygiene.md) for hygiene rules.
+
+**Required track artifacts (2.0):** `spec.md`, `plan.md`, `hld.md`, `lld.md`, `metadata.json`, `discovery.md`.
+
+**Scope fields:** `metadata.json:scope_includes` / `scope_excludes` (or spec frontmatter fallback) define track footprint; conflicts block parallel work without explicit exclusion.
 </core-file>
 
 ---

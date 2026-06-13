@@ -6,9 +6,9 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/mayurpise/draft/releases"><img src="https://img.shields.io/github/v/release/mayurpise/draft?include_prereleases&style=for-the-badge" alt="GitHub release"></a>
+  <a href="https://github.com/drafthq/draft/releases"><img src="https://img.shields.io/github/v/release/drafthq/draft?include_prereleases&style=for-the-badge" alt="GitHub release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge" alt="MIT License"></a>
-  <a href="https://github.com/mayurpise/draft/stargazers"><img src="https://img.shields.io/github/stars/mayurpise/draft?style=for-the-badge" alt="Stars"></a>
+  <a href="https://github.com/drafthq/draft/stargazers"><img src="https://img.shields.io/github/stars/drafthq/draft?style=for-the-badge" alt="Stars"></a>
   <a href="https://github.com/DeusData/codebase-memory-mcp" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/graph_engine-codebase--memory--mcp-8A2BE2?style=for-the-badge" alt="Graph engine: codebase-memory-mcp"></a>
 </p>
 
@@ -49,7 +49,7 @@ Free. No API keys. No paid tier. No vendor lock-in. Catches the 3 bugs you misse
 ## Install — Claude Code (30 seconds)
 
 ```bash
-/plugin marketplace add mayurpise/draft
+/plugin marketplace add drafthq/draft
 /plugin install draft
 /draft:init       # 5-phase codebase analysis (one-time)
 /draft:review     # ← run this on every branch before you push
@@ -63,19 +63,19 @@ That's it. Run `/draft` for the full command map.
 ### Cursor
 Cursor natively supports the `.claude/` plugin structure. Add via *Settings > Rules, Skills, Subagents > Rules > New > Add from Github*:
 ```
-https://github.com/mayurpise/draft.git
+https://github.com/drafthq/draft.git
 ```
 Then use: `@draft init`, `@draft new-track`, `@draft implement`.
 
 ### GitHub Copilot
 ```bash
 mkdir -p .github && curl -o .github/copilot-instructions.md \
-  https://raw.githubusercontent.com/mayurpise/draft/main/integrations/copilot/.github/copilot-instructions.md
+  https://raw.githubusercontent.com/drafthq/draft/main/integrations/copilot/.github/copilot-instructions.md
 ```
 
 ### Gemini
 ```bash
-curl -o .gemini.md https://raw.githubusercontent.com/mayurpise/draft/main/integrations/gemini/.gemini.md
+curl -o .gemini.md https://raw.githubusercontent.com/drafthq/draft/main/integrations/gemini/.gemini.md
 ```
 
 ### Antigravity IDE
@@ -242,7 +242,7 @@ Each layer narrows the solution space. By the time AI writes code, decisions are
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=mayurpise/draft&type=Date)](https://star-history.com/#mayurpise/draft&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=drafthq/draft&type=Date)](https://star-history.com/#drafthq/draft&Date)
 
 ---
 

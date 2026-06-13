@@ -10,7 +10,7 @@ Draft works with Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Googl
 
 ### Claude Code (primary)
 ```
-/plugin marketplace add mayurpise/draft
+/plugin marketplace add drafthq/draft
 /plugin install draft
 /draft:init
 ```
@@ -18,18 +18,18 @@ Draft works with Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Googl
 ### Cursor
 Cursor > Settings > Rules, Skills, Subagents > Rules > New > Add from Github:
 ```
-https://github.com/mayurpise/draft.git
+https://github.com/drafthq/draft.git
 ```
 Then use: `@draft init`, `@draft new-track`, `@draft implement`
 
 ### GitHub Copilot
 ```
-mkdir -p .github && curl -o .github/copilot-instructions.md https://raw.githubusercontent.com/mayurpise/draft/main/integrations/copilot/.github/copilot-instructions.md
+mkdir -p .github && curl -o .github/copilot-instructions.md https://raw.githubusercontent.com/drafthq/draft/main/integrations/copilot/.github/copilot-instructions.md
 ```
 
 ### Gemini
 ```
-curl -o .gemini.md https://raw.githubusercontent.com/mayurpise/draft/main/integrations/gemini/.gemini.md
+curl -o .gemini.md https://raw.githubusercontent.com/drafthq/draft/main/integrations/gemini/.gemini.md
 ```
 
 ### Antigravity IDE
@@ -286,9 +286,9 @@ Draft's knowledge graph is powered by [codebase-memory-mcp](https://github.com/D
 - Getting Started: https://getdraft.dev/book/getting-started/
 - Command Reference: https://getdraft.dev/book/command-reference/
 - File Reference: https://getdraft.dev/book/file-reference/
-- GitHub: https://github.com/mayurpise/draft
+- GitHub: https://github.com/drafthq/draft
 - Graph Engine: https://github.com/DeusData/codebase-memory-mcp
-- Methodology: https://github.com/mayurpise/draft/blob/main/core/methodology.md
+- Methodology: https://github.com/drafthq/draft/blob/main/core/methodology.md
 - Concise LLM context: https://getdraft.dev/llms.txt
 
 ## License

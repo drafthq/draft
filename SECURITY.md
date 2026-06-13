@@ -13,7 +13,7 @@
 
 Instead, please report vulnerabilities via one of:
 
-1. **GitHub Security Advisories:** [Report a vulnerability](https://github.com/mayurpise/draft/security/advisories/new)
+1. **GitHub Security Advisories:** [Report a vulnerability](https://github.com/drafthq/draft/security/advisories/new)
 2. **Email:** Send details to the repository maintainer (see GitHub profile)
 
 ### What to Include

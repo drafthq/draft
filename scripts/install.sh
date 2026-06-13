@@ -3,7 +3,7 @@
 # Install Draft plugin for Cursor, Claude Code, GitHub Copilot, Antigravity, or Gemini.
 #
 # Usage:
-#   curl -fsSL https://raw.githubusercontent.com/mayurpise/draft/main/scripts/install.sh | bash -s -- [target]
+#   curl -fsSL https://raw.githubusercontent.com/drafthq/draft/main/scripts/install.sh | bash -s -- [target]
 #
 # Targets:
 #   --cursor       Install to ~/.cursor/plugins/local/draft (default)
@@ -19,7 +19,7 @@
 
 set -euo pipefail
 
-REPO_URL="https://github.com/mayurpise/draft.git"
+REPO_URL="https://github.com/drafthq/draft.git"
 
 # ── Parse flags ──────────────────────────────────────────────
 TARGET="cursor"

@@ -3,7 +3,7 @@
 ## Development Setup
 
 ```bash
-git clone https://github.com/mayurpise/draft.git
+git clone https://github.com/drafthq/draft.git
 cd draft
 make build    # Generate integration files
 make test     # Run tests
@@ -97,8 +97,8 @@ Execution instructions...
 
 ## Reporting Issues
 
-- **Bugs:** Use the [bug report template](https://github.com/mayurpise/draft/issues/new?template=bug_report.md)
-- **Features:** Use the [feature request template](https://github.com/mayurpise/draft/issues/new?template=feature_request.md)
+- **Bugs:** Use the [bug report template](https://github.com/drafthq/draft/issues/new?template=bug_report.md)
+- **Features:** Use the [feature request template](https://github.com/drafthq/draft/issues/new?template=feature_request.md)
 - **Security:** See [SECURITY.md](SECURITY.md)
 
 ## Code of Conduct
