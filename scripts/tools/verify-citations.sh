@@ -79,7 +79,11 @@ extract_citations() {
         {
             s = $0
             gsub(/https?:\/\/[^[:space:]]*/, "", s)
-            while (match(s, /[A-Za-z0-9_][A-Za-z0-9_./-]*\.[A-Za-z0-9]+:[0-9]+/)) {
+            # Use a string regex (not a /.../ literal): a literal "/" inside a
+            # bracket expression prematurely terminates a regex literal in
+            # POSIX/BSD awk ("nonterminated character class"), though gawk is
+            # lenient. The string form is portable across awk implementations.
+            while (match(s, "[A-Za-z0-9_][A-Za-z0-9_./-]*\\.[A-Za-z0-9]+:[0-9]+")) {
                 cite = substr(s, RSTART, RLENGTH)
                 printf("%s\t%d\t%s\n", FILENAME, NR, cite)
                 s = substr(s, RSTART + RLENGTH)
@@ -214,13 +218,17 @@ emit() {
         printf '{"violation_count": %d, "tolerance": %d, "violations": [\n' \
             "$violation_count" "$TOLERANCE"
         local first=1 v track kind file line detail
-        for v in "${violations[@]}"; do
-            IFS='|' read -r track kind file line detail <<< "$v"
-            if ((first)); then first=0; else printf ',\n'; fi
-            printf ' {"track":"%s","kind":"%s","file":"%s","line":%s,"detail":"%s"}' \
-                "$(json_escape "$track")" "$(json_escape "$kind")" \
-                "$(json_escape "$file")" "${line:-0}" "$(json_escape "$detail")"
-        done
+        # Guard the expansion: "${arr[@]}" on an empty array is an unbound-variable
+        # error under `set -u` in bash <= 4.3 (e.g. macOS).
+        if ((violation_count > 0)); then
+            for v in "${violations[@]}"; do
+                IFS='|' read -r track kind file line detail <<< "$v"
+                if ((first)); then first=0; else printf ',\n'; fi
+                printf ' {"track":"%s","kind":"%s","file":"%s","line":%s,"detail":"%s"}' \
+                    "$(json_escape "$track")" "$(json_escape "$kind")" \
+                    "$(json_escape "$file")" "${line:-0}" "$(json_escape "$detail")"
+            done
+        fi
         printf '\n]}\n'
     else
         if ((violation_count == 0)); then

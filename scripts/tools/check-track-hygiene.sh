@@ -59,7 +59,9 @@ if ((${#TRACK_PATHS[@]} == 0)); then
 fi
 
 # Patterns
-FORBIDDEN_AUTHOR_RE='Author[0-9]+|xxx@(|example)\.(com|org)|\[name\]'
+# Note: use `(example)?` rather than an empty alternation branch `(|example)` —
+# strict ERE engines (BSD grep, ugrep) reject empty branches as a regex error.
+FORBIDDEN_AUTHOR_RE='Author[0-9]+|xxx@(example)?\.(com|org)|\[name\]'
 EMPTY_APPROVAL_ROW_RE='^\|[^|]*\|[[:space:]]*\|[[:space:]]*\|[[:space:]]*\|[[:space:]]*\|[[:space:]]*$'
 TBD_RE='_TBD_[A-Za-z0-9_]+_'
 
@@ -197,13 +199,17 @@ emit() {
     if ((EMIT_JSON)); then
         printf '{"violation_count": %d, "violations": [\n' "$violation_count"
         local first=1 v track kind file line detail
-        for v in "${violations[@]}"; do
-            IFS='|' read -r track kind file line detail <<< "$v"
-            if ((first)); then first=0; else printf ',\n'; fi
-            printf ' {"track":"%s","kind":"%s","file":"%s","line":%s,"detail":"%s"}' \
-                "$(json_escape "$track")" "$(json_escape "$kind")" \
-                "$(json_escape "$file")" "${line:-0}" "$(json_escape "$detail")"
-        done
+        # Guard the expansion: "${arr[@]}" on an empty array is an unbound-variable
+        # error under `set -u` in bash <= 4.3 (e.g. macOS).
+        if ((violation_count > 0)); then
+            for v in "${violations[@]}"; do
+                IFS='|' read -r track kind file line detail <<< "$v"
+                if ((first)); then first=0; else printf ',\n'; fi
+                printf ' {"track":"%s","kind":"%s","file":"%s","line":%s,"detail":"%s"}' \
+                    "$(json_escape "$track")" "$(json_escape "$kind")" \
+                    "$(json_escape "$file")" "${line:-0}" "$(json_escape "$detail")"
+            done
+        fi
         printf '\n]}\n'
     else
         if ((violation_count == 0)); then
