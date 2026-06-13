@@ -37,6 +37,7 @@ CAPS_CONF_DEFAULT="$SCRIPT_DIR/skill-caps.conf"
 EMIT_JSON=0
 ENFORCE=0
 CAPS_CONF="$CAPS_CONF_DEFAULT"
+SKILLS_DIR="$REPO_ROOT/skills"
 
 usage() {
     local stream=2 code=2
@@ -51,29 +52,13 @@ while (($#)); do
         --enforce) ENFORCE=1; shift ;;
         --json) EMIT_JSON=1; shift ;;
         --caps) CAPS_CONF="$2"; shift 2 ;;
+        --skills-dir) SKILLS_DIR="$2"; shift 2 ;;
         -*) printf 'Unknown flag: %s\n' "$1" >&2; usage ;;
         *) printf 'Unexpected arg: %s\n' "$1" >&2; usage ;;
     esac
 done
 
-# Load caps. Format per line:
-# <skill-name> <max-lines>
-# Lines starting with '#' or blank are ignored. A `*` skill-name sets the
-# global default cap.
-declare -A CAPS
 GLOBAL_CAP=600
-
-if [[ -f "$CAPS_CONF" ]]; then
-    while read -r name cap; do
-        [[ -z "$name" || "$name" == \#* ]] && continue
-        if [[ "$name" == "*" ]]; then
-            GLOBAL_CAP="$cap"
-        else
-            CAPS["$name"]="$cap"
-        fi
-    done < "$CAPS_CONF"
-fi
-
 over_count=0
 declare -a findings=()
 record() { findings+=("$1|$2|$3"); over_count=$((over_count + 1)); }
@@ -82,11 +67,11 @@ while IFS= read -r path; do
     rel="${path#"$REPO_ROOT/"}"
     name="$(basename "$(dirname "$path")")"
     lines="$(wc -l < "$path" | tr -d ' ')"
-    cap="${CAPS[$name]:-$GLOBAL_CAP}"
+    cap="$(skill_line_cap "$name" "$CAPS_CONF" "$GLOBAL_CAP")"
     if (( lines > cap )); then
         record "$name" "$lines" "$cap"
     fi
-done < <(find "$REPO_ROOT/skills" -mindepth 2 -maxdepth 2 -name 'SKILL.md' | sort)
+done < <(find "$SKILLS_DIR" -mindepth 2 -maxdepth 2 -name 'SKILL.md' | sort)
 
 emit() {
     if ((EMIT_JSON)); then

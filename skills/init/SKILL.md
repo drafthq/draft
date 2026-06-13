@@ -772,87 +772,14 @@ If any reader agent fails to produce valid JSON after one retry:
 
 ---
 
-### Sequential Generation Protocol (Primary for Tiers 1–2; Fallback for Tiers 3–5)
+### Sequential Fallback (when parallel IR pipeline unavailable)
 
-**Use this protocol for tiers 1–2 (micro/small) as the primary path.** At small scale, direct sequential analysis produces deeper output than the parallel IR pipeline with less overhead.
+When the Agent tool is unavailable or reader agents fail after retry, write `draft/architecture.md` using the **10-section graph-primary structure** (checklist above + `core/templates/architecture.md`). Do not use legacy 28-section or Pass 1/2/3 volume protocols.
 
-**Also use this protocol as fallback for tiers 3–5** if the Agent tool is unavailable, or if a reader agent fails entirely after retry. For 500+ file codebases running the fallback, limit sequential analysis to the top 20 modules by fan-in rank — the output will be shallower than parallel but still useful.
-
-#### Pass 1: Foundation (Sections 1–6)
-
-Generate Sections 1–6 (Executive Summary through Data Flow). Write the result to `draft/architecture.md`. These sections establish the structural skeleton: identity, topology diagrams, component map, and data flow diagrams. **Minimum 400 lines for Pass 1.**
-
-#### Pass 2: Module Deep Dives (Section 7) — One Module at a Time, with Sub-Modules
-
-**MANDATORY (graph-first)**: Use the ranked module list from Step 1.4.6 — do NOT re-discover modules by directory scanning if Phase 0 succeeded. The graph list is exhaustive. Read the top-3 hotspot files per module (from `draft/graph/hotspots.jsonl`) before writing its deep-dive.
-
-For each module in ranked order (hotspot_count × 2 + fan_in_count, descending), up to top 20:
-
-**Step A — Top-level module analysis:**
-1. **READ** `draft/graph/modules/{module_name}.jsonl` — extract sub-directory structure, file list with line counts
-2. **READ** `draft/graph/hotspots.jsonl` — identify high-complexity files in this module
-3. **READ** at least 3 key source files for this module: the interface/header, the main implementation, and one representative op/handler. For modules with 200+ files, read at least 5 source files.
-4. **CLASSIFY** each sub-directory by tier: Large (50+ files → full deep-dive), Medium (10-49 files → summary), Small (< 10 files → table row), Ops/Handler (→ operation catalog)
-5. **WRITE** the top-level module deep-dive: role, sub-module structure table, responsibilities, internal architecture diagram (showing sub-module relationships), notable mechanisms, error handling, thread safety
-
-**Step B — Sub-module deep-dives (within the same module):**
-
-**CRITICAL — Sub-modules get the SAME depth as top-level modules.** A sub-module with 200+ files is as complex as many standalone services. Do NOT abbreviate. There is NO page limit.
-
-For each Large sub-module (50+ files):
-1. **READ** 2-3 key source files from this sub-module (interface header, main impl, one op/handler). For sub-modules with 200+ files, read at least 5 source files.
-2. **WRITE** full sub-module deep-dive (`##### 7.X.Y`) using the SAME template as top-level modules: role, source files list, sub-sub-module structure table (if nested dirs exist), responsibilities (ALL, numbered), key operations/methods table (with signatures), state machine (if stateful), internal architecture diagram (if 100+ files), notable mechanisms, error handling, thread safety
-3. **RECURSE** — if the sub-module itself has Large sub-sub-modules (50+ files), apply this same step recursively at `###### 7.X.Y.Z` level
-
-For each Medium sub-module (10-49 files):
-1. **READ** 1-2 key source files (interface, one impl)
-2. **WRITE** summary sub-module deep-dive (`##### 7.X.Y`): role (2-3 sentences), key operations table (5+ entries with source file references), notable mechanisms, one interface/header code snippet
-
-For each Ops/Handler directory:
-1. **READ** file list from graph JSONL (no need to read each file — names and line counts are sufficient for the catalog)
-2. **WRITE** numbered operation catalog table enumerating ALL operations — no sampling, no "and others"
-
-**Step C — Verify and append:**
-1. **VERIFY** the complete module section (top-level + all sub-modules) is at least 100 lines (150+ for modules with 200+ files), contains UNIQUE description text, and all Large/Medium sub-modules have their own subsections
-2. **APPEND** the entire module section to `draft/architecture.md`
-
-Do NOT batch all 20 modules into one write. Process them sequentially so each module and its sub-modules get dedicated analysis attention. **No upper limit on Pass 2 length** — it scales with codebase complexity. A 14-module C++ codebase with deep sub-module hierarchies may produce 5000+ lines in Pass 2 alone. That is correct and expected.
-
-#### Pass 2 Completion Gate — Graph Fidelity + Diagram Check (MANDATORY before Pass 3)
-
-**YOU MUST PRODUCE THIS VERIFICATION before writing Pass 3.** Do not skip it.
-
-For every module that received a `#### 7.X` section, verify the following and record the result:
-
-```
-## Pass 2 Graph Fidelity & Diagram Report
-| Module | Graph block present? | Workflow/State diagram present & accurate? | Synthesis contradicts graph? | PASS / FAIL |
-|--------|----------------------|--------------------------------------------|------------------------------|-------------|
-| foo/bar | Yes | Yes (stateDiagram of lifecycle) | No | PASS |
-| foo/baz | Yes | Partial (only dependency list) | No | FAIL — add one primary flow diagram |
-```
-
-**Rules (new priority):**
-- Every module in `draft/graph/architecture.json` `.packages` must have its deterministic `<!-- GRAPH:module-deep/... -->` block rendered (see init/references/architecture-spec.md).
-- Every architecturally significant module (top 20 by fan-in or any module with >1 clear internal boundary in the graph) must contain **at least one synthesized Mermaid workflow, state, or sequence diagram** that visualizes the dominant control/data flow derived from the graph + source reads.
-- Synthesis prose must not contradict the graph record for that module. If a discrepancy is discovered during source reading, it is noted explicitly; the graph remains the structural authority.
-- A FAIL row means you must add or correct the missing diagram (or remove the contradicting sentence) before proceeding. Re-reading source is allowed only to improve diagram accuracy or resolve a real contradiction.
-- **Passing the gate with a correct graph block + one good diagram + 40 words of synthesis is better than a 200-line prose dump that ignores the graph.**
-
-This gate enforces the new priority: the graph defines structure; diagrams make it usable; prose is minimal supporting narrative. The old 100-line volume targets are retired.
-
-#### Pass 3: Cross-Cutting Sections + Mandatory Gaps & Relationship
-
-Synthesize the remaining high-value cross-cutting sections using the graph + targeted reads. The focus is on invariants with provenance, failure modes, data truth sources, extension patterns, and (always) the two mandatory closing sections:
-
-- §9 Graph Coverage Gaps & Known Limitations
-- §10 Relationship to Other Authoritative Documentation (when Context Audit detected high/medium context)
-
-No volume targets. No legacy appendices. Quality is measured by fidelity declarations, provenance tags, diagram accuracy, and honest gap reporting — not line counts.
-
-#### Pass 4: Quality Gate Verification
-
-Run the (now signal-quality) Completion Verification defined later in this skill. Only the hard fidelity / provenance / gaps / relationship checks are blocking. Expand only where those checks fail. Proceed to condensation only when they pass.
+1. Use the ranked module list from Step 1.4.6 (graph-first — do not re-scan by directory if Phase 0 succeeded).
+2. For each top module (up to 20 by fan-in), read `draft/graph/modules/{name}.jsonl`, hotspot files, and 3–5 key sources; embed graph blocks and at least one workflow/state diagram per significant module inside §4–§8 as appropriate.
+3. Always include §9 Graph Coverage Gaps and §10 Relationship when the Context Audit requires them.
+4. Run Completion Verification (defined later in this skill) before condensation. Fidelity, provenance, and gap honesty block completion — not line counts.
 
 ---
 
@@ -1082,13 +1009,15 @@ The document is:
 **Full details, per-section guidance, provenance rules, and examples** live in:
 - `core/templates/architecture.md` (the source of truth for the 10 sections + Generation Contract)
 - `docs/research/proposed-graph-backed-architecture-template.md` (design rationale and fidelity rules)
-- `references/architecture-spec.md` (supplementary per-section notes, kept in sync with the template)
+- `references/architecture-spec.md` (deprecated legacy notes — **10-section template wins on any conflict**)
 
-There is no legacy 28-section, no volume targets, and no Pass 1/2/3 protocol. The template itself is the contract.
+There is no legacy 28-section structure and no volume targets. The template itself is the contract.
 
 **After completing analysis AND passing verification**, write to `draft/architecture.md`. This is the PRIMARY output. Then run the Condensation Subroutine.
 
 ## .ai-context.md Specification
+
+**Authoritative procedure:** [core/shared/condensation.md](../../core/shared/condensation.md). Git state lives in `draft/metadata.json` only — do not copy `git.*` into `.ai-context.md` frontmatter.
 
 Generate `draft/.ai-context.md` — a **machine-optimized** context file for AI/LLM consumption (200-400 lines).
 

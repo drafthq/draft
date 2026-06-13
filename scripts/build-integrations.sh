@@ -43,6 +43,7 @@ get_skill_header() {
         deploy-checklist)  echo "Deploy Checklist Command" ;;
         bughunt)           echo "Bug Hunt Command" ;;
         review)            echo "Review Command" ;;
+        upload)            echo "Upload Command" ;;
         quick-review)      echo "Quick Review Command" ;;
         deep-review)       echo "Deep Review Command" ;;
         testing-strategy)  echo "Testing Strategy Command" ;;
@@ -87,6 +88,7 @@ get_copilot_trigger() {
         deploy-checklist)  echo "\"deploy checklist\" or \"draft deploy-checklist [track <id>]\"" ;;
         bughunt)           echo "\"hunt bugs\" or \"draft bughunt [--track <id>]\"" ;;
         review)            echo "\"review code\" or \"draft review [--track <id>] [--full]\"" ;;
+        upload)            echo "\"upload for review\" or \"draft upload [track <id>]\"" ;;
         quick-review)      echo "\"quick review\" or \"draft quick-review [file|pr <number>]\"" ;;
         deep-review)       echo "\"deep review\" or \"draft deep-review [module]\"" ;;
         testing-strategy)  echo "\"test strategy\" or \"draft testing-strategy [track <id>|path]\"" ;;

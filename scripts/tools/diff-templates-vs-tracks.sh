@@ -59,10 +59,7 @@ while (($#)); do
 done
 
 if ((${#TRACK_PATHS[@]} == 0)); then
-    while IFS= read -r p; do TRACK_PATHS+=("$p"); done < <(
-        find "$REPO_ROOT" -type d -path '*/tracks/*' -maxdepth 4 -mindepth 2 \
-            -not -path '*/.*' 2>/dev/null | sort
-    )
+    while IFS= read -r p; do TRACK_PATHS+=("$p"); done < <(discover_track_dirs "$REPO_ROOT")
 fi
 
 # Expected artifact files per track (all required at 2.0)
@@ -73,12 +70,16 @@ REQUIRED_FILES=(spec.md plan.md hld.md lld.md metadata.json discovery.md)
 # conform. Match is case-insensitive and treats hyphen-or-space as equivalent
 # so author-style variation (Mode Selection vs Mode-selection) doesn't trip
 # the validator. The canonical form is the form in core/templates/.
-declare -A REQUIRED_HEADERS
-REQUIRED_HEADERS[spec.md]='Problem Statement|Requirements|Acceptance Criteria|Risk Assessment|Open Questions'
-REQUIRED_HEADERS[plan.md]='Phase 0|Phase 1|Status Markers'
-REQUIRED_HEADERS[hld.md]='Background|Requirements|High Level Design|Detailed Design|Dependencies|Checklist|Deployment|Observability'
-REQUIRED_HEADERS[lld.md]='Background|Requirements|Low Level Design|Observability'
-REQUIRED_HEADERS[discovery.md]='Hotspots|Mode Selection|Open Questions|References'
+required_headers_for() {
+    case "$1" in
+        spec.md)      printf '%s' 'Problem Statement|Requirements|Acceptance Criteria|Risk Assessment|Open Questions' ;;
+        plan.md)      printf '%s' 'Phase 0|Phase 1|Status Markers' ;;
+        hld.md)       printf '%s' 'Background|Requirements|High Level Design|Detailed Design|Dependencies|Checklist|Deployment|Observability' ;;
+        lld.md)       printf '%s' 'Background|Requirements|Low Level Design|Observability' ;;
+        discovery.md) printf '%s' 'Hotspots|Mode Selection|Open Questions|References' ;;
+        *)            printf '%s' '' ;;
+    esac
+}
 
 # Strings that were removed at 2.0 — should not appear in conforming tracks.
 REMOVED_FIELDS_RE='Author1|xxx@\.com|xxx@example\.com|^Status: \[x\] Complete$'
@@ -103,10 +104,12 @@ scan_track() {
         fi
     done
 
-    for fname in "${!REQUIRED_HEADERS[@]}"; do
+    for fname in spec.md plan.md hld.md lld.md discovery.md; do
         local fpath="$track_dir/$fname"
         [[ -f "$fpath" ]] || continue
-        local pattern="${REQUIRED_HEADERS[$fname]}"
+        local pattern
+        pattern="$(required_headers_for "$fname")"
+        [[ -n "$pattern" ]] || continue
         IFS='|' read -r -a heads <<< "$pattern"
         for h in "${heads[@]}"; do
             # Build a hyphen-or-space-tolerant regex: every literal space in

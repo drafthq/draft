@@ -49,53 +49,16 @@ while (($#)); do
 done
 
 if ((${#TRACK_PATHS[@]} == 0)); then
-    while IFS= read -r p; do TRACK_PATHS+=("$p"); done < <(
-        find "$REPO_ROOT" -type d -path '*/tracks/*' -maxdepth 4 -mindepth 2 \
-            -not -path '*/.*' 2>/dev/null | sort
-    )
+    while IFS= read -r p; do TRACK_PATHS+=("$p"); done < <(discover_track_dirs "$REPO_ROOT")
 fi
 
 conflict_count=0
 declare -a conflicts=()
+declare -a track_rels=()
+declare -a track_includes=()
+declare -a track_excludes=()
+
 record() { conflicts+=("$1|$2|$3"); conflict_count=$((conflict_count + 1)); }
-
-# Parse a JSON or YAML array field "scope_includes:" / "scope_excludes:".
-# Returns space-separated tags on stdout. Anchors the array search on the
-# exact key so minified single-line JSON returns the correct payload.
-read_scope_array() {
-    local file="$1" key="$2"
-    if [[ ! -f "$file" ]]; then return 0; fi
-    case "$file" in
-        *.json)
-            awk -v key="$key" '
-                {
-                    # Match "key" : [ ... ] anchored to the exact key.
-                    pat = "\""key"\"[[:space:]]*:[[:space:]]*\\[[^]]*\\]"
-                    if (match($0, pat)) {
-                        s = substr($0, RSTART, RLENGTH)
-                        sub("^\""key"\"[[:space:]]*:[[:space:]]*", "", s)
-                        gsub(/[\[\]",]/, " ", s)
-                        print s
-                        exit
-                    }
-                }' "$file"
-            ;;
-        *.md)
-            awk -v key="$key" '
-                NR==1 && /^---$/ { in_fm=1; next }
-                in_fm && /^---$/ { exit }
-                in_fm && $0 ~ "^"key":" {
-                    sub("^"key":[[:space:]]*", "", $0)
-                    gsub(/[\[\]",]/, " ", $0)
-                    print $0
-                    exit
-                }' "$file"
-            ;;
-    esac
-}
-
-declare -A track_includes # track_rel -> "tag1 tag2 ..."
-declare -A track_excludes # track_rel -> "tag1 tag2 ..."
 
 for t in "${TRACK_PATHS[@]}"; do
     [[ -d "$t" ]] || { record "$t" "not-a-directory" ""; continue; }
@@ -110,25 +73,22 @@ for t in "${TRACK_PATHS[@]}"; do
         inc="$(read_scope_array "$track_dir/spec.md" scope_includes)"
         exc="$(read_scope_array "$track_dir/spec.md" scope_excludes)"
     fi
-    track_includes["$rel"]="$inc"
-    track_excludes["$rel"]="$exc"
+    track_rels+=("$rel")
+    track_includes+=("$inc")
+    track_excludes+=("$exc")
 done
 
-# Pairwise compare.
-tracks=("${!track_includes[@]}")
-for ((i=0; i<${#tracks[@]}; i++)); do
-    for ((j=i+1; j<${#tracks[@]}; j++)); do
-        a="${tracks[$i]}"
-        b="${tracks[$j]}"
-        a_inc="${track_includes[$a]:-}"
-        b_inc="${track_includes[$b]:-}"
-        a_exc="${track_excludes[$a]:-}"
-        b_exc="${track_excludes[$b]:-}"
+for ((i=0; i<${#track_rels[@]}; i++)); do
+    for ((j=i+1; j<${#track_rels[@]}; j++)); do
+        a="${track_rels[$i]}"
+        b="${track_rels[$j]}"
+        a_inc="${track_includes[$i]}"
+        b_inc="${track_includes[$j]}"
+        a_exc="${track_excludes[$i]}"
+        b_exc="${track_excludes[$j]}"
         for tag in $a_inc; do
             [[ -z "$tag" ]] && continue
             if [[ " $b_inc " == *" $tag "* ]]; then
-                # Both include `tag`. Mutual exclusion satisfied if either
-                # excludes a tag in the other's includes.
                 conflict=1
                 for ex in $a_exc; do
                     [[ -z "$ex" ]] && continue

@@ -16,6 +16,80 @@ json_escape() {
 }
 
 # Extract a top-level YAML frontmatter field value from a Markdown file.
+# Discover track directories under a repo root (default: caller's Draft repo).
+discover_track_dirs() {
+    local repo_root="${1:-}"
+    [[ -n "$repo_root" ]] || return 0
+    find "$repo_root" -type d -path '*/tracks/*' -maxdepth 4 -mindepth 2 \
+        -not -path '*/.*' 2>/dev/null | sort
+}
+
+# Extract a string value from minified or pretty-printed JSON.
+read_json_str() {
+    local file="$1" key="$2"
+    [[ -f "$file" ]] || return 0
+    awk -v key="$key" '
+        {
+            pat = "\""key"\"[[:space:]]*:[[:space:]]*\"[^\"]*\""
+            if (match($0, pat)) {
+                s = substr($0, RSTART, RLENGTH)
+                sub("^\""key"\"[[:space:]]*:[[:space:]]*\"", "", s)
+                sub("\"$", "", s)
+                print s
+                exit
+            }
+        }' "$file"
+}
+
+# Parse scope_includes / scope_excludes from metadata.json or spec.md frontmatter.
+read_scope_array() {
+    local file="$1" key="$2"
+    [[ -f "$file" ]] || return 0
+    case "$file" in
+        *.json)
+            awk -v key="$key" '
+                {
+                    pat = "\""key"\"[[:space:]]*:[[:space:]]*\\[[^]]*\\]"
+                    if (match($0, pat)) {
+                        s = substr($0, RSTART, RLENGTH)
+                        sub("^\""key"\"[[:space:]]*:[[:space:]]*", "", s)
+                        gsub(/[\[\]",]/, " ", s)
+                        print s
+                        exit
+                    }
+                }' "$file"
+            ;;
+        *.md)
+            awk -v key="$key" '
+                NR==1 && /^---$/ { in_fm=1; next }
+                in_fm && /^---$/ { exit }
+                in_fm && $0 ~ "^"key":" {
+                    sub("^"key":[[:space:]]*", "", $0)
+                    gsub(/[\[\]",]/, " ", $0)
+                    print $0
+                    exit
+                }' "$file"
+            ;;
+    esac
+}
+
+# Return the per-skill line cap from a caps config file (or GLOBAL_CAP).
+skill_line_cap() {
+    local skill_name="$1" caps_conf="$2" global_cap="$3"
+    local name cap
+    [[ -f "$caps_conf" ]] || { printf '%s' "$global_cap"; return; }
+    while read -r name cap; do
+        [[ -z "$name" || "$name" == \#* ]] && continue
+        if [[ "$name" == "*" ]]; then
+            global_cap="$cap"
+        elif [[ "$name" == "$skill_name" ]]; then
+            printf '%s' "$cap"
+            return
+        fi
+    done < "$caps_conf"
+    printf '%s' "$global_cap"
+}
+
 get_yaml_field() {
     local file="$1"
     local key="$2"

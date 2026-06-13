@@ -12,9 +12,9 @@
 #   --antigravity  Install to ~/.gemini/antigravity/skills/draft
 #   --gemini       Install to ./.gemini.md
 #
-# After copying, the script materializes the native graph binaries via Git LFS
-# (bin/<arch>/ is canonical; see bin/README.md) and verifies the selected binary.
-# Both steps fail gracefully so air-gapped / placeholder installs still succeed.
+# After copying, the script fetches the knowledge-graph engine binary on demand
+# (see scripts/fetch-memory-engine.sh and bin/README.md). Fetch failures are
+# non-fatal so air-gapped / placeholder installs still succeed.
 #
 
 set -euo pipefail

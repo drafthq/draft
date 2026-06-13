@@ -289,7 +289,7 @@ init → learn → (updates guardrails.md)
 | Cross-Skill Dispatch | `core/shared/cross-skill-dispatch.md` | bughunt, deep-review, implement, review |
 | Jira Sync | `core/shared/jira-sync.md` | bughunt, review, implement (when ticket linked) |
 | Graph Query | `core/shared/graph-query.md` | init, implement, bughunt, review, debug, decompose, index, impact |
-| Graph Mermaid | `graph/src/mermaid.js` | init (injects module-deps + proto-map into architecture.md) |
+| Graph Mermaid | `scripts/tools/mermaid-from-graph.sh` | init (injects module-deps + proto-map into architecture.md) |
 
 ## Artifact Flow
 

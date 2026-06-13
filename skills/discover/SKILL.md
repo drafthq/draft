@@ -31,7 +31,8 @@ Strong keyword and phrase matching with fallback to a menu when intent is broad 
 | learn patterns, discover conventions, update guardrails, anti-patterns | `/draft:learn` | Pattern mining + guardrail evolution |
 | index services, aggregate context, monorepo index | `/draft:index` | Monorepo service context aggregation |
 | tour, walkthrough, onboard me, getting started tour | `/draft:tour` | Guided interactive project tour |
-| impact, blast radius, change impact, analytics | `/draft:impact` | Telemetry-driven change impact reports |
+| blast radius, code impact, affected modules, downstream callers | `/draft:review` or `scripts/tools/graph-impact.sh` | Graph-derived blast-radius before merge |
+| impact, delivery telemetry, track analytics, CDD effectiveness | `/draft:impact` | Project-wide track delivery telemetry |
 | assist review, help reviewer, PR architectural audit | `/draft:assist-review` | Risk audit to support human reviewers |
 
 ## Dispatch Examples

@@ -264,29 +264,25 @@ derive from IR fields and reader deep-dives. Do not read source files for these.
 
 ## Output
 
-Write the full draft/architecture.md following the standard 28-section template.
-Begin immediately with the YAML frontmatter, then Section 1. Do not explain your plan first.
-Section 7 must contain the reader deep-dives in full — paste them, don't summarize.
+Write the full `draft/architecture.md` following the **10-section graph-primary template** in `core/templates/architecture.md`.
+Begin immediately with the YAML frontmatter, then the mandatory section headings. Do not explain your plan first.
 
 MANDATORY output structure (in this exact order):
-1. YAML frontmatter (---project/git metadata---)
-2. # Architecture: {PROJECT_NAME}
-3. ## Table of Contents (numbered 1-28 + Appendices A-E)
-4. ## 1. Executive Summary
-5. ## 2. AI Agent Quick Reference
-6. ## 3. System Identity & Purpose
-7. ## 4. Architecture Overview (with 4.1 High-Level Topology diagram, 4.2 Process Lifecycle, 4.3 Initialization Sequence diagram, 4.4 Module Dependency Graph slot)
-8. ## 5. Component Map & Interactions (with 5.1 Orchestrator table, 5.2 DI Pattern, 5.3 Interaction Matrix)
-9. ## 6. Core Operational Flows, Lifecycles & State Machines (2–5 high-fidelity behavioral diagrams from graph + full indexed knowledge)
-10. ## 7. Core Modules Deep Dive (reader deep-dives pasted verbatim — one #### per module, ##### per sub-module only when graph shows clear boundary; graph block + one workflow/state diagram per module is primary)
-11. ## 8. Concurrency Model & Thread Safety (thread pool table, locking strategy, execution topology diagram)
-12. ## 9. Framework & Extension Points (plugin types table, registry mechanism, core interfaces with REAL code)
-13. ## 10. Full Catalog of Implementations (architecturally significant implementations and extension points surfaced by graph; no exhaustive enumeration requirement)
-14. ## 11–28: All remaining sections per template
-15. ## Appendix A–E: All appendices per template
+1. YAML frontmatter (`project`, `module`, `generated_by`, `generated_at`, graph fidelity block when available)
+2. `# Architecture: {PROJECT_NAME}`
+3. `## 1. Executive Summary + Graph Health Dashboard`
+4. `## 2. Critical Invariants & Safety Rules (with provenance)`
+5. `## 3. Primary Control & Data Flows (Graph + Synthesis)`
+6. `## 4. Module & Dependency Map (Primarily Graph-Derived)`
+7. `## 5. Concurrency, Ownership & Isolation Model`
+8. `## 6. Error Handling & Failure Mode Catalog`
+9. `## 7. State & Data Truth Sources + Reconciliation`
+10. `## 8. Extension Points & Safe Mutation Patterns`
+11. `## 9. Graph Coverage Gaps & Known Limitations (MANDATORY)`
+12. `## 10. Relationship to Other Authoritative Documentation` (when Context Audit is high/medium)
 
-Do NOT produce freeform sections like "## Module deep-dive: X" or "## Key architectural patterns".
-Every section heading MUST match the template numbering exactly.
+Embed reader IR insights inside §3–§8 as graph-grounded diagrams and concise synthesis — not as a separate legacy Section 7 volume.
+Do NOT produce freeform sections or resurrect 28-section numbering.
 ```
 
 ---

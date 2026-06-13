@@ -239,7 +239,7 @@ If `draft/graph/schema.yaml` does not exist, set `Graph files queried: NONE` and
 
 ## Graph Usage Report (append to checklist)
 
-Emit the canonical footer from [core/shared/graph-usage-report.md](../../core/shared/graph-usage-report.md) §Canonical footer. The lint hook `scripts/tools/check-graph-usage-report.sh` validates the section on save.
+Emit the canonical footer from [core/shared/graph-usage-report.md](../../core/shared/graph-usage-report.md). The lint hook `scripts/tools/check-graph-usage-report.sh` validates the section on save.
 ## Cross-Skill Dispatch
 
 - **Auto-invoked by:** `/draft:upload` (pre-upload verification)

@@ -1,18 +1,18 @@
-## architecture.md Specification
+## architecture.md Specification (Supplementary Notes)
 
-Generate `draft/architecture.md` — a comprehensive human-readable engineering reference.
+> **DEPRECATED for structure.** The authoritative contract is `core/templates/architecture.md` (10-section graph-primary). If anything below conflicts with that template or `skills/init/SKILL.md`, the template wins.
+
+Generate `draft/architecture.md` — a graph-primary human-readable engineering reference.
 
 **Output format**:
 - Markdown report with Mermaid diagrams, tables, and code blocks
-- **Target length: fidelity-first** — cover all 28 sections + 5 appendices with graph-grounded accuracy and diagram correctness. Prose volume is secondary to correctness; short sections that are faithful to the graph + diagrams are preferred over padded exhaustive text.
-- Include a **Table of Contents** with numbered sections
+- **Target length: fidelity-first** — cover all 10 mandatory sections with graph-grounded accuracy and diagram correctness
 - End the document with: `"End of analysis. Queries should reference the .ai-context.md file for token efficiency."`
 
 **CRITICAL — Template Structure Compliance:**
-- The output MUST use the EXACT 28-section numbered structure defined below (## 1. through ## 28. plus Appendix A–E)
-- Do NOT create freeform/custom section names (e.g., "## Module deep-dive: X", "## Key architectural patterns")
-- Do NOT collapse multiple template sections into one
-- Do NOT skip section numbers — if a section does not apply, include the heading with "N/A — {reason}"
+- The output MUST use the EXACT 10-section structure from `core/templates/architecture.md` (§1–§10)
+- Do NOT create freeform/custom section names or resurrect 28-section numbering
+- Do NOT skip mandatory sections — if a section does not apply, include the heading with "N/A — {reason}"
 - The knowledge graph (`draft/graph/`) is the **deterministic ground truth** for structure (modules, dependencies, public surfaces, edges, hotspots). LLM synthesis exists to interpret the graph into actionable behavioral understanding — primarily through accurate diagrams — plus minimal narrative that does not contradict the graph.
 - **Diagrams over prose volume.** Prefer one correct workflow/state/sequence diagram per major module or operational model over long responsibility paragraphs. A 20-line Mermaid diagram that faithfully reflects real call paths and state transitions from the graph is more valuable for downstream code generation than 300 words of generic description.
 - **Accuracy and fidelity to graph + host index > historical length targets.** It is acceptable (and preferred) for sections to be short when the graph block + diagrams already convey the design.

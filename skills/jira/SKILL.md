@@ -17,7 +17,7 @@ Parse `$ARGUMENTS` and dispatch:
 | `(no args)`, `preview`, `preview <track-id>` | **preview** (default) | Generate `jira-export-<timestamp>.md` — **one Story** containing all phases/tasks |
 | `preview --epic ...` | **preview --epic** | Generate rich export: 1 Epic + 1–3 Stories (max) |
 | `create`, `create <track-id>` | **create** | Create **1 Story** (default) via MCP |
-| `review <JIRA_ID>` | **review** | Full qualification review of any Jira ticket — delegates to [review.md](review.md) |
+| `review <JIRA_ID>` | **review** | Full qualification review of any Jira ticket — delegates to [references/review.md](references/review.md) |
 
 - `preview` is the default when no subcommand is supplied.
 - `review` requires a Jira ID as the next argument. Validate format `<PROJECT>-<NUMBER>` (e.g., `ENG-446236`). If numeric-only, prompt for project prefix — do NOT assume.

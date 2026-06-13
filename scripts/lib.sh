@@ -33,6 +33,7 @@ SKILL_ORDER=(
     deploy-checklist
     bughunt
     review
+    upload
     plan
     ops
     docs

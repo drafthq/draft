@@ -132,7 +132,7 @@ The build script transforms skill content for platform compatibility:
 ## End-User Context
 
 When users run `/draft:init`, it creates a `draft/` directory in their project with:
-- **`architecture.md`** — Source of truth: 28-section comprehensive engineering reference + 5 appendices, with Mermaid diagrams
+- **`architecture.md`** — Source of truth: 10-section graph-primary engineering reference with Mermaid diagrams
 - **`.ai-context.md`** — Token-optimized 200-400 line AI context (derived from architecture.md)
 - **`.ai-profile.md`** — Ultra-compact 20-50 line always-injected profile (derived from .ai-context.md)
 - **`product.md`**, **`tech-stack.md`**, **`workflow.md`**, **`guardrails.md`** — Project config files

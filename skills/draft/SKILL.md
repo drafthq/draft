@@ -23,7 +23,7 @@ Draft is a methodology for structured software development: **Context → Spec &
 
 ### Canonical Workflow
 ```
-init → plan → implement → review
+init → plan → implement → review → upload
                ↑            |
                └────────────┘  (review auto-invoked at phase boundaries)
 ```
@@ -69,6 +69,7 @@ These commands remain available for targeted, specialist execution outside paren
 * `/draft:debug` - Structured 4-stage debugging flow (reproduce → isolate → diagnose → fix)
 * `/draft:standup` - Summarize git activity and file changes for standup reporting
 * `/draft:deploy-checklist` - Pre-deployment checklist verification with automated rollback triggers
+* `/draft:upload` - Pre-upload gate: review, HLD approvals, validator chain, then git upload/PR
 * `/draft:incident-response` - Coordinate incident lifecycle (triage → mitigate → postmortem)
 
 #### 4. Setup & Documentation

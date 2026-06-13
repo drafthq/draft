@@ -55,10 +55,7 @@ while (($#)); do
 done
 
 if ((${#TRACK_PATHS[@]} == 0)); then
-    while IFS= read -r p; do TRACK_PATHS+=("$p"); done < <(
-        find "$REPO_ROOT" -type d -path '*/tracks/*' -maxdepth 4 -mindepth 2 \
-            -not -path '*/.*' 2>/dev/null | sort
-    )
+    while IFS= read -r p; do TRACK_PATHS+=("$p"); done < <(discover_track_dirs "$REPO_ROOT")
 fi
 
 violation_count=0
@@ -69,23 +66,8 @@ record() {
     violation_count=$((violation_count + 1))
 }
 
-read_json_str() {
-    awk -v key="$2" '
-        {
-            pat = "\""key"\"[[:space:]]*:[[:space:]]*\"[^\"]*\""
-            if (match($0, pat)) {
-                s = substr($0, RSTART, RLENGTH)
-                sub("^\""key"\"[[:space:]]*:[[:space:]]*\"", "", s)
-                sub("\"$", "", s)
-                print s; exit
-            }
-        }' "$1"
-}
-
 # Extract citations from a markdown file, skipping VERIFIER:IGNORE blocks.
-# Output: file:line:cite where cite is one of
-# path/to/file.ext:LINE
-# path/to/file.ext:LINE-LINE
+# Output: file<TAB>line<TAB>cite (cite is path:LINE or path:LINE-LINE).
 extract_citations() {
     local md="$1"
     awk '
@@ -95,16 +77,11 @@ extract_citations() {
         ignore == 1 { next }
         /\(planned\)|\[New file/ { next }
         {
-            # Match either `path:N` or `path:N-M`. Path = no spaces, must
-            # contain a dot or slash. Strip scheme URLs first so their
-            # path-like fragments (e.g. host/foo.js:42) are not mistaken
-            # for local citations.
             s = $0
             gsub(/https?:\/\/[^[:space:]]*/, "", s)
-            while (match(s, /[A-Za-z0-9_./-]+\.[A-Za-z0-9]+:[0-9]+(-[0-9]+)?/)) {
+            while (match(s, /[A-Za-z0-9_][A-Za-z0-9_./-]*\.[A-Za-z0-9]+:[0-9]+/)) {
                 cite = substr(s, RSTART, RLENGTH)
-                # Strip leading slash / quote noise.
-                printf("%s:%d:%s\n", FILENAME, NR, cite)
+                printf("%s\t%d\t%s\n", FILENAME, NR, cite)
                 s = substr(s, RSTART + RLENGTH)
             }
         }
@@ -161,8 +138,17 @@ verify_one_citation() {
 
     local total_lines
     total_lines="$(git -C "$repo_root" show "$commit":"$resolved_path" 2>/dev/null | wc -l | tr -d ' ')"
+    if (( lo < 1 )); then
+        printf 'invalid-line|cite %s has line < 1\n' "$cite"
+        return 1
+    fi
     if (( hi > total_lines + TOLERANCE )); then
         printf 'past-eof|file %s has %d lines, cite %s exceeds (+tol %d)\n' \
+            "$resolved_path" "$total_lines" "$cite" "$TOLERANCE"
+        return 1
+    fi
+    if (( lo > total_lines + TOLERANCE )); then
+        printf 'past-eof|file %s has %d lines, cite %s start exceeds (+tol %d)\n' \
             "$resolved_path" "$total_lines" "$cite" "$TOLERANCE"
         return 1
     fi
@@ -199,11 +185,8 @@ scan_one_track() {
 
     while IFS= read -r f; do
         local rel_md="${f#"$track_dir/"}"
-        while IFS= read -r line; do
-            local md_line="${line%%:*}"
-            local rest="${line#*:}"
-            local lineno="${rest%%:*}"
-            local cite="${rest#*:}"
+        while IFS=$'\t' read -r md_file lineno cite; do
+            local md_line="$md_file"
             local result rc=0
             # set +e to capture rc; set -e would exit on a non-zero return.
             set +e

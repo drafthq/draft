@@ -3,7 +3,7 @@
    ============================================================
    Tab-switcher with 6 fixtures showing real-shaped JSON output
    from each graph query mode. No live engine; output is static
-   but accurate per docs/shared/graph-query.md schema.
+   but accurate per core/shared/graph-query.md schema.
    ============================================================ */
 (function () {
     'use strict';

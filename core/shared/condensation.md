@@ -73,24 +73,18 @@ Start `draft/.ai-context.md` with a stable frontmatter block. Git state is centr
 
 Transform each `architecture.md` section into machine-optimized format using this mapping:
 
-| architecture.md Section | .ai-context.md Section | Transformation |
-|------------------------|------------------------|----------------|
-| Executive Summary | META | Extract key-value pairs only (type, lang, pattern, build, test, entry, config) |
-| Architecture Overview (Mermaid) | GRAPH:COMPONENTS | Convert Mermaid diagrams to tree notation using `├─` / `└─` |
-| Component Map | GRAPH:COMPONENTS | Merge into the same tree |
-| **Core Operational Flows, Lifecycles & State Machines** (§6) | **GRAPH:OPERATIONAL** + GRAPH:DATAFLOW | Highest fidelity requirement. Extract primary behavioral models (states, transitions, error/recovery paths) in compact structured form. |
-| Data Flow (Mermaid) | GRAPH:DATAFLOW | Convert to `FLOW:{Name}` with arrow notation (merge with OPERATIONAL where appropriate) |
-| External Dependencies | GRAPH:DEPENDENCIES | Convert to `A -[protocol]-> B` format |
-| Dependency Injection | WIRING | Extract mechanism + tokens/getters lists |
-| Critical Invariants | INVARIANTS | One line per invariant: `[CATEGORY] name: rule @file:line` |
-| Framework/Extension Points | INTERFACES + EXTEND | Condensed signatures + cookbook steps |
-| Full Catalog | CATALOG:{Category} | Pipe-separated rows: `id|type|file|purpose` |
-| Concurrency Model | THREADS + CONCURRENCY | Pipe-separated rows + rules with violation consequences |
-| Configuration | CONFIG | Pipe-separated rows: `param|default|critical:Y/N|purpose` |
-| Error Handling | ERRORS | Key-value pairs: `scenario: recovery` |
-| Build/Test | TEST + META | Extract exact commands |
-| File Structure | FILES | Concept-to-path mappings: `entry: path`, `config: path`, etc. |
-| Glossary | VOCAB | `term: definition` pairs |
+| architecture.md Section (10-section graph-primary) | .ai-context.md Section | Transformation |
+|--------------------------------------------------|------------------------|----------------|
+| §1 Executive Summary + Graph Health Dashboard | META + GRAPH:HEALTH | Extract key-value pairs; dashboard metrics as compact rows |
+| §2 Critical Invariants & Safety Rules | INVARIANTS | One line per invariant: `[CATEGORY] name: rule @file:line` |
+| §3 Primary Control & Data Flows | GRAPH:OPERATIONAL + GRAPH:DATAFLOW | Convert Mermaid to `FLOW:{Name}` arrow notation |
+| §4 Module & Dependency Map | GRAPH:COMPONENTS + GRAPH:MODULES | Tree notation `├─` / `└─`; module fan-in/out from graph |
+| §5 Concurrency, Ownership & Isolation | THREADS + CONCURRENCY | Pipe-separated rows + isolation rules |
+| §6 Error Handling & Failure Mode Catalog | ERRORS | Key-value pairs: `scenario: recovery` |
+| §7 State & Data Truth Sources | GRAPH:DATAFLOW + STATE | Truth sources and reconciliation paths |
+| §8 Extension Points & Safe Mutation | INTERFACES + EXTEND | Condensed signatures + cookbook steps |
+| §9 Graph Coverage Gaps | GRAPH:GAPS | Bullet list of known limitations |
+| §10 Relationship to Other Docs | META:DOCS | Pointer map to authoritative files |
 
 #### Step 3.5: Generate Graph Summary Sections
 

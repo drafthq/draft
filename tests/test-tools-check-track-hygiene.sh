@@ -82,3 +82,5 @@ assert "5 TBDs at ready-for-review (cap 3) → exit 1" "$([[ "$rc" == "1" ]] && 
 output="$("$TOOL" --json "$FIXTURE/tracks/clean" 2>&1)"
 assert "JSON mode emits violation_count key" \
     "$(echo "$output" | grep -q '"violation_count"' && echo true || echo false)"
+
+finish_test "check-track-hygiene.sh tests"

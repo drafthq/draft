@@ -269,7 +269,7 @@ Template selection depends on scope:
 - Project-wide: Update `draft/architecture.md` with the module changes, then run the Condensation Subroutine (defined in `core/shared/condensation.md`) to regenerate `draft/.ai-context.md`.
 - Track-scoped: write to `draft/tracks/<id>/hld.md` and (when triggered) `draft/tracks/<id>/lld.md`.
 
-> ** context:** HLD and LLD are design-mandated review artifacts. HLD is approved by Technical Leads / Architecture Review Board / Cloud Operations / QA / PM Leads before significant implementation; LLD is approved by Team Leads / Technical Leads / QA before code review begins. `/draft:upload` gates `git upload` for high-criticality tracks on the HLD Approvals table being populated.
+> **Context:** HLD and LLD are design-mandated review artifacts. HLD is approved by Technical Leads / Architecture Review Board / Cloud Operations / QA / PM Leads before significant implementation; LLD is approved by Team Leads / Technical Leads / QA before code review begins. `/draft:upload` gates `git upload` for high-criticality tracks on the HLD Approvals table being populated.
 
 ### Step 5a: HLD Generation (Track-Scoped, Always)
 

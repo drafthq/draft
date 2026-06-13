@@ -55,10 +55,7 @@ while (($#)); do
 done
 
 if ((${#TRACK_PATHS[@]} == 0)); then
-    while IFS= read -r p; do TRACK_PATHS+=("$p"); done < <(
-        find "$REPO_ROOT" -type d -path '*/tracks/*' -maxdepth 4 -mindepth 2 \
-            -not -path '*/.*' 2>/dev/null | sort
-    )
+    while IFS= read -r p; do TRACK_PATHS+=("$p"); done < <(discover_track_dirs "$REPO_ROOT")
 fi
 
 # Patterns
@@ -73,27 +70,6 @@ record() {
     local track="$1" kind="$2" file="$3" line="$4" detail="$5"
     violations+=("$track|$kind|$file|$line|$detail")
     violation_count=$((violation_count + 1))
-}
-
-# Read a JSON value from metadata.json: works without jq. Handles both
-# pretty-printed (one field per line) and minified (all-on-one-line) JSON
-# by anchoring on the exact "key": "value" pair.
-read_json_str() {
-    local file="$1" key="$2"
-    awk -v key="$key" '
-        {
-            # Look for "key": "...". Use a literal-quote regex around the key.
-            pat = "\""key"\"[[:space:]]*:[[:space:]]*\"[^\"]*\""
-            if (match($0, pat)) {
-                s = substr($0, RSTART, RLENGTH)
-                # Strip the leading "key":<space>" portion.
-                sub("^\""key"\"[[:space:]]*:[[:space:]]*\"", "", s)
-                sub("\"$", "", s)
-                print s
-                exit
-            }
-        }
-    ' "$file"
 }
 
 scan_one_track() {
@@ -145,7 +121,7 @@ scan_one_track() {
         while IFS= read -r line; do
             n=$((n + 1))
             # Detect a markdown table header starting with | Role |
-            if [[ "${line,,}" =~ ^\|[[:space:]]*role[[:space:]]*\| ]]; then
+            if echo "$line" | grep -qiE '^\|[[:space:]]*role[[:space:]]*\|'; then
                 in_table=1
                 continue
             fi

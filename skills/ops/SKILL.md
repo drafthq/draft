@@ -21,6 +21,7 @@ Intent keywords drive deterministic dispatch. Multi-intent requests are sequence
 
 | User Intent Keywords                     | Dispatches To              | Purpose |
 |------------------------------------------|----------------------------|---------|
+| upload for review, git upload, submit code, open PR | `/draft:upload` | Pre-upload gate: review, approvals, validators, then push |
 | deploy checklist, pre-deploy, release check, readiness | `/draft:deploy-checklist` | Pre-deployment verification with rollback triggers |
 | incident, outage, sev, postmortem, triage | `/draft:incident-response` | Full incident lifecycle (triage → mitigate → postmortem) |
 | standup, daily summary, what did I do, activity report | `/draft:standup` | Git activity standup summary (read-only) |

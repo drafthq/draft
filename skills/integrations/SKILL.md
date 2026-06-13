@@ -11,8 +11,8 @@ It handles connectors and exports to external systems like Jira.
 
 Specialist integration workflows remain available as named modes:
 
-- `/draft:integrations jira-preview` (formerly `/draft:jira-preview`)
-- `/draft:integrations jira-create` (formerly `/draft:jira-create`)
+- `/draft:jira preview` (or `/draft:integrations jira-preview`)
+- `/draft:jira create` (or `/draft:integrations jira-create`)
 
 ## Step 1: Parse Intent and Route
 
@@ -22,8 +22,8 @@ Examine the user's input and route to the correct integrations workflow.
 
 If the user explicitly invokes a specialist mode, route directly:
 
-- `/draft:integrations jira-preview` → follow `/draft:jira-preview`
-- `/draft:integrations jira-create` → follow `/draft:jira-create`
+- `/draft:integrations jira-preview` → follow `/draft:jira preview`
+- `/draft:integrations jira-create` → follow `/draft:jira create`
 
 ### Intent Routing
 
@@ -31,8 +31,8 @@ If no explicit mode is specified, infer the intent from the user's prompt:
 
 | Intent | Action | Route |
 |--------|--------|-------|
-| "Export to Jira", "Preview Jira issues", "Show me what you'll create in Jira" | Jira Preview | `/draft:jira-preview` |
-| "Create Jira issues", "Sync to Jira", "Make tickets" | Jira Create | `/draft:jira-create` |
+| "Export to Jira", "Preview Jira issues", "Show me what you'll create in Jira" | Jira Preview | `/draft:jira preview` |
+| "Create Jira issues", "Sync to Jira", "Make tickets" | Jira Create | `/draft:jira create` |
 
 ## Step 2: Bare Parent Command Fallback
 

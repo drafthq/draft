@@ -22,6 +22,13 @@ assert() {
     fi
 }
 
+finish_test() {
+    local suite_name="${1:-test suite}"
+    echo ""
+    echo "=== Results: $PASS passed, $FAIL failed ==="
+    exit "$FAIL"
+}
+
 # Write a mock codebase-memory-mcp engine to $1 and echo its path.
 # The mock answers `--version` and `cli <tool> <json>` with deterministic JSON,
 # so graph-engine tools can be exercised in CI without the real binary.
