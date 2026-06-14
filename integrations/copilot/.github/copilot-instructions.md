@@ -1139,7 +1139,6 @@ The document is:
 
 **Full details, per-section guidance, provenance rules, and examples** live in:
 - `core/templates/architecture.md` (the source of truth for the 10 sections + Generation Contract)
-- `docs/research/proposed-graph-backed-architecture-template.md` (design rationale and fidelity rules)
 - `references/architecture-spec.md` (deprecated legacy notes — **10-section template wins on any conflict**)
 
 There is no legacy 28-section structure and no volume targets. The template itself is the contract.

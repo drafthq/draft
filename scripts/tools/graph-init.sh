@@ -5,7 +5,7 @@
 # ROOT (the spine — the single structural source of truth), then builds a
 # scope-local snapshot and links a sub-module's graph up to the root.
 #
-# Model (see docs/design/init-graph-simplification.md):
+# Model:
 #   - ROOT resolution: nearest ancestor ABOVE scope containing draft/ (bounded by
 #     the git toplevel)  →  git toplevel  →  scope itself (no git / module-local).
 #   - The engine is the default capability tier. If the codebase-memory-mcp binary
