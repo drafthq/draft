@@ -8,7 +8,7 @@
 # which scripts/tools/_lib.sh:find_memory_bin resolves.
 #
 # Pinned by default for reproducibility; override with CMM_VERSION (a tag, e.g.
-# "v0.7.0", or "latest").
+# "v0.8.1", or "latest").
 #
 # Usage:
 #   scripts/fetch-memory-engine.sh [--dest DIR] [--force]
@@ -21,7 +21,7 @@
 set -euo pipefail
 
 REPO="DeusData/codebase-memory-mcp"
-DEFAULT_VERSION="v0.7.0"   # pinned; bump deliberately
+DEFAULT_VERSION="v0.8.1"   # pinned; bump deliberately. NOTE: tag must carry the leading "v" AND have published assets (0.7.0 had none → 404).
 VERSION="${CMM_VERSION:-$DEFAULT_VERSION}"
 DEST="$HOME/.cache/draft/bin"
 FORCE=0

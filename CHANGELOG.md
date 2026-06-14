@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.8.1] - 2026-06-14
+
+### Fixed
+- **Knowledge-graph engine fetch no longer 404s.** `scripts/fetch-memory-engine.sh`
+  pinned `DEFAULT_VERSION="v0.7.0"`, but the upstream `codebase-memory-mcp` `0.7.0`
+  release publishes no binary assets, so every fetch failed with a 404 and graph
+  features stayed unavailable ("graph engine unavailable — no snapshot written").
+  Bumped the pin to `v0.8.1` (the current release with published darwin/linux
+  assets and a verified `checksums.txt`). Fixes both the manual fetch and the
+  `draft install` graph download, which delegate to the same script.
+
 ## [2.8.0] - 2026-06-13
 
 ### Changed
