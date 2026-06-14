@@ -55,7 +55,6 @@ graph TD
     subgraph "Architecture"
         decompose["/draft:decompose"]
         adr["/draft:adr"]
-        index["/draft:index"]
         tech-debt["/draft:tech-debt"]
         impact["/draft:impact"]
     end
@@ -96,7 +95,6 @@ graph TD
     init --> learn
     init --> adr
     init --> bughunt
-    init --> index
     init --> status
     init --> deep-review
     init --> debug
@@ -124,7 +122,6 @@ graph TD
     discover --> coverage
     discover --> testing-strategy
     discover --> learn
-    discover --> index
     discover --> tour
     discover --> impact
     discover --> assist-review
@@ -178,8 +175,7 @@ graph TD
     impact -.->|reads graph| new-track
     impact -.->|reads graph| implement
 
-    %% Monorepo chain
-    init -.->|per-service| index
+    %% Monorepo: init is scope-aware — root build + module→root graph link (no separate index command)
 ```
 
 ## Dependency Matrix
@@ -193,7 +189,7 @@ graph TD
 | `implement` | init, new-track | review (triggers at phase boundaries) | Modifies source code; regenerates .ai-context.md |
 | `review` | init, new-track | implement (called at phase boundaries) | review-report-latest.md |
 | `quick-review` | init | review (fast alternative) | quick-review-report.md |
-| `bughunt` | init | review (optional), index (optional), jira (optional) | bughunt-report-latest.md |
+| `bughunt` | init | review (optional), jira (optional) | bughunt-report-latest.md |
 | `deep-review` | init | -- | deep-review audit report |
 | `coverage` | init, new-track | -- | Regenerates .ai-context.md |
 | `testing-strategy` | init | coverage (informs), bughunt (informs) | testing-strategy.md |
@@ -248,7 +244,8 @@ deep-review ──→ tech-debt ──→ new-track (prioritized items)
 
 ### Monorepo Flow
 ```
-init (per-service) → index (at root) → aggregated context
+init (root)       → whole-repo code-graph spine + sparse root map
+init (sub-module) → module snapshot + root-link.json → cross-module context via the root spine
 ```
 
 ### Quality Audit Flow
@@ -280,15 +277,15 @@ init → learn → (updates guardrails.md)
 
 | Subroutine | Defined In | Called By |
 |------------|-----------|----------|
-| Condensation Subroutine (.ai-context.md regeneration) | `core/shared/condensation.md` | implement, decompose, coverage, index |
+| Condensation Subroutine (.ai-context.md regeneration) | `core/shared/condensation.md` | implement, decompose, coverage |
 | Standard File Metadata (YAML frontmatter) | `init` | All skills that generate draft/ files |
 | Three-Stage Review | `review` | implement (at phase boundaries) |
-| Signal Classification | `init` | init refresh, index (future) |
+| Signal Classification | `init` | init refresh |
 | Pattern Learning | `core/shared/pattern-learning.md` | learn, bughunt, review, deep-review (updates guardrails.md) |
 | Context Loading | `core/shared/draft-context-loading.md` | All skills requiring draft/ context |
 | Cross-Skill Dispatch | `core/shared/cross-skill-dispatch.md` | bughunt, deep-review, implement, review |
 | Jira Sync | `core/shared/jira-sync.md` | bughunt, review, implement (when ticket linked) |
-| Graph Query | `core/shared/graph-query.md` | init, implement, bughunt, review, debug, decompose, index, impact |
+| Graph Query | `core/shared/graph-query.md` | init, implement, bughunt, review, debug, decompose, impact |
 | Graph Mermaid | `scripts/tools/mermaid-from-graph.sh` | init (injects module-deps + proto-map into architecture.md) |
 
 ## Artifact Flow

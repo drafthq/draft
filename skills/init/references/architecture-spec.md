@@ -161,14 +161,14 @@ Write the `GRAPH:module-deps` injection slot into architecture.md:
 
 If graph build succeeded (Step 1.4.7 completed), write the populated slot content using the diagram from Step 1.4.7. If filtered (>30 modules), include the filter note. Dashed edges indicate circular dependencies.
 
-If graph binary was not found: write the slot with placeholder body so draft:index can populate it later:
+If graph binary was not found: write the slot with placeholder body so draft:init --graph-only can populate it later:
 ```
 <!-- GRAPH:module-deps:START -->
-[Graph data unavailable — run draft:index to populate after graph binary is installed]
+[Graph data unavailable — run draft:init --graph-only to populate after graph binary is installed]
 <!-- GRAPH:module-deps:END -->
 ```
 
-The slot markers MUST always be written — they are required for draft:index refresh to function.
+The slot markers MUST always be written — they are required for draft:init --graph-only refresh to function.
 
 #### 4.2 Process Lifecycle (or Usage Lifecycle for libraries)
 
@@ -1078,11 +1078,11 @@ If graph build succeeded and proto files exist (Step 1.4.7 completed), write the
 If graph binary was not found or no proto files exist, write the slot with placeholder:
 ```
 <!-- GRAPH:proto-map:START -->
-[Graph data unavailable — run draft:index to populate after graph binary is installed]
+[Graph data unavailable — run draft:init --graph-only to populate after graph binary is installed]
 <!-- GRAPH:proto-map:END -->
 ```
 
-The slot markers MUST always be written — they are required for draft:index refresh to function.
+The slot markers MUST always be written — they are required for draft:init --graph-only refresh to function.
 
 ---
 

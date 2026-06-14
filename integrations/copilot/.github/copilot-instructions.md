@@ -31,7 +31,7 @@ When `draft/` exists in the project, always consider:
 | Command | Purpose |
 |---------|---------|
 | `draft` | Show overview and available commands |
-| `draft init` | Initialize project (run once) |
+| `draft init [refresh] [--graph-only] [--module-only]` | Initialize project context + code-graph memory; scope-aware (root or sub-module) |
 | `draft new-track <description>` | Create feature/bug track |
 | `draft implement` | Execute tasks from plan |
 | `draft review [--track <id>]` | Three-stage code review |
@@ -57,7 +57,6 @@ When `draft/` exists in the project, always consider:
 | `draft status` | Show progress overview |
 | `draft revert` | Git-aware rollback |
 | `draft change <description>` | Handle mid-track requirement changes |
-| `draft index [--init-missing]` | Aggregate monorepo service contexts |
 | `draft tour` | Interactive onboarding tour |
 | `draft impact` | Telemetry and analytics insights |
 | `draft assist-review` | Assist human reviewers with architectural risk audit |
@@ -124,7 +123,7 @@ Recognize and use these throughout plan.md:
 
 ## Init Command
 
-When user says "init draft" or "draft init [refresh]":
+When user says "init draft", "build the code graph", or "draft init [refresh] [--graph-only] [--module-only]":
 
 Initialize a Draft project for Context-Driven Development.
 
@@ -314,17 +313,23 @@ synced_to_commit: "a1b2c3d4e5f6789012345678901234567890abcd"
 
 Check for arguments:
 - `refresh`: Update existing context without full re-init
-- `index`: Route to `draft index`
+- `--graph-only`: Build/refresh only the code-graph knowledge memory (no markdown) — see the fast path below
+- `--module-only`: When run in a sub-module, do not touch the root graph (the module→root link is marked `pending`)
 - `discover`: Route to `draft discover`
+
+> `draft init` is the **single entry point** for building context — there is no separate `index` command. Init is scope-aware (root vs sub-module); see **Scope Detection** below.
 
 ### Route Explicit Modes Before Initialization
 
 If the user explicitly invoked a specialist mode, route directly:
 
-- `draft init index` → follow `draft index`
 - `draft init discover` → follow `draft discover`
 
 Explicit mode always wins. Do not perform standard initialization if an explicit mode is requested.
+
+### `--graph-only` Fast Path
+
+If `--graph-only` is present, run **Step 1.4** (scope-aware, root-first graph build via `graph-init.sh`) and **STOP** — generate no `architecture.md` or other markdown. This is the fast path to (re)build the whole-repo code-graph knowledge memory; in a sub-module it also ensures the root spine exists and writes the module→root link. This path is allowed even when `draft/` already exists (it refreshes the graph in place — no `draft.tmp/` staging, no overwrite prompt).
 
 ### Standard Init Check
 
@@ -357,16 +362,16 @@ mv draft.tmp/ draft/
 
 > **Forced re-init:** If `draft/` exists and the user explicitly requests a fresh init (not refresh), confirm with user before removing the existing `draft/` directory.
 
-### Monorepo Detection
+### Scope Detection (root vs sub-module)
 
-Check for monorepo indicators:
-- Multiple `package.json` / `go.mod` / `Cargo.toml` in child directories
-- `lerna.json`, `pnpm-workspace.yaml`, `nx.json`, or `turbo.json` at root
-- `packages/`, `apps/`, `services/` directories with independent manifests
+`draft init` is the single entry point and is **scope-aware** — it works the same whether run at the repository root or inside a sub-module. The root-first graph behavior is handled mechanically by `graph-init.sh` in Step 1.4; you do not detect the monorepo shape by hand.
 
-If monorepo detected:
-- Announce: "Detected monorepo structure. Consider using `draft init index` at root level to aggregate service context, or run `draft init` within individual service directories."
-- Ask user to confirm: initialize here (single service) or abort (use draft init index instead)
+Resolve **ROOT** = nearest ancestor (above the current dir) containing `draft/` → else the git toplevel → else the current dir. Then:
+
+- **Root init** (current dir IS root): the graph step builds the whole-repo spine. The generated markdown is a **sparse, high-level system map** that links *down* to each module's context — a large root must not carry deep per-module prose. (See "Root vs Module Markdown" below.)
+- **Module init** (current dir is BELOW root): the graph step ensures the root spine exists first (building it if missing), builds the module snapshot, and writes `draft/graph/root-link.json` (module→root). The generated markdown is the **detailed** module reference produced by the standard deep analysis in this skill.
+
+Use `--module-only` to skip touching the root (the link is marked `pending` and resolves when root init later runs). With no git and no ancestor `draft/`, init treats the current dir as root (module-local, no traversal).
 
 ### Migration Detection
 
@@ -599,19 +604,24 @@ If **Greenfield**: skip to Step 2 (Product Definition).
 
 **CRITICAL ORDERING**: Phase 0 (this step) MUST complete before writing any section of architecture.md. The graph provides: (a) exhaustive module list, (b) hotspot-ranked module priority, (c) authoritative proto API surface, (d) mermaid diagrams ready for slot injection, (e) codebase tier for .ai-context.md budget.
 
-### 1. Build the graph snapshot
+### 1. Build the graph (scope-aware, root-first)
 
-The knowledge-graph engine is `codebase-memory-mcp`, resolved by `scripts/tools/_lib.sh:find_memory_bin` (`DRAFT_MEMORY_BIN` > PATH > `~/.cache/draft/bin` > vendored `bin/<arch>/`). `draft install` fetches it (skip with `--no-graph`); install manually with `scripts/fetch-memory-engine.sh`. Set `DRAFT_MEMORY_DISABLE=1` to opt out.
+The knowledge-graph engine `codebase-memory-mcp` is Draft's **default** capability tier — deterministic call/dependency traversal beats grep/glob. It is normally already installed by `draft install`; `graph-init.sh` fetches it as a fallback when missing (blocking — download/index time is accepted, never gated on cost). Resolution: `scripts/tools/_lib.sh:find_memory_bin` (`DRAFT_MEMORY_BIN` > PATH > `~/.cache/draft/bin` > vendored `bin/<arch>/`). Set `DRAFT_MEMORY_DISABLE=1` to opt out.
 
-One command resolves the engine, indexes the repo, and writes the committed snapshot under `draft/graph/`:
+One command resolves ROOT, ensures the engine, builds the whole-repo spine, and — in a sub-module — builds the module snapshot and writes the `root-link.json` pointer:
 
 ```bash
-if scripts/tools/graph-snapshot.sh --repo .; then
-    echo "Graph snapshot written to draft/graph/ (schema.yaml, architecture.json, hotspots.jsonl, *.mermaid)."
+# Add --module-only to skip touching the root (link marked "pending").
+if scripts/tools/graph-init.sh --scope .; then
+    echo "Graph memory ready under draft/graph/ (the root spine is the structural source of truth)."
 else
-    echo "Graph engine unavailable — skipping automated graph analysis. Downstream skills degrade gracefully."
+    echo "Graph engine unavailable — proceeding with degraded manual discovery. Downstream skills degrade gracefully."
 fi
 ```
+
+- **Root init** writes `<root>/draft/graph/` — the committed, git-tracked whole-repo memory.
+- **Module init** also writes `draft/graph/root-link.json` (module→root); follow `root_graph` for cross-module understanding. The root spine is rebuilt first so the link is live.
+- Only `draft/graph/` is committed. The engine's `~/.cache` index is a disposable accelerator — never commit it; it rebuilds deterministically from source.
 
 Optionally record which engine was selected (usage-report contract):
 
@@ -621,7 +631,7 @@ scripts/tools/verify-graph-binary.sh --repo . --json 2>/dev/null || true
 
 See `core/shared/graph-query.md` and `bin/README.md` for the query contract and engine resolution.
 
-If the snapshot succeeds, `draft/graph/` is populated and later steps consume the always-load artifacts + injection slots.
+If the build succeeds, `draft/graph/` is populated and later steps consume the always-load artifacts + injection slots.
 
 ### 2. If graph build succeeds, load the always-load artifacts
 
@@ -1133,6 +1143,15 @@ The document is:
 - `references/architecture-spec.md` (deprecated legacy notes — **10-section template wins on any conflict**)
 
 There is no legacy 28-section structure and no volume targets. The template itself is the contract.
+
+### Root vs Module Markdown (scope asymmetry)
+
+The depth of generated markdown depends on the scope resolved in **Scope Detection**:
+
+- **Module init** (current dir below root): generate the **full, detailed** 10-section `architecture.md` for the module subtree — the standard deep analysis described in this skill. This is where engineering depth lives.
+- **Root init** (current dir IS root, monorepo): generate a **sparse, high-level system map**, not deep per-module prose. The root `architecture.md` covers: system overview + Graph Health Dashboard (from the whole-repo spine), the module catalog with one-line responsibilities and links *down* to each module's `draft/.ai-context.md`, cross-module dependency topology (from `draft/graph/`), shared infrastructure, and system-wide invariants. Defer module internals to the module docs — a large root must not duplicate them. If a module has not been initialized, link it as "not yet initialized — run `draft init` there."
+
+The graph is symmetric (root spine + per-module snapshots, linked); only the **prose** is asymmetric. Both consume `draft/graph/`.
 
 **After completing analysis AND passing verification**, write to `draft/architecture.md`. This is the PRIMARY output. Then run the Condensation Subroutine.
 
@@ -2087,14 +2106,14 @@ Write the `GRAPH:module-deps` injection slot into architecture.md:
 
 If graph build succeeded (Step 1.4.7 completed), write the populated slot content using the diagram from Step 1.4.7. If filtered (>30 modules), include the filter note. Dashed edges indicate circular dependencies.
 
-If graph binary was not found: write the slot with placeholder body so draft:index can populate it later:
+If graph binary was not found: write the slot with placeholder body so draft:init --graph-only can populate it later:
 ```
 <!-- GRAPH:module-deps:START -->
-[Graph data unavailable — run draft:index to populate after graph binary is installed]
+[Graph data unavailable — run draft:init --graph-only to populate after graph binary is installed]
 <!-- GRAPH:module-deps:END -->
 ```
 
-The slot markers MUST always be written — they are required for draft:index refresh to function.
+The slot markers MUST always be written — they are required for draft:init --graph-only refresh to function.
 
 #### 4.2 Process Lifecycle (or Usage Lifecycle for libraries)
 
@@ -3004,11 +3023,11 @@ If graph build succeeded and proto files exist (Step 1.4.7 completed), write the
 If graph binary was not found or no proto files exist, write the slot with placeholder:
 ```
 <!-- GRAPH:proto-map:START -->
-[Graph data unavailable — run draft:index to populate after graph binary is installed]
+[Graph data unavailable — run draft:init --graph-only to populate after graph binary is installed]
 <!-- GRAPH:proto-map:END -->
 ```
 
-The slot markers MUST always be written — they are required for draft:index refresh to function.
+The slot markers MUST always be written — they are required for draft:init --graph-only refresh to function.
 
 ---
 
@@ -3186,871 +3205,11 @@ Run this checklist before writing architecture.md:
 
 ---
 
-## Index Command
-
-When user says "index services" or "draft index [--init-missing]":
-
-You are building a federated knowledge index for a monorepo with multiple services.
-
-## Red Flags - STOP if you're:
-
-- Running at a non-root directory in a monorepo
-- Indexing services that haven't been initialized with `draft init`
-- Overwriting root-level context without confirming with the user
-- Aggregating without verifying each service's draft/ directory exists
-- Skipping dependency mapping between services
-
-**Aggregate from initialized services only. Verify before overwriting.**
-
----
-
-## Standard File Metadata
-
-**ALL generated files MUST include the standard YAML frontmatter.** This enables refresh tracking, sync verification, and traceability.
-
-### Project Metadata File (single source of truth)
-
-Before writing any file, update `draft/metadata.json` with current git state. This is the single source of truth for `synced_to_commit` and all `git.*` fields for every project-level artifact. Do NOT embed git fields in per-file frontmatter.
-
-Use the `--project-metadata` flag (preferred):
-
-```bash
-DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
-[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
-[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
-bash "$DRAFT_TOOLS/git-metadata.sh" --project-metadata \
-    --project "$PROJECT" --generated-by "draft:index"
-```
-
-### Per-File Metadata Template
-
-Insert this **stable** YAML frontmatter at the top of every generated file (`service-index.md`, `dependency-graph.md`, `tech-matrix.md`, `draft-index-bughunt-summary.md`):
-
-```yaml
----
-project: "{PROJECT_NAME}"
-module: "root"
-generated_by: "draft:index"
-generated_at: "{ISO_TIMESTAMP}"
----
-```
-
-> **Note**: `generated_by` uses `draft:command` format (not `draft command`) for cross-platform compatibility.
-
----
-
-## Pre-Check
-
-```bash
-ls draft/ 2>/dev/null
-```
-
-**If `draft/` does NOT exist at root:**
-- Announce: "Root draft/ directory not found. Run `draft init` at monorepo root first to create base context, then run `draft index` to aggregate service knowledge."
-- Stop here.
-
-**If `draft/` exists:** Continue to lockfile check.
-
-## Lockfile Check
-
-Before proceeding, check for a stale lock:
-
-```bash
-ls draft/.index-lock 2>/dev/null
-```
-
-- **If `draft/.index-lock` exists and is less than 10 minutes old:** Warn: "Previous indexing may be incomplete. Remove `draft/.index-lock` to proceed." Stop here.
-- **If `draft/.index-lock` exists and is older than 10 minutes:** Remove it and continue.
-- **If no lock exists:** Continue.
-
-Create `draft/.index-lock` with the current timestamp before starting:
-
-```bash
-date -u +"%Y-%m-%dT%H:%M:%SZ" > draft/.index-lock
-```
-
-**On completion (Step 9) or fatal error, remove the lock:**
-
-```bash
-rm -f draft/.index-lock
-```
-
-## Step 1: Parse Arguments
-
-Check for optional arguments:
-- `--init-missing`: Also initialize services that don't have `draft/` directories
-- `bughunt [dir1 dir2 ...]`: Run bug hunt across subdirectories with `draft/` folders
-  - If no directories specified: auto-discover all subdirectories with `draft/`
-  - If directories specified: run bughunt only in those subdirectories (skip if no `draft/`)
-  - Generate summary report at: `draft/bughunt-summary.md`
-
-**If `bughunt` argument detected:** Skip to Step 1A (Bughunt Mode) instead of continuing to Step 2.
-
-## Step 1A: Bughunt Mode
-
-This mode runs `draft bughunt` across multiple subdirectories and aggregates results.
-
-### 1A.1: Determine Target Directories
-
-**If directories explicitly specified** (e.g., `bughunt dir1 dir2 dir3`):
-- Use provided directory list as targets
-- Verify each directory exists
-- Check each directory for `draft/` subdirectory
-- Warn and skip any directory without `draft/`
-
-**If no directories specified** (e.g., just `bughunt`):
-- Auto-discover all immediate child directories (depth=1)
-- Filter for directories containing `draft/` subdirectory
-- Exclude patterns: `node_modules/`, `vendor/`, `.git/`, `draft/`, `.*`
-
-```bash
-# Example auto-discovery
-for dir in */; do
-  if [ -d "$dir/draft" ]; then
-    echo "$dir"
-  fi
-done
-```
-
-**Output:**
-```
-Target directories for bughunt:
-  - services/auth/
-  - services/billing/
-  - services/notifications/
-```
-
-### 1A.2: Execute Bughunt Per Directory
-
-For each target directory:
-
-1. **Set working directory** to `<target-dir>` for the bughunt scope. The AI agent should invoke `draft bughunt` with the target directory as the scope path, rather than using `cd`:
-   ```
-   draft bughunt
-   → (scope prompt) → "Specific paths"
-   → (paths prompt) → <target-dir>
-   ```
-
-2. **Announce:**
-   ```
-   Running bughunt in <target-dir>...
-   ```
-
-3. **Let `draft bughunt` run its full workflow:**
-   - Report will be generated at `<target-dir>/draft/bughunt-report-<timestamp>.md`
-   - Capture exit status (success/failure)
-
-4. **Record results:**
-   - Directory path
-   - Total bugs found (by severity)
-   - Report location
-   - Any errors encountered
-
-**Note:** Run bughunts sequentially, not in parallel, to avoid context conflicts.
-
-### 1A.3: Parse Individual Reports
-
-After all bughunts complete, read each generated report:
-
-```bash
-# For each target directory
-cat <dir>/draft/bughunt-report-latest.md
-```
-
-Extract from each report:
-- Branch and commit (from header)
-- Summary table (bug counts by severity)
-- Critical/High issue count
-- Total issues count
-
-### 1A.4: Generate Aggregate Summary Report
-
-Create `draft/bughunt-summary.md`:
-
-```markdown
-# Draft Index: Bughunt Summary
-
-**Date:** YYYY-MM-DD HH:MM
-**Mode:** [Auto-discovery | Explicit directories]
-**Directories Scanned:** N
-
-## Overview
-
-| Directory | Critical | High | Medium | Low | Total | Report |
-|-----------|----------|------|--------|-----|-------|--------|
-| services/auth/ | 0 | 2 | 5 | 3 | 10 | [→](services/auth/draft/bughunt-report.md) |
-| services/billing/ | 1 | 1 | 2 | 1 | 5 | [→](services/billing/draft/bughunt-report.md) |
-| services/notifications/ | 0 | 0 | 1 | 2 | 3 | [→](services/notifications/draft/bughunt-report.md) |
-
-**Grand Total:** X Critical, Y High, Z Medium, W Low
-
-## Directories With Critical Issues
-
-| Directory | Count | Details |
-|-----------|-------|---------|
-| services/billing/ | 1 | [→](services/billing/draft/bughunt-report.md#critical-issues) |
-
-## Directories With No Issues
-
-- services/api-gateway/
-- services/user-service/
-
-## Skipped Directories
-
-| Directory | Reason |
-|-----------|--------|
-| services/legacy-tools/ | No draft/ directory found |
-| services/experiments/ | No draft/ directory found |
-
-## Next Steps
-
-1. **Prioritize Critical Issues:** Review directories with Critical bugs first
-2. **Review Individual Reports:** Click links above to see detailed findings
-3. **Track Fixes:** Use `draft new-track` to create implementation tracks for fixes
-4. **Re-run After Fixes:** Run `draft index bughunt` again to verify
-
----
-
-*Generated by `draft index bughunt` command*
-```
-
-### 1A.5: Completion Report
-
-```
----
-              DRAFT INDEX BUGHUNT COMPLETE
----
-Scanned: N directories
-Completed: X successful
-Skipped: Y (no draft/)
-Failed: Z errors
-
-Grand Total Bugs:
-  Critical: W
-  High: X
-  Medium: Y
-  Low: Z
-
-Summary Report: draft/bughunt-summary.md
-
-Directories requiring immediate attention:
-  - services/billing/ (1 CRITICAL)
-  - services/auth/ (2 HIGH)
-
----
-```
-
-**STOP HERE** if bughunt mode. Do not continue to Step 2 (normal indexing flow).
-
-## Step 2: Discover Services (Depth=1 Only)
-
-Scan immediate child directories for service markers. Do NOT recurse beyond depth=1.
-
-**Service detection markers (any of these):**
-- `package.json` (Node.js)
-- `go.mod` (Go)
-- `Cargo.toml` (Rust)
-- `pom.xml` or `build.gradle` (Java)
-- `pyproject.toml` or `requirements.txt` (Python)
-- `Dockerfile` (containerized service)
-- `src/` directory with code files
-
-**Exclude patterns:**
-- `node_modules/`
-- `vendor/`
-- `.git/`
-- `draft/` (the root draft directory itself)
-- Any directory starting with `.`
-
-```bash
-# Example discovery (adapt to actual structure)
-ls -d */ | head -50
-```
-
-**Output:** List of detected service directories.
-
-## Step 3: Categorize Services
-
-For each detected service directory, check for `draft/` subdirectory:
-
-```bash
-# For each service
-ls <service>/draft/ 2>/dev/null
-```
-
-Categorize into:
-- **Initialized:** Has `draft/` with context files
-- **Uninitialized:** No `draft/` directory
-
-Report:
-```
-Scanning immediate child directories...
-
-Detected X service directories:
-  ✓ Y initialized (draft/ found)
-  ○ Z uninitialized
-
-Initialized services:
-  - services/auth/
-  - services/billing/
-  - ...
-
-Uninitialized services:
-  - services/legacy-reports/
-  - services/admin-tools/
-  - ...
-```
-
-## Step 4: Handle Uninitialized Services
-
-**If `init-missing` argument is present:**
-1. For each uninitialized service, prompt:
-   ```
-   Initialize <service-name>/? [y/n/all/skip-rest]
-   ```
-2. If user selects:
-   - `y`: Run `draft init` in that directory
-   - `n`: Skip this service
-   - `all`: Initialize all remaining without prompting
-   - `skip-rest`: Skip all remaining uninitialized services
-
-**If `init-missing` argument is NOT present:**
-- Just report uninitialized services and continue
-- Suggest: "Run `draft index --init-missing` to initialize these services"
-
-## Step 5: Aggregate Context from Initialized Services
-
-For each initialized service, read and extract:
-
-### 5.1 From `<service>/draft/product.md`:
-- Service name
-- First paragraph of Vision (summary)
-- Target users (list)
-- Core features (list)
-
-### 5.2 From `<service>/draft/.ai-context.md` (or legacy `<service>/draft/architecture.md`):
-- Key Takeaway paragraph (from `## System Overview`)
-- External dependencies (from `## External Dependencies`)
-- Exposed APIs or entry points (from `## Entry Points`)
-- Dependencies on other services (look for references to sibling service names)
-- Critical invariants summary (from `## Critical Invariants`, if available)
-
-### 5.3 From `<service>/draft/tech-stack.md`:
-- Primary language/framework
-- Database
-- Key dependencies
-
-### 5.4 Create/Update `<service>/draft/manifest.json`:
-```json
-{
-  "name": "<service-name>",
-  "type": "service",
-  "summary": "<first line of product vision>",
-  "primaryTech": "<main language/framework>",
-  "dependencies": ["<other-service-names>", "<external-deps>"],
-  "dependents": [],
-  "team": "<if found in docs>",
-  "initialized": "<date>",
-  "lastIndexed": "<current-date>"
-}
-```
-
-## Step 6: Detect Inter-Service Dependencies
-
-Analyze extracted data to build dependency graph:
-
-1. Look for service name references in each service's architecture.md
-2. Look for API client imports or service URLs in tech-stack.md
-3. Look for mentions in product.md that reference other services
-4. **Graph-enriched detection** (if individual services have `draft/graph/` directories):
-   - Read each service's `draft/graph/architecture.json` `.routes` to map which service defines vs consumes which endpoints
-   - Cross-reference proto consumers with proto producers to build precise inter-service dependency edges
-   - Read `draft/graph/architecture.json` (`.packages`) per service for internal module structure
-   - This provides deterministic, code-level dependency data that supplements the heuristic name-matching above
-
-Build a dependency map:
-```
-auth-service: [] # no dependencies on other services
-billing-service: [auth-service]
-api-gateway: [auth-service, billing-service]
-```
-
-### Step 6.1b: Cycle Detection
-
-**Cycle detection:** Walk the dependency graph depth-first from each service. If a cycle is detected (service A depends on B depends on ... depends on A), emit a `> WARNING: Circular dependency detected: A → B → ... → A` line in `dependency-graph.md`, mark the back-edge with `circular: true` in `manifest.json`'s dependency entry, and continue processing. Do not fail on cycles — report and proceed.
-
-### Step 6.2: Resolve Dependents (Reverse Lookup)
-
-For each service S, iterate all other services' `dependencies` arrays. If S appears in another service's dependencies, add that service to S's `dependents` array. Write the updated `manifest.json` for each service.
-
-## Step 7: Generate Root Aggregated Files
-
-### 7.1 Generate `draft/service-index.md`
-
-Use the following inline template:
-
-```markdown
-# Service Index
-
-> Auto-generated by `draft index` on <date>. Do not edit directly.
-> Re-run `draft index` to update.
-
-## Overview
-
-| Metric | Count |
-|--------|-------|
-| Total Services Detected | X |
-| Initialized | Y |
-| Uninitialized | Z |
-
-## Service Registry
-
-| Service | Status | Tech Stack | Dependencies | Team | Details |
-|---------|--------|------------|--------------|------|---------|
-| auth | ✓ | Go, Postgres | - | @auth-team | [→](../services/auth/draft/.ai-context.md) |
-| billing | ✓ | Node, Stripe | auth | @billing | [→](../services/billing/draft/.ai-context.md) |
-| legacy-reports | ○ | - | - | - | Not initialized |
-
-## Uninitialized Services
-
-The following services have not been initialized with `draft init`:
-- `services/legacy-reports/`
-- `services/admin-tools/`
-
-Run `draft index --init-missing` or initialize individually with:
-```bash
-cd services/legacy-reports && draft init
-```
-```
-
-### 7.2 Generate `draft/dependency-graph.md`
-
-```markdown
-# Service Dependency Graph
-
-> Auto-generated by `draft index` on <date>. Do not edit directly.
-
-## System Topology
-
-```mermaid
-graph LR
-    subgraph "Core Services"
-        auth[auth-service]
-        billing[billing-service]
-        users[user-service]
-    end
-
-    subgraph "Edge"
-        gateway[api-gateway]
-    end
-
-    subgraph "Background"
-        notifications[notification-service]
-        reports[report-service]
-    end
-
-    gateway --> auth
-    gateway --> billing
-    gateway --> users
-    billing --> auth
-    notifications --> users
-    reports --> billing
-```
-
-## Dependency Matrix
-
-| Service | Depends On | Depended By |
-|---------|-----------|-------------|
-| auth-service | - | billing, gateway, users |
-| billing-service | auth | gateway, reports |
-| user-service | auth | gateway, notifications |
-| api-gateway | auth, billing, users | - |
-
-## Dependency Order (Topological)
-
-1. **auth-service** (foundational - no internal dependencies)
-2. **user-service** (depends on: auth)
-3. **billing-service** (depends on: auth)
-4. **notification-service** (depends on: users)
-5. **report-service** (depends on: billing)
-6. **api-gateway** (depends on: auth, billing, users)
-
-> This ordering helps when planning cross-service changes or understanding impact.
-```
-
-### 7.3 Generate `draft/tech-matrix.md`
-
-```markdown
-# Technology Matrix
-
-> Auto-generated by `draft index` on <date>. Do not edit directly.
-
-## Common Stack (Org Standards)
-
-Technologies used by majority of services:
-
-| Technology | Usage | Services |
-|------------|-------|----------|
-| PostgreSQL | Database | auth, billing, users (85%) |
-| Redis | Caching | auth, gateway, notifications (60%) |
-| Docker | Containerization | all (100%) |
-| GitHub Actions | CI/CD | all (100%) |
-
-## Technology Distribution
-
-### Languages
-
-| Language | Services | Percentage |
-|----------|----------|------------|
-| Go | auth, users, gateway | 45% |
-| TypeScript | billing, notifications, reports | 45% |
-| Python | ml-service, analytics | 10% |
-
-### Databases
-
-| Database | Services |
-|----------|----------|
-| PostgreSQL | auth, billing, users, reports |
-| MongoDB | notifications, analytics |
-| Redis | auth, gateway (cache only) |
-
-## Variance Report
-
-Services deviating from org standards:
-
-| Service | Deviation | Reason |
-|---------|-----------|--------|
-| ml-service | Python instead of Go/TS | ML ecosystem |
-| analytics | MongoDB instead of Postgres | Time-series workload |
-```
-
-### Placeholder Detection
-
-A file is considered a placeholder if it contains the marker `<!-- AUTO-GENERATED -->` or is smaller than 100 bytes. Placeholders may be overwritten without confirmation. Non-placeholder files require user confirmation before overwriting.
-
-### 7.4 Synthesize `draft/product.md` (if not exists or is placeholder)
-
-Read all service product.md files and synthesize:
-
-```markdown
-# Product: [Org/Product Name]
-
-> Synthesized from X service contexts by `draft index` on <date>.
-> Edit this file to refine the overall product vision.
-
-## Vision
-
-[Synthesized from common themes across service visions - one paragraph describing what the overall product/platform does]
-
-## Target Users
-
-<!-- Aggregated from all services, deduplicated -->
-- **End Users**: [common user types across services]
-- **Developers**: [if developer-facing APIs exist]
-- **Operators**: [if ops/admin services exist]
-
-## Service Capabilities
-
-| Capability | Provided By | Description |
-|------------|-------------|-------------|
-| Authentication | auth-service | User identity, JWT, OAuth |
-| Payments | billing-service | Stripe integration, invoicing |
-| API Access | api-gateway | Rate limiting, routing |
-
-## Cross-Cutting Concerns
-
-<!-- Extracted from common patterns across services -->
-- **Authentication**: All services validate via auth-service
-- **Observability**: [common logging/tracing approach]
-- **Data Privacy**: [common compliance patterns]
-```
-
-### 7.5 Synthesize `draft/architecture.md` (if not exists or is placeholder)
-
-```markdown
-# Architecture: [Org/Product Name]
-
-> Synthesized from X service contexts by `draft index` on <date>.
-> This is a system-of-systems view. For service internals, see individual service contexts.
-
-## System Overview
-
-**Key Takeaway:** [One paragraph synthesizing overall system purpose from service summaries]
-
-### System Topology
-
-```mermaid
-graph TD
-    subgraph "External"
-        Users[Users/Clients]
-        ThirdParty[Third-Party Services]
-    end
-
-    subgraph "Edge Layer"
-        Gateway[API Gateway]
-        CDN[CDN/Static]
-    end
-
-    subgraph "Core Services"
-        Auth[Auth Service]
-        Billing[Billing Service]
-        Users2[User Service]
-    end
-
-    subgraph "Background"
-        Notifications[Notifications]
-        Reports[Reports]
-    end
-
-    subgraph "Data Layer"
-        Postgres[(PostgreSQL)]
-        Redis[(Redis)]
-        Queue[Message Queue]
-    end
-
-    Users --> Gateway
-    Gateway --> Auth
-    Gateway --> Billing
-    Gateway --> Users2
-    Billing --> ThirdParty
-    Auth --> Postgres
-    Billing --> Postgres
-    Notifications --> Queue
-    Reports --> Queue
-```
-
-## Service Directory
-
-| Service | Responsibility | Tech | Status | Details |
-|---------|---------------|------|--------|---------|
-| auth-service | Identity & access management | Go, Postgres | ✓ Active | [→ context](../services/auth/draft/.ai-context.md) |
-| billing-service | Payments & invoicing | Node, Stripe | ✓ Active | [→ context](../services/billing/draft/.ai-context.md) |
-
-## Shared Infrastructure
-
-<!-- Extracted from common external dependencies -->
-
-| Component | Purpose | Used By |
-|-----------|---------|---------|
-| PostgreSQL | Primary datastore | auth, billing, users |
-| Redis | Caching, sessions | auth, gateway |
-| RabbitMQ | Async messaging | notifications, reports |
-| Stripe | Payment processing | billing |
-
-## Cross-Service Patterns
-
-<!-- Extracted from common conventions -->
-
-| Pattern | Description | Services |
-|---------|-------------|----------|
-| JWT Auth | All services validate JWT via auth-service | all |
-| Event-Driven | Async events via message queue | notifications, reports |
-
-## Notes
-
-- For detailed service architecture, navigate to individual service contexts
-- This file is regenerable via `draft index`
-- Manual edits to non-synthesized sections will be preserved on re-index
-```
-
-### 7.6 Synthesize `draft/tech-stack.md` (if not exists or is placeholder)
-
-```markdown
-# Tech Stack: [Org/Product Name]
-
-> Synthesized from X service contexts by `draft index` on <date>.
-> This defines org-wide standards. Service-specific additions are in their local tech-stack.md.
-
-## Org Standards
-
-### Languages
-- **Primary**: [most common language] — [X% of services]
-- **Secondary**: [second most common] — [Y% of services]
-
-### Frameworks
-- **API**: [common API framework]
-- **Testing**: [common test framework]
-
-### Infrastructure
-- **Database**: PostgreSQL (standard), MongoDB (approved for specific use cases)
-- **Caching**: Redis
-- **Messaging**: RabbitMQ / SQS
-- **Container**: Docker
-- **Orchestration**: Kubernetes
-
-### CI/CD
-- **Platform**: GitHub Actions
-- **Registry**: [container registry]
-
-## Approved Variances
-
-| Service | Variance | Justification |
-|---------|----------|---------------|
-| ml-service | Python | ML ecosystem requirements |
-| analytics | MongoDB | Time-series workload |
-
-## Shared Libraries
-
-| Library | Purpose | Version | Used By |
-|---------|---------|---------|---------|
-| @org/auth-client | Auth service client | 2.x | billing, gateway, notifications |
-| @org/logging | Structured logging | 1.x | all services |
-```
-
-### 7.7 Synthesize `draft/.ai-context.md` (if not exists or is placeholder)
-
-After generating `draft/architecture.md`, derive a condensed `draft/.ai-context.md` using the Condensation Subroutine (as defined in `core/shared/condensation.md`). This provides a token-optimized, self-contained AI context file at the root level aggregating all service knowledge.
-
-- Read the synthesized `draft/architecture.md`
-- Condense into 200-400 lines covering: system overview, service catalog, inter-service dependencies, shared infrastructure, cross-cutting patterns, critical invariants, and entry points
-- If `draft/.ai-context.md` already exists and is not a placeholder, prompt before overwriting
-
-## Step 8: Create Root Config
-
-Create `draft/config.yaml` if not exists:
-
-```yaml
-# Draft Index Configuration
-
-# Service detection patterns (immediate children only)
-service_patterns:
-  - "package.json"
-  - "go.mod"
-  - "Cargo.toml"
-  - "pom.xml"
-  - "build.gradle"
-  - "pyproject.toml"
-  - "requirements.txt"
-  - "Dockerfile"
-
-# Directories to exclude from scanning
-exclude_patterns:
-  - "node_modules"
-  - "vendor"
-  - ".git"
-  - "draft"
-  - ".*" # Hidden directories
-
-# Re-index on these events (for CI integration)
-reindex_triggers:
-  - "service added"
-  - "service removed"
-  - "weekly"
-```
-
-## Step 8.5: Refresh Graph Injection Slots
-
-For each initialized service with both `draft/architecture.md` AND `draft/graph/schema.yaml`:
-
-**A. Read current `architecture.md` into memory.**
-
-**B. Regenerate slot content from graph JSONL:**
-- `GRAPH:module-deps` → run `scripts/tools/mermaid-from-graph.sh --repo . --diagram module-deps`
-  Parse JSON response, extract `.mermaid` string + `filtered` flag + stats
-- `GRAPH:proto-map` → run `scripts/tools/mermaid-from-graph.sh --repo . --diagram proto-map`
-  Parse JSON response, extract `.mermaid` string + stats
-- `GRAPH:hotspots` → read `draft/graph/hotspots.jsonl`, build top-10 markdown table:
-  `| File | Lines | fanIn | Score |` with one row per hotspot, ordered by score descending
-
-**C. For each slot, find `<!-- GRAPH:{id}:START -->` ... `<!-- GRAPH:{id}:END -->` markers.**
-Replace entire block (inclusive of markers) with regenerated content.
-If a marker pair is absent (legacy file): insert slot at the designated position and log:
-`"Injected GRAPH:{id} slot into architecture.md (slot was absent — legacy file upgraded)"`
-
-**D. Write updated `architecture.md` back to disk.**
-Update frontmatter: `generated_by = "draft:index"`, `generated_at = now`. Also update `draft/metadata.json` via `git-metadata.sh --project-metadata --generated-by "draft:index"` to re-anchor `synced_to_commit`.
-
-**E. Re-run Condensation Subroutine** (condensation.md) to propagate updated hotspot data into `.ai-context.md` GRAPH:HOTSPOTS and recompute tier budget. If `.ai-profile.md` exists, regenerate via Profile Generation Subroutine.
-
-**F. Report per service:**
-```
-✓ <service>: refreshed 3 graph slots (module-deps, proto-map, hotspots)
-✓ <service>: regenerated .ai-context.md (tier N, {lines} lines)
-```
-
-## Step 8.6: Refresh OKF Bundle Root
-
-After the root aggregated files exist (`service-index.md`, `architecture.md`,
-`product.md`, `tech-stack.md`, `.ai-context.md`, …), regenerate the Open Knowledge
-Format root index so the root `draft/` tree is a portable OKF bundle. This is the
-default; the index links `service-index.md` and every other concept present.
-
-```bash
-scripts/tools/okf-bundle.sh --dir draft   # writes the bundle-root draft/index.md
-scripts/tools/okf-check.sh  --dir draft   # OKF v0.1 conformance (advisory, non-fatal)
-```
-
-## Step 9: Completion Report
-
-Remove the lockfile:
-
-```bash
-rm -f draft/.index-lock
-```
-
-```
----
-                    DRAFT INDEX COMPLETE
----
-Scanned: X service directories (depth=1)
-Indexed: Y services with draft/ context
-Skipped: Z uninitialized services
-
-Generated/Updated:
-  ✓ draft/service-index.md (service registry)
-  ✓ draft/dependency-graph.md (inter-service topology)
-  ✓ draft/tech-matrix.md (technology distribution)
-  ✓ draft/product.md (synthesized product vision)
-  ✓ draft/architecture.md (system-of-systems view)
-  ✓ draft/tech-stack.md (org standards)
-  ✓ draft/config.yaml (index configuration)
-
-Service manifests updated: Y services
-
-Next steps:
-1. Review synthesized files in draft/
-2. Edit draft/product.md to refine overall vision
-3. Edit draft/architecture.md to add cross-cutting context
-4. Run draft index periodically to refresh
-
-For uninitialized services, run:
-  draft index init-missing
----
-```
-
-## Operational Notes
-
-### What This Command Does NOT Do
-
-- **No deep code analysis** — Reads only existing `draft/*.md` files
-- **No source code scanning** — That's `draft init`'s job per service
-- **No recursive scanning** — Depth=1 only, immediate children
-- **No duplication** — Root files link to service files, not copy content
-
-### When to Re-Run
-
-- After running `draft init` on a new service
-- After significant changes to service architectures
-- Weekly/monthly as part of documentation hygiene
-- Before major cross-service planning
-
-### Preserving Manual Edits
-
-When regenerating, the skill:
-1. Reads existing root files
-2. Identifies manually-added sections (not marked as auto-generated)
-3. Preserves those sections while updating auto-generated parts
-4. Sections between `<!-- MANUAL START -->` and `<!-- MANUAL END -->` are never overwritten
-
-**Graph injection slots** (`<!-- GRAPH:...:START -->` / `<!-- GRAPH:...:END -->`) are ALWAYS overwritten during refresh — they are auto-managed. Never place manual content between these markers. Use `<!-- MANUAL START -->` / `<!-- MANUAL END -->` for content you want preserved near a slot.
-
----
-
 ## Graph Command
 
 When user says "build graph", "refresh graph", or "draft graph [path]":
 
-Initialize or refresh the `draft/graph/` knowledge-graph snapshot for a repository. This is the narrow "give me a fresh structural graph" command — it does **not** generate `architecture.md`/`.ai-context.md` (that is `draft init`) and does **not** re-inject doc diagram slots (that is `draft index`).
+Initialize or refresh the `draft/graph/` knowledge-graph snapshot for a single repository. This is the narrow "give me a fresh structural graph" command — it does **not** generate `architecture.md`/`.ai-context.md` and does **not** re-inject doc diagram slots (both are `draft init`). For scope-aware, root-first graph memory across a monorepo (root spine + module→root links), use `draft init --graph-only`.
 
 ## Red Flags - STOP if you're:
 
@@ -4137,7 +3296,7 @@ Present a concise summary:
 
 Then point the user at the natural next steps:
 
-- To re-inject the refreshed diagrams/hotspot tables into `architecture.md` / `.ai-context.md`: run `draft index`.
+- To re-inject the refreshed diagrams/hotspot tables into `architecture.md` / `.ai-context.md`: run `draft init refresh` (or `draft init --graph-only` to rebuild just the graph memory).
 - For a first-time full context bootstrap (architecture + profiles): run `draft init`.
 
 ## Graceful Degradation
@@ -7127,6 +6286,19 @@ Use track context to:
 
 If no Draft context exists, proceed with code-only analysis.
 
+## Multi-Directory Mode (monorepo)
+
+`draft bughunt` can sweep multiple sub-projects in one run — useful at a monorepo root. Trigger it with an explicit directory list (`bughunt <dir1> <dir2> ...`) or no list (auto-discover).
+
+1. **Resolve targets:**
+   - **Explicit list** → use the given directories; verify each exists; skip (with a warning) any that lack a `draft/` directory.
+   - **Auto-discover** → immediate child directories containing a `draft/` folder, excluding `node_modules/`, `vendor/`, `.git/`, `draft/`, and dotfiles.
+2. **Run sequentially** (not in parallel — avoids context conflicts): for each target, run the full single-target bug hunt below scoped to that directory. Each writes its own `<dir>/draft/bughunt-report-latest.md`.
+3. **Aggregate** into `draft/bughunt-summary.md` at the invocation root: a table of `dir | Critical | High | Medium | Low | Total | report link`, a grand total, and a "directories with Critical issues" callout.
+4. Report skipped directories (no `draft/`) and suggest running `draft init` in them first.
+
+For a single target (the common case), skip this section and proceed.
+
 ## Dimension Applicability Check
 
 Before analyzing all 14 dimensions, determine which apply to this codebase:
@@ -9504,7 +8676,6 @@ When user says "discover debug" or "draft discover <intent>" (debug, bughunt, re
 - Code quality reviews (lightweight to exhaustive to architectural)
 - Coverage analysis and test strategy design
 - Discovering and codifying project conventions
-- Monorepo indexing and context aggregation
 - Project tours, impact analysis, or reviewer assistance
 
 ## Routing Logic
@@ -9520,7 +8691,6 @@ Strong keyword and phrase matching with fallback to a menu when intent is broad 
 | coverage, code coverage, test coverage report | `draft coverage` | Coverage measurement and gap report |
 | test strategy, testing plan, coverage targets, pyramid | `draft testing-strategy` | Test approach design |
 | learn patterns, discover conventions, update guardrails, anti-patterns | `draft learn` | Pattern mining + guardrail evolution |
-| index services, aggregate context, monorepo index | `draft index` | Monorepo service context aggregation |
 | tour, walkthrough, onboard me, getting started tour | `draft tour` | Guided interactive project tour |
 | blast radius, code impact, affected modules, downstream callers | `draft review` or `scripts/tools/graph-impact.sh` | Graph-derived blast-radius before merge |
 | impact, delivery telemetry, track analytics, CDD effectiveness | `draft impact` | Project-wide track delivery telemetry |
@@ -9546,7 +8716,7 @@ User: "learn the coding patterns in this repo and tighten guardrails"
 
 User: "index the monorepo so agents see all services"
 
-→ dispatches to `draft index --init-missing`
+→ Monorepo context is a foundation task, not a discover route: run `draft init` at the repo root (it builds the whole-repo code graph + a sparse root map linking each module). Running `draft init` inside a sub-module links that module up to the same root graph.
 
 ## Auto-Chains & Recommendations
 
@@ -15212,7 +14382,7 @@ Draft solves this through **Context-Driven Development**: structured documents t
 - [Command Workflows](#command-workflows)
   - [draft init](#draftinit--initialize-project)
   - [draft plan](#draftplan--planning-orchestrator)
-  - [draft index](#draftindex--monorepo-service-index)
+  - [Monorepo Support (via draft init)](#monorepo-support-via-draftinit)
   - [draft new-track](#draftnew-track--create-feature-track)
   - [draft implement](#draftimplement--execute-tasks)
   - [draft status](#draftstatus--show-progress)
@@ -15587,7 +14757,7 @@ Draft auto-classifies the project:
 - **Brownfield (existing codebase):** Detected by the presence of `package.json`, `requirements.txt`, `go.mod`, `Cargo.toml`, `src/`, or git history with commits. Draft scans the existing stack and pre-fills `tech-stack.md`.
 - **Greenfield (new project):** Empty or near-empty directory. Developer provides all context through dialogue.
 - **Mature high-context brownfield:** Projects with strong existing agent-optimized docs (CLAUDE.md, INVARIANTS.md, ADRs, etc.) now receive an early Context Quality Audit, graph fidelity declaration, and explicit Relationship/Gaps sections so the generated architecture.md acts as graph-primary overlay rather than duplicative prose.
-- **Monorepo:** Detected by `lerna.json`, `pnpm-workspace.yaml`, `nx.json`, `turbo.json`, or multiple package manifests in child directories. Suggests `draft index` instead.
+- **Monorepo:** Detected by `lerna.json`, `pnpm-workspace.yaml`, `nx.json`, `turbo.json`, or multiple package manifests in child directories. `draft init` is scope-aware — run it at the root for whole-repo context (sparse root map + the code-graph spine), or inside a sub-module to generate detailed module context that links up to the root graph. See **Monorepo Support (via draft init)** below.
 
 #### Initialization Sequence
 
@@ -15681,32 +14851,31 @@ The parent command should move planning forward rather than listing options.
 
 ---
 
-### `draft index` — Monorepo Service Index
+### Monorepo Support (via `draft init`)
 
-Aggregates Draft context from multiple services in a monorepo into unified root-level documents. Designed for organizations with multiple services, each with their own `draft/` context.
+There is no separate index command — `draft init` is the single, scope-aware entry point. The same command behaves differently by where it is run, so a monorepo needs no special tooling.
 
-#### What It Does
+#### Root init (run at the repo root)
 
-1. **Scans** immediate child directories for services (detects `package.json`, `go.mod`, `Cargo.toml`, etc.)
-2. **Reads** each service's `draft/product.md`, `draft/.ai-context.md` (or legacy `draft/architecture.md`), `draft/tech-stack.md`
-3. **Synthesizes** root-level documents:
+1. **Builds the whole-repo code-graph spine** — `graph-init.sh` indexes every file at every depth into one unified graph and writes the committed `draft/graph/` snapshot (the structural source of truth).
+2. **Generates a sparse root map** (not deep per-module prose), aggregating the children into root-level documents:
    - `draft/service-index.md` — Service registry with status, tech, and links
-   - `draft/dependency-graph.md` — Inter-service dependency topology
+   - `draft/dependency-graph.md` — Inter-service dependency topology (from the graph)
    - `draft/tech-matrix.md` — Technology distribution across services
-   - `draft/product.md` — Synthesized product vision (if not exists)
-   - `draft/.ai-context.md` — System-of-systems architecture view
-   - `draft/tech-stack.md` — Org-wide technology standards
+   - `draft/architecture.md` — High-level system map linking *down* to each module's `draft/.ai-context.md`
+   - `draft/.ai-context.md` / `draft/.ai-profile.md` — Condensed system-of-systems views
 
-#### Arguments
+#### Module init (run inside a sub-module)
 
-- `init-missing` — Run `draft init` on services that lack a `draft/` directory
-- `bughunt [dir1 dir2 ...]` — Run `draft bughunt` across subdirectories with `draft/` folders. If no directories specified, auto-discovers all subdirectories with `draft/`. Generates summary report at `draft-index-bughunt-summary.md`.
+1. **Ensures the root spine exists first** (builds it if missing), then builds the module's own `draft/graph/` snapshot.
+2. **Writes `draft/graph/root-link.json`** — a pointer up to the root graph so the module has full cross-module understanding regardless of where init ran.
+3. **Generates the detailed module reference** (full 10-section `architecture.md` for the subtree). Use `--module-only` to skip touching the root (link marked `pending`).
 
 #### When to Use
 
-- After running `draft init` on individual services
-- After adding or removing services from the monorepo
-- Periodically to refresh cross-service context
+- After cloning or adding a service — run `draft init` in it (auto-links to the root spine)
+- At the root after services change — refresh the whole-repo graph + sparse root map
+- `draft init --graph-only` to (re)build just the code-graph knowledge memory, no markdown
 
 ---
 
@@ -16586,7 +15755,7 @@ This matrix is the **single source of truth** for which Layer 0.5 files load per
 
 | Command type | Commands | Guardrails loaded |
 |---|---|---|
-| **Read-only** | `draft status`, `draft standup`, `draft tour`, `draft index`, `draft coverage` | **none** |
+| **Read-only** | `draft status`, `draft standup`, `draft tour`, `draft coverage` | **none** |
 | **Spec / Plan** | `draft new-track`, `draft decompose`, `draft adr`, `draft testing-strategy`, `draft documentation` | `design-norms.md` only (architecture-shaped rules) |
 | **Code-touching (generation)** | `draft implement`, `draft debug`, `draft change`, `draft revert` | `code-quality.md` + `security.md` + `secure-patterns.md` + `language-standards.md` (detected stack) |
 | **Review** | `draft review`, `draft quick-review`, `draft deep-review`, `draft assist-review`, `draft bughunt`, `draft tech-debt` | `review-checks.md` + `security.md` + `language-standards.md` (detected stack); deep-review also loads `code-quality.md` + `design-norms.md` |
@@ -16623,9 +15792,11 @@ If `draft/graph/schema.yaml` exists, the project has automated graph analysis da
 | `draft/graph/architecture.json` | Node labels, edge types, languages, packages (fan-in/out), entry points, routes, hotspots | JSON |
 | `draft/graph/hotspots.jsonl` | Fan-in-ranked symbols, one object per line: `{id, name, fanIn}` | JSONL |
 
+The snapshot also includes `draft/graph/okf/` — an Open Knowledge Format v0.1 bundle (`index.md` + `modules/*.md`) emitted by default. It is a portable mirror of the graph, not an always-load target.
+
 Note: `.ai-context.md` embeds a condensed graph summary (`GRAPH:MODULES`, `GRAPH:HOTSPOTS`, `GRAPH:CYCLES`) for first-pass structural ground truth. `architecture.json` is authoritative for deep structure.
 
-Note: The canonical embedded mermaid diagrams are in architecture.md injection slots (`<!-- GRAPH:module-deps:START/END -->`, `<!-- GRAPH:proto-map:START/END -->`), refreshed by `draft:index`. For current data, regenerate via `scripts/tools/mermaid-from-graph.sh`.
+Note: The canonical embedded mermaid diagrams are in architecture.md injection slots (`<!-- GRAPH:module-deps:START/END -->`, `<!-- GRAPH:proto-map:START/END -->`), refreshed by `draft:init`. For current data, regenerate via `scripts/tools/mermaid-from-graph.sh`.
 
 **Live structural queries** (run on demand — no per-language index files; the engine's model is unified):
 
@@ -17125,7 +16296,7 @@ This is a self-contained, callable procedure for generating `draft/.ai-context.m
 
 Any skill that mutates `architecture.md` should execute this subroutine afterward to keep the derived context files in sync.
 
-**Called by:** `draft init`, `draft init refresh`, `draft implement`, `draft decompose`, `draft coverage`, `draft index`
+**Called by:** `draft init`, `draft init refresh`, `draft implement`, `draft decompose`, `draft coverage`
 
 ### Inputs
 
@@ -17661,7 +16832,7 @@ Shared procedure for querying the knowledge graph from any skill. The graph prov
 
 This is the **single source of truth** for graph lookup procedure. Consumer skills MUST reference this file rather than inlining their own lookup logic.
 
-Referenced by: `draft init`, `draft implement`, `draft bughunt`, `draft review`, `draft deep-review`, `draft quick-review`, `draft debug`, `draft decompose`, `draft new-track`, `draft tech-debt`, `draft deploy-checklist`, `draft learn`, `draft index`
+Referenced by: `draft init`, `draft implement`, `draft bughunt`, `draft review`, `draft deep-review`, `draft quick-review`, `draft debug`, `draft decompose`, `draft new-track`, `draft tech-debt`, `draft deploy-checklist`, `draft learn`, `draft graph`
 
 ## Mandatory Lookup Contract
 
@@ -17791,6 +16962,7 @@ When `draft/graph/` exists, the snapshot contains:
 | `hotspots.jsonl` | Always | Fan-in-ranked symbols, one JSON object per line: `{id, name, fanIn}`. |
 | `module-deps.mermaid` | Diagram injection | File co-change coupling diagram (`FILE_CHANGES_WITH`). |
 | `proto-map.mermaid` | Diagram injection | Detected service-route diagram (`Route` nodes). |
+| `okf/` | On demand | Open Knowledge Format v0.1 bundle (emitted by default): `index.md` (reserved bundle root, no frontmatter) + cross-linked `modules/<name>.md` concept pages. Portable, vendor-neutral mirror of the graph; validate with `okf-check.sh`. |
 
 The engine uses a **unified, language-agnostic** node model — `Function`, `Method`, `Class`, `Module`, `File`, `Folder`, `Route`, `Section`, `Variable` (language is inferred from file extension) — and edges `CALLS`, `DEFINES`, `CONTAINS_FILE`, `IMPORTS`, `HTTP_CALLS`, `FILE_CHANGES_WITH`, `SEMANTICALLY_RELATED`, `SIMILAR_TO`. There are **no** per-language index files and no `ctags-sym` fallback; that detail is served by live queries against the unified model.
 
@@ -17852,7 +17024,7 @@ Emits a ready-to-inject ` ```mermaid ``` ` block, or an empty stub (exit 2) when
 scripts/tools/graph-snapshot.sh --repo .
 ```
 
-Writes the committed `draft/graph/` snapshot (`schema.yaml`, `architecture.json`, `hotspots.jsonl`, `*.mermaid`). Run during `draft init` and `draft index`, or whenever the reviewable graph state should be refreshed.
+Writes the committed `draft/graph/` snapshot (`schema.yaml`, `architecture.json`, `hotspots.jsonl`, `*.mermaid`, plus the Open Knowledge Format bundle under `okf/`). Run during `draft init` and `draft graph`, or whenever the reviewable graph state should be refreshed.
 
 ## Finding the Engine (Resolution + Usage Report)
 
@@ -17878,7 +17050,7 @@ After successful detection, `draft/.graph-binary-report.json` contains: `detecte
 
 ## Building the Snapshot
 
-Run during `draft:init` / `draft:index`, or manually:
+Run during `draft:init` / `draft:graph`, or manually:
 
 ```bash
 scripts/tools/graph-snapshot.sh --repo .
@@ -21154,7 +20326,7 @@ Portable stub. Content generalized from proven internal patterns.
 ---
 project: "{PROJECT_NAME}"
 module: "root"
-generated_by: "draft:index"
+generated_by: "draft:init"
 generated_at: "{ISO_TIMESTAMP}"
 ---
 
@@ -21168,7 +20340,7 @@ generated_at: "{ISO_TIMESTAMP}"
 | **Synced To** | `{FULL_SHA}` |
 
 > Auto-generated. Do not edit directly.
-> Re-run `draft index` to update.
+> Re-run `draft init` to update.
 
 ---
 
@@ -21195,7 +20367,7 @@ The following services have not been initialized with `draft init`:
 
 - `[path/to/service]/`
 
-Run `draft index --init-missing` or initialize individually with:
+Initialize each one by running `draft init` inside its directory — it links the module's graph up to the root spine:
 ```bash
 cd [path/to/service] && draft init
 ```
@@ -21218,7 +20390,7 @@ cd [path/to/service] && draft init
 ---
 project: "{PROJECT_NAME}"
 module: "root"
-generated_by: "draft:index"
+generated_by: "draft:init"
 generated_at: "{ISO_TIMESTAMP}"
 ---
 
@@ -21232,7 +20404,7 @@ generated_at: "{ISO_TIMESTAMP}"
 | **Synced To** | `{FULL_SHA}` |
 
 > Auto-generated. Do not edit directly.
-> Re-run `draft index` to update.
+> Re-run `draft init` to update.
 
 ---
 
@@ -21330,7 +20502,7 @@ Services depending on external systems:
 ---
 project: "{PROJECT_NAME}"
 module: "root"
-generated_by: "draft:index"
+generated_by: "draft:init"
 generated_at: "{ISO_TIMESTAMP}"
 ---
 
@@ -21344,7 +20516,7 @@ generated_at: "{ISO_TIMESTAMP}"
 | **Synced To** | `{FULL_SHA}` |
 
 > Auto-generated. Do not edit directly.
-> Re-run `draft index` to update.
+> Re-run `draft init` to update.
 
 ---
 
@@ -21440,7 +20612,7 @@ Current versions in production:
 ---
 project: "{PROJECT_NAME}"
 module: "root"
-generated_by: "draft:index"
+generated_by: "draft:init"
 generated_at: "{ISO_TIMESTAMP}"
 ---
 
@@ -21455,7 +20627,7 @@ generated_at: "{ISO_TIMESTAMP}"
 
 > Synthesized from [X] service contexts.
 > Edit this file to refine the overall product vision.
-> Re-running `draft index` will update auto-generated sections but preserve manual edits.
+> Re-running `draft init` will update auto-generated sections but preserve manual edits.
 
 ---
 
@@ -21502,7 +20674,7 @@ generated_at: "{ISO_TIMESTAMP}"
 ---
 project: "{PROJECT_NAME}"
 module: "root"
-generated_by: "draft:index"
+generated_by: "draft:init"
 generated_at: "{ISO_TIMESTAMP}"
 ---
 
@@ -21517,7 +20689,7 @@ generated_at: "{ISO_TIMESTAMP}"
 
 > Synthesized from [X] service contexts.
 > This is a **system-of-systems** view. For service internals, see individual service contexts.
-> Re-running `draft index` will update auto-generated sections but preserve manual edits.
+> Re-running `draft init` will update auto-generated sections but preserve manual edits.
 
 ---
 
@@ -21624,7 +20796,7 @@ sequenceDiagram
 ## Notes
 
 - For detailed service architecture, navigate to individual service contexts via the Details column
-- This file is regenerable via `draft index`
+- This file is regenerable via `draft init`
 - Manual edits between `<!-- MANUAL START -->` and `<!-- MANUAL END -->` are preserved
 
 </core-file>
@@ -21638,7 +20810,7 @@ sequenceDiagram
 ---
 project: "{PROJECT_NAME}"
 module: "root"
-generated_by: "draft:index"
+generated_by: "draft:init"
 generated_at: "{ISO_TIMESTAMP}"
 ---
 
@@ -21653,7 +20825,7 @@ generated_at: "{ISO_TIMESTAMP}"
 
 > Synthesized from [X] service contexts.
 > This defines **org-wide standards**. Service-specific additions are in their local tech-stack.md.
-> Re-running `draft index` will update auto-generated sections but preserve manual edits.
+> Re-running `draft init` will update auto-generated sections but preserve manual edits.
 
 ---
 

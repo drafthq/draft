@@ -4,7 +4,7 @@ Shared procedure for querying the knowledge graph from any skill. The graph prov
 
 This is the **single source of truth** for graph lookup procedure. Consumer skills MUST reference this file rather than inlining their own lookup logic.
 
-Referenced by: `/draft:init`, `/draft:implement`, `/draft:bughunt`, `/draft:review`, `/draft:deep-review`, `/draft:quick-review`, `/draft:debug`, `/draft:decompose`, `/draft:new-track`, `/draft:tech-debt`, `/draft:deploy-checklist`, `/draft:learn`, `/draft:index`
+Referenced by: `/draft:init`, `/draft:implement`, `/draft:bughunt`, `/draft:review`, `/draft:deep-review`, `/draft:quick-review`, `/draft:debug`, `/draft:decompose`, `/draft:new-track`, `/draft:tech-debt`, `/draft:deploy-checklist`, `/draft:learn`, `/draft:graph`
 
 ## Mandatory Lookup Contract
 
@@ -134,6 +134,7 @@ When `draft/graph/` exists, the snapshot contains:
 | `hotspots.jsonl` | Always | Fan-in-ranked symbols, one JSON object per line: `{id, name, fanIn}`. |
 | `module-deps.mermaid` | Diagram injection | File co-change coupling diagram (`FILE_CHANGES_WITH`). |
 | `proto-map.mermaid` | Diagram injection | Detected service-route diagram (`Route` nodes). |
+| `okf/` | On demand | Open Knowledge Format v0.1 bundle (emitted by default): `index.md` (reserved bundle root, no frontmatter) + cross-linked `modules/<name>.md` concept pages. Portable, vendor-neutral mirror of the graph; validate with `okf-check.sh`. |
 
 The engine uses a **unified, language-agnostic** node model — `Function`, `Method`, `Class`, `Module`, `File`, `Folder`, `Route`, `Section`, `Variable` (language is inferred from file extension) — and edges `CALLS`, `DEFINES`, `CONTAINS_FILE`, `IMPORTS`, `HTTP_CALLS`, `FILE_CHANGES_WITH`, `SEMANTICALLY_RELATED`, `SIMILAR_TO`. There are **no** per-language index files and no `ctags-sym` fallback; that detail is served by live queries against the unified model.
 
@@ -195,7 +196,7 @@ Emits a ready-to-inject ` ```mermaid ``` ` block, or an empty stub (exit 2) when
 scripts/tools/graph-snapshot.sh --repo .
 ```
 
-Writes the committed `draft/graph/` snapshot (`schema.yaml`, `architecture.json`, `hotspots.jsonl`, `*.mermaid`). Run during `/draft:init` and `/draft:index`, or whenever the reviewable graph state should be refreshed.
+Writes the committed `draft/graph/` snapshot (`schema.yaml`, `architecture.json`, `hotspots.jsonl`, `*.mermaid`, plus the Open Knowledge Format bundle under `okf/`). Run during `/draft:init` and `/draft:graph`, or whenever the reviewable graph state should be refreshed.
 
 ## Finding the Engine (Resolution + Usage Report)
 
@@ -221,7 +222,7 @@ After successful detection, `draft/.graph-binary-report.json` contains: `detecte
 
 ## Building the Snapshot
 
-Run during `draft:init` / `draft:index`, or manually:
+Run during `draft:init` / `draft:graph`, or manually:
 
 ```bash
 scripts/tools/graph-snapshot.sh --repo .

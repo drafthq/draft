@@ -16,7 +16,7 @@ This is a self-contained, callable procedure for generating `draft/.ai-context.m
 
 Any skill that mutates `architecture.md` should execute this subroutine afterward to keep the derived context files in sync.
 
-**Called by:** `/draft:init`, `/draft:init refresh`, `/draft:implement`, `/draft:decompose`, `/draft:coverage`, `/draft:index`
+**Called by:** `/draft:init`, `/draft:init refresh`, `/draft:implement`, `/draft:decompose`, `/draft:coverage`
 
 ### Inputs
 

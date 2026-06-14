@@ -1,7 +1,7 @@
 ---
 project: "{PROJECT_NAME}"
 module: "root"
-generated_by: "draft:index"
+generated_by: "draft:init"
 generated_at: "{ISO_TIMESTAMP}"
 ---
 
@@ -16,7 +16,7 @@ generated_at: "{ISO_TIMESTAMP}"
 
 > Synthesized from [X] service contexts.
 > This defines **org-wide standards**. Service-specific additions are in their local tech-stack.md.
-> Re-running `/draft:index` will update auto-generated sections but preserve manual edits.
+> Re-running `/draft:init` will update auto-generated sections but preserve manual edits.
 
 ---
 

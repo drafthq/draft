@@ -113,9 +113,9 @@ curl -o .gemini.md https://raw.githubusercontent.com/drafthq/draft/main/integrat
 
 ---
 
-## Beyond `/draft:review` — 33 more commands
+## Beyond `/draft:review` — 32 more commands
 
-`/draft:review` is the wedge. Once Draft has indexed your repo, you also get spec-driven planning, TDD-enforced implementation, exhaustive bug hunting, deep architectural audits, and 29 more commands covering the full development lifecycle.
+`/draft:review` is the wedge. Once Draft has indexed your repo, you also get spec-driven planning, TDD-enforced implementation, exhaustive bug hunting, deep architectural audits, and 32 more commands covering the full development lifecycle.
 
 ---
 
@@ -187,7 +187,7 @@ The graph powers `/draft:graph` and `/draft:impact`, enriches `/draft:bughunt` a
 
 ### Deterministic helper tools
 
-Skills also call into **14 shell helpers** under `scripts/tools/` for mechanical work — git metadata, file classification, test-framework detection, hotspot ranking, freshness checks, ADR indexing. All emit JSON, follow a uniform exit-code contract, and degrade gracefully when their input source is unavailable.
+Skills also call into **34 shell helpers** under `scripts/tools/` for mechanical work — git metadata, file classification, test-framework detection, hotspot ranking, freshness checks, ADR indexing, and Open Knowledge Format emission/validation (`okf-emit.sh`, `okf-bundle.sh`, `okf-check.sh`). All emit JSON or markdown, follow a uniform exit-code contract, and degrade gracefully when their input source is unavailable.
 
 ---
 

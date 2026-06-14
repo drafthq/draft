@@ -213,9 +213,28 @@
         <!-- v2.8 -->
         <article class="changelog-entry">
             <div class="changelog-entry-header">
-                <span class="changelog-version">v2.8</span>
+                <span class="changelog-version">v3.0</span>
                 <span class="changelog-date">2026-06-14</span>
                 <span class="changelog-tag changelog-tag--latest">Latest</span>
+                <span class="changelog-tag">Breaking</span>
+                <span class="changelog-tag">Knowledge Graph</span>
+            </div>
+            <div class="changelog-category">Changed</div>
+            <ul class="changelog-changes">
+                <li><strong>One scope-aware <code>/draft:init</code></strong> &mdash; Draft now has a single entry point for building context. Run <code>/draft:init</code> at the repo root or inside any sub-module; it figures out the scope automatically.</li>
+                <li><strong>Root-first code-graph memory</strong> &mdash; init always builds the whole-repo knowledge graph (the spine) first. A sub-module gets its own snapshot plus a <code>root-link.json</code> pointing up to the root graph, so any module has full cross-module understanding regardless of where you ran init.</li>
+                <li><strong><code>--graph-only</code> and <code>--module-only</code> flags</strong> &mdash; <code>--graph-only</code> rebuilds just the code-graph memory (no markdown); <code>--module-only</code> skips touching the root.</li>
+            </ul>
+            <div class="changelog-category">Removed</div>
+            <ul class="changelog-changes">
+                <li><strong><code>/draft:index</code> removed (breaking)</strong> &mdash; folded into the scope-aware <code>/draft:init</code>. Monorepo context now comes from running init at the root (sparse root map + graph spine) and in each sub-module (detailed context + root link). The multi-directory bug sweep moved to <code>/draft:bughunt</code>. Total surface: <strong>33 skills</strong>.</li>
+            </ul>
+        </article>
+
+        <article class="changelog-entry">
+            <div class="changelog-entry-header">
+                <span class="changelog-version">v2.8</span>
+                <span class="changelog-date">2026-06-14</span>
                 <span class="changelog-tag">Install</span>
                 <span class="changelog-tag">Knowledge Graph</span>
             </div>

@@ -233,8 +233,8 @@
         <canvas id="hero-canvas" aria-hidden="true"></canvas>
         <div class="hero-content">
             <a href="#changelog-strip" class="release-pill">
-                <span class="release-pill-tag">v2.8.3</span>
-                <span class="release-pill-text">Knowledge graph engine &mdash; codebase-memory-mcp: 159 languages, 100% local, plus the /draft:graph command</span>
+                <span class="release-pill-tag">v3.0.0</span>
+                <span class="release-pill-text">One entry point: /draft:init now builds a root-first code-graph knowledge memory across your whole repo</span>
                 <span class="release-pill-arrow">â</span>
             </a>
             <h1>Stop shipping<br><span class="gradient-text">AI-generated bugs</span>.</h1>
@@ -262,7 +262,7 @@
             <!-- Hero stats strip -->
             <div class="hero-stats">
                 <div class="hero-stat">
-                    <span class="hero-stat-num">33</span>
+                    <span class="hero-stat-num">34</span>
                     <span class="hero-stat-label">Commands</span>
                 </div>
                 <div class="hero-stat-divider"></div>
@@ -295,22 +295,22 @@
     </section>
 
     <!-- ============================================================ -->
-    <!-- v2.8.3 RELEASE STRIP                                         -->
+    <!-- v3.0.0 RELEASE STRIP                                         -->
     <!-- ============================================================ -->
     <section id="changelog-strip" class="release-strip">
         <div class="release-strip-inner">
             <div class="release-strip-meta">
                 <span class="release-strip-tag">Latest</span>
-                <span class="release-strip-version">v2.8.3 &middot; June 14, 2026</span>
+                <span class="release-strip-version">v3.0.0 &middot; June 14, 2026</span>
             </div>
             <div class="release-strip-headline">
-                <h3>Draft 2.8 hardens the knowledge graph engine</h3>
-                <p>Draft's knowledge graph engine &mdash; codebase-memory-mcp: tree-sitter + LSP across 159 languages, 100% local &mdash; is fetched and checksum-verified on install, with the <code>/draft:graph</code> command. <a href="changelog/" class="link-cyan">View full changelog &rarr;</a></p>
+                <h3>Draft 3.0: one scope-aware <code>/draft:init</code>, root-first code-graph memory</h3>
+                <p><code>/draft:init</code> is now the single entry point. Run it anywhere &mdash; it builds the whole-repo code-graph knowledge memory first, and a sub-module links up to that root graph for full cross-module understanding. The old <code>/draft:index</code> is folded in (breaking change). <a href="changelog/" class="link-cyan">View full changelog &rarr;</a></p>
             </div>
             <div class="release-strip-tags">
-                <span class="release-strip-pill">New Graph Engine</span>
-                <span class="release-strip-pill">159 Languages</span>
-                <span class="release-strip-pill">/draft:graph</span>
+                <span class="release-strip-pill">Single entry point</span>
+                <span class="release-strip-pill">Root-first graph</span>
+                <span class="release-strip-pill">Monorepo-aware</span>
                 <span class="release-strip-pill">Free forever</span>
             </div>
         </div>
@@ -555,7 +555,7 @@
                 <a href="book/multi-ide-support/" class="persona-card persona-card--amber">
                     <div class="persona-card-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="9" y1="6" x2="15" y2="6"/><line x1="6" y1="9" x2="6" y2="15"/><line x1="18" y1="9" x2="18" y2="15"/><line x1="9" y1="18" x2="15" y2="18"/></svg></div>
                     <h3>Platform engineers</h3>
-                    <p class="persona-claim">Knowledge graph + 30 deterministic helpers.</p>
+                    <p class="persona-claim">Knowledge graph + 34 deterministic helpers.</p>
                     <p class="persona-detail">Tree-sitter + LSP across 159 languages. Incremental, git-aware indexing. 100% local — no API key, no code leaves your machine. Track-level impact memory. Skills delegate mechanical work to JSON-emitting shell tools.</p>
                     <ul class="persona-bullets">
                         <li>Six graph query modes</li>
@@ -815,10 +815,10 @@
                         <div class="bento-icon bento-icon--emerald">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
                         </div>
-                        <span class="bento-tag">30 helpers</span>
+                        <span class="bento-tag">34 helpers</span>
                     </div>
                     <h3>Deterministic Helpers</h3>
-                    <p>Skills delegate mechanical work to 30 shell tools under <code>scripts/tools/</code> &mdash; git metadata, file classification, hotspot ranking, cycle detection, freshness checks, ADR indexing, test-framework detection, and more. Uniform JSON output and exit-code contract; graceful degradation when input is missing.</p>
+                    <p>Skills delegate mechanical work to 34 shell tools under <code>scripts/tools/</code> &mdash; git metadata, file classification, hotspot ranking, cycle detection, freshness checks, ADR indexing, test-framework detection, Open Knowledge Format emission/validation, and more. Uniform JSON output and exit-code contract; graceful degradation when input is missing.</p>
                     <div class="bento-stats">
                         <span>JSON contract</span><span>Reproducible</span>
                     </div>
@@ -847,7 +847,7 @@
     <section id="commands" class="section">
         <div class="section-glow section-glow--emerald"></div>
         <div class="section-inner">
-            <span class="section-label">33 Commands &middot; 7 Specialized Agents</span>
+            <span class="section-label">34 Commands &middot; 7 Specialized Agents</span>
             <h2>Full development <span class="text-emerald">lifecycle</span></h2>
 
             <!-- Interactive terminal -->

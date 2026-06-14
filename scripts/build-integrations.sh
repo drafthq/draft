@@ -35,7 +35,6 @@ get_skill_header() {
     case "$skill" in
         draft)             echo "Draft Overview" ;;
         init)              echo "Init Command" ;;
-        index)             echo "Index Command" ;;
         graph)             echo "Graph Command" ;;
         new-track)         echo "New Track Command" ;;
         decompose)         echo "Decompose Command" ;;
@@ -79,8 +78,7 @@ get_copilot_trigger() {
     local skill="$1"
     case "$skill" in
         draft)             echo "\"help\" or \"draft\"" ;;
-        init)              echo "\"init draft\" or \"draft init [refresh]\"" ;;
-        index)             echo "\"index services\" or \"draft index [--init-missing]\"" ;;
+        init)              echo "\"init draft\", \"build the code graph\", or \"draft init [refresh] [--graph-only] [--module-only]\"" ;;
         graph)             echo "\"build graph\", \"refresh graph\", or \"draft graph [path]\"" ;;
         new-track)         echo "\"new feature\" or \"draft new-track <description>\"" ;;
         decompose)         echo "\"break into modules\" or \"draft decompose\"" ;;
@@ -358,7 +356,7 @@ COMMON_HEADER
 
     # Command table - 5 routers are the recommended primary interface
     echo "| \`draft\` | Show overview and available commands |"
-    echo "| \`draft init\` | Initialize project (run once) |"
+    echo "| \`draft init [refresh] [--graph-only] [--module-only]\` | Initialize project context + code-graph memory; scope-aware (root or sub-module) |"
     echo "| \`draft new-track <description>\` | Create feature/bug track |"
     echo "| \`draft implement\` | Execute tasks from plan |"
     echo "| \`draft review [--track <id>]\` | Three-stage code review |"
@@ -386,7 +384,6 @@ COMMON_HEADER
     echo "| \`draft status\` | Show progress overview |"
     echo "| \`draft revert\` | Git-aware rollback |"
     echo "| \`draft change <description>\` | Handle mid-track requirement changes |"
-    echo "| \`draft index [--init-missing]\` | Aggregate monorepo service contexts |"
     echo "| \`draft tour\` | Interactive onboarding tour |"
     echo "| \`draft impact\` | Telemetry and analytics insights |"
     echo "| \`draft assist-review\` | Assist human reviewers with architectural risk audit |"

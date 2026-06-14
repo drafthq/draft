@@ -1,6 +1,6 @@
 ---
 name: init
-description: "Initialize Draft project context for Context-Driven Development. Run once per project to create product.md, tech-stack.md, workflow.md, tracks.md, architecture.md (brownfield), .ai-context.md (derived), and .ai-profile.md (ultra-compact profile). Always performs deep analysis. Use when the user asks to 'init draft', 'set up Draft for this project', 'bootstrap context', or says 'start using Draft', 'I want to use Draft here'."
+description: "Initialize Draft project context for Context-Driven Development — the single, scope-aware entry point (works at the repo root or inside any sub-module; no separate index command). Builds the root-first code-graph knowledge memory (draft/graph/, with a module→root link) and creates product.md, tech-stack.md, workflow.md, tracks.md, architecture.md (brownfield), .ai-context.md (derived), and .ai-profile.md. Supports --graph-only (graph memory only, no markdown) and --module-only. Use when the user asks to 'init draft', 'set up Draft for this project', 'bootstrap context', 'build the code graph', or says 'start using Draft', 'I want to use Draft here'."
 ---
 
 # Draft Init
@@ -193,17 +193,23 @@ synced_to_commit: "a1b2c3d4e5f6789012345678901234567890abcd"
 
 Check for arguments:
 - `refresh`: Update existing context without full re-init
-- `index`: Route to `/draft:index`
+- `--graph-only`: Build/refresh only the code-graph knowledge memory (no markdown) — see the fast path below
+- `--module-only`: When run in a sub-module, do not touch the root graph (the module→root link is marked `pending`)
 - `discover`: Route to `/draft:discover`
+
+> `/draft:init` is the **single entry point** for building context — there is no separate `index` command. Init is scope-aware (root vs sub-module); see **Scope Detection** below.
 
 ### Route Explicit Modes Before Initialization
 
 If the user explicitly invoked a specialist mode, route directly:
 
-- `/draft:init index` → follow `/draft:index`
 - `/draft:init discover` → follow `/draft:discover`
 
 Explicit mode always wins. Do not perform standard initialization if an explicit mode is requested.
+
+### `--graph-only` Fast Path
+
+If `--graph-only` is present, run **Step 1.4** (scope-aware, root-first graph build via `graph-init.sh`) and **STOP** — generate no `architecture.md` or other markdown. This is the fast path to (re)build the whole-repo code-graph knowledge memory; in a sub-module it also ensures the root spine exists and writes the module→root link. This path is allowed even when `draft/` already exists (it refreshes the graph in place — no `draft.tmp/` staging, no overwrite prompt).
 
 ### Standard Init Check
 
@@ -236,16 +242,16 @@ mv draft.tmp/ draft/
 
 > **Forced re-init:** If `draft/` exists and the user explicitly requests a fresh init (not refresh), confirm with user before removing the existing `draft/` directory.
 
-### Monorepo Detection
+### Scope Detection (root vs sub-module)
 
-Check for monorepo indicators:
-- Multiple `package.json` / `go.mod` / `Cargo.toml` in child directories
-- `lerna.json`, `pnpm-workspace.yaml`, `nx.json`, or `turbo.json` at root
-- `packages/`, `apps/`, `services/` directories with independent manifests
+`/draft:init` is the single entry point and is **scope-aware** — it works the same whether run at the repository root or inside a sub-module. The root-first graph behavior is handled mechanically by `graph-init.sh` in Step 1.4; you do not detect the monorepo shape by hand.
 
-If monorepo detected:
-- Announce: "Detected monorepo structure. Consider using `/draft:init index` at root level to aggregate service context, or run `/draft:init` within individual service directories."
-- Ask user to confirm: initialize here (single service) or abort (use /draft:init index instead)
+Resolve **ROOT** = nearest ancestor (above the current dir) containing `draft/` → else the git toplevel → else the current dir. Then:
+
+- **Root init** (current dir IS root): the graph step builds the whole-repo spine. The generated markdown is a **sparse, high-level system map** that links *down* to each module's context — a large root must not carry deep per-module prose. (See "Root vs Module Markdown" below.)
+- **Module init** (current dir is BELOW root): the graph step ensures the root spine exists first (building it if missing), builds the module snapshot, and writes `draft/graph/root-link.json` (module→root). The generated markdown is the **detailed** module reference produced by the standard deep analysis in this skill.
+
+Use `--module-only` to skip touching the root (the link is marked `pending` and resolves when root init later runs). With no git and no ancestor `draft/`, init treats the current dir as root (module-local, no traversal).
 
 ### Migration Detection
 
@@ -478,19 +484,24 @@ If **Greenfield**: skip to Step 2 (Product Definition).
 
 **CRITICAL ORDERING**: Phase 0 (this step) MUST complete before writing any section of architecture.md. The graph provides: (a) exhaustive module list, (b) hotspot-ranked module priority, (c) authoritative proto API surface, (d) mermaid diagrams ready for slot injection, (e) codebase tier for .ai-context.md budget.
 
-### 1. Build the graph snapshot
+### 1. Build the graph (scope-aware, root-first)
 
-The knowledge-graph engine is `codebase-memory-mcp`, resolved by `scripts/tools/_lib.sh:find_memory_bin` (`DRAFT_MEMORY_BIN` > PATH > `~/.cache/draft/bin` > vendored `bin/<arch>/`). `draft install` fetches it (skip with `--no-graph`); install manually with `scripts/fetch-memory-engine.sh`. Set `DRAFT_MEMORY_DISABLE=1` to opt out.
+The knowledge-graph engine `codebase-memory-mcp` is Draft's **default** capability tier — deterministic call/dependency traversal beats grep/glob. It is normally already installed by `draft install`; `graph-init.sh` fetches it as a fallback when missing (blocking — download/index time is accepted, never gated on cost). Resolution: `scripts/tools/_lib.sh:find_memory_bin` (`DRAFT_MEMORY_BIN` > PATH > `~/.cache/draft/bin` > vendored `bin/<arch>/`). Set `DRAFT_MEMORY_DISABLE=1` to opt out.
 
-One command resolves the engine, indexes the repo, and writes the committed snapshot under `draft/graph/`:
+One command resolves ROOT, ensures the engine, builds the whole-repo spine, and — in a sub-module — builds the module snapshot and writes the `root-link.json` pointer:
 
 ```bash
-if scripts/tools/graph-snapshot.sh --repo .; then
-    echo "Graph snapshot written to draft/graph/ (schema.yaml, architecture.json, hotspots.jsonl, *.mermaid)."
+# Add --module-only to skip touching the root (link marked "pending").
+if scripts/tools/graph-init.sh --scope .; then
+    echo "Graph memory ready under draft/graph/ (the root spine is the structural source of truth)."
 else
-    echo "Graph engine unavailable — skipping automated graph analysis. Downstream skills degrade gracefully."
+    echo "Graph engine unavailable — proceeding with degraded manual discovery. Downstream skills degrade gracefully."
 fi
 ```
+
+- **Root init** writes `<root>/draft/graph/` — the committed, git-tracked whole-repo memory.
+- **Module init** also writes `draft/graph/root-link.json` (module→root); follow `root_graph` for cross-module understanding. The root spine is rebuilt first so the link is live.
+- Only `draft/graph/` is committed. The engine's `~/.cache` index is a disposable accelerator — never commit it; it rebuilds deterministically from source.
 
 Optionally record which engine was selected (usage-report contract):
 
@@ -500,7 +511,7 @@ scripts/tools/verify-graph-binary.sh --repo . --json 2>/dev/null || true
 
 See `core/shared/graph-query.md` and `bin/README.md` for the query contract and engine resolution.
 
-If the snapshot succeeds, `draft/graph/` is populated and later steps consume the always-load artifacts + injection slots.
+If the build succeeds, `draft/graph/` is populated and later steps consume the always-load artifacts + injection slots.
 
 ### 2. If graph build succeeds, load the always-load artifacts
 
@@ -1012,6 +1023,15 @@ The document is:
 - `references/architecture-spec.md` (deprecated legacy notes — **10-section template wins on any conflict**)
 
 There is no legacy 28-section structure and no volume targets. The template itself is the contract.
+
+### Root vs Module Markdown (scope asymmetry)
+
+The depth of generated markdown depends on the scope resolved in **Scope Detection**:
+
+- **Module init** (current dir below root): generate the **full, detailed** 10-section `architecture.md` for the module subtree — the standard deep analysis described in this skill. This is where engineering depth lives.
+- **Root init** (current dir IS root, monorepo): generate a **sparse, high-level system map**, not deep per-module prose. The root `architecture.md` covers: system overview + Graph Health Dashboard (from the whole-repo spine), the module catalog with one-line responsibilities and links *down* to each module's `draft/.ai-context.md`, cross-module dependency topology (from `draft/graph/`), shared infrastructure, and system-wide invariants. Defer module internals to the module docs — a large root must not duplicate them. If a module has not been initialized, link it as "not yet initialized — run `/draft:init` there."
+
+The graph is symmetric (root spine + per-module snapshots, linked); only the **prose** is asymmetric. Both consume `draft/graph/`.
 
 **After completing analysis AND passing verification**, write to `draft/architecture.md`. This is the PRIMARY output. Then run the Condensation Subroutine.
 

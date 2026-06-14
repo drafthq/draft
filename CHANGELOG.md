@@ -5,7 +5,51 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.0.0] - 2026-06-14
+
+### Added
+- **Open Knowledge Format (OKF) emission by default.** The knowledge-graph
+  snapshot now also writes an [OKF v0.1](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)
+  bundle to `draft/graph/okf/` (`index.md` + cross-linked `modules/<name>.md`
+  concept pages) via the new `scripts/tools/okf-emit.sh`, on every `/draft:graph`
+  and `/draft:init` run. A portable, vendor-neutral markdown
+  mirror of the graph.
+- **The whole `draft/` directory is an OKF bundle.** `scripts/tools/okf-bundle.sh`
+  writes `draft/index.md` (the bundle-root index) cross-linking every concept —
+  context docs, tracks, and the graph sub-bundle. Project-doc templates
+  (`architecture.md`, `.ai-context.md`, `.ai-profile.md`, `product.md`,
+  `tech-stack.md`, `workflow.md`, `guardrails.md`) and track templates
+  (`spec/plan/hld/lld/discovery/rca`, `tracks.md`) now carry an OKF `type:`
+  frontmatter field.
+- **OKF v0.1 conformance checker.** `scripts/tools/okf-check.sh` validates §9 of
+  the spec — parseable frontmatter with a non-empty `type` on every concept, and
+  the reserved-file rules for `index.md`/`log.md`. Wired (advisory) into
+  `/draft:init`.
+- **Scope-aware, root-first code-graph memory.** `/draft:init` is now the single,
+  scope-aware entry point and builds the whole-repo "code-graph knowledge memory"
+  first, wherever it is run. New `scripts/tools/graph-init.sh` resolves the repo
+  ROOT (nearest ancestor with `draft/` → git toplevel → cwd), ensures the
+  knowledge-graph engine is present (fetching it as a fallback), builds the
+  committed root snapshot (`draft/graph/`), and — when run inside a sub-module —
+  builds the module snapshot and writes `draft/graph/root-link.json` pointing up
+  to the root graph, so any module has full cross-module understanding.
+- **`/draft:init --graph-only` and `--module-only` flags.** `--graph-only`
+  (re)builds just the code-graph memory with no markdown; `--module-only` skips
+  touching the root (the module→root link is marked `pending`).
+
+### Changed
+- **`/draft:init` markdown is scope-asymmetric.** A root init now generates a
+  sparse, high-level system map that links down to each module's context (no deep
+  per-module prose); a module init generates the full detailed reference. The
+  graph layer stays symmetric (root spine + per-module snapshots, linked).
+
+### Removed
+- **`/draft:index` is removed — folded into the scope-aware `/draft:init`.**
+  Monorepo context now comes from running `/draft:init` at the repo root (sparse
+  root map + whole-repo graph spine) and in each sub-module (detailed context +
+  `root-link.json`). The multi-directory bug-hunt sweep moved to
+  `/draft:bughunt` (explicit dir list or auto-discovery). Total surface: 33 skills.
+  (Web/book references to `/draft:index` will be updated in a follow-up docs pass.)
 
 ## [2.8.3] - 2026-06-14
 

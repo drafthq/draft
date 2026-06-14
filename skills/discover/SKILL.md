@@ -1,6 +1,6 @@
 ---
 name: discover
-description: "Primary router for discovery, debugging, investigation, quality, and exploration workflows. Analyzes user intent and dispatches to debug, bughunt, quick-review, deep-review, coverage, testing-strategy, learn, index, tour, impact, assist-review. The recommended entry point for any 'find out', 'check', 'review', or 'investigate' request."
+description: "Primary router for discovery, debugging, investigation, quality, and exploration workflows. Analyzes user intent and dispatches to debug, bughunt, quick-review, deep-review, coverage, testing-strategy, learn, tour, impact, assist-review. The recommended entry point for any 'find out', 'check', 'review', or 'investigate' request."
 ---
 
 # Discover - Investigation & Quality Router
@@ -13,7 +13,6 @@ description: "Primary router for discovery, debugging, investigation, quality, a
 - Code quality reviews (lightweight to exhaustive to architectural)
 - Coverage analysis and test strategy design
 - Discovering and codifying project conventions
-- Monorepo indexing and context aggregation
 - Project tours, impact analysis, or reviewer assistance
 
 ## Routing Logic
@@ -29,7 +28,6 @@ Strong keyword and phrase matching with fallback to a menu when intent is broad 
 | coverage, code coverage, test coverage report | `/draft:coverage` | Coverage measurement and gap report |
 | test strategy, testing plan, coverage targets, pyramid | `/draft:testing-strategy` | Test approach design |
 | learn patterns, discover conventions, update guardrails, anti-patterns | `/draft:learn` | Pattern mining + guardrail evolution |
-| index services, aggregate context, monorepo index | `/draft:index` | Monorepo service context aggregation |
 | tour, walkthrough, onboard me, getting started tour | `/draft:tour` | Guided interactive project tour |
 | blast radius, code impact, affected modules, downstream callers | `/draft:review` or `scripts/tools/graph-impact.sh` | Graph-derived blast-radius before merge |
 | impact, delivery telemetry, track analytics, CDD effectiveness | `/draft:impact` | Project-wide track delivery telemetry |
@@ -55,7 +53,7 @@ User: "learn the coding patterns in this repo and tighten guardrails"
 
 User: "index the monorepo so agents see all services"
 
-→ dispatches to `/draft:index --init-missing`
+→ Monorepo context is a foundation task, not a discover route: run `/draft:init` at the repo root (it builds the whole-repo code graph + a sparse root map linking each module). Running `/draft:init` inside a sub-module links that module up to the same root graph.
 
 ## Auto-Chains & Recommendations
 

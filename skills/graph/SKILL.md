@@ -5,7 +5,7 @@ description: Initialize or refresh the knowledge-graph snapshot for a repository
 
 # Draft Graph
 
-Initialize or refresh the `draft/graph/` knowledge-graph snapshot for a repository. This is the narrow "give me a fresh structural graph" command — it does **not** generate `architecture.md`/`.ai-context.md` (that is `/draft:init`) and does **not** re-inject doc diagram slots (that is `/draft:index`).
+Initialize or refresh the `draft/graph/` knowledge-graph snapshot for a single repository. This is the narrow "give me a fresh structural graph" command — it does **not** generate `architecture.md`/`.ai-context.md` and does **not** re-inject doc diagram slots (both are `/draft:init`). For scope-aware, root-first graph memory across a monorepo (root spine + module→root links), use `/draft:init --graph-only`.
 
 ## Red Flags - STOP if you're:
 
@@ -92,7 +92,7 @@ Present a concise summary:
 
 Then point the user at the natural next steps:
 
-- To re-inject the refreshed diagrams/hotspot tables into `architecture.md` / `.ai-context.md`: run `/draft:index`.
+- To re-inject the refreshed diagrams/hotspot tables into `architecture.md` / `.ai-context.md`: run `/draft:init refresh` (or `/draft:init --graph-only` to rebuild just the graph memory).
 - For a first-time full context bootstrap (architecture + profiles): run `/draft:init`.
 
 ## Graceful Degradation

@@ -1,7 +1,7 @@
 ---
 project: "{PROJECT_NAME}"
 module: "root"
-generated_by: "draft:index"
+generated_by: "draft:init"
 generated_at: "{ISO_TIMESTAMP}"
 ---
 
@@ -15,7 +15,7 @@ generated_at: "{ISO_TIMESTAMP}"
 | **Synced To** | `{FULL_SHA}` |
 
 > Auto-generated. Do not edit directly.
-> Re-run `/draft:index` to update.
+> Re-run `/draft:init` to update.
 
 ---
 

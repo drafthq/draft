@@ -94,6 +94,19 @@ Use track context to:
 
 If no Draft context exists, proceed with code-only analysis.
 
+## Multi-Directory Mode (monorepo)
+
+`/draft:bughunt` can sweep multiple sub-projects in one run — useful at a monorepo root. Trigger it with an explicit directory list (`bughunt <dir1> <dir2> ...`) or no list (auto-discover).
+
+1. **Resolve targets:**
+   - **Explicit list** → use the given directories; verify each exists; skip (with a warning) any that lack a `draft/` directory.
+   - **Auto-discover** → immediate child directories containing a `draft/` folder, excluding `node_modules/`, `vendor/`, `.git/`, `draft/`, and dotfiles.
+2. **Run sequentially** (not in parallel — avoids context conflicts): for each target, run the full single-target bug hunt below scoped to that directory. Each writes its own `<dir>/draft/bughunt-report-latest.md`.
+3. **Aggregate** into `draft/bughunt-summary.md` at the invocation root: a table of `dir | Critical | High | Medium | Low | Total | report link`, a grand total, and a "directories with Critical issues" callout.
+4. Report skipped directories (no `draft/`) and suggest running `/draft:init` in them first.
+
+For a single target (the common case), skip this section and proceed.
+
 ## Dimension Applicability Check
 
 Before analyzing all 14 dimensions, determine which apply to this codebase:

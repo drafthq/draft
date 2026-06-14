@@ -39,7 +39,7 @@ The 5 router commands provide intent-based dispatch into the 20+ specialist comm
 | `/draft:plan` | Planning & architecture | new-track, decompose, adr, tech-debt, change |
 | `/draft:ops` | Operations & lifecycle | deploy-checklist, incident-response, standup, status, revert |
 | `/draft:docs` | Authoring | documentation |
-| `/draft:discover` | Investigation & quality | debug, bughunt, quick/deep-review, coverage, testing-strategy, learn, index, tour, impact, assist-review |
+| `/draft:discover` | Investigation & quality | debug, bughunt, quick/deep-review, coverage, testing-strategy, learn, tour, impact, assist-review |
 | `/draft:jira` | Jira integration (preview, create, review) | - |
 
 ### Specialist Commands (leaf skills, invoked via routers or directly)
@@ -74,7 +74,7 @@ These commands remain available for targeted, specialist execution outside paren
 
 #### 4. Setup & Documentation
 * `/draft` - Display this command overview and help reference
-* `/draft:index` - Aggregate multi-service context in monorepo structures
+* `/draft:init` - Single scope-aware entry point: builds the root-first code graph (`draft/graph/`) and project context; run at the repo root or inside any sub-module (monorepo context comes from running it at root)
 * `/draft:discover` - Phase 0 code-spike report (hotspots, mode flags, open questions) before spec freeze
 * `/draft:documentation` - Generate structured codebase documentation (API, Onboarding, Runbooks)
 * `/draft:tech-debt` - Audit technical debt across 6 key dimensions

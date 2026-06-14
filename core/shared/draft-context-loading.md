@@ -38,7 +38,7 @@ This matrix is the **single source of truth** for which Layer 0.5 files load per
 
 | Command type | Commands | Guardrails loaded |
 |---|---|---|
-| **Read-only** | `/draft:status`, `/draft:standup`, `/draft:tour`, `/draft:index`, `/draft:coverage` | **none** |
+| **Read-only** | `/draft:status`, `/draft:standup`, `/draft:tour`, `/draft:coverage` | **none** |
 | **Spec / Plan** | `/draft:new-track`, `/draft:decompose`, `/draft:adr`, `/draft:testing-strategy`, `/draft:documentation` | `design-norms.md` only (architecture-shaped rules) |
 | **Code-touching (generation)** | `/draft:implement`, `/draft:debug`, `/draft:change`, `/draft:revert` | `code-quality.md` + `security.md` + `secure-patterns.md` + `language-standards.md` (detected stack) |
 | **Review** | `/draft:review`, `/draft:quick-review`, `/draft:deep-review`, `/draft:assist-review`, `/draft:bughunt`, `/draft:tech-debt` | `review-checks.md` + `security.md` + `language-standards.md` (detected stack); deep-review also loads `code-quality.md` + `design-norms.md` |
@@ -75,9 +75,11 @@ If `draft/graph/schema.yaml` exists, the project has automated graph analysis da
 | `draft/graph/architecture.json` | Node labels, edge types, languages, packages (fan-in/out), entry points, routes, hotspots | JSON |
 | `draft/graph/hotspots.jsonl` | Fan-in-ranked symbols, one object per line: `{id, name, fanIn}` | JSONL |
 
+The snapshot also includes `draft/graph/okf/` — an Open Knowledge Format v0.1 bundle (`index.md` + `modules/*.md`) emitted by default. It is a portable mirror of the graph, not an always-load target.
+
 Note: `.ai-context.md` embeds a condensed graph summary (`GRAPH:MODULES`, `GRAPH:HOTSPOTS`, `GRAPH:CYCLES`) for first-pass structural ground truth. `architecture.json` is authoritative for deep structure.
 
-Note: The canonical embedded mermaid diagrams are in architecture.md injection slots (`<!-- GRAPH:module-deps:START/END -->`, `<!-- GRAPH:proto-map:START/END -->`), refreshed by `draft:index`. For current data, regenerate via `scripts/tools/mermaid-from-graph.sh`.
+Note: The canonical embedded mermaid diagrams are in architecture.md injection slots (`<!-- GRAPH:module-deps:START/END -->`, `<!-- GRAPH:proto-map:START/END -->`), refreshed by `draft:init`. For current data, regenerate via `scripts/tools/mermaid-from-graph.sh`.
 
 **Live structural queries** (run on demand — no per-language index files; the engine's model is unified):
 

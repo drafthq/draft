@@ -44,6 +44,19 @@ contracts — see `hotspot-rank.sh`, `cycle-detect.sh`, `mermaid-from-graph.sh`,
 and `verify-graph-binary.sh`. The shared wrappers (`memory_cli`,
 `memory_ensure_index`, `memory_project_for_repo`) live in `_lib.sh`.
 
+## Snapshot artifacts
+
+`scripts/tools/graph-snapshot.sh` writes a small, committed, PR-reviewable snapshot under `<repo>/draft/graph/`:
+
+| Artifact | Content |
+|----------|---------|
+| `schema.yaml` | Engine + project metadata, node/edge counts, artifact list (gates graph use). |
+| `architecture.json` | `get_architecture(all)`: node labels, edge types, languages, packages (fan-in/out), entry points, routes, hotspots. |
+| `hotspots.jsonl` | Fan-in-ranked symbols, one JSON object per line. |
+| `module-deps.mermaid` | File co-change coupling diagram. |
+| `proto-map.mermaid` | Detected service-route diagram. |
+| `okf/` | Open Knowledge Format v0.1 bundle (`index.md` + cross-linked `modules/<name>.md`), emitted by default — a portable markdown mirror of the graph. Validate with `okf-check.sh`. |
+
 ## Offline / air-gapped distributions
 
 To ship the engine in-tree, place the binary at `bin/<os>-<arch>/codebase-memory-mcp` (resolution step 4). This is optional and not the default; the managed fetch is preferred.

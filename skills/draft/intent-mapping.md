@@ -33,5 +33,6 @@ Draft commands can be invoked using natural language. If you describe your goal 
 | "write docs", "create readme", "api documentation" | `/draft:documentation` | Generate professional, structured docs |
 | "preview jira", "export jira issues", "jira draft" | `/draft:jira-preview` | Generate Jira markdown export from plan |
 | "create jira", "push to jira board" | `/draft:jira-create` | Create actual Jira issues via MCP integrations |
-| "index services", "aggregate context", "monorepo setup" | `/draft:index` | Aggregate multi-service context at the root |
-| "build graph", "refresh graph", "rebuild the knowledge graph", "index this repo's structure" | `/draft:graph` | Initialize/refresh the `draft/graph/` snapshot (optionally `draft graph <path>`) |
+| "index services", "aggregate context", "monorepo setup" | `/draft:init` | Single entry point — run at the repo root to build the whole-repo code graph + sparse root map; run in a sub-module to link up to it |
+| "build the code graph", "index this repo's structure", "graph memory only" | `/draft:init --graph-only` | Scope-aware, root-first code-graph build with no markdown |
+| "build graph", "refresh graph", "rebuild the knowledge graph" | `/draft:graph` | Narrow refresh of the `draft/graph/` snapshot for one repo (optionally `draft graph <path>`) |

@@ -30,6 +30,7 @@ TEST_SCRIPTS = \
 	./tests/test-tools-manage-symlinks.sh \
 	./tests/test-tools-mermaid-from-graph.sh \
 	./tests/test-tools-graph-snapshot.sh \
+	./tests/test-tools-graph-init.sh \
 	./tests/test-tools-okf-emit.sh \
 	./tests/test-tools-okf-bundle.sh \
 	./tests/test-tools-okf-check.sh \

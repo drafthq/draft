@@ -4,7 +4,7 @@
 
 Draft is a plugin that adds three things to AI coding agents: a knowledge graph engine that maps your repo, spec-driven planning that produces git-tracked specs and phased plans, and a three-stage review pipeline that validates work against the plan. Together, they force AI to execute pre-approved work — grounded in real codebase understanding — instead of guessing.
 
-Draft works with Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Google Gemini. 5 primary routers + 20+ specialist commands (still directly callable), 7 specialized agents, 14-dimension bug hunting, ACID-style module audits, knowledge graph with query tools, 30 deterministic shell helpers. MIT license, no telemetry, no paid tiers.
+Draft works with Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Google Gemini. 4 primary workflow commands + 5 routers + 25 specialist commands (still directly callable), 7 specialized agents, 14-dimension bug hunting, ACID-style module audits, knowledge graph with query tools, 34 deterministic shell helpers. MIT license, no telemetry, no paid tiers.
 
 ## Installation
 
@@ -70,7 +70,7 @@ For better discoverability, use the consolidated router commands instead of the 
 
 All specialist commands remain directly callable for compatibility.
 
-## All Commands (33)
+## All Commands (34)
 
 ### Primary Workflow
 - `/draft` — Overview, intent mapping, and command reference
@@ -193,13 +193,12 @@ draft/
     signal classification — Codebase signal detection across 11 categories
     run memory          — Cross-session continuity with resumable checkpoints
   graph/                — Knowledge-graph output (when graph engine is run)
-    schema.yaml         — Build metadata + module list
-    architecture.json  — Inter-module dependency edges (always-load)
-    hotspots.jsonl      — Complexity x fan-in ranking (always-load)
-    architecture.json   — Proto services, RPCs, messages, enums
-    *-index.jsonl       — Per-language indexes (go, python, ts, c)
-    architecture.json    — Intra-file call edges (with confidence: direct|inferred)
-    modules/<name>.jsonl — Per-module file graph
+    schema.yaml         — Engine + project metadata, node/edge counts, artifact list
+    architecture.json   — get_architecture: packages, edges, languages, routes, hotspots
+    hotspots.jsonl      — Fan-in-ranked symbols (always-load)
+    module-deps.mermaid — File co-change coupling diagram
+    proto-map.mermaid   — Detected service-route diagram
+    okf/                — Open Knowledge Format bundle (index.md + modules/*.md)
 ```
 
 Status markers in tracks: `[ ]` Pending, `[~]` In Progress, `[x]` Completed, `[!]` Blocked.
@@ -223,12 +222,13 @@ Call edges carry confidence signals (resolved vs. inferred); skills weight findi
 
 ## Deterministic Helper Tools
 
-Skills delegate mechanical work to 30 shell helpers under `scripts/tools/`, including:
+Skills delegate mechanical work to 34 shell helpers under `scripts/tools/`, including:
 
 - `git-metadata.sh`, `parse-git-log.sh` — git introspection
 - `classify-files.sh` — language + category (code/test/doc/config) classification
 - `hotspot-rank.sh`, `cycle-detect.sh`, `mermaid-from-graph.sh` — graph wrappers
 - `graph-snapshot.sh`, `graph-impact.sh`, `graph-callers.sh` — codebase-memory-mcp graph queries (committed snapshot, blast radius, callers)
+- `okf-emit.sh`, `okf-bundle.sh`, `okf-check.sh` — Open Knowledge Format bundle emission + v0.1 conformance validation
 - `check-track-hygiene.sh`, `check-scope-conflicts.sh`, `verify-citations.sh`, `render-track.sh` — track-hygiene and verification helpers
 - `freshness-check.sh` — file-hash freshness verification
 - `manage-symlinks.sh` — keep `*-latest.md` symlinks pointing at the newest report
@@ -250,7 +250,7 @@ All emit JSON, follow uniform exit-code contract (0 = success, 1 = invocation er
 - **Platform-agnostic:** Same methodology across Claude Code, Cursor, Copilot, Gemini, Antigravity IDE
 - **TDD enforcement:** RED → GREEN → REFACTOR cycle with verification
 - **14-dimension bug hunting:** Exhaustive defect discovery beyond simple linting
-- **Built-in code intelligence:** Knowledge graph engine + 30 deterministic helpers — no external services required
+- **Built-in code intelligence:** Knowledge graph engine + 34 deterministic helpers — no external services required
 - **Track impact memory:** Each completed track records its blast radius; new tracks get overlap warnings during context load
 - **ACID compliance audits:** Enterprise-grade module lifecycle reviews
 - **7 specialized agents:** Purpose-built behaviors for architecture, debugging, planning, review, RCA, operations, and documentation

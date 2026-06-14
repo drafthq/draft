@@ -30,7 +30,7 @@ Draft solves this through **Context-Driven Development**: structured documents t
 - [Command Workflows](#command-workflows)
   - [/draft:init](#draftinit--initialize-project)
   - [/draft:plan](#draftplan--planning-orchestrator)
-  - [/draft:index](#draftindex--monorepo-service-index)
+  - [Monorepo Support (via /draft:init)](#monorepo-support-via-draftinit)
   - [/draft:new-track](#draftnew-track--create-feature-track)
   - [/draft:implement](#draftimplement--execute-tasks)
   - [/draft:status](#draftstatus--show-progress)
@@ -405,7 +405,7 @@ Draft auto-classifies the project:
 - **Brownfield (existing codebase):** Detected by the presence of `package.json`, `requirements.txt`, `go.mod`, `Cargo.toml`, `src/`, or git history with commits. Draft scans the existing stack and pre-fills `tech-stack.md`.
 - **Greenfield (new project):** Empty or near-empty directory. Developer provides all context through dialogue.
 - **Mature high-context brownfield:** Projects with strong existing agent-optimized docs (CLAUDE.md, INVARIANTS.md, ADRs, etc.) now receive an early Context Quality Audit, graph fidelity declaration, and explicit Relationship/Gaps sections so the generated architecture.md acts as graph-primary overlay rather than duplicative prose.
-- **Monorepo:** Detected by `lerna.json`, `pnpm-workspace.yaml`, `nx.json`, `turbo.json`, or multiple package manifests in child directories. Suggests `/draft:index` instead.
+- **Monorepo:** Detected by `lerna.json`, `pnpm-workspace.yaml`, `nx.json`, `turbo.json`, or multiple package manifests in child directories. `/draft:init` is scope-aware — run it at the root for whole-repo context (sparse root map + the code-graph spine), or inside a sub-module to generate detailed module context that links up to the root graph. See **Monorepo Support (via /draft:init)** below.
 
 #### Initialization Sequence
 
@@ -499,32 +499,31 @@ The parent command should move planning forward rather than listing options.
 
 ---
 
-### `/draft:index` — Monorepo Service Index
+### Monorepo Support (via `/draft:init`)
 
-Aggregates Draft context from multiple services in a monorepo into unified root-level documents. Designed for organizations with multiple services, each with their own `draft/` context.
+There is no separate index command — `/draft:init` is the single, scope-aware entry point. The same command behaves differently by where it is run, so a monorepo needs no special tooling.
 
-#### What It Does
+#### Root init (run at the repo root)
 
-1. **Scans** immediate child directories for services (detects `package.json`, `go.mod`, `Cargo.toml`, etc.)
-2. **Reads** each service's `draft/product.md`, `draft/.ai-context.md` (or legacy `draft/architecture.md`), `draft/tech-stack.md`
-3. **Synthesizes** root-level documents:
+1. **Builds the whole-repo code-graph spine** — `graph-init.sh` indexes every file at every depth into one unified graph and writes the committed `draft/graph/` snapshot (the structural source of truth).
+2. **Generates a sparse root map** (not deep per-module prose), aggregating the children into root-level documents:
    - `draft/service-index.md` — Service registry with status, tech, and links
-   - `draft/dependency-graph.md` — Inter-service dependency topology
+   - `draft/dependency-graph.md` — Inter-service dependency topology (from the graph)
    - `draft/tech-matrix.md` — Technology distribution across services
-   - `draft/product.md` — Synthesized product vision (if not exists)
-   - `draft/.ai-context.md` — System-of-systems architecture view
-   - `draft/tech-stack.md` — Org-wide technology standards
+   - `draft/architecture.md` — High-level system map linking *down* to each module's `draft/.ai-context.md`
+   - `draft/.ai-context.md` / `draft/.ai-profile.md` — Condensed system-of-systems views
 
-#### Arguments
+#### Module init (run inside a sub-module)
 
-- `init-missing` — Run `/draft:init` on services that lack a `draft/` directory
-- `bughunt [dir1 dir2 ...]` — Run `/draft:bughunt` across subdirectories with `draft/` folders. If no directories specified, auto-discovers all subdirectories with `draft/`. Generates summary report at `draft-index-bughunt-summary.md`.
+1. **Ensures the root spine exists first** (builds it if missing), then builds the module's own `draft/graph/` snapshot.
+2. **Writes `draft/graph/root-link.json`** — a pointer up to the root graph so the module has full cross-module understanding regardless of where init ran.
+3. **Generates the detailed module reference** (full 10-section `architecture.md` for the subtree). Use `--module-only` to skip touching the root (link marked `pending`).
 
 #### When to Use
 
-- After running `/draft:init` on individual services
-- After adding or removing services from the monorepo
-- Periodically to refresh cross-service context
+- After cloning or adding a service — run `/draft:init` in it (auto-links to the root spine)
+- At the root after services change — refresh the whole-repo graph + sparse root map
+- `/draft:init --graph-only` to (re)build just the code-graph knowledge memory, no markdown
 
 ---
 

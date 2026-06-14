@@ -24,7 +24,6 @@ TOOLS_DIR="$ROOT_DIR/scripts/tools"
 SKILL_ORDER=(
     draft
     init
-    index
     graph
     new-track
     decompose
@@ -158,6 +157,7 @@ TOOLS=(
     "manage-symlinks.sh"
     "mermaid-from-graph.sh"
     "graph-snapshot.sh"
+    "graph-init.sh"
     "okf-emit.sh"
     "okf-bundle.sh"
     "okf-check.sh"

@@ -43,7 +43,7 @@ The `plugin.json` file contains **metadata** and a **skills directory path** poi
 {
   "name": "draft",
   "description": "...",
-  "version": "2.6.0",
+  "version": "3.0.0",
   "author": { "name": "..." },
   "homepage": "...",
   "license": "MIT",
@@ -186,5 +186,5 @@ To add a new skill to the Draft plugin:
 
 ---
 
-**Last Updated:** 2026-04-10
-**Plugin Version:** 2.6.0
+**Last Updated:** 2026-06-14
+**Plugin Version:** 3.0.0

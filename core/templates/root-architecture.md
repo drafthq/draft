@@ -1,7 +1,7 @@
 ---
 project: "{PROJECT_NAME}"
 module: "root"
-generated_by: "draft:index"
+generated_by: "draft:init"
 generated_at: "{ISO_TIMESTAMP}"
 ---
 
@@ -16,7 +16,7 @@ generated_at: "{ISO_TIMESTAMP}"
 
 > Synthesized from [X] service contexts.
 > This is a **system-of-systems** view. For service internals, see individual service contexts.
-> Re-running `/draft:index` will update auto-generated sections but preserve manual edits.
+> Re-running `/draft:init` will update auto-generated sections but preserve manual edits.
 
 ---
 
@@ -123,5 +123,5 @@ sequenceDiagram
 ## Notes
 
 - For detailed service architecture, navigate to individual service contexts via the Details column
-- This file is regenerable via `/draft:index`
+- This file is regenerable via `/draft:init`
 - Manual edits between `<!-- MANUAL START -->` and `<!-- MANUAL END -->` are preserved
