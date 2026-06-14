@@ -10,6 +10,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.8.0] - 2026-06-13
 
 ### Changed
+- **`draft install claude-code` now upgrades an existing install** instead of
+  no-op'ing on "already installed". The plan runs four idempotent `claude plugin`
+  steps — `marketplace add`, `marketplace update`, `install`, `update` — so a
+  re-run re-fetches the marketplace manifest from GitHub and bumps the plugin to
+  the latest version. Previously `add`/`install` short-circuited when present, so
+  existing users stayed pinned to their old version until they manually ran
+  `marketplace update` + `plugin update`. The extra steps exit 0 when there's
+  nothing to do, so fresh installs are unaffected.
 - **`draft install` now fetches the knowledge-graph engine for every host**, not
   just cursor. Previously `claude-code`, `codex`, and `opencode` deferred the
   `codebase-memory-mcp` download to first use of `/draft:init`, so a fresh
