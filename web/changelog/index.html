@@ -210,12 +210,36 @@
     <!-- Changelog entries -->
     <main class="changelog-content">
 
+        <!-- v2.8 -->
+        <article class="changelog-entry">
+            <div class="changelog-entry-header">
+                <span class="changelog-version">v2.8</span>
+                <span class="changelog-date">2026-06-14</span>
+                <span class="changelog-tag changelog-tag--latest">Latest</span>
+                <span class="changelog-tag">Install</span>
+                <span class="changelog-tag">Knowledge Graph</span>
+            </div>
+            <div class="changelog-category">Documentation</div>
+            <ul class="changelog-changes">
+                <li><strong>v2.8.2 &mdash; routers, upload &amp; integrations now in the README</strong> &mdash; the command reference previously listed only specialist leaf commands; it now documents the 4 top-tier routers (<code>/draft:plan</code>, <code>/draft:ops</code>, <code>/draft:docs</code>, <code>/draft:discover</code>), the <code>/draft:upload</code> handoff gate, and the <code>/draft:integrations</code> parent command.</li>
+                <li><strong>Counts corrected site-wide</strong> &mdash; the total surface is <strong>34 skills</strong> (4 primary + 5 routers + 25 specialists). Stale "33 commands / 22 specialists" copy is now aligned to the actual count.</li>
+            </ul>
+            <div class="changelog-category">Knowledge Graph</div>
+            <ul class="changelog-changes">
+                <li><strong>v2.8.1 &mdash; graph engine fetch no longer 404s</strong> &mdash; <code>scripts/fetch-memory-engine.sh</code> pinned <code>codebase-memory-mcp</code> to <code>v0.7.0</code>, which publishes no binary assets, so every fetch failed with a 404 and graph features stayed unavailable. Bumped the pin to <code>v0.8.1</code> (current release with published darwin/linux assets and a verified <code>checksums.txt</code>).</li>
+            </ul>
+            <div class="changelog-category">Installation</div>
+            <ul class="changelog-changes">
+                <li><strong>v2.8.0 &mdash; graph engine fetched on every install</strong> &mdash; <code>draft install</code> now downloads the <code>codebase-memory-mcp</code> engine for all hosts (<code>claude-code</code>, <code>codex</code>, <code>opencode</code>), not just cursor. The download stays best-effort and network-gated, and remains opt-out via <code>--no-graph</code>.</li>
+                <li><strong>v2.8.0 &mdash; <code>claude-code install</code> upgrades existing plugins</strong> &mdash; re-running the installer now runs four idempotent <code>claude plugin</code> steps (<code>marketplace add</code>, <code>marketplace update</code>, <code>install</code>, <code>update</code>), so existing users are bumped to the latest version instead of short-circuiting on "already installed".</li>
+            </ul>
+        </article>
+
         <!-- v2.7 -->
         <article class="changelog-entry">
             <div class="changelog-entry-header">
                 <span class="changelog-version">v2.7</span>
                 <span class="changelog-date">2026-06-13</span>
-                <span class="changelog-tag changelog-tag--latest">Latest</span>
                 <span class="changelog-tag">Install</span>
             </div>
             <div class="changelog-category">Installation</div>

@@ -1,6 +1,6 @@
 {
   "name": "@drafthq/draft",
-  "version": "2.8.1",
+  "version": "2.8.2",
   "description": "Context-Driven Development for AI coding agents — install Draft into Claude Code, Cursor, Codex, or opencode.",
   "bin": {
     "draft": "cli/bin/draft.js"

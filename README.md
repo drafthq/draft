@@ -113,9 +113,9 @@ curl -o .gemini.md https://raw.githubusercontent.com/drafthq/draft/main/integrat
 
 ---
 
-## Beyond `/draft:review` — 27 more commands
+## Beyond `/draft:review` — 33 more commands
 
-`/draft:review` is the wedge. Once Draft has indexed your repo, you also get spec-driven planning, TDD-enforced implementation, exhaustive bug hunting, deep architectural audits, and 23 more commands covering the full development lifecycle.
+`/draft:review` is the wedge. Once Draft has indexed your repo, you also get spec-driven planning, TDD-enforced implementation, exhaustive bug hunting, deep architectural audits, and 29 more commands covering the full development lifecycle.
 
 ---
 
@@ -124,6 +124,10 @@ curl -o .gemini.md https://raw.githubusercontent.com/drafthq/draft/main/integrat
 | Command | What It Does |
 |---------|--------------|
 | **`/draft`** | Overview, intent mapping, and command reference |
+| **`/draft:plan`** | Router for planning, architecture, and track management |
+| **`/draft:ops`** | Router for operations, deployment, incident, and lifecycle |
+| **`/draft:docs`** | Router for authoring and documentation workflows |
+| **`/draft:discover`** | Router for discovery, debugging, investigation, and quality |
 | **`/draft:init`** | Analyze codebase, create context files + state tracking |
 | **`/draft:index`** | Aggregate monorepo service contexts |
 | **`/draft:new-track`** | Collaborative spec + plan with AI |
@@ -141,11 +145,13 @@ curl -o .gemini.md https://raw.githubusercontent.com/drafthq/draft/main/integrat
 | **`/draft:debug`** | Structured debugging: reproduce, isolate, diagnose, fix |
 | **`/draft:quick-review`** | Lightweight 4-dimension code review |
 | **`/draft:deploy-checklist`** | Pre-deployment verification with rollback triggers |
+| **`/draft:upload`** | Pre-upload handoff gate (review, HLD, checklist, validators) |
 | **`/draft:testing-strategy`** | Test plan design with coverage targets |
 | **`/draft:tech-debt`** | Technical debt analysis across 6 dimensions |
 | **`/draft:standup`** | Git activity standup summary (read-only) |
 | **`/draft:incident-response`** | Incident lifecycle: triage, communicate, mitigate, postmortem |
 | **`/draft:documentation`** | Technical docs: readme, runbook, api, onboarding |
+| **`/draft:integrations`** | External system exports and syncs (jira preview / create) |
 | **`/draft:jira`** | Unified Jira workflows (preview / create / review) |
 | **`/draft:tour`** | Interactive architecture mentorship and codebase walk-through |
 | **`/draft:impact`** | ROI analytics tracking friction and timeline metrics |

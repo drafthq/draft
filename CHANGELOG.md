@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.8.2] - 2026-06-14
+
+### Documentation
+- **README now documents the full router surface.** The command reference
+  previously listed only the specialist leaf commands; it now also documents the
+  4 top-tier routers (`/draft:plan`, `/draft:ops`, `/draft:docs`,
+  `/draft:discover`), the `/draft:upload` handoff gate, and the
+  `/draft:integrations` parent command — the recommended public entry points.
+- **Corrected stale skill/command counts site-wide.** The total surface is
+  **34 skills** (4 primary + 5 routers + 25 specialists). CLAUDE.md said
+  "31 skills / 22 specialists" and the website said "33 commands / 22
+  specialists"; both are now aligned to the actual count.
+
 ## [2.8.1] - 2026-06-14
 
 ### Fixed
