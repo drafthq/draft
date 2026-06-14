@@ -1588,6 +1588,7 @@ Create `draft/tracks.md` with metadata header:
 
 ```markdown
 ---
+type: TrackIndex
 project: "{PROJECT_NAME}"
 module: "root"
 generated_by: "draft:init"
@@ -1638,14 +1639,17 @@ to (re)generate the Open Knowledge Format root index so the whole `draft/` tree 
 a portable, vendor-neutral OKF bundle. This is the default — no flag required.
 
 ```bash
-scripts/tools/okf-bundle.sh --dir draft        # writes draft/index.md (type: Repository)
-scripts/tools/okf-bundle.sh --dir draft --check  # verifies every concept declares type:
+scripts/tools/okf-bundle.sh --dir draft   # writes the bundle-root draft/index.md
+scripts/tools/okf-check.sh  --dir draft   # OKF v0.1 conformance (advisory, non-fatal)
 ```
 
 `okf-bundle.sh` links every concept file present (`.ai-profile.md`, `.ai-context.md`,
 `architecture.md`, `product.md`, `tech-stack.md`, `workflow.md`, `guardrails.md`), the
-tracks, and the graph sub-bundle (`graph/okf/`). Concept `type:` frontmatter comes
-from the templates; `--check` is a conformance gate, not a hard failure of init.
+tracks, and the graph sub-bundle (`graph/okf/`). Concept `type:` frontmatter comes from
+the templates; `okf-check.sh` validates §9 conformance (frontmatter + `type` on every
+concept; reserved `index.md`/`log.md` structure). It is advisory — report the result,
+do not fail init. Note: operational reports later written into `draft/` (e.g.
+`deep-review-report.md`) are not OKF concepts and will be flagged.
 
 **Finalize run memory:** Update `draft/.state/run-memory.json`:
 - `status`: `"completed"`

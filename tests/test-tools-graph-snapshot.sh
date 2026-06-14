@@ -38,7 +38,7 @@ if command -v jq >/dev/null 2>&1; then
     assert "hotspots.jsonl is one JSON object per line" \
         "$(head -1 "$FIXTURE/graph/hotspots.jsonl" | jq -e '.id and .fanIn' >/dev/null 2>&1 && echo true || echo false)"
     assert "OKF bundle emitted by default" \
-        "$([[ -f "$FIXTURE/graph/okf/index.md" ]] && grep -q '^type: Repository' "$FIXTURE/graph/okf/index.md" && echo true || echo false)"
+        "$([[ -f "$FIXTURE/graph/okf/index.md" ]] && ! head -1 "$FIXTURE/graph/okf/index.md" | grep -q '^---' && echo true || echo false)"
 fi
 
 echo ""

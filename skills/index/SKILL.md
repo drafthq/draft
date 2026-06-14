@@ -791,8 +791,8 @@ Format root index so the root `draft/` tree is a portable OKF bundle. This is th
 default; the index links `service-index.md` and every other concept present.
 
 ```bash
-scripts/tools/okf-bundle.sh --dir draft        # writes draft/index.md (type: Repository)
-scripts/tools/okf-bundle.sh --dir draft --check  # conformance gate (non-fatal)
+scripts/tools/okf-bundle.sh --dir draft   # writes the bundle-root draft/index.md
+scripts/tools/okf-check.sh  --dir draft   # OKF v0.1 conformance (advisory, non-fatal)
 ```
 
 ## Step 9: Completion Report

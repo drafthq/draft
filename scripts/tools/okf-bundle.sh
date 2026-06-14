@@ -10,40 +10,36 @@
 # vendor-neutral OKF bundle.
 # https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing
 #
-# Default mode: write <dir>/index.md (type: Repository) linking every concept
-#   file present, the tracks, and the graph sub-bundle (graph/okf/).
-# --check mode: verify every canonical concept file present declares `type:`;
-#   exit 1 listing any that do not (OKF requires `type` on every concept).
+# Writes <dir>/index.md (the OKF bundle-root index, §6/§11) linking every concept
+# file present, the tracks, and the graph sub-bundle (graph/okf/). Validate the
+# result with okf-check.sh (the OKF v0.1 conformance checker).
 #
-# Usage: scripts/tools/okf-bundle.sh [--dir DIR] [--check]
-# Exit codes: 0 OK, 1 invocation error or conformance failure, 2 dir missing.
+# Usage: scripts/tools/okf-bundle.sh [--dir DIR]
+# Exit codes: 0 OK, 1 invocation error, 2 dir missing.
 set -euo pipefail
 
 DIR="draft"
-CHECK=0
 
 usage() {
     cat <<'EOF'
-okf-bundle.sh — write the OKF root index.md for a draft/ context bundle.
+okf-bundle.sh — write the OKF bundle-root index.md for a draft/ context bundle.
 
 Usage:
-  scripts/tools/okf-bundle.sh [--dir DIR] [--check]
+  scripts/tools/okf-bundle.sh [--dir DIR]
 
 Flags:
   --dir DIR  Bundle root (default: draft).
-  --check    Validate `type:` frontmatter on canonical concept files instead of
-             writing; exit 1 if any concept file is missing it.
   --help     Show this help.
 
-Default writes <dir>/index.md (OKF type: Repository) cross-linking every concept
-present. Exit 0 OK, 1 invocation/conformance error, 2 when <dir> is absent.
+Writes <dir>/index.md cross-linking every concept present, the tracks, and the
+graph sub-bundle. Validate conformance with `okf-check.sh --dir <dir>`.
+Exit 0 OK, 1 invocation error, 2 when <dir> is absent.
 EOF
 }
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --dir) DIR="$2"; shift 2;;
-        --check) CHECK=1; shift;;
         --help|-h) usage; exit 0;;
         -*) echo "Unknown flag: $1" >&2; usage >&2; exit 1;;
         *) echo "Unexpected arg: $1" >&2; usage >&2; exit 1;;
@@ -81,26 +77,7 @@ read_fm_field() {
     ' "$1"
 }
 
-# --- --check: enforce `type:` on every present concept file ---
-if [[ "$CHECK" == "1" ]]; then
-    missing=()
-    for entry in "${CONCEPTS[@]}"; do
-        IFS='|' read -r fname _ _ <<< "$entry"
-        [[ -f "$DIR/$fname" ]] || continue
-        [[ -n "$(read_fm_field "$DIR/$fname" type)" ]] || missing+=("$fname")
-    done
-    if [[ ${#missing[@]} -gt 0 ]]; then
-        echo "OKF conformance FAIL — concept files missing required 'type:' frontmatter:" >&2
-        printf '  %s\n' "${missing[@]}" >&2
-        exit 1
-    fi
-    echo "OKF conformance OK — all present concept files declare 'type:'."
-    exit 0
-fi
-
-# --- default: write the bundle root index.md ---
-TS="$(date -Iseconds 2>/dev/null || date)"
-
+# --- write the bundle root index.md ---
 PROJECT=""
 for probe in architecture.md .ai-context.md product.md .ai-profile.md; do
     if [[ -f "$DIR/$probe" ]]; then
@@ -112,16 +89,12 @@ done
 
 INDEX="$DIR/index.md"
 {
+    # Bundle-root index.md: frontmatter is permitted only to declare okf_version (§11).
     printf -- '---\n'
-    printf 'type: Repository\n'
-    printf 'title: "%s"\n' "$PROJECT"
-    printf 'description: "Draft context bundle (Open Knowledge Format root index)."\n'
-    printf 'tags: [repository, draft, knowledge-bundle]\n'
-    printf 'timestamp: "%s"\n' "$TS"
+    printf 'okf_version: "0.1"\n'
     printf -- '---\n\n'
     printf '# %s — Draft Context Bundle\n\n' "$PROJECT"
-    printf 'Open Knowledge Format (OKF) bundle root. Each concept below is a markdown file\n'
-    printf 'with a `type` frontmatter field; the links form the navigable knowledge graph.\n'
+    printf 'Open Knowledge Format (OKF) bundle root. Each concept below is a markdown file with a `type` frontmatter field; the links form the navigable knowledge graph.\n'
 
     # Context concepts (only if at least one is present)
     context=""
@@ -130,16 +103,18 @@ INDEX="$DIR/index.md"
         [[ -f "$DIR/$fname" ]] || continue
         t="$(read_fm_field "$DIR/$fname" type)"
         [[ -n "$t" ]] || t="$expected"
-        context+="$(printf -- '- [%s](%s) — `%s`' "$label" "$fname" "$t")"$'\n'
+        d="$(read_fm_field "$DIR/$fname" description)"
+        desc="${d:-$t concept}"
+        context+="$(printf -- '* [%s](%s) - %s' "$label" "$fname" "$desc")"$'\n'
     done
     if [[ -n "$context" ]]; then
-        printf '\n## Context\n\n%s' "$context"
+        printf '\n# Context\n\n%s' "$context"
     fi
 
     # Tracks
     if [[ -f "$DIR/tracks.md" || -d "$DIR/tracks" ]]; then
-        printf '\n## Tracks\n\n'
-        [[ -f "$DIR/tracks.md" ]] && printf -- '- [Track Index](tracks.md)\n'
+        printf '\n# Tracks\n\n'
+        [[ -f "$DIR/tracks.md" ]] && printf -- '* [Track Index](tracks.md) - active, completed, and archived tracks\n'
         if [[ -d "$DIR/tracks" ]]; then
             for td in "$DIR"/tracks/*/; do
                 [[ -d "$td" ]] || continue
@@ -150,15 +125,15 @@ INDEX="$DIR/index.md"
                     mt="$(jq -r '.title // empty' "$td/metadata.json" 2>/dev/null || true)"
                     [[ -n "$mt" ]] && title="$mt"
                 fi
-                printf -- '- [%s](tracks/%s/spec.md)\n' "$title" "$id"
+                printf -- '* [%s](tracks/%s/spec.md) - track %s\n' "$title" "$id" "$id"
             done
         fi
     fi
 
     # Knowledge graph sub-bundle
     if [[ -f "$DIR/graph/okf/index.md" ]]; then
-        printf '\n## Knowledge graph\n\n'
-        printf -- '- [Graph bundle](graph/okf/index.md) — `Repository`\n'
+        printf '\n# Knowledge graph\n\n'
+        printf -- '* [Graph bundle](graph/okf/index.md) - structural knowledge graph (modules, dependencies, hotspots)\n'
     fi
 } > "$INDEX"
 

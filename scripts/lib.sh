@@ -160,6 +160,7 @@ TOOLS=(
     "graph-snapshot.sh"
     "okf-emit.sh"
     "okf-bundle.sh"
+    "okf-check.sh"
     "graph-impact.sh"
     "graph-callers.sh"
     "validate-frontmatter.sh"

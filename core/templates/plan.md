@@ -1,4 +1,5 @@
 ---
+type: Plan
 project: "{PROJECT_NAME}"
 module: "root"
 track_id: "{TRACK_ID}"

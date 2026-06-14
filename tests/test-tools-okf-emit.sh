@@ -49,12 +49,14 @@ JSON
 
     OKF="$SNAP/okf"
     assert "index.md written" "$([[ -f "$OKF/index.md" ]] && echo true || echo false)"
-    assert "index.md declares OKF type: Repository" \
-        "$(grep -q '^type: Repository' "$OKF/index.md" && echo true || echo false)"
+    assert "index.md is a reserved file with no frontmatter (§6)" \
+        "$(head -1 "$OKF/index.md" | grep -q '^---' && echo false || echo true)"
     assert "index.md links each module concept" \
-        "$(grep -q '\[alpha\](modules/alpha.md)' "$OKF/index.md" && grep -q '\[beta\](modules/beta.md)' "$OKF/index.md" && echo true || echo false)"
+        "$(grep -qF '[alpha](modules/alpha.md)' "$OKF/index.md" && grep -qF '[beta](modules/beta.md)' "$OKF/index.md" && echo true || echo false)"
     assert "index.md surfaces hotspots" \
         "$(grep -q 'foo' "$OKF/index.md" && echo true || echo false)"
+    assert "emitted bundle passes okf-check" \
+        "$("$ROOT_DIR/scripts/tools/okf-check.sh" --dir "$OKF" --quiet >/dev/null 2>&1 && echo true || echo false)"
 
     assert "module concept file written" "$([[ -f "$OKF/modules/alpha.md" ]] && echo true || echo false)"
     assert "module declares OKF type: Module" \

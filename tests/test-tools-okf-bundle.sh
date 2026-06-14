@@ -19,10 +19,10 @@ mkdir -p "$D/tracks/T-001" "$D/graph/okf"
 printf -- '---\ntype: Architecture\nproject: "demoproj"\n---\n\n# Arch\n' > "$D/architecture.md"
 printf -- '---\ntype: ContextMap\nproject: "demoproj"\n---\n\n# Ctx\n' > "$D/.ai-context.md"
 printf -- '---\ntype: Product\nproject: "demoproj"\n---\n\n# Product\n' > "$D/product.md"
-printf -- '# Tracks\n' > "$D/tracks.md"
-printf -- '---\nproject: "demoproj"\ntrack_id: "T-001"\n---\n\n# Spec\n' > "$D/tracks/T-001/spec.md"
+printf -- '---\ntype: TrackIndex\n---\n\n# Tracks\n' > "$D/tracks.md"
+printf -- '---\ntype: Spec\nproject: "demoproj"\ntrack_id: "T-001"\n---\n\n# Spec\n' > "$D/tracks/T-001/spec.md"
 printf '{"title":"Add login"}\n' > "$D/tracks/T-001/metadata.json"
-printf -- '---\ntype: Repository\n---\n\n# graph\n' > "$D/graph/okf/index.md"
+printf -- '# graph\n' > "$D/graph/okf/index.md"   # reserved index: no frontmatter
 
 # --- Missing dir → exit 2 ---
 set +e
@@ -38,36 +38,26 @@ rc=$?
 set -e
 assert "Generate → exit 0" "$([[ "$rc" == "0" ]] && echo true || echo false)"
 assert "index.md written" "$([[ -f "$D/index.md" ]] && echo true || echo false)"
-assert "index.md declares OKF type: Repository" \
-    "$(grep -q '^type: Repository' "$D/index.md" && echo true || echo false)"
-assert "index.md derives project name" \
-    "$(grep -q 'title: "demoproj"' "$D/index.md" && echo true || echo false)"
-assert "links each present concept with its type" \
-    "$(grep -q '\[Architecture\](architecture.md) — `Architecture`' "$D/index.md" \
-        && grep -q '\[Product\](product.md) — `Product`' "$D/index.md" && echo true || echo false)"
+assert "root index.md declares okf_version, not a concept type (§11)" \
+    "$(grep -q '^okf_version: "0.1"' "$D/index.md" && ! grep -q '^type:' "$D/index.md" && echo true || echo false)"
+assert "index.md derives project name into the heading" \
+    "$(grep -q '^# demoproj' "$D/index.md" && echo true || echo false)"
+assert "links each present concept (§6 bullet form)" \
+    "$(grep -qF '* [Architecture](architecture.md) - ' "$D/index.md" \
+        && grep -qF '* [Product](product.md) - ' "$D/index.md" && echo true || echo false)"
 assert "omits concepts not present (no workflow.md link)" \
     "$(grep -q 'workflow.md' "$D/index.md" && echo false || echo true)"
 assert "links track via metadata title" \
-    "$(grep -q '\[Add login\](tracks/T-001/spec.md)' "$D/index.md" && echo true || echo false)"
+    "$(grep -qF '* [Add login](tracks/T-001/spec.md)' "$D/index.md" && echo true || echo false)"
 assert "links the graph sub-bundle" \
-    "$(grep -q '\[Graph bundle\](graph/okf/index.md)' "$D/index.md" && echo true || echo false)"
+    "$(grep -qF '* [Graph bundle](graph/okf/index.md)' "$D/index.md" && echo true || echo false)"
 
-# --- Conformance check: passes when all present concepts have type: ---
+# --- The generated bundle is OKF v0.1 conformant end-to-end ---
 set +e
-"$TOOL" --dir "$D" --check >/dev/null 2>&1
+"$ROOT_DIR/scripts/tools/okf-check.sh" --dir "$D" --quiet >/dev/null 2>&1
 rc=$?
 set -e
-assert "--check passes when all concepts declare type" "$([[ "$rc" == "0" ]] && echo true || echo false)"
-
-# --- Conformance check: fails when a concept lacks type: ---
-printf -- '---\nproject: "demoproj"\n---\n\n# Tech (no type)\n' > "$D/tech-stack.md"
-set +e
-out="$("$TOOL" --dir "$D" --check 2>&1)"
-rc=$?
-set -e
-assert "--check fails when a concept lacks type" "$([[ "$rc" == "1" ]] && echo true || echo false)"
-assert "--check names the offending file" \
-    "$(echo "$out" | grep -q 'tech-stack.md' && echo true || echo false)"
+assert "generated draft/ bundle passes okf-check" "$([[ "$rc" == "0" ]] && echo true || echo false)"
 
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="

@@ -1,4 +1,5 @@
 ---
+type: RCA
 project: "{PROJECT_NAME}"
 track_id: "{TRACK_ID}"
 jira_ticket: "{JIRA_KEY}"
