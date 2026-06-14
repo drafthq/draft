@@ -35,7 +35,7 @@ module.exports = {
           label: `claude plugin install ${PLUGIN_REF} --scope ${scope}`,
         },
       ],
-      graph: false, // /draft:init fetches the graph engine on first use
+      graph: true, // fetch the graph engine at install time (/draft:init also fetches on first use as a fallback)
       done: 'Installed draft. Restart Claude Code (or start a new session), then run /draft:init.',
       fallbackTitle: 'Claude Code CLI not found. Run these in Claude Code instead:',
       fallback: [

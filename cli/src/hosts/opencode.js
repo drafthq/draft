@@ -32,7 +32,7 @@ module.exports = {
           label: '~/.agents/skills/draft/',
         },
       ],
-      graph: false,
+      graph: true,
       done: 'opencode reads AGENTS.md from the repo root; Draft skills bundled under ~/.agents/skills/draft/.',
     };
   },

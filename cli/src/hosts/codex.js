@@ -25,7 +25,7 @@ module.exports = {
           guard: true,
         },
       ],
-      graph: false,
+      graph: true,
       done: 'Wrote AGENTS.md — Codex reads it automatically from the repo root.',
       notes: ['Commit AGENTS.md so your whole team shares the Draft methodology.'],
     };

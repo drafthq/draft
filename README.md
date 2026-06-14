@@ -159,7 +159,7 @@ curl -o .gemini.md https://raw.githubusercontent.com/drafthq/draft/main/integrat
 
 ## Built-in Code Intelligence
 
-Draft is powered by a **local knowledge graph engine** ([codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp)) that gives every command precise structural context — module boundaries, call graphs, dependencies, hotspots. It's 100% local (no API key, no SaaS), installed on first use.
+Draft is powered by a **local knowledge graph engine** ([codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp)) that gives every command precise structural context — module boundaries, call graphs, dependencies, hotspots. It's 100% local (no API key, no SaaS), fetched during `draft install` (best-effort; `--no-graph` to skip), with first-use fetch as a fallback.
 
 ```bash
 /draft:graph                                  # build / refresh the snapshot

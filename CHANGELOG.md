@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **`draft install` now fetches the knowledge-graph engine for every host**, not
+  just cursor. Previously `claude-code`, `codex`, and `opencode` deferred the
+  `codebase-memory-mcp` download to first use of `/draft:init`, so a fresh
+  install left graph-backed steps stubbed until something happened to trigger the
+  fetch. All host plans now set `graph: true`; the download remains best-effort
+  and network-gated (skipped cleanly when offline) and is still opt-out via
+  `--no-graph`.
+
 ## [2.7.1] - 2026-06-13
 
 ### Fixed
