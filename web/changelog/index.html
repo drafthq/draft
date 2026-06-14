@@ -219,8 +219,9 @@
                 <span class="changelog-tag">Install</span>
                 <span class="changelog-tag">Knowledge Graph</span>
             </div>
-            <div class="changelog-category">Documentation</div>
+            <div class="changelog-category">Fixed</div>
             <ul class="changelog-changes">
+                <li><strong>v2.8.3 &mdash; <code>install claude-code</code> no longer hangs</strong> &mdash; <code>claude plugin marketplace add</code> git-clones the repo, and ~670&nbsp;MB of audiobook <code>.m4a</code> files in HEAD made even the shallow clone download everything, stalling the install on its first step. The audio now ships as a GitHub Release asset (removed from the repo), shrinking the marketplace clone from ~535&nbsp;MB to under 2&nbsp;MB. The installer also gained a per-step timeout so a stalled network op prints the manual fallback instead of hanging forever.</li>
                 <li><strong>v2.8.2 &mdash; routers, upload &amp; integrations now in the README</strong> &mdash; the command reference previously listed only specialist leaf commands; it now documents the 4 top-tier routers (<code>/draft:plan</code>, <code>/draft:ops</code>, <code>/draft:docs</code>, <code>/draft:discover</code>), the <code>/draft:upload</code> handoff gate, and the <code>/draft:integrations</code> parent command.</li>
                 <li><strong>Counts corrected site-wide</strong> &mdash; the total surface is <strong>34 skills</strong> (4 primary + 5 routers + 25 specialists). Stale "33 commands / 22 specialists" copy is now aligned to the actual count.</li>
             </ul>

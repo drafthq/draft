@@ -25,7 +25,7 @@
   <!-- Brand -->
   <g transform="translate(80, 80)">
     <text x="0" y="0" font-family="JetBrains Mono, monospace" font-size="22" font-weight="600" fill="#a371f7" letter-spacing="6">DRAFT</text>
-    <text x="0" y="32" font-family="JetBrains Mono, monospace" font-size="14" fill="#768390" letter-spacing="2">v2.4 · MIT · open source</text>
+    <text x="0" y="32" font-family="JetBrains Mono, monospace" font-size="14" fill="#768390" letter-spacing="2">v2.8 · MIT · open source</text>
   </g>
 
   <!-- Headline -->
