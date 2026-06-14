@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.8.3] - 2026-06-14
+
+### Fixed
+- **`draft install claude-code` no longer hangs.** `claude plugin marketplace
+  add drafthq/draft` does a `git clone` of the repo, and the repo carried ~670 MB
+  of audiobook `.m4a` files in HEAD (`web/book/audio/audio-files/`). Even claude's
+  shallow clone downloaded all of it, so the install stalled on the very first
+  step. The audio is now hosted as the `book-audio` GitHub Release and removed
+  from the repo, shrinking the marketplace clone to a few MB. The book audio
+  player and `podcast.xml` enclosures now point at the release assets.
+- **Installer fails loudly instead of hanging forever.** Each `claude plugin`
+  step now runs under a timeout (default 300s, override with
+  `DRAFT_INSTALL_TIMEOUT_MS`); on timeout the installer prints the manual
+  slash-command fallback rather than blocking indefinitely.
+- **Marketplace manifest version synced.** `.claude-plugin/marketplace.json`
+  advertised `2.8.0` while the plugin was newer, so `claude plugin update` saw a
+  stale version; it now tracks the plugin version.
+
 ## [2.8.2] - 2026-06-14
 
 ### Documentation

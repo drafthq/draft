@@ -11,13 +11,22 @@ function hasBinary(name) {
   return !(r.error && r.error.code === 'ENOENT');
 }
 
+// Per-step ceiling so a stalled network op (e.g. the `git clone` behind
+// `claude plugin marketplace add`) fails loudly with the manual fallback
+// instead of hanging the installer forever. Override with DRAFT_INSTALL_TIMEOUT_MS.
+const STEP_TIMEOUT_MS = Number(process.env.DRAFT_INSTALL_TIMEOUT_MS) || 300000;
+
 function execAction(act, ctx) {
   const printable = `${act.cmd} ${act.args.join(' ')}`;
   log.plan(`${ctx.dryRun ? 'would run' : 'running'}: ${printable}`);
   if (ctx.dryRun) return 0;
-  const r = spawnSync(act.cmd, act.args, { stdio: 'inherit' });
+  const r = spawnSync(act.cmd, act.args, { stdio: 'inherit', timeout: STEP_TIMEOUT_MS });
   if (r.error) {
-    log.error(`failed to run ${act.cmd}: ${r.error.message}`);
+    if (r.error.code === 'ETIMEDOUT') {
+      log.error(`timed out after ${Math.round(STEP_TIMEOUT_MS / 1000)}s: ${printable}`);
+    } else {
+      log.error(`failed to run ${act.cmd}: ${r.error.message}`);
+    }
     return 1;
   }
   return r.status == null ? 1 : r.status;

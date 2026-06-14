@@ -140,8 +140,9 @@ class DraftAudioPlayer {
     playTrack(index, title, subtitle) {
         this.currentIdx = index;
 
-        const isAudioPage = document.body.classList.contains('audio-player-page');
-        const baseUrl = isAudioPage ? './audio-files/' : '../audio/audio-files/';
+        // Audio is hosted as GitHub Release assets (not in the repo) to keep the
+        // marketplace clone small. See the "book-audio" release on drafthq/draft.
+        const baseUrl = 'https://github.com/drafthq/draft/releases/download/book-audio/';
 
         this.audio.src = `${baseUrl}chapter-${index}.m4a`;
         this.titleEl.innerText = title;

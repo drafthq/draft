@@ -31,7 +31,7 @@
     <item>
       <title>Chapter 0: What is Draft?</title>
       <description>What Draft is, what it is not, who it is for, and what you get. An overview of 34 commands and 7 specialized agents for structured AI development.</description>
-      <enclosure url="https://getdraft.dev/book/audio/audio-files/chapter-0.m4a" length="43893225" type="audio/x-m4a"/>
+      <enclosure url="https://github.com/drafthq/draft/releases/download/book-audio/chapter-0.m4a" length="43893225" type="audio/x-m4a"/>
       <guid>https://getdraft.dev/book/audio/audio-files/chapter-0.m4a</guid>
       <pubDate>Sat, 05 Apr 2026 00:00:00 +0000</pubDate>
       <link>https://getdraft.dev/book/what-is-draft/</link>
@@ -45,7 +45,7 @@
     <item>
       <title>Chapter 1: The Problem</title>
       <description>Why AI coding assistants produce wrong code without structure. Explores the gap between speed and correctness, and why better prompting is not the answer.</description>
-      <enclosure url="https://getdraft.dev/book/audio/audio-files/chapter-1.m4a" length="45143484" type="audio/x-m4a"/>
+      <enclosure url="https://github.com/drafthq/draft/releases/download/book-audio/chapter-1.m4a" length="45143484" type="audio/x-m4a"/>
       <guid>https://getdraft.dev/book/audio/audio-files/chapter-1.m4a</guid>
       <pubDate>Fri, 04 Apr 2026 00:00:00 +0000</pubDate>
       <link>https://getdraft.dev/book/the-problem/</link>
@@ -59,7 +59,7 @@
     <item>
       <title>Chapter 3: Getting Started</title>
       <description>Install Draft and run your first commands in five minutes. Set up architecture discovery, create a track, and start implementing with structured AI assistance.</description>
-      <enclosure url="https://getdraft.dev/book/audio/audio-files/chapter-3.m4a" length="46859265" type="audio/x-m4a"/>
+      <enclosure url="https://github.com/drafthq/draft/releases/download/book-audio/chapter-3.m4a" length="46859265" type="audio/x-m4a"/>
       <guid>https://getdraft.dev/book/audio/audio-files/chapter-3.m4a</guid>
       <pubDate>Thu, 03 Apr 2026 00:00:00 +0000</pubDate>
       <link>https://getdraft.dev/book/getting-started/</link>
@@ -73,7 +73,7 @@
     <item>
       <title>Chapter 4: Specs and Plans</title>
       <description>Collaborative spec intake and phased plan generation. Requirements to specification to implementation plan, reviewed before code exists.</description>
-      <enclosure url="https://getdraft.dev/book/audio/audio-files/chapter-4.m4a" length="43441897" type="audio/x-m4a"/>
+      <enclosure url="https://github.com/drafthq/draft/releases/download/book-audio/chapter-4.m4a" length="43441897" type="audio/x-m4a"/>
       <guid>https://getdraft.dev/book/audio/audio-files/chapter-4.m4a</guid>
       <pubDate>Wed, 02 Apr 2026 00:00:00 +0000</pubDate>
       <link>https://getdraft.dev/book/specs-and-plans/</link>
@@ -87,7 +87,7 @@
     <item>
       <title>Chapter 5: Implementation</title>
       <description>Task-by-task implementation with TDD enforcement. RED, GREEN, REFACTOR cycles with architecture checkpoints and production robustness patterns.</description>
-      <enclosure url="https://getdraft.dev/book/audio/audio-files/chapter-5.m4a" length="45825762" type="audio/x-m4a"/>
+      <enclosure url="https://github.com/drafthq/draft/releases/download/book-audio/chapter-5.m4a" length="45825762" type="audio/x-m4a"/>
       <guid>https://getdraft.dev/book/audio/audio-files/chapter-5.m4a</guid>
       <pubDate>Tue, 01 Apr 2026 00:00:00 +0000</pubDate>
       <link>https://getdraft.dev/book/implementation/</link>
@@ -101,7 +101,7 @@
     <item>
       <title>Chapter 6: Review Pipeline</title>
       <description>Three-stage code review pipeline covering automated validation, spec compliance checking, and code quality analysis with STRIDE threat modeling.</description>
-      <enclosure url="https://getdraft.dev/book/audio/audio-files/chapter-6.m4a" length="38284728" type="audio/x-m4a"/>
+      <enclosure url="https://github.com/drafthq/draft/releases/download/book-audio/chapter-6.m4a" length="38284728" type="audio/x-m4a"/>
       <guid>https://getdraft.dev/book/audio/audio-files/chapter-6.m4a</guid>
       <pubDate>Mon, 31 Mar 2026 00:00:00 +0000</pubDate>
       <link>https://getdraft.dev/book/review-pipeline/</link>
@@ -115,7 +115,7 @@
     <item>
       <title>Chapter 7: Managing Tracks</title>
       <description>Track lifecycle management including status markers, parallel tracks, blocked state handling, and git-aware rollback capabilities.</description>
-      <enclosure url="https://getdraft.dev/book/audio/audio-files/chapter-7.m4a" length="40019932" type="audio/x-m4a"/>
+      <enclosure url="https://github.com/drafthq/draft/releases/download/book-audio/chapter-7.m4a" length="40019932" type="audio/x-m4a"/>
       <guid>https://getdraft.dev/book/audio/audio-files/chapter-7.m4a</guid>
       <pubDate>Sun, 30 Mar 2026 00:00:00 +0000</pubDate>
       <link>https://getdraft.dev/book/managing-tracks/</link>
@@ -129,7 +129,7 @@
     <item>
       <title>Chapter 8: Decomposition</title>
       <description>Breaking large features into independently shippable sub-tasks. Tree decomposition with dependency ordering and blast radius scoping.</description>
-      <enclosure url="https://getdraft.dev/book/audio/audio-files/chapter-8.m4a" length="43023324" type="audio/x-m4a"/>
+      <enclosure url="https://github.com/drafthq/draft/releases/download/book-audio/chapter-8.m4a" length="43023324" type="audio/x-m4a"/>
       <guid>https://getdraft.dev/book/audio/audio-files/chapter-8.m4a</guid>
       <pubDate>Sat, 29 Mar 2026 00:00:00 +0000</pubDate>
       <link>https://getdraft.dev/book/decomposition/</link>
@@ -143,7 +143,7 @@
     <item>
       <title>Chapter 9: Architecture Decision Records</title>
       <description>Structured decision capture with context, rationale, consequences, and lifecycle management. How ADRs create an auditable trail of architectural choices.</description>
-      <enclosure url="https://getdraft.dev/book/audio/audio-files/chapter-9.m4a" length="35858913" type="audio/x-m4a"/>
+      <enclosure url="https://github.com/drafthq/draft/releases/download/book-audio/chapter-9.m4a" length="35858913" type="audio/x-m4a"/>
       <guid>https://getdraft.dev/book/audio/audio-files/chapter-9.m4a</guid>
       <pubDate>Fri, 28 Mar 2026 00:00:00 +0000</pubDate>
       <link>https://getdraft.dev/book/adrs/</link>
@@ -157,7 +157,7 @@
     <item>
       <title>Chapter 10: Context Tiering</title>
       <description>How Draft organizes project context into three tiers -- always-loaded profiles, working memory, and deep storage -- modeled after CPU memory hierarchy.</description>
-      <enclosure url="https://getdraft.dev/book/audio/audio-files/chapter-10.m4a" length="39487061" type="audio/x-m4a"/>
+      <enclosure url="https://github.com/drafthq/draft/releases/download/book-audio/chapter-10.m4a" length="39487061" type="audio/x-m4a"/>
       <guid>https://getdraft.dev/book/audio/audio-files/chapter-10.m4a</guid>
       <pubDate>Thu, 27 Mar 2026 00:00:00 +0000</pubDate>
       <link>https://getdraft.dev/book/context-tiering/</link>
@@ -171,7 +171,7 @@
     <item>
       <title>Chapter 11: The Agent System</title>
       <description>Seven specialized agents -- Architect, Debugger, Ops, Planner, RCA, Reviewer, and Writer -- each with behavioral protocols tuned for their domain.</description>
-      <enclosure url="https://getdraft.dev/book/audio/audio-files/chapter-11.m4a" length="42199108" type="audio/x-m4a"/>
+      <enclosure url="https://github.com/drafthq/draft/releases/download/book-audio/chapter-11.m4a" length="42199108" type="audio/x-m4a"/>
       <guid>https://getdraft.dev/book/audio/audio-files/chapter-11.m4a</guid>
       <pubDate>Wed, 26 Mar 2026 00:00:00 +0000</pubDate>
       <link>https://getdraft.dev/book/agent-system/</link>
@@ -185,7 +185,7 @@
     <item>
       <title>Chapter 12: Signal Classification</title>
       <description>How Draft classifies source files into 11 signal categories to determine which architecture sections get deep treatment, brief mention, or skip.</description>
-      <enclosure url="https://getdraft.dev/book/audio/audio-files/chapter-12.m4a" length="40479477" type="audio/x-m4a"/>
+      <enclosure url="https://github.com/drafthq/draft/releases/download/book-audio/chapter-12.m4a" length="40479477" type="audio/x-m4a"/>
       <guid>https://getdraft.dev/book/audio/audio-files/chapter-12.m4a</guid>
       <pubDate>Tue, 25 Mar 2026 00:00:00 +0000</pubDate>
       <link>https://getdraft.dev/book/signal-classification/</link>
@@ -199,7 +199,7 @@
     <item>
       <title>Chapter 13: Incremental Refresh</title>
       <description>How Draft detects changes and updates only what has drifted. Covers freshness hashing, signal drift detection, and targeted regeneration.</description>
-      <enclosure url="https://getdraft.dev/book/audio/audio-files/chapter-13.m4a" length="40741056" type="audio/x-m4a"/>
+      <enclosure url="https://github.com/drafthq/draft/releases/download/book-audio/chapter-13.m4a" length="40741056" type="audio/x-m4a"/>
       <guid>https://getdraft.dev/book/audio/audio-files/chapter-13.m4a</guid>
       <pubDate>Mon, 24 Mar 2026 00:00:00 +0000</pubDate>
       <link>https://getdraft.dev/book/incremental-refresh/</link>
@@ -213,7 +213,7 @@
     <item>
       <title>Chapter 14: Deep Review</title>
       <description>Production-grade deep review with ACID compliance audits. Checks atomicity, isolation, durability, idempotency, resilience, and observability.</description>
-      <enclosure url="https://getdraft.dev/book/audio/audio-files/chapter-14.m4a" length="28332073" type="audio/x-m4a"/>
+      <enclosure url="https://github.com/drafthq/draft/releases/download/book-audio/chapter-14.m4a" length="28332073" type="audio/x-m4a"/>
       <guid>https://getdraft.dev/book/audio/audio-files/chapter-14.m4a</guid>
       <pubDate>Sun, 23 Mar 2026 00:00:00 +0000</pubDate>
       <link>https://getdraft.dev/book/deep-review/</link>
@@ -227,7 +227,7 @@
     <item>
       <title>Chapter 15: Bug Hunt</title>
       <description>14-dimension bug hunting sweep covering null safety, concurrency, security, and algorithmic complexity. Only HIGH/CONFIRMED confidence findings are reported.</description>
-      <enclosure url="https://getdraft.dev/book/audio/audio-files/chapter-15.m4a" length="41564641" type="audio/x-m4a"/>
+      <enclosure url="https://github.com/drafthq/draft/releases/download/book-audio/chapter-15.m4a" length="41564641" type="audio/x-m4a"/>
       <guid>https://getdraft.dev/book/audio/audio-files/chapter-15.m4a</guid>
       <pubDate>Sat, 22 Mar 2026 00:00:00 +0000</pubDate>
       <link>https://getdraft.dev/book/bug-hunt/</link>
@@ -241,7 +241,7 @@
     <item>
       <title>Chapter 17: Pattern Learning</title>
       <description>How Draft detects codebase patterns, records them to guardrails, and applies learned conventions to future work automatically.</description>
-      <enclosure url="https://getdraft.dev/book/audio/audio-files/chapter-17.m4a" length="42558550" type="audio/x-m4a"/>
+      <enclosure url="https://github.com/drafthq/draft/releases/download/book-audio/chapter-17.m4a" length="42558550" type="audio/x-m4a"/>
       <guid>https://getdraft.dev/book/audio/audio-files/chapter-17.m4a</guid>
       <pubDate>Fri, 21 Mar 2026 00:00:00 +0000</pubDate>
       <link>https://getdraft.dev/book/pattern-learning/</link>
@@ -255,7 +255,7 @@
     <item>
       <title>Chapter 18: Monorepo Federation</title>
       <description>Context federation across monorepo services. Per-service draft directories with shared root context and service aggregation.</description>
-      <enclosure url="https://getdraft.dev/book/audio/audio-files/chapter-18.m4a" length="43857367" type="audio/x-m4a"/>
+      <enclosure url="https://github.com/drafthq/draft/releases/download/book-audio/chapter-18.m4a" length="43857367" type="audio/x-m4a"/>
       <guid>https://getdraft.dev/book/audio/audio-files/chapter-18.m4a</guid>
       <pubDate>Thu, 20 Mar 2026 00:00:00 +0000</pubDate>
       <link>https://getdraft.dev/book/monorepo-federation/</link>
