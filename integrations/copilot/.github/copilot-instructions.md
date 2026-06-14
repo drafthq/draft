@@ -4068,7 +4068,7 @@ echo "Engine: $ENGINE"
 
 ## Step 3: Build / refresh the snapshot
 
-One call resolves the engine, indexes the repo (incrementally on refresh), and writes the committed snapshot under `<repo>/draft/graph/` — `schema.yaml`, `architecture.json`, `hotspots.jsonl`, `module-deps.mermaid`, `proto-map.mermaid`.
+One call resolves the engine, indexes the repo (incrementally on refresh), and writes the committed snapshot under `<repo>/draft/graph/` — `schema.yaml`, `architecture.json`, `hotspots.jsonl`, `module-deps.mermaid`, `proto-map.mermaid`, and an Open Knowledge Format bundle under `okf/` (a portable, vendor-neutral markdown mirror of the graph — `index.md` + one cross-linked `modules/<name>.md` concept per module).
 
 ```bash
 scripts/tools/graph-snapshot.sh --repo "$REPO_ABS"
@@ -18644,6 +18644,7 @@ whose `pre_deploy_status != passing`.
 <core-file path="core/templates/guardrails.md">
 
 ---
+type: Guardrails
 project: "{PROJECT_NAME}"
 module: "root"
 generated_by: "draft:init"
@@ -19208,6 +19209,7 @@ Structured questions for track creation. **Ask ONE question at a time.** Wait fo
 <core-file path="core/templates/ai-context.md">
 
 ---
+type: ContextMap
 project: "{PROJECT_NAME}"
 module: "root"
 generated_by: "draft:init"
@@ -19487,6 +19489,7 @@ interface {ServiceName} {
 <core-file path="core/templates/ai-profile.md">
 
 ---
+type: Profile
 project: "{PROJECT_NAME}"
 module: "{MODULE_NAME or 'root'}"
 generated_by: "draft:{COMMAND_NAME}"
@@ -19537,6 +19540,7 @@ generated_at: "{ISO_TIMESTAMP}"
 <core-file path="core/templates/architecture.md">
 
 ---
+type: Architecture
 project: "{PROJECT_NAME}"
 module: "root"
 generated_by: "draft:init"
@@ -20196,6 +20200,7 @@ Use Cases:
 <core-file path="core/templates/product.md">
 
 ---
+type: Product
 project: "{PROJECT_NAME}"
 module: "root"
 generated_by: "draft:init"
@@ -20315,6 +20320,7 @@ Things explicitly out of scope for this product:
 <core-file path="core/templates/tech-stack.md">
 
 ---
+type: TechStack
 project: "{PROJECT_NAME}"
 module: "root"
 generated_by: "draft:init"
@@ -20493,6 +20499,7 @@ graph TD
 <core-file path="core/templates/workflow.md">
 
 ---
+type: Workflow
 project: "{PROJECT_NAME}"
 module: "root"
 generated_by: "draft:init"

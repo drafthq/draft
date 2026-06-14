@@ -55,7 +55,7 @@ echo "Engine: $ENGINE"
 
 ## Step 3: Build / refresh the snapshot
 
-One call resolves the engine, indexes the repo (incrementally on refresh), and writes the committed snapshot under `<repo>/draft/graph/` — `schema.yaml`, `architecture.json`, `hotspots.jsonl`, `module-deps.mermaid`, `proto-map.mermaid`.
+One call resolves the engine, indexes the repo (incrementally on refresh), and writes the committed snapshot under `<repo>/draft/graph/` — `schema.yaml`, `architecture.json`, `hotspots.jsonl`, `module-deps.mermaid`, `proto-map.mermaid`, and an Open Knowledge Format bundle under `okf/` (a portable, vendor-neutral markdown mirror of the graph — `index.md` + one cross-linked `modules/<name>.md` concept per module).
 
 ```bash
 scripts/tools/graph-snapshot.sh --repo "$REPO_ABS"

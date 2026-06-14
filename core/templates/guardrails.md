@@ -1,4 +1,5 @@
 ---
+type: Guardrails
 project: "{PROJECT_NAME}"
 module: "root"
 generated_by: "draft:init"

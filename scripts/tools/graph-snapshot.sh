@@ -13,6 +13,7 @@
 #   hotspots.jsonl       fan-in-ranked symbols, one JSON object per line
 #   module-deps.mermaid  co-change coupling diagram
 #   proto-map.mermaid    detected-route diagram
+#   okf/                 Open Knowledge Format bundle (portable markdown mirror)
 #
 # Usage: scripts/tools/graph-snapshot.sh [--repo DIR] [--out DIR]
 # Exit codes: 0 OK, 1 invocation error, 2 graph engine unavailable.
@@ -76,7 +77,10 @@ echo "$ARCH" | jq '.' > "$OUT/architecture.json"
 "$TOOLS_DIR/mermaid-from-graph.sh" --repo "$REPO_ABS" --diagram module-deps > "$OUT/module-deps.mermaid" 2>/dev/null || true
 "$TOOLS_DIR/mermaid-from-graph.sh" --repo "$REPO_ABS" --diagram proto-map  > "$OUT/proto-map.mermaid"  2>/dev/null || true
 
-# 4. schema.yaml — metadata + gate for skill graph use
+# 4. OKF bundle (best-effort) — portable Open Knowledge Format mirror of the graph.
+"$TOOLS_DIR/okf-emit.sh" --repo "$REPO_ABS" --snapshot "$OUT" --out "$OUT/okf" >/dev/null 2>&1 || true
+
+# 5. schema.yaml — metadata + gate for skill graph use
 NODES="$(echo "$ARCH" | jq -r '.total_nodes // 0')"
 EDGES="$(echo "$ARCH" | jq -r '.total_edges // 0')"
 HOTN="$(wc -l < "$OUT/hotspots.jsonl" | tr -d ' ')"
@@ -96,6 +100,7 @@ artifacts:
   - hotspots.jsonl
   - module-deps.mermaid
   - proto-map.mermaid
+  - okf/
 EOF
 
 echo "Snapshot written to $OUT (nodes=$NODES edges=$EDGES hotspots=$HOTN)"

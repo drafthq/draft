@@ -158,6 +158,7 @@ TOOLS=(
     "manage-symlinks.sh"
     "mermaid-from-graph.sh"
     "graph-snapshot.sh"
+    "okf-emit.sh"
     "graph-impact.sh"
     "graph-callers.sh"
     "validate-frontmatter.sh"

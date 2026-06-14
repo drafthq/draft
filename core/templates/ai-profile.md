@@ -1,4 +1,5 @@
 ---
+type: Profile
 project: "{PROJECT_NAME}"
 module: "{MODULE_NAME or 'root'}"
 generated_by: "draft:{COMMAND_NAME}"

@@ -37,6 +37,8 @@ if command -v jq >/dev/null 2>&1; then
         "$(grep -q 'engine: codebase-memory-mcp' "$FIXTURE/graph/schema.yaml" && echo true || echo false)"
     assert "hotspots.jsonl is one JSON object per line" \
         "$(head -1 "$FIXTURE/graph/hotspots.jsonl" | jq -e '.id and .fanIn' >/dev/null 2>&1 && echo true || echo false)"
+    assert "OKF bundle emitted by default" \
+        "$([[ -f "$FIXTURE/graph/okf/index.md" ]] && grep -q '^type: Repository' "$FIXTURE/graph/okf/index.md" && echo true || echo false)"
 fi
 
 echo ""

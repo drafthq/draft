@@ -138,7 +138,7 @@ When users run `/draft:init`, it creates a `draft/` directory in their project w
 - **`product.md`**, **`tech-stack.md`**, **`workflow.md`**, **`guardrails.md`** — Project config files
 - **`tracks/`** — Individual feature/fix tracks with `spec.md`, `plan.md`, `metadata.json` (now includes `impact` block: files_touched, modules_touched, downstream_files, by_category)
 - **`.state/`** — Freshness hashes, signal classification, run memory for incremental refresh
-- **`graph/`** — Knowledge-graph output (when graph engine is run): module-graph.jsonl, hotspots.jsonl, proto-index.jsonl, language-specific indexes, per-module files, mermaid diagrams
+- **`graph/`** — Knowledge-graph output (when graph engine is run): module-graph.jsonl, hotspots.jsonl, proto-index.jsonl, language-specific indexes, per-module files, mermaid diagrams, and `okf/` — an [Open Knowledge Format](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing) bundle (portable markdown mirror of the graph, emitted by default via `scripts/tools/okf-emit.sh`)
 
 Status markers in tracks: `[ ]` Pending, `[~]` In Progress, `[x]` Completed, `[!]` Blocked
 
