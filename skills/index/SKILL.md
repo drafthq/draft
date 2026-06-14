@@ -783,6 +783,18 @@ Update frontmatter: `generated_by = "draft:index"`, `generated_at = now`. Also u
 ✓ <service>: regenerated .ai-context.md (tier N, {lines} lines)
 ```
 
+## Step 8.6: Refresh OKF Bundle Root
+
+After the root aggregated files exist (`service-index.md`, `architecture.md`,
+`product.md`, `tech-stack.md`, `.ai-context.md`, …), regenerate the Open Knowledge
+Format root index so the root `draft/` tree is a portable OKF bundle. This is the
+default; the index links `service-index.md` and every other concept present.
+
+```bash
+scripts/tools/okf-bundle.sh --dir draft        # writes draft/index.md (type: Repository)
+scripts/tools/okf-bundle.sh --dir draft --check  # conformance gate (non-fatal)
+```
+
 ## Step 9: Completion Report
 
 Remove the lockfile:

@@ -1754,6 +1754,20 @@ For **brownfield** projects, run `draft learn` (no arguments — full codebase s
 
 ## Completion
 
+**Finalize OKF bundle:** After all `draft/` files are written, run the bundle tool
+to (re)generate the Open Knowledge Format root index so the whole `draft/` tree is
+a portable, vendor-neutral OKF bundle. This is the default — no flag required.
+
+```bash
+scripts/tools/okf-bundle.sh --dir draft        # writes draft/index.md (type: Repository)
+scripts/tools/okf-bundle.sh --dir draft --check  # verifies every concept declares type:
+```
+
+`okf-bundle.sh` links every concept file present (`.ai-profile.md`, `.ai-context.md`,
+`architecture.md`, `product.md`, `tech-stack.md`, `workflow.md`, `guardrails.md`), the
+tracks, and the graph sub-bundle (`graph/okf/`). Concept `type:` frontmatter comes
+from the templates; `--check` is a conformance gate, not a hard failure of init.
+
 **Finalize run memory:** Update `draft/.state/run-memory.json`:
 - `status`: `"completed"`
 - `completed_at`: current ISO timestamp
@@ -1763,6 +1777,7 @@ For **Brownfield** projects, announce:
 "Draft initialized successfully with comprehensive analysis!
 
 Created:
+- draft/index.md (Open Knowledge Format bundle root — cross-links every concept)
 - draft/.ai-profile.md (20-50 lines — ultra-compact always-injected profile, Tier 0)
 - draft/.ai-context.md (200-400 lines — token-optimized AI context, self-contained, Tier 1)
 - draft/architecture.md (comprehensive human-readable engineering reference, Tier 2)
@@ -1797,6 +1812,7 @@ For **Greenfield** projects, announce:
 "Draft initialized successfully!
 
 Created:
+- draft/index.md (Open Knowledge Format bundle root — cross-links every concept)
 - draft/product.md
 - draft/tech-stack.md
 - draft/workflow.md
@@ -3946,6 +3962,18 @@ Update frontmatter: `generated_by = "draft:index"`, `generated_at = now`. Also u
 ```
 ✓ <service>: refreshed 3 graph slots (module-deps, proto-map, hotspots)
 ✓ <service>: regenerated .ai-context.md (tier N, {lines} lines)
+```
+
+## Step 8.6: Refresh OKF Bundle Root
+
+After the root aggregated files exist (`service-index.md`, `architecture.md`,
+`product.md`, `tech-stack.md`, `.ai-context.md`, …), regenerate the Open Knowledge
+Format root index so the root `draft/` tree is a portable OKF bundle. This is the
+default; the index links `service-index.md` and every other concept present.
+
+```bash
+scripts/tools/okf-bundle.sh --dir draft        # writes draft/index.md (type: Repository)
+scripts/tools/okf-bundle.sh --dir draft --check  # conformance gate (non-fatal)
 ```
 
 ## Step 9: Completion Report

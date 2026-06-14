@@ -159,6 +159,7 @@ TOOLS=(
     "mermaid-from-graph.sh"
     "graph-snapshot.sh"
     "okf-emit.sh"
+    "okf-bundle.sh"
     "graph-impact.sh"
     "graph-callers.sh"
     "validate-frontmatter.sh"
