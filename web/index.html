@@ -381,7 +381,7 @@
     <section id="playground" class="section section-playground">
         <div class="section-glow section-glow--violet"></div>
         <div class="section-inner">
-            <span class="section-label">v2.4 &middot; Built-in</span>
+            <span class="section-label">v2.8 &middot; Built-in</span>
             <h2>Your repo, <span class="text-violet">queryable.</span></h2>
             <p class="section-subtitle">Draft installs a local knowledge-graph engine that maps every module, call, dependency, and hotspot in your codebase. No daemon. No external service. No code leaves your machine. Try the queries below &mdash; these are real outputs from running Draft against itself.</p>
 
@@ -456,9 +456,9 @@
                         <tr>
                             <th scope="row">Spec-driven planning</th>
                             <td class="vs-cell vs-yes">Specs &amp; phased plans before code</td>
+                            <td class="vs-cell vs-partial">Copilot Plan Mode &middot; ad-hoc</td>
                             <td class="vs-cell vs-no">No</td>
-                            <td class="vs-cell vs-no">No</td>
-                            <td class="vs-cell vs-yes">Yes</td>
+                            <td class="vs-cell vs-yes">PRD docs (ChatPRD)</td>
                         </tr>
                         <tr>
                             <th scope="row">Knowledge graph engine</th>
@@ -470,14 +470,14 @@
                         <tr>
                             <th scope="row">Three-stage code review</th>
                             <td class="vs-cell vs-yes">Validation &middot; spec compliance &middot; quality</td>
-                            <td class="vs-cell vs-partial">Inline diff suggestions</td>
+                            <td class="vs-cell vs-partial">PR bug review (BugBot) &middot; not spec-aware</td>
                             <td class="vs-cell vs-no">No</td>
                             <td class="vs-cell vs-no">No</td>
                         </tr>
                         <tr>
                             <th scope="row">Bug discovery</th>
                             <td class="vs-cell vs-yes">14-dimension sweep + taint tracking</td>
-                            <td class="vs-cell vs-partial">Per-file hints</td>
+                            <td class="vs-cell vs-partial">Cross-repo PR scan (BugBot)</td>
                             <td class="vs-cell vs-no">No</td>
                             <td class="vs-cell vs-no">No</td>
                         </tr>
@@ -491,7 +491,7 @@
                         <tr>
                             <th scope="row">Multi-IDE</th>
                             <td class="vs-cell vs-yes">Claude, Cursor, Copilot, Antigravity, Gemini</td>
-                            <td class="vs-cell vs-partial">Each tool, separately</td>
+                            <td class="vs-cell vs-partial">Copilot multi-IDE &middot; rest single</td>
                             <td class="vs-cell vs-partial">Editor extensions</td>
                             <td class="vs-cell vs-partial">Web-only mostly</td>
                         </tr>
@@ -500,13 +500,13 @@
                             <td class="vs-cell vs-yes">Git-tracked spec/plan/architecture</td>
                             <td class="vs-cell vs-no">Session-bound</td>
                             <td class="vs-cell vs-partial">Index, not artifacts</td>
-                            <td class="vs-cell vs-partial">App-bound</td>
+                            <td class="vs-cell vs-partial">ChatPRD app &middot; specStory repo files</td>
                         </tr>
                         <tr>
                             <th scope="row">Price</th>
                             <td class="vs-cell vs-yes">Free, MIT, no telemetry</td>
                             <td class="vs-cell vs-partial">Subscription</td>
-                            <td class="vs-cell vs-partial">SaaS</td>
+                            <td class="vs-cell vs-partial">Sourcegraph paid &middot; GitNexus free OSS</td>
                             <td class="vs-cell vs-partial">Subscription</td>
                         </tr>
                     </tbody>
@@ -784,7 +784,7 @@
                         <div class="bento-icon bento-icon--violet">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="9" y1="6" x2="15" y2="6"/><line x1="6" y1="9" x2="6" y2="15"/><line x1="18" y1="9" x2="18" y2="15"/><line x1="9" y1="18" x2="15" y2="18"/></svg>
                         </div>
-                        <span class="bento-tag">v2.4 &middot; Built-in</span>
+                        <span class="bento-tag">v2.8 &middot; Built-in</span>
                     </div>
                     <h3>Knowledge Graph Engine</h3>
                     <p>Tree-sitter + LSP-grade resolution across 159 languages, 100% local. Query tools &mdash; <strong>callers</strong>, <strong>callees</strong>, <strong>impact</strong>, <strong>cycles</strong>, <strong>hotspots</strong>, <strong>mermaid</strong>. Incremental, git-aware indexing. Impact queries break results down by code/test/doc/config. Powers <code>/draft:impact</code>, enriches <code>/draft:bughunt</code> and <code>/draft:review</code>.</p>
@@ -800,7 +800,7 @@
                         <div class="bento-icon bento-icon--amber">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         </div>
-                        <span class="bento-tag">v2.4</span>
+                        <span class="bento-tag">v2.8</span>
                     </div>
                     <h3>Track Impact Memory</h3>
                     <p>Each completed track records its blast radius in <code>metadata.json</code> &mdash; files touched, modules affected, downstream count, by-category breakdown. <code>/draft:plan</code> reads recent tracks' impact during context load and surfaces overlap warnings before you even write a spec.</p>
