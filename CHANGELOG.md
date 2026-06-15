@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.0] - 2026-06-14
+
 ### Added
 - **Full codebase-memory-mcp capability adoption (graph tooling v2).** Draft now
   uses the whole graph engine instead of a thin ~3-edge slice. All Cypher is
