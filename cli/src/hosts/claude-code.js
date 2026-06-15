@@ -56,7 +56,10 @@ module.exports = {
       ],
       graph: true, // fetch the graph engine at install time (/draft:init also fetches on first use as a fallback)
       done: 'Installed/updated draft. Restart Claude Code (or start a new session), then run /draft:init.',
-      fallbackTitle: 'Claude Code CLI not found. Run these in Claude Code instead:',
+      // Shown when the `claude` CLI is absent OR a step fails: the in-session
+      // /plugin commands work without the terminal CLI on PATH.
+      onFailHint: 'If that failed with "unknown command", your Claude Code is too old for the `claude plugin` command — run "claude update" (or upgrade the app), then re-run.',
+      fallbackTitle: 'Run these inside a Claude Code session instead (or put the `claude` CLI on your PATH and re-run):',
       fallback: [
         '/plugin marketplace add drafthq/draft',
         '/plugin marketplace update draft-plugins',

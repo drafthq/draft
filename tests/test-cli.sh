@@ -118,6 +118,48 @@ assert "claude-code --dry-run writes no files to cwd" \
     "$([[ "$(find "$CC_TMP" -type f | wc -l | tr -d ' ')" -eq 0 ]] && echo true || echo false)"
 rm -rf "$CC_TMP"
 
+# --- Missing `claude` CLI: loud failure, not a silent no-op ---
+echo ""
+echo "## claude-code install when the claude CLI is absent"
+NODE_BIN="$(command -v node)"
+MISS_TMP="$(mktemp -d)"; MISS_HOME="$(mktemp -d)"
+# Empty PATH so spawnSync('claude') hits ENOENT; node runs via its absolute path.
+if ( cd "$MISS_TMP" && PATH="/nonexistent" HOME="$MISS_HOME" "$NODE_BIN" "$CLI" install claude-code --no-graph >/dev/null 2>&1 ); then
+    assert "missing claude CLI exits non-zero" "false"
+else
+    assert "missing claude CLI exits non-zero" "true"
+fi
+MISS_OUT="$( cd "$MISS_TMP" && PATH="/nonexistent" HOME="$MISS_HOME" "$NODE_BIN" "$CLI" install claude-code --no-graph 2>&1 || true )"
+assert "missing claude CLI says nothing was installed" \
+    "$(echo "$MISS_OUT" | grep -qi 'nothing was installed' && echo true || echo false)"
+assert "missing claude CLI prints the /plugin fallback" \
+    "$(echo "$MISS_OUT" | grep -q '/plugin marketplace add drafthq/draft' && echo true || echo false)"
+rm -rf "$MISS_TMP" "$MISS_HOME"
+
+# --- Stale `claude` CLI (no `plugin` subcommand): step fails with an upgrade hint ---
+echo ""
+echo "## claude-code install when the claude CLI is too old"
+STALE_DIR="$(mktemp -d)"; STALE_TMP="$(mktemp -d)"; STALE_HOME="$(mktemp -d)"
+# Fake claude: answers --version (so the binary check passes) but errors on any
+# subcommand (so `claude plugin marketplace add` fails like an old CLI would).
+cat > "$STALE_DIR/claude" <<'FAKE'
+#!/usr/bin/env bash
+if [ "$1" = "--version" ]; then echo "1.0.0 (fake)"; exit 0; fi
+echo "error: unknown command '$1'" >&2; exit 1
+FAKE
+chmod +x "$STALE_DIR/claude"
+if ( cd "$STALE_TMP" && PATH="$STALE_DIR:$PATH" HOME="$STALE_HOME" "$NODE_BIN" "$CLI" install claude-code --no-graph >/dev/null 2>&1 ); then
+    assert "stale claude CLI exits non-zero" "false"
+else
+    assert "stale claude CLI exits non-zero" "true"
+fi
+STALE_OUT="$( cd "$STALE_TMP" && PATH="$STALE_DIR:$PATH" HOME="$STALE_HOME" "$NODE_BIN" "$CLI" install claude-code --no-graph 2>&1 || true )"
+assert "stale claude CLI hints to update Claude Code" \
+    "$(echo "$STALE_OUT" | grep -qi 'claude update\|too old' && echo true || echo false)"
+assert "stale claude CLI prints the /plugin fallback" \
+    "$(echo "$STALE_OUT" | grep -q '/plugin marketplace add drafthq/draft' && echo true || echo false)"
+rm -rf "$STALE_DIR" "$STALE_TMP" "$STALE_HOME"
+
 # --- Old installer is gone ---
 echo ""
 echo "## Legacy installer removed"

@@ -5,9 +5,13 @@ const fsx = require('./lib/fsx');
 const log = require('./lib/log');
 const { fetchGraph } = require('./lib/graph');
 
+// A short ceiling so a wedged `claude --version` can't hang the installer
+// before we even reach the real (separately-timed) install steps.
+const CHECK_TIMEOUT_MS = 10000;
+
 function hasBinary(name) {
   // ENOENT on the error means the binary is not on PATH.
-  const r = spawnSync(name, ['--version'], { stdio: 'ignore' });
+  const r = spawnSync(name, ['--version'], { stdio: 'ignore', timeout: CHECK_TIMEOUT_MS });
   return !(r.error && r.error.code === 'ENOENT');
 }
 
@@ -59,12 +63,14 @@ function install(host, ctx) {
   const plan = host.plan(ctx);
   log.step(`Installing Draft -> ${host.label}  [${plan.targetSummary}]${ctx.dryRun ? '  (dry run)' : ''}`);
 
-  // A plan may require an external CLI (e.g. claude). If it's missing, print
-  // the manual fallback and stop — but only when actually installing; a
-  // dry run still shows the planned commands.
+  // A plan may require an external CLI (e.g. claude). If it's missing, say so
+  // loudly, print the manual fallback, and exit non-zero — a no-op must never
+  // read as success. Only enforced on a real install; a dry run still shows the
+  // planned commands.
   if (plan.requires && !ctx.dryRun && !hasBinary(plan.requires)) {
+    log.error(`Cannot auto-install: the "${plan.requires}" CLI is not on your PATH. Nothing was installed.`);
     printFallback(plan);
-    return 0;
+    return 1;
   }
 
   // Pre-flight: for file copies, every bundled source must exist and guarded
@@ -88,6 +94,7 @@ function install(host, ctx) {
       const code = execAction(act, ctx);
       if (code !== 0) {
         log.error(`Step failed (exit ${code}): ${act.label || act.cmd}`);
+        if (plan.onFailHint) log.error(plan.onFailHint);
         if (plan.fallback) printFallback(plan);
         return code;
       }
