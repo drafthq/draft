@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Draft â Code Intelligence Built Into Your AI Coding Agent</title>
+    <title>Draft — Code Intelligence Built Into Your AI Coding Agent</title>
     <meta name="description" content="Free open-source plugin for Claude Code, Cursor, Copilot, Antigravity, and Gemini. Powered by codebase-memory-mcp — a 159-language local knowledge-graph engine. Spec-driven planning, three-stage review, 14-dimension bug hunting. 33 commands, MIT.">
     <meta name="author" content="mayurpise">
     <meta name="theme-color" content="#7c3aed">
     <meta name="keywords" content="claude code plugin, code intelligence, knowledge graph, knowledge graph engine, codebase-memory-mcp, ai code review, ai tdd, context-driven development, spec-driven development, tree-sitter, callers, blast radius, hotspots, ai bug hunting, github copilot plugin, gemini plugin, cursor ai plugin, antigravity ide, ai coding agent, ACID audit, open source developer tools, MIT licensed">
     <meta name="robots" content="index, follow">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
-    <meta property="og:title" content="Draft â Code Intelligence for Your AI Coding Agent">
+    <meta property="og:title" content="Draft — Code Intelligence for Your AI Coding Agent">
     <meta property="og:description" content="Powered by codebase-memory-mcp — 159-language local knowledge-graph engine. Spec-driven planning, three-stage review — in one plugin for Claude Code, Cursor, Copilot, Antigravity, and Gemini. 33 commands, free forever.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://getdraft.dev">
     <meta property="og:image" content="https://getdraft.dev/social-preview.png">
     <meta property="og:image:alt" content="Draft: Code intelligence built into your AI coding agent">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Draft â Code Intelligence for Your AI Coding Agent">
+    <meta name="twitter:title" content="Draft — Code Intelligence for Your AI Coding Agent">
     <meta name="twitter:description" content="Powered by codebase-memory-mcp — 159 languages, 100% local. Spec-driven planning + three-stage review. One plugin for Claude Code, Cursor, Copilot, Antigravity, Gemini. 33 commands. Free forever.">
     <meta name="twitter:image" content="https://getdraft.dev/social-preview.png">
     <meta name="twitter:image:alt" content="Draft: Code intelligence built into your AI coding agent">
@@ -94,7 +94,7 @@
           "name": "What AI coding agents does Draft support?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Draft supports Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Gemini. It integrates natively with each platform using their respective configuration formats â slash commands for Claude Code and Cursor, copilot-instructions.md for Copilot, and .gemini.md for Gemini and Antigravity."
+            "text": "Draft supports Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Gemini. It integrates natively with each platform using their respective configuration formats — slash commands for Claude Code and Cursor, copilot-instructions.md for Copilot, and .gemini.md for Gemini and Antigravity."
           }
         },
         {
@@ -118,7 +118,7 @@
           "name": "Does Draft work with my existing project?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes. Running /draft:init performs a 5-phase analysis of your existing codebase, generating architecture documentation, AI context files, and signal classifications. It works with any language, framework, or project structure â brownfield or greenfield."
+            "text": "Yes. Running /draft:init performs a 5-phase analysis of your existing codebase, generating architecture documentation, AI context files, and signal classifications. It works with any language, framework, or project structure — brownfield or greenfield."
           }
         },
         {
@@ -126,7 +126,7 @@
           "name": "How is Draft different from other AI coding tools?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Draft is not an AI coding tool â it is a methodology layer that runs on top of existing AI agents. While tools like Cursor or Copilot generate code, Draft ensures that code follows approved specifications, passes TDD gates, and fits your architecture. It adds structure and quality gates, not another AI model."
+            "text": "Draft is not an AI coding tool — it is a methodology layer that runs on top of existing AI agents. While tools like Cursor or Copilot generate code, Draft ensures that code follows approved specifications, passes TDD gates, and fits your architecture. It adds structure and quality gates, not another AI model."
           }
         },
         {
@@ -235,7 +235,7 @@
             <a href="#changelog-strip" class="release-pill">
                 <span class="release-pill-tag">v3.1.5</span>
                 <span class="release-pill-text">The knowledge graph is now engine-only &mdash; indexed locally and queried live, with no machine-readable snapshot committed to your repo</span>
-                <span class="release-pill-arrow">â</span>
+                <span class="release-pill-arrow">→</span>
             </a>
             <h1>Stop shipping<br><span class="gradient-text">AI-generated bugs</span>.</h1>
             <p class="tagline">One command runs a three-stage review on your branch &mdash; validation, spec compliance, code quality &mdash; and writes the missing tests. Powered by a tree-sitter knowledge graph of your repo. <strong>Free forever.</strong> For Claude Code, Cursor, Copilot, Antigravity, and Gemini.</p>
@@ -376,7 +376,7 @@
     </section>
 
     <!-- ============================================================ -->
-    <!-- INTERACTIVE PLAYGROUND â Knowledge Graph Demo                -->
+    <!-- INTERACTIVE PLAYGROUND — Knowledge Graph Demo                -->
     <!-- ============================================================ -->
     <section id="playground" class="section section-playground">
         <div class="section-glow section-glow--violet"></div>
@@ -569,13 +569,13 @@
     </section>
 
     <!-- ============================================================ -->
-    <!-- SECTION 3: HOW IT WORKS â /draft:init Deep Dive              -->
+    <!-- SECTION 3: HOW IT WORKS — /draft:init Deep Dive              -->
     <!-- ============================================================ -->
     <section id="how-it-works" class="section">
         <div class="section-glow section-glow--cyan"></div>
         <div class="section-inner">
             <span class="section-label">The Foundation</span>
-            <h2><code>/draft:init</code> â your codebase, <span class="text-cyan">fully mapped</span></h2>
+            <h2><code>/draft:init</code> — your codebase, <span class="text-cyan">fully mapped</span></h2>
             <p class="section-subtitle">One command performs a 5-phase deep analysis of your entire codebase. Every future interaction is grounded in this understanding.</p>
 
             <!-- Init phases showcase -->
@@ -618,7 +618,7 @@
                 <div class="init-state-grid">
                     <div class="init-state-item">
                         <span class="init-state-file">freshness.json</span>
-                        <p>SHA-256 hashes of every analyzed file. <code>/draft:init refresh</code> only re-analyzes files with changed hashes â no full re-scan.</p>
+                        <p>SHA-256 hashes of every analyzed file. <code>/draft:init refresh</code> only re-analyzes files with changed hashes — no full re-scan.</p>
                     </div>
                     <div class="init-state-item">
                         <span class="init-state-file">signals.json</span>
@@ -641,7 +641,7 @@
                     <div class="pipeline-connector"></div>
                     <h3>Spec &amp; Plan</h3>
                     <p class="pipeline-cmd">/draft:plan</p>
-                    <p>Collaborative intake â AI asks one question at a time, contributes expertise, surfaces risks. Builds spec progressively with citations from DDD, Clean Architecture, OWASP.</p>
+                    <p>Collaborative intake — AI asks one question at a time, contributes expertise, surfaces risks. Builds spec progressively with citations from DDD, Clean Architecture, OWASP.</p>
                 </div>
                 <div class="pipeline-step" data-step="3">
                     <div class="pipeline-icon pipeline-icon--rose">
@@ -734,7 +734,7 @@
                         </div>
                     </div>
                     <h3>Collaborative Intake</h3>
-                    <p>AI as expert partner â asks one question at a time, contributes patterns, risks, trade-offs. Builds spec progressively with citations from DDD, Clean Architecture, OWASP.</p>
+                    <p>AI as expert partner — asks one question at a time, contributes patterns, risks, trade-offs. Builds spec progressively with citations from DDD, Clean Architecture, OWASP.</p>
                     <div class="bento-stats"><span>AI as partner</span></div>
                 </div>
 
@@ -747,7 +747,7 @@
                         <span class="bento-tag">Exhaustive Sweep</span>
                     </div>
                     <h3>14-Dimension Bug Hunt</h3>
-                    <p>Systematic defect discovery across 14 dimensions: correctness, reliability, security, performance, UI responsiveness, concurrency, state management, API contracts, accessibility, configuration, tests, dependency/supply chain security, algorithmic complexity, and i18n/l10n. Severity-ranked with file:line locations. Only HIGH/CONFIRMED confidence â false-positive elimination and taint tracking built in.</p>
+                    <p>Systematic defect discovery across 14 dimensions: correctness, reliability, security, performance, UI responsiveness, concurrency, state management, API contracts, accessibility, configuration, tests, dependency/supply chain security, algorithmic complexity, and i18n/l10n. Severity-ranked with file:line locations. Only HIGH/CONFIRMED confidence — false-positive elimination and taint tracking built in.</p>
                     <div class="bento-stats">
                         <span>14 dimensions</span><span>Taint tracking</span><span>Confidence filtering</span><span>Regression tests</span>
                     </div>
@@ -773,7 +773,7 @@
                         </div>
                     </div>
                     <h3>Pattern Learning</h3>
-                    <p>Scans your codebase for recurring patterns (3+ occurrences). Discovers conventions to skip and anti-patterns to always flag. Every quality command updates <code>guardrails.md</code> after each run â your codebase teaches Draft what to enforce, and false positives disappear over time.</p>
+                    <p>Scans your codebase for recurring patterns (3+ occurrences). Discovers conventions to skip and anti-patterns to always flag. Every quality command updates <code>guardrails.md</code> after each run — your codebase teaches Draft what to enforce, and false positives disappear over time.</p>
                     <div class="bento-stats"><span>Auto-learning</span><span>Temporal analysis</span><span>guardrails.md</span></div>
                 </div>
 
@@ -1141,7 +1141,7 @@
             <p class="install-note install-note--global">Prefer a persistent command? Install once with <code>npm install -g @drafthq/draft</code>, then run <code>draft install &lt;host&gt;</code>. Use <code>draft list</code> to see every host.</p>
 
             <div class="callout">
-                <strong>No vendor lock-in.</strong> Your specs, plans, and architecture docs are plain markdown files in your repo. Switch tools any time â your project knowledge stays with you.
+                <strong>No vendor lock-in.</strong> Your specs, plans, and architecture docs are plain markdown files in your repo. Switch tools any time — your project knowledge stays with you.
             </div>
         </div>
     </section>
@@ -1154,7 +1154,7 @@
         <div class="section-inner">
             <span class="section-label">Deep Analysis</span>
             <h2>Your codebase, <span class="text-violet">fully understood</span></h2>
-            <p class="section-subtitle">/draft:init performs a 5-phase codebase analysis â not a diagram of intent, a map of reality.</p>
+            <p class="section-subtitle">/draft:init performs a 5-phase codebase analysis — not a diagram of intent, a map of reality.</p>
 
             <div class="arch-grid">
                 <div class="glass-card arch-card">
@@ -1180,7 +1180,7 @@
                 <div class="glass-card arch-card">
                     <div class="arch-num">5</div>
                     <h3>Extension Cookbooks</h3>
-                    <p>Step-by-step guides: "Add a new endpoint", "Add a new model" â file-by-file instructions.</p>
+                    <p>Step-by-step guides: "Add a new endpoint", "Add a new model" — file-by-file instructions.</p>
                 </div>
                 <div class="glass-card arch-card">
                     <div class="arch-num">S</div>
@@ -1194,24 +1194,24 @@
                 <div class="glass-card dual-card">
                     <h4>.ai-context.md</h4>
                     <p class="dual-meta">Machine-optimized &middot; 200-400 lines</p>
-                    <p>Dense tables, YAML frontmatter, flat sections. Token-efficient â minimal prose, maximum signal. Consumed by all Draft commands and external AI tools.</p>
+                    <p>Dense tables, YAML frontmatter, flat sections. Token-efficient — minimal prose, maximum signal. Consumed by all Draft commands and external AI tools.</p>
                 </div>
                 <div class="dual-divider"></div>
                 <div class="glass-card dual-card">
                     <h4>architecture.md</h4>
                     <p class="dual-meta">Graph-primary &middot; High-signal with explicit fidelity</p>
-                    <p>Prose paragraphs, annotated Mermaid diagrams, onboarding framing. Source of truth â all mutations happen here. For engineers, leads, and PR reviewers.</p>
+                    <p>Prose paragraphs, annotated Mermaid diagrams, onboarding framing. Source of truth — all mutations happen here. For engineers, leads, and PR reviewers.</p>
                 </div>
                 <div class="dual-divider"></div>
                 <div class="glass-card dual-card">
                     <h4>guardrails.md</h4>
                     <p class="dual-meta">Auto-learning &middot; Hard rules + discovered patterns</p>
-                    <p>Human-defined constraints plus auto-discovered conventions and anti-patterns. Quality commands read this file, skip known patterns, and flag violations â then update it after every run. Your codebase teaches Draft what to enforce.</p>
+                    <p>Human-defined constraints plus auto-discovered conventions and anti-patterns. Quality commands read this file, skip known patterns, and flag violations — then update it after every run. Your codebase teaches Draft what to enforce.</p>
                 </div>
             </div>
 
             <div class="callout">
-                <strong>Pay the analysis cost once, benefit on every interaction.</strong> Reduces token cost, eliminates hallucinations, improves accuracy. The AI writes code that fits your system because it <em>knows</em> your system â and guardrails ensure it respects your rules.
+                <strong>Pay the analysis cost once, benefit on every interaction.</strong> Reduces token cost, eliminates hallucinations, improves accuracy. The AI writes code that fits your system because it <em>knows</em> your system — and guardrails ensure it respects your rules.
             </div>
         </div>
     </section>
@@ -1224,7 +1224,7 @@
         <div class="section-inner">
             <span class="section-label">Built For Your Role</span>
             <h2>Who it's <span class="text-cyan">for</span></h2>
-            <p class="section-subtitle">Draft speaks different languages to different roles â but the value compounds across your entire organization.</p>
+            <p class="section-subtitle">Draft speaks different languages to different roles — but the value compounds across your entire organization.</p>
 
             <div class="audience-grid">
                 <div class="glass-card audience-card" data-accent="cyan">
@@ -1413,7 +1413,7 @@
                 <details class="faq-item glass-card">
                     <summary class="faq-question">What AI coding agents does Draft support?</summary>
                     <div class="faq-answer">
-                        <p>Draft supports Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Gemini. It integrates natively with each platform using their respective configuration formats â slash commands for Claude Code and Cursor, copilot-instructions.md for Copilot, and .gemini.md for Gemini and Antigravity.</p>
+                        <p>Draft supports Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Gemini. It integrates natively with each platform using their respective configuration formats — slash commands for Claude Code and Cursor, copilot-instructions.md for Copilot, and .gemini.md for Gemini and Antigravity.</p>
                     </div>
                 </details>
 
@@ -1434,14 +1434,14 @@
                 <details class="faq-item glass-card">
                     <summary class="faq-question">Does Draft work with my existing project?</summary>
                     <div class="faq-answer">
-                        <p>Yes. Running <code>/draft:init</code> performs a 5-phase analysis of your existing codebase, generating architecture documentation, AI context files, and signal classifications. It works with any language, framework, or project structure â brownfield or greenfield.</p>
+                        <p>Yes. Running <code>/draft:init</code> performs a 5-phase analysis of your existing codebase, generating architecture documentation, AI context files, and signal classifications. It works with any language, framework, or project structure — brownfield or greenfield.</p>
                     </div>
                 </details>
 
                 <details class="faq-item glass-card">
                     <summary class="faq-question">How is Draft different from other AI coding tools?</summary>
                     <div class="faq-answer">
-                        <p>Draft is not an AI coding tool â it is a methodology layer that runs on top of existing AI agents. While tools like Cursor or Copilot generate code, Draft ensures that code follows approved specifications, passes TDD gates, and fits your architecture. It adds structure and quality gates, not another AI model.</p>
+                        <p>Draft is not an AI coding tool — it is a methodology layer that runs on top of existing AI agents. While tools like Cursor or Copilot generate code, Draft ensures that code follows approved specifications, passes TDD gates, and fits your architecture. It adds structure and quality gates, not another AI model.</p>
                     </div>
                 </details>
 
