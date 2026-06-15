@@ -1,7 +1,7 @@
 {
   "name": "draft",
   "description": "Context-Driven Development: draft specs and plans before implementation. Structured workflows for features and fixes.",
-  "version": "3.1.5",
+  "version": "3.2.0",
   "author": {
     "name": "mayurpise"
   },
