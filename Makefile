@@ -33,6 +33,7 @@ TEST_SCRIPTS = \
 	./tests/test-tools-graph-init.sh \
 	./tests/test-tools-graph-impact.sh \
 	./tests/test-tools-graph-callers.sh \
+	./tests/test-tools-graph-arch.sh \
 	./tests/test-tools-validate-frontmatter.sh \
 	./tests/test-tools-check-scope-conflicts.sh \
 	./tests/test-tools-check-skill-line-caps.sh \

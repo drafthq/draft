@@ -84,8 +84,9 @@ rm -rf "$OUT/okf" 2>/dev/null || true
 # schema.yaml — provenance + gate. Counts are point-of-index provenance only;
 # the live engine is authoritative.
 STATUS_JSON="$(memory_cli index_status "{\"project\":\"$PROJECT\"}" || echo '{}')"
-NODES="$(echo "$STATUS_JSON" | jq -r '.nodes // 0')"
-EDGES="$(echo "$STATUS_JSON" | jq -r '.edges // 0')"
+# Tolerate field-name variation across engine versions; counts are provenance only.
+NODES="$(echo "$STATUS_JSON" | jq -r '.nodes // .node_count // .total_nodes // 0')"
+EDGES="$(echo "$STATUS_JSON" | jq -r '.edges // .edge_count // .total_edges // 0')"
 VER="$("$MEMORY_BIN" --version 2>/dev/null | awk '{print $NF}' || echo unknown)"
 cat > "$OUT/schema.yaml" <<EOF
 # Draft graph gate marker — written by scripts/tools/graph-snapshot.sh

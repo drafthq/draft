@@ -47,7 +47,7 @@ case "$tool" in
   index_repository) echo '{"project":"mock","status":"indexed","nodes":3,"edges":2}' ;;
   index_status)     echo '{"project":"mock","nodes":3,"edges":2,"status":"ready"}' ;;
   get_architecture)
-    echo '{"project":"mock","hotspots":[{"name":"foo","qualified_name":"mock.foo","fan_in":5},{"name":"bar","qualified_name":"mock.bar","fan_in":2}],"routes":[{"method":"GET","path":"/health","handler":"healthz"}]}' ;;
+    echo '{"project":"mock","total_nodes":3,"total_edges":2,"hotspots":[{"name":"foo","qualified_name":"mock.foo","fan_in":5},{"name":"bar","qualified_name":"mock.bar","fan_in":2}],"routes":[{"method":"GET","path":"/health","handler":"healthz"}]}' ;;
   query_graph)
     echo '{"columns":["a","b"],"rows":[["mock.a","mock.b"]],"total":1}' ;;
   trace_path)
