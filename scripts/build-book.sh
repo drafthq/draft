@@ -118,7 +118,7 @@ CHAPTER_DESCRIPTIONS=(
     "14-dimension bug hunting sweep — from null safety to concurrency, security to algorithmic complexity. Only HIGH/CONFIRMED confidence reported."
     "Spec-to-implementation coverage analysis — gap identification, untested paths, and target enforcement at 95%+ coverage."
     "How Draft detects codebase patterns, records them to guardrails, and applies learned conventions to future work."
-    "Context federation across monorepo services — per-service draft directories with shared root context and service aggregation."
+    "Context federation across monorepo services — scope-aware /draft:init builds per-module snapshots and writes root-link.json for cross-module knowledge graph access."
     "Mapping Draft tracks to Jira issues — preview before creation, epic/story/sub-task mapping, and bidirectional sync."
     "How Draft works across Claude Code, Copilot, Cursor, Gemini, and Antigravity IDE — platform-specific syntax transforms."
     "The philosophical foundations of Context-Driven Development — structured development, quality gates, incremental refinement."
@@ -401,14 +401,14 @@ generate_landing_page() {
     <meta name="robots" content="index, follow">
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <meta property="og:title" content="The Draft Book — Context-Driven Development Deep Dive">
-    <meta property="og:description" content="22 chapters covering Draft's methodology, features, and philosophy. From context tiering to 14-dimension bug hunting.">
+    <meta property="og:description" content="24 chapters covering Draft's methodology, features, and philosophy. From context tiering to 14-dimension bug hunting.">
     <meta property="og:type" content="book">
     <meta property="og:url" content="https://getdraft.dev/book/">
     <meta property="og:image" content="https://getdraft.dev/social-preview.png">
     <meta property="og:image:alt" content="The Draft Book — Context-Driven Development Deep Dive">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="The Draft Book — Context-Driven Development Deep Dive">
-    <meta name="twitter:description" content="22 chapters covering specs, plans, TDD enforcement, 3-stage code review, 14-dimension bug hunting, and ACID audits for AI coding agents.">
+    <meta name="twitter:description" content="24 chapters covering specs, plans, TDD enforcement, 3-stage code review, 14-dimension bug hunting, and ACID audits for AI coding agents.">
     <meta name="twitter:image" content="https://getdraft.dev/social-preview.png">
     <meta name="twitter:image:alt" content="The Draft Book — Context-Driven Development Deep Dive">
     <link rel="canonical" href="https://getdraft.dev/book/">
@@ -419,7 +419,7 @@ generate_landing_page() {
       "@type": "Book",
       "name": "The Draft Book",
       "alternateName": "Context-Driven Development Deep Dive",
-      "description": "A comprehensive guide to Draft's Context-Driven Development methodology. 22 chapters covering specs, plans, TDD, code review, bug hunting, ACID audits, and more.",
+      "description": "A comprehensive guide to Draft's Context-Driven Development methodology. 24 chapters covering specs, plans, TDD, code review, bug hunting, ACID audits, and more.",
       "url": "https://getdraft.dev/book/",
       "author": {
         "@type": "Person",

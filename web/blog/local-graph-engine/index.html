@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your AI Assistant Doesn't Understand Your Codebase. Here's the Fix That Lives Inside Your Repo. — Draft Blog</title>
-    <meta name="description" content="Most AI-for-code tools improve context by sending more of your code to a third party. Draft's graph engine does the opposite: a local, deterministic, version-controlled knowledge graph. No MCP server, no SaaS, no cloud, no API key.">
+    <meta name="description" content="Most AI-for-code tools improve context by sending more of your code to a third party. Draft's graph engine does the opposite: a local, live-queried knowledge graph. No MCP server, no SaaS, no cloud, no API key.">
     <meta name="author" content="Mayur Pise">
     <meta name="theme-color" content="#0a0d12">
-    <meta name="keywords" content="ai code context, knowledge graph, local code intelligence, mcp alternative, vector db alternative, deterministic code analysis, draft graph engine, version controlled context">
+    <meta name="keywords" content="ai code context, knowledge graph, local code intelligence, mcp alternative, vector db alternative, deterministic code analysis, draft graph engine, live queried context">
     <meta name="robots" content="index, follow">
     <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
     <meta property="og:title" content="Your AI Assistant Doesn't Understand Your Codebase. Here's the Fix That Lives Inside Your Repo.">
-    <meta property="og:description" content="A local, deterministic, version-controlled knowledge graph, powered by codebase-memory-mcp and installed alongside the Draft plugin. No MCP server, no SaaS, no cloud, no API key, no leaked code.">
+    <meta property="og:description" content="A local, live-queried knowledge graph, powered by codebase-memory-mcp and installed alongside the Draft plugin. No MCP server, no SaaS, no cloud, no API key, no leaked code.">
     <meta property="og:type" content="article">
     <meta property="og:url" content="https://getdraft.dev/blog/local-graph-engine/">
     <meta property="og:image" content="https://getdraft.dev/social-preview.png">
@@ -26,7 +26,7 @@
       "@context": "https://schema.org",
       "@type": "BlogPosting",
       "headline": "Your AI Assistant Doesn't Understand Your Codebase. Here's the Fix That Lives Inside Your Repo.",
-      "description": "A local, deterministic, version-controlled knowledge graph, powered by codebase-memory-mcp and installed alongside the Draft plugin. No MCP server, no SaaS, no cloud, no API key, no leaked code.",
+      "description": "A local, live-queried knowledge graph, powered by codebase-memory-mcp and installed alongside the Draft plugin. No MCP server, no SaaS, no cloud, no API key, no leaked code.",
       "datePublished": "2026-04-26",
       "dateModified": "2026-04-26",
       "url": "https://getdraft.dev/blog/local-graph-engine/",
@@ -101,8 +101,8 @@
 
             <div class="post-body">
                 <h2>The Bottom Line</h2>
-                <p>Most "AI for code" tools improve context by <strong>sending more of your code to a third party</strong> &mdash; vector DBs, MCP servers, indexing services, hosted retrieval pipelines. Draft&apos;s graph engine takes the opposite path: a <strong>local, deterministic, version-controlled knowledge graph</strong> of your repo, powered by <a href="https://github.com/DeusData/codebase-memory-mcp">codebase-memory-mcp</a> &mdash; a local engine Draft installs &mdash; that writes a structured snapshot into <code>draft/graph/</code> you can <code>git diff</code>.</p>
-                <p>No external service. No cloud. No network call. No API key. Your AI assistant gets sharper context because the <strong>structural truth</strong> of your codebase &mdash; modules, dependencies, hotspots, call edges, proto APIs &mdash; is sitting next to the code it's reasoning about, in files you can <code>git diff</code>.</p>
+                <p>Most "AI for code" tools improve context by <strong>sending more of your code to a third party</strong> &mdash; vector DBs, MCP servers, indexing services, hosted retrieval pipelines. Draft&apos;s graph engine takes the opposite path: a <strong>local, live-queried knowledge graph</strong> of your repo, powered by <a href="https://github.com/DeusData/codebase-memory-mcp">codebase-memory-mcp</a> &mdash; a local engine Draft installs &mdash; that indexes your repo and answers structural queries on demand.</p>
+                <p>No external service. No cloud. No network call. No API key. Your AI assistant gets sharper context because the <strong>structural truth</strong> of your codebase &mdash; modules, dependencies, hotspots, call edges, proto APIs &mdash; is queried live from the engine running locally alongside your code.</p>
 
                 <h2>Why "Better Context" Usually Means "More Cloud"</h2>
                 <p>Walk through the standard playbook for giving an LLM context on a large codebase:</p>
@@ -118,16 +118,12 @@
                 <p>For regulated environments (finance, healthcare, defense, on-prem GPU clusters), most of this isn't even allowed.</p>
 
                 <h2>What Draft Does Instead</h2>
-                <p>Draft installs <a href="https://github.com/DeusData/codebase-memory-mcp">codebase-memory-mcp</a>, a single-binary engine (tree-sitter + LSP across 159 languages, 100% local). You run it once during <code>/draft:init</code> or <code>/draft:graph</code>, and it writes a structured, deterministic snapshot of your repo into <code>draft/graph/</code>:</p>
+                <p>Draft installs <a href="https://github.com/DeusData/codebase-memory-mcp">codebase-memory-mcp</a>, a single-binary engine (tree-sitter + LSP across 159 languages, 100% local). You run it once during <code>/draft:init</code> or <code>/draft:graph</code> to index the repo. From that point on, skills and shell helpers query the engine live &mdash; no snapshot files committed, no data going stale between commits:</p>
 <pre><code>draft/graph/
-├── schema.yaml              # engine + project metadata, counts
-├── architecture.json        # modules, packages, languages, routes, hotspots
-├── hotspots.jsonl           # symbols ranked by fan-in
-├── module-deps.mermaid      # module co-change coupling diagram
-├── proto-map.mermaid        # detected routes (HTTP / gRPC / GraphQL)
-└── okf/                     # Open Knowledge Format bundle (index.md + modules/*.md)
+└── schema.yaml              # gate marker: engine + project metadata, counts
+                             # (access: engine-live — all other data queried from engine)
 </code></pre>
-                <p>Every file is plain text (JSON / JSONL / Mermaid). <strong>The whole thing is meant to be checked into git.</strong></p>
+                <p>The engine holds the graph. <code>draft/graph/schema.yaml</code> is the only committed artifact &mdash; a tiny gate marker that confirms the engine has indexed the repo and records provenance counts. All structural queries go directly to the engine at call time.</p>
 
                 <h2>Five Properties That Change How AI Reasons About Your Code</h2>
 
@@ -158,9 +154,9 @@
                 </table>
                 <p>The graph engine is one local process reading your source files.</p>
 
-                <h3>3. Version-Controlled Context</h3>
-                <p>Files under <code>draft/graph/</code> are plain text. Commit them. Diff them. Review them in PRs.</p>
-                <p>When a refactor lands, the graph diff shows <strong>what structural relationships changed</strong> &mdash; new edges added, hotspot ranks shifted, cycles introduced. Your code review now includes the architecture review, automatically. No dashboard required.</p>
+                <h3>3. Always-Fresh, Never-Stale Context</h3>
+                <p>Because the graph is queried live from the local engine rather than read from a committed snapshot, it is <strong>always current</strong>. Re-indexing is fast and deterministic &mdash; run <code>/draft:graph</code> after a refactor and every subsequent query reflects the new structure immediately.</p>
+                <p>Committed snapshots went stale on the very next commit and duplicated what the engine already serves precisely on demand. The engine-only model eliminates that entire class of drift.</p>
 
                 <h3>4. Blast-Radius Queries Before You Edit</h3>
                 <p>Before changing a file, ask the graph what depends on it:</p>
@@ -190,7 +186,7 @@ mermaid-from-graph --diagram module-deps   # ready-to-paste architecture diagram
                     <li><code>/draft:bughunt</code> walks call edges to widen the search radius around a suspect function, deterministically, without spraying tokens at unrelated files.</li>
                     <li><code>/draft:debug</code> uses callers + impact to scope the investigation rather than asking the LLM to grep.</li>
                 </ul>
-                <p>When <code>draft/graph/</code> is absent, every skill <strong>degrades silently</strong> &mdash; the graph enriches reasoning, it never gates it.</p>
+                <p>When the graph engine has not indexed the repo, every skill <strong>degrades silently</strong> &mdash; the graph enriches reasoning, it never gates it.</p>
 
                 <h2>What This Means for the Three People Reading This</h2>
                 <p><strong>If you're an engineer:</strong> stop pasting whole repos into a chat window. A 30-second <code>/draft:graph</code> produces a context layer your AI assistant can actually navigate, and it costs nothing per query.</p>
@@ -198,21 +194,23 @@ mermaid-from-graph --diagram module-deps   # ready-to-paste architecture diagram
                 <p><strong>If you work in a regulated or air-gapped environment:</strong> this is the entire point. The graph runs on a laptop, on a build agent, on a DGX node behind a firewall. Code never leaves the box. Your AI workflow finally has a context strategy that legal will sign off on.</p>
 
                 <h2>The Larger Argument</h2>
-                <p>The industry default for "AI + code" is to <strong>bolt more cloud onto your repo</strong>. Draft's bet is the opposite: the artifact that makes AI useful on a codebase is <strong>a deterministic structural index that lives next to the code, in the same git history, refreshable in seconds, readable by humans and machines alike.</strong></p>
-                <p>Embeddings have a place. Vector search has a place. Hosted retrieval has a place. But for the question every AI assistant actually asks &mdash; <em>"what does this code touch, and what touches it?"</em> &mdash; the right answer is a graph, on disk, in your repo, under your control.</p>
+                <p>The industry default for "AI + code" is to <strong>bolt more cloud onto your repo</strong>. Draft's bet is the opposite: the artifact that makes AI useful on a codebase is <strong>a deterministic structural index served by a local engine running alongside the code, refreshable in seconds, queryable on demand, readable by humans and machines alike.</strong></p>
+                <p>Embeddings have a place. Vector search has a place. Hosted retrieval has a place. But for the question every AI assistant actually asks &mdash; <em>"what does this code touch, and what touches it?"</em> &mdash; the right answer is a graph, queried live from a local engine running on your machine, under your control.</p>
 
                 <h2>Try It</h2>
 <pre><code># Install Draft (Claude Code plugin)
-# https://getdraft.dev
+npx @drafthq/draft install claude-code
 
 cd your-repo
-/draft:init                                 # builds the graph as part of init
+/draft:init                                 # indexes the repo via codebase-memory-mcp
 
-# Or run the engine directly:
-/draft:graph                                 # build / refresh the snapshot
+# Or refresh the index at any time:
+/draft:graph                                 # re-index after major refactors
+
+# Query the live engine via shell helpers:
 scripts/tools/hotspot-rank.sh --top 10
 scripts/tools/graph-impact.sh --file path/to/file</code></pre>
-                <p>Then commit <code>draft/graph/</code>. Your repo now carries its own structural memory &mdash; and your AI assistant just got a lot less guessy.</p>
+                <p>The engine runs locally, indexes your repo, and answers queries on demand. No committed snapshot files, no staleness &mdash; your AI assistant just got a lot less guessy.</p>
             </div>
 
             <aside class="post-share" aria-label="Share this post">

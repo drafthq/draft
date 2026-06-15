@@ -4,7 +4,7 @@
 
 Draft is a plugin that adds three things to AI coding agents: a knowledge graph engine that maps your repo, spec-driven planning that produces git-tracked specs and phased plans, and a three-stage review pipeline that validates work against the plan. Together, they force AI to execute pre-approved work — grounded in real codebase understanding — instead of guessing.
 
-Draft works with Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Google Gemini. 4 primary workflow commands + 5 routers + 25 specialist commands (still directly callable), 7 specialized agents, 14-dimension bug hunting, ACID-style module audits, knowledge graph with query tools, 34 deterministic shell helpers. MIT license, no telemetry, no paid tiers.
+Draft works with Claude Code, Cursor, Codex, OpenCode, GitHub Copilot, and Google Gemini. 4 primary workflow commands + 5 routers + 24 specialist commands (still directly callable), 7 specialized agents, 14-dimension bug hunting, ACID-style module audits, knowledge graph with query tools, 32 deterministic shell helpers. MIT license, no telemetry, no paid tiers.
 
 ## Installation
 
@@ -110,7 +110,6 @@ All specialist commands remain directly callable for compatibility.
 ### Project Management
 - `/draft:status` — Show progress overview
 - `/draft:revert` — Git-aware rollback
-- `/draft:index` — Aggregate monorepo service contexts
 - `/draft:jira [preview|create|review <ID>]` — Unified Jira integration (generate export, push issues, qualify existing tickets)
 
 ### Authoring & Onboarding
@@ -192,25 +191,22 @@ draft/
     freshness hashes    — File-level change detection for incremental refresh
     signal classification — Codebase signal detection across 11 categories
     run memory          — Cross-session continuity with resumable checkpoints
-  graph/                — Knowledge-graph output (when graph engine is run)
-    schema.yaml         — Engine + project metadata, node/edge counts, artifact list
-    architecture.json   — get_architecture: packages, edges, languages, routes, hotspots
-    hotspots.jsonl      — Fan-in-ranked symbols (always-load)
-    module-deps.mermaid — File co-change coupling diagram
-    proto-map.mermaid   — Detected service-route diagram
-    okf/                — Open Knowledge Format bundle (index.md + modules/*.md)
+  graph/                — Engine-only graph memory (no committed mirror)
+    schema.yaml         — The ONLY committed graph file: a gate marker (engine + node/edge
+                          counts, access: engine-live). All structural data — architecture,
+                          hotspots, module deps, routes — is queried live from the engine.
 ```
 
 Status markers in tracks: `[ ]` Pending, `[~]` In Progress, `[x]` Completed, `[!]` Blocked.
 
 ## Knowledge Graph Engine
 
-Draft installs codebase-memory-mcp, a single-binary local graph engine (tree-sitter + LSP across 159 languages), no daemon, no external service, no API key. The committed snapshot lives in `draft/graph/`.
+Draft installs codebase-memory-mcp, a single-binary local graph engine (tree-sitter + LSP across 159 languages), no daemon, no external service, no API key. The graph is served live by the engine; the only committed file is `draft/graph/schema.yaml` (a gate marker) — there is no committed machine-readable mirror.
 
 CLI:
 
 ```
-/draft:graph [path]                                  # Build / refresh the committed snapshot
+/draft:graph [path]                                  # Index / refresh the graph in the engine
 scripts/tools/graph-callers.sh --symbol buildIndex   # Who calls this function
 scripts/tools/graph-impact.sh  --file src/auth/login.go   # Blast radius (by_category)
 scripts/tools/hotspot-rank.sh --top 10               # Top symbols by fan-in
@@ -222,13 +218,12 @@ Call edges carry confidence signals (resolved vs. inferred); skills weight findi
 
 ## Deterministic Helper Tools
 
-Skills delegate mechanical work to 34 shell helpers under `scripts/tools/`, including:
+Skills delegate mechanical work to 32 shell helpers under `scripts/tools/`, including:
 
 - `git-metadata.sh`, `parse-git-log.sh` — git introspection
 - `classify-files.sh` — language + category (code/test/doc/config) classification
 - `hotspot-rank.sh`, `cycle-detect.sh`, `mermaid-from-graph.sh` — graph wrappers
-- `graph-snapshot.sh`, `graph-impact.sh`, `graph-callers.sh` — codebase-memory-mcp graph queries (committed snapshot, blast radius, callers)
-- `okf-emit.sh`, `okf-bundle.sh`, `okf-check.sh` — Open Knowledge Format bundle emission + v0.1 conformance validation
+- `graph-snapshot.sh`, `graph-impact.sh`, `graph-callers.sh` — codebase-memory-mcp graph queries (index/refresh, blast radius, callers)
 - `check-track-hygiene.sh`, `check-scope-conflicts.sh`, `verify-citations.sh`, `render-track.sh` — track-hygiene and verification helpers
 - `freshness-check.sh` — file-hash freshness verification
 - `manage-symlinks.sh` — keep `*-latest.md` symlinks pointing at the newest report
@@ -250,7 +245,7 @@ All emit JSON, follow uniform exit-code contract (0 = success, 1 = invocation er
 - **Platform-agnostic:** Same methodology across Claude Code, Cursor, Copilot, Gemini, Antigravity IDE
 - **TDD enforcement:** RED → GREEN → REFACTOR cycle with verification
 - **14-dimension bug hunting:** Exhaustive defect discovery beyond simple linting
-- **Built-in code intelligence:** Knowledge graph engine + 34 deterministic helpers — no external services required
+- **Built-in code intelligence:** Knowledge graph engine + 32 deterministic helpers — no external services required
 - **Track impact memory:** Each completed track records its blast radius; new tracks get overlap warnings during context load
 - **ACID compliance audits:** Enterprise-grade module lifecycle reviews
 - **7 specialized agents:** Purpose-built behaviors for architecture, debugging, planning, review, RCA, operations, and documentation

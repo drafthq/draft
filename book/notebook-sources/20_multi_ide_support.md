@@ -8,41 +8,55 @@ Draft is not locked to a single AI coding tool. The methodology — the skills, 
 
 ## Claude Code (Native)
 
-Claude Code is Draft's native environment. The plugin is installed directly via the marketplace:
+Claude Code is Draft's native environment. Install with:
 
-All 28 commands are available as/draft:*slash commands. Skills are loaded from the.claude-plugin/plugin.jsonmanifest, which points to theskills/directory. Each skill'sSKILL.mdfile is read at invocation time, giving Claude Code direct access to the full methodology without any transformation.
+`npx @drafthq/draft install claude-code`
+
+All 33 commands are available as/draft:*slash commands. Skills are loaded from the.claude-plugin/plugin.jsonmanifest, which points to theskills/directory. Each skill'sSKILL.mdfile is read at invocation time, giving Claude Code direct access to the full methodology without any transformation.
 
 The 7 specialized agents (Architect, Debugger, Planner, RCA, Reviewer, Ops, Writer) are referenced as@architect,@debugger, etc., and resolved fromcore/agents/.
 
 ## Cursor
 
-Cursor natively supports the.claude/plugin structure, making it a near-identical experience to Claude Code. Installation is through Cursor's settings:
+Cursor natively supports the.claude/plugin structure, making it a near-identical experience to Claude Code. Install with:
 
-Commands use@draftsyntax:@draft init,@draft new-track,@draft implement. The same plugin.json, the same skill files, the same agent definitions — no separate build step required.
+`npx @drafthq/draft install cursor`
+
+Commands use/draft:*syntax:/draft:init,/draft:new-track,/draft:implement. The same plugin.json, the same skill files, the same agent definitions — no separate build step required.
 
 ## GitHub Copilot
 
-Copilot does not have a plugin system that can read skill files at runtime. Instead, Draft uses a.github/copilot-instructions.mdfile — a single, large generated file (15,000+ lines) that encodes the entire Draft methodology inline.
+Copilot does not have a plugin system that can read skill files at runtime. Instead, Draft uses a.github/copilot-instructions.mdfile — a single, large generated file (~23,600 lines) that encodes the entire Draft methodology inline.
 
 This file is produced by the build pipeline (scripts/build-integrations.sh) and includes:
 
-* All 25 skill definitions (minus frontmatter, plus syntax transforms)
-* All core reference files (methodology, knowledge base, shared procedures, templates, agent definitions)
+* All 33 skill definitions (minus frontmatter, plus syntax transforms)
+* All 62 core reference files (methodology, knowledge base, shared procedures, templates, agent definitions)
 * Quality disciplines, communication style, and proactive behaviors
 * Intent mapping for natural language triggers
 Two key syntax transformations apply:
 
-Installation is a single curl command that drops the generated file into the project:
+Installation copies the generated file into the project:
+
+`npx @drafthq/draft install copilot`
 
 ## Gemini
 
 Gemini uses a.gemini.mdbootstrap file that instructs Gemini where to find Draft's skill files. Rather than inlining all content (as Copilot requires), the bootstrap points to the skills directory and lets Gemini read files as needed.
 
-## Antigravity IDE
+`npx @drafthq/draft install gemini`
 
-Antigravity IDE supports global skill installation. Draft is cloned to a central location and configured via a global.gemini.mdbootstrap:
+## OpenCode
 
-This makes Draft available across all projects without per-project setup.
+OpenCode is supported via the same plugin structure as Claude Code.
+
+`npx @drafthq/draft install opencode`
+
+## Codex
+
+Codex is supported via the same plugin structure as Claude Code.
+
+`npx @drafthq/draft install codex`
 
 ## The Build Pipeline
 
@@ -50,11 +64,11 @@ The transformation from source skills to platform-specific integrations is handl
 
 The pipeline works as follows:
 
-* Skill ordering— ASKILL_ORDERarray defines the 25 skills and their generation order. This order is independent of the alphabetical order inplugin.json.
+* Skill ordering— ASKILL_ORDERarray defines the 33 skills and their generation order. This order is independent of the alphabetical order inplugin.json.
 * Frontmatter extraction— Each skill's YAML frontmatter (name:anddescription:) is validated. The body is extracted viaextract_body(), which strips the frontmatter delimiters.
 * Body format validation— The body must follow a strict format: blank line,# Titleheading, blank line, then content. The build skips the first 3 body lines when inlining (the title is replaced by the integration's section header).
 * Syntax transformation— Platform-specific transforms are applied:/draft:commandbecomesdraft commandfor Copilot, agent references become@workspace.
-* Core file inlining— 22 core reference files (methodology, shared procedures, templates, agents) are inlined into the output, each wrapped in<core-file>tags.
+* Core file inlining— 62 core reference files (methodology, shared procedures, templates, agents) are inlined into the output, each wrapped in<core-file>tags.
 * Verification—verify_output()checks minimum line count (>1000), completeness sentinel (DRAFT_BUILD_COMPLETE), and that no untransformed syntax remains.
 The build is atomic: output is written to a temporary file, verified, then moved to the final location. A failed verification deletes the temp file and exits with an error, leaving the previous output intact.
 

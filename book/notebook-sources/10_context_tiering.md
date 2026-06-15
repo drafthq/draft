@@ -34,7 +34,7 @@ This file isderivedfromarchitecture.md, not written directly. Draft's condensati
 
 ## Tier 2: The Full Architecture
 
-The filedraft/architecture.mdis the source of truth. It is a comprehensive, human-readable engineering reference with 25 sections and 4 appendices, complete with Mermaid diagrams, code snippets, interaction matrices, and state machine definitions. It exists for two audiences: AI agents performing deep analysis, and engineers who need to understand a module without reading source code.
+The filedraft/architecture.mdis the source of truth. It is a comprehensive, human-readable 10-section engineering reference, complete with Mermaid diagrams, code snippets, interaction matrices, and state machine definitions. It exists for two audiences: AI agents performing deep analysis, and engineers who need to understand a module without reading source code.
 
 Tier 2 is loaded only for deep analysis:/draft:initrefresh,/draft:deep-review,/draft:decompose, and full architecture refreshes. Most day-to-day development never touches it. When it is loaded, it provides exhaustive context that Tier 1 intentionally omits: per-module state machines, thread safety annotations, the full implementation catalog, concurrency model details, and configuration reference tables.
 
@@ -76,7 +76,7 @@ Evening: you run/draft:deep-reviewon the auth module after a security concern. D
 
 ## Why Not Just Load Everything?
 
-Token budgets are finite. A 400-line.ai-context.mdplus a 2000-linearchitecture.mdplus 150 facts consumes significant context window space — space that competes with the actual code being analyzed, the spec being checked, and the plan being followed. Tiering is not an optimization. It is a necessity. Without it, large projects would hit context limits before the AI could even begin working.
+Token budgets are finite. A 400-line.ai-context.mdplus a comprehensive 10-sectionarchitecture.mdplus 150 facts consumes significant context window space — space that competes with the actual code being analyzed, the spec being checked, and the plan being followed. Tiering is not an optimization. It is a necessity. Without it, large projects would hit context limits before the AI could even begin working.
 
 The three-tier system also reflects a truth about information relevance: most of your project's architectural knowledge is irrelevant to any single task. Loading it anyway does not make the AI smarter. It makes it noisier. Focused context produces focused output.
 

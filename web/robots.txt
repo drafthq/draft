@@ -1,7 +1,7 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://getdraft.dev/sitemap.xml
+Sitemap: https://www.getdraft.dev/sitemap.xml
 
 # AI/LLM discoverability
 # See https://llmstxt.org for spec

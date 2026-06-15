@@ -337,43 +337,27 @@
         </tbody>
     </table>
 
-    <h2>Monorepo Root Files (from /draft:index)</h2>
-    <p>Generated at the monorepo root level when <code>/draft:index</code> aggregates service contexts:</p>
+    <h2>Monorepo Files (scope-aware /draft:init)</h2>
+    <p>Monorepo federation in Draft uses scope-aware <code>/draft:init</code> rather than a separate index command. Running <code>/draft:init</code> inside a sub-module writes one additional file to that module's <code>draft/graph/</code> directory:</p>
 
     <table>
         <thead>
             <tr>
                 <th>File</th>
                 <th>Purpose</th>
+                <th>Created By</th>
             </tr>
         </thead>
         <tbody>
             <tr>
-                <td><code>draft/service-index.md</code></td>
-                <td>Directory of all detected services with status, tech stack, dependencies, and team ownership</td>
-            </tr>
-            <tr>
-                <td><code>draft/dependency-graph.md</code></td>
-                <td>Inter-service dependency mapping with Mermaid topology and topological ordering</td>
-            </tr>
-            <tr>
-                <td><code>draft/tech-matrix.md</code></td>
-                <td>Technology distribution across services with organizational standards and variances</td>
-            </tr>
-            <tr>
-                <td><code>draft/config.yaml</code></td>
-                <td>Index configuration: service detection patterns, exclusions, re-index triggers</td>
-            </tr>
-            <tr>
-                <td><code>draft/bughunt-summary.md</code></td>
-                <td>Aggregate bughunt results across services (created by <code>/draft:index bughunt</code>)</td>
-            </tr>
-            <tr>
-                <td><code>&lt;service&gt;/draft/manifest.json</code></td>
-                <td>Per-service metadata: name, type, summary, primary tech, dependencies, dependents, team, timestamps</td>
+                <td><code>&lt;module&gt;/draft/graph/root-link.json</code></td>
+                <td>Pointer from a sub-module to the root knowledge graph. Contains the relative path to the root <code>draft/graph/</code> directory. Enables cross-module queries from within any sub-module without any aggregation step.</td>
+                <td><code>/draft:init</code> (when run inside a sub-module)</td>
             </tr>
         </tbody>
     </table>
+
+    <p>The root-level <code>draft/</code> directory (created by running <code>/draft:init</code> at the repo root) contains the standard context files (<code>architecture.md</code>, <code>.ai-context.md</code>, <code>.ai-profile.md</code>, <code>product.md</code>, <code>tech-stack.md</code>, <code>workflow.md</code>, <code>guardrails.md</code>) scoped to the whole-repo view, plus the <code>draft/graph/schema.yaml</code> gate marker pointing to the live engine.</p>
 
     <div class="callout callout-tip">
         <div class="callout-title">Source of Truth Hierarchy</div>

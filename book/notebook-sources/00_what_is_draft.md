@@ -8,7 +8,7 @@ You installed an AI coding assistant. It writes code fast. But it also picks the
 
 ## What Draft Is
 
-Draft is a free, open-source plugin that adds structured development methodology to AI coding agents. It provides 28 slash commands and 7 specialized agents that turn your AI assistant from an autonomous guessing machine into a disciplined executor of pre-approved work.
+Draft is a free, open-source plugin that adds structured development methodology to AI coding agents. It provides 33 slash commands and 7 specialized agents that turn your AI assistant from an autonomous guessing machine into a disciplined executor of pre-approved work.
 
 The core idea: before AI writes a single line of code, it analyzes your codebase, generates a specification, builds a phased plan, and waits for your approval. Only then does implementation begin — constrained by your architecture, your conventions, and your acceptance criteria.
 
@@ -26,7 +26,7 @@ Draft is for developers and teams who use AI coding assistants and have experien
 
 ## What You Get
 
-4 primary workflow commands (`/draft:init`, `/draft:new-track`, `/draft:implement`, `/draft:review`) plus 5 routers (`/draft:plan`, `/draft:ops`, `/draft:docs`, `/draft:discover`, `/draft:jira`) as the recommended public interface. 22 specialist commands are dispatched by the routers for targeted work (debug, bughunt, deep-review, tech-debt, ADR, etc.).
+4 primary workflow commands (`/draft:init`, `/draft:new-track`, `/draft:implement`, `/draft:review`) plus 5 routers (`/draft:plan`, `/draft:ops`, `/draft:docs`, `/draft:discover`, `/draft:jira`) as the recommended public interface. 24 specialist commands are dispatched by the routers for targeted work (debug, bughunt, deep-review, tech-debt, ADR, etc.).
 
 The router model reduces cognitive load: state your intent to a router and it dispatches to the right specialist with context.
 
@@ -36,7 +36,7 @@ The router model reduces cognitive load: state your intent to a router and it di
 
 Draft works with the AI coding tools you already use:
 
-* Claude Code— Native plugin installation via/plugin install
+* Claude Code— Native plugin installation via`npx @drafthq/draft install claude-code`
 * Cursor— Native support for the.claude/plugin structure
 * GitHub Copilot— Via.github/copilot-instructions.md
 * Gemini— Via.gemini.mdbootstrap file

@@ -122,7 +122,7 @@ log lines are unstructured and missing actor identity.
                 <p>The graph disagrees.</p>
 
                 <h2>Step 1: The Hotspot Warning Fires Before Anything Runs</h2>
-                <p>When <code>/draft:implement</code> picks up the first task, it loads <code>draft/graph/hotspots.jsonl</code> and checks every file the task plans to touch. <code>internal/db/transaction.go</code> is on the list:</p>
+                <p>When <code>/draft:implement</code> picks up the first task, it queries hotspots live from the graph engine (via <code>scripts/tools/hotspot-rank.sh</code>) and checks every file the task plans to touch. <code>internal/db/transaction.go</code> is on the list:</p>
 <pre><code>⚠ Hotspot detected
   File:   internal/db/transaction.go
   fanIn:  31
@@ -132,7 +132,7 @@ log lines are unstructured and missing actor identity.
   Consider running a graph impact query before writing code.
 
   scripts/tools/graph-impact.sh --file internal/db/transaction.go</code></pre>
-                <p>This warning is in <code>skills/implement/SKILL.md</code> at line 48. The graph's <code>hotspots.jsonl</code> was built from <code>lines + fanIn * 50</code> &mdash; complexity weighted by how many other files include or import the file. <code>transaction.go</code> isn't large; it's <em>central</em>. Thirty-one direct dependents.</p>
+                <p>This warning is in <code>skills/implement/SKILL.md</code> at line 48. The engine computes hotspot rank from <code>lines + fanIn * 50</code> &mdash; complexity weighted by how many other files include or import the file. <code>transaction.go</code> isn't large; it's <em>central</em>. Thirty-one direct dependents.</p>
                 <p>Most AI assistants ignore this kind of signal. The Draft skill stops and waits.</p>
 
                 <h2>Step 2: The Impact Query &mdash; What Actually Breaks</h2>
@@ -259,7 +259,7 @@ log lines are unstructured and missing actor identity.
                 <h2>The Three Loops, Composed</h2>
                 <p>Pull back and the architecture is one shared graph used in three places:</p>
                 <ol>
-                    <li><strong>Pre-change risk assessment.</strong> Before <code>/draft:implement</code> touches a hotspot, it loads <code>hotspots.jsonl</code>, warns, and points at the impact query. The query returns categorized blast radius &mdash; the actual answer to "what breaks?"</li>
+                    <li><strong>Pre-change risk assessment.</strong> Before <code>/draft:implement</code> touches a hotspot, it queries hotspots live from the engine, warns, and points at the impact query. The query returns categorized blast radius &mdash; the actual answer to "what breaks?"</li>
                     <li><strong>Post-completion memory.</strong> When a phase passes review, <code>/draft:implement</code> snapshots <code>files_touched</code> + downstream blast radius into <code>metadata.json.impact</code>. Ten extra seconds, written into git.</li>
                     <li><strong>Cross-track overlap detection.</strong> When <code>/draft:new-track</code> opens, it reads recent impact memory and flags candidate modules already touched within 30 days. No coordination meeting required.</li>
                 </ol>
@@ -283,7 +283,7 @@ scripts/tools/graph-impact.sh --file path/to/your/file.go | jq
 # wire up the warning + memory loops
 /draft:new-track "your next change"
 /draft:implement</code></pre>
-                <p>The graph is local, deterministic, and version-controlled &mdash; same engine the <a href="../local-graph-engine/">previous post</a> walked through. Impact mode is one of query tools; the rest are documented in <code>core/shared/graph-query.md</code>. No SaaS, no cloud, no API key &mdash; just a JSON answer to the most expensive question in code review.</p>
+                <p>The graph is local, deterministic, and queried live &mdash; same engine the <a href="../local-graph-engine/">previous post</a> walked through. Impact mode is one of several query tools; the rest are documented in <code>core/shared/graph-query.md</code>. No SaaS, no cloud, no API key &mdash; just a JSON answer to the most expensive question in code review.</p>
                 <p>The graph is not a planner. It is a memory. Use it before you write code, after you ship code, and the next time someone is about to retrace your steps.</p>
             </div>
 

@@ -4,21 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>What is Draft? — Draft Book</title>
-    <meta name="description" content="What Draft is, what it is not, who it is for, and what you get — 34 commands and 7 specialized agents for structured AI development.">
+    <meta name="description" content="What Draft is, what it is not, who it is for, and what you get — 33 commands and 7 specialized agents for structured AI development.">
     <meta name="author" content="Mayur Pise">
     <meta name="theme-color" content="#2563eb">
     <meta name="keywords" content="what is draft, ai coding plugin, context-driven development, claude code plugin, ai development methodology">
     <meta name="robots" content="index, follow">
     <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
     <meta property="og:title" content="What is Draft? — Draft Book">
-    <meta property="og:description" content="What Draft is, what it is not, who it is for, and what you get — 34 commands and 7 specialized agents for structured AI development.">
+    <meta property="og:description" content="What Draft is, what it is not, who it is for, and what you get — 33 commands and 7 specialized agents for structured AI development.">
     <meta property="og:type" content="article">
     <meta property="og:url" content="https://getdraft.dev/book/what-is-draft/">
     <meta property="og:image" content="https://getdraft.dev/social-preview.png">
     <meta property="og:image:alt" content="What is Draft? — Draft Book">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="What is Draft? — Draft Book">
-    <meta name="twitter:description" content="What Draft is, what it is not, who it is for, and what you get — 34 commands and 7 specialized agents for structured AI development.">
+    <meta name="twitter:description" content="What Draft is, what it is not, who it is for, and what you get — 33 commands and 7 specialized agents for structured AI development.">
     <meta name="twitter:image" content="https://getdraft.dev/social-preview.png">
     <meta name="twitter:image:alt" content="What is Draft? — Draft Book">
     <link rel="canonical" href="https://getdraft.dev/book/what-is-draft/">
@@ -28,7 +28,7 @@
       "@context": "https://schema.org",
       "@type": "Article",
       "headline": "What is Draft?",
-      "description": "What Draft is, what it is not, who it is for, and what you get — 34 commands and 7 specialized agents for structured AI development.",
+      "description": "What Draft is, what it is not, who it is for, and what you get — 33 commands and 7 specialized agents for structured AI development.",
       "url": "https://getdraft.dev/book/what-is-draft/",
       "isPartOf": { "@type": "Book", "name": "The Draft Book", "url": "https://getdraft.dev/book/" },
       "author": { "@type": "Person", "name": "Mayur Pise", "url": "https://github.com/mayurpise" },
@@ -253,7 +253,7 @@
     </div>
 
     <h2>What Draft Is</h2>
-    <p>Draft is a free, open-source plugin that adds structured development methodology to AI coding agents. It provides 34 commands and 7 specialized agents that turn your AI assistant from an autonomous guessing machine into a disciplined executor of pre-approved work.</p>
+    <p>Draft is a free, open-source plugin that adds structured development methodology to AI coding agents. It provides 33 commands and 7 specialized agents that turn your AI assistant from an autonomous guessing machine into a disciplined executor of pre-approved work.</p>
 
     <p>The core idea: before AI writes a single line of code, it analyzes your codebase, generates a specification, builds a phased plan, and waits for your approval. Only then does implementation begin &mdash; constrained by your architecture, your conventions, and your acceptance criteria.</p>
 
@@ -271,9 +271,9 @@
     <p>Draft is for developers and teams who use AI coding assistants and have experienced the gap between "it generated code" and "it generated the right code." If you've ever had an AI assistant introduce a dependency your team doesn't use, violate your project's naming conventions, or build a feature that doesn't match what was actually needed &mdash; Draft addresses that gap structurally.</p>
 
     <h2>What You Get</h2>
-    <p><strong>4 primary commands + 5 routers</strong> (recommended interface) + 25 specialists covering the full development lifecycle:</p>
+    <p><strong>4 primary commands + 5 routers</strong> (recommended interface) + 24 specialists covering the full development lifecycle:</p>
     <ul>
-        <li><strong>Context</strong> &mdash; <code>/draft:init</code> performs Phase 0 graph build (tree-sitter knowledge graph) followed by 5-phase deep analysis. <code>/draft:tour</code> for exploratory walkthroughs. Generates architecture docs, AI context files, and state tracking.</li>
+        <li><strong>Context</strong> &mdash; <code>/draft:init</code> performs Phase 0 graph build (knowledge graph via codebase-memory-mcp) followed by 5-phase deep analysis. <code>/draft:tour</code> for exploratory walkthroughs. Generates architecture docs, AI context files, and state tracking.</li>
         <li><strong>Planning</strong> &mdash; <code>/draft:plan</code> orchestrates feature planning: routes to <code>/draft:new-track</code>, <code>/draft:decompose</code>, or <code>/draft:change</code>.</li>
         <li><strong>Execution</strong> &mdash; <code>/draft:implement</code> builds features task-by-task with TDD cycles and architecture checkpoints</li>
         <li><strong>Debugging</strong> &mdash; <code>/draft:debug</code> provides structured debugging: reproduce, isolate, diagnose, fix</li>
@@ -281,7 +281,7 @@
         <li><strong>Operations</strong> &mdash; <code>/draft:ops</code> orchestrates operational workflows: <code>/draft:deploy-checklist</code>, <code>/draft:incident-response</code>, <code>/draft:standup</code>, <code>/draft:status</code>, <code>/draft:revert</code>, <code>/draft:change</code>, <code>/draft:coverage</code></li>
         <li><strong>Strategy</strong> &mdash; <code>/draft:tech-debt</code> for technical debt analysis across 6 dimensions with prioritization</li>
         <li><strong>Documentation</strong> &mdash; <code>/draft:docs</code> orchestrates doc generation: readme, runbook, api, onboarding via <code>/draft:documentation</code></li>
-        <li><strong>Knowledge &amp; Governance</strong> &mdash; <code>/draft:adr</code>, <code>/draft:learn</code>, <code>/draft:decompose</code>, <code>/draft:index</code></li>
+        <li><strong>Knowledge &amp; Governance</strong> &mdash; <code>/draft:adr</code>, <code>/draft:learn</code>, <code>/draft:decompose</code>, <code>/draft:graph</code></li>
         <li><strong>Integration</strong> &mdash; <code>/draft:jira preview</code>, <code>/draft:jira create</code></li>
     </ul>
 
@@ -300,7 +300,7 @@
                 <!-- Context -->
                 <rect x="20" y="50" width="160" height="80" rx="12" fill="#2563eb" filter="url(#shadowCat)"/>
                 <text x="100" y="74" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">Context</text>
-                <text x="100" y="92" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-size="10">init, index</text>
+                <text x="100" y="92" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-size="10">init, graph</text>
                 <rect x="130" y="54" width="28" height="18" rx="9" fill="rgba(255,255,255,0.2)"/>
                 <text x="144" y="67" text-anchor="middle" fill="#fff" font-size="10" font-weight="600">2</text>
 
@@ -340,7 +340,7 @@
                 <rect x="195" y="150" width="160" height="80" rx="12" fill="#0891b2" filter="url(#shadowCat)"/>
                 <text x="275" y="174" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">Knowledge</text>
                 <text x="275" y="190" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-size="9">learn, adr, tech-debt</text>
-                <text x="275" y="203" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-size="9">index, tour</text>
+                <text x="275" y="203" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-size="9">graph, tour</text>
                 <rect x="305" y="154" width="28" height="18" rx="9" fill="rgba(255,255,255,0.2)"/>
                 <text x="319" y="167" text-anchor="middle" fill="#fff" font-size="10" font-weight="600">5</text>
 
@@ -372,7 +372,7 @@
                 <text x="360" y="278" text-anchor="middle" fill="#718096" font-size="11" font-style="italic">Supporting categories provide operational, knowledge, authoring, and integration capabilities</text>
             </svg>
         </div>
-        <div class="figure-caption">Draft's command surface: 7 primary workflow parents + 5 intent routers (plan, ops, docs, discover, jira) dispatching to 20+ specialists. Prefer routers for most usage.</div>
+        <div class="figure-caption">Draft's command surface: 4 primary workflow commands + 5 intent routers (plan, ops, docs, discover, jira) dispatching to 24 specialists. Prefer routers for most usage.</div>
     </div>
 
     <h2>Platform Support</h2>

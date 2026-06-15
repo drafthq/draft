@@ -110,7 +110,7 @@ Draft's current architecture treats context as static documents that are loaded 
 
 * Tiered context loading— Draft already implements three tiers (.ai-profile.mdat 20-50 lines,.ai-context.mdat 200-400 lines,architecture.mdat full size). Future iterations may add relevance scoring that loads only the sections needed for a specific task.
 * Cross-session memory— Draft's.state/run-memory.jsonalready provides continuity data across sessions. The natural extension is richer state that captures what was tried, what failed, and what patterns were learned during development.
-* Team-scale context—/draft:indexaggregates service-level context into a system view. Future work may extend this to team-level conventions, cross-team dependency negotiation, and organizational standards enforcement.
+* Team-scale context—/draft:initbuilds cross-module context through its scope-aware root-link mechanism, connecting per-module graphs to a shared root. Future work may extend this to team-level conventions, cross-team dependency negotiation, and organizational standards enforcement.
 The underlying principle will remain constant: better structure produces better AI output. The documents may evolve. The methodology may expand. But the insight — that explicit, managed, versioned context is the most reliable way to direct AI behavior — is the foundation everything else builds on.
 
 The knowledge base does not only catalog good patterns. It also catalogs anti-patterns that agents actively watch for: distributed monoliths, shared databases between services, God classes, leaky abstractions, security by obscurity, hardcoded secrets, and the eight fallacies of distributed computing. These anti-patterns are flagged during review and bughunt when detected in the codebase.

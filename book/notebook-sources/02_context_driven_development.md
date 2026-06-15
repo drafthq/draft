@@ -32,7 +32,7 @@ What it locks in:technology choices, dependency constraints, accepted patterns. 
 
 ### architecture.md — How (Structure)
 
-The source of truth. A comprehensive 25-section engineering reference generated from exhaustive codebase analysis. It includes module boundaries, dependency graphs, data flows, API definitions, concurrency models, security architecture, and testing infrastructure — all with real Mermaid diagrams and actual code snippets from your codebase.
+The source of truth. A comprehensive 10-section engineering reference generated from exhaustive codebase analysis. It includes module boundaries, dependency graphs, data flows, API definitions, concurrency models, security architecture, and testing infrastructure — all with real Mermaid diagrams and actual code snippets from your codebase.
 
 What it locks in:module boundaries, interaction contracts, data flow patterns, invariants. The AI cannot violate your architecture because the architecture is explicitly documented with every component, every interface, and every constraint.
 
@@ -68,7 +68,7 @@ This is where the AI gets enough context to make correct decisions without the f
 
 ### Tier 2: Long-Term Storage
 
-architecture.mdis the full, comprehensive reference — 25 sections plus appendices, with Mermaid diagrams and code snippets. It is loaded for deep reviews, architecture refreshes, and complex analysis tasks. Most day-to-day development never touches this tier directly.
+architecture.mdis the full, comprehensive reference — 10 sections with Mermaid diagrams and code snippets. It is loaded for deep reviews, architecture refreshes, and complex analysis tasks. Most day-to-day development never touches this tier directly.
 
 Smaller context windows produce better AI decisions. By loading only what's needed, Draft reduces token consumption, decreases hallucination risk, and keeps the AI focused on the relevant subset of your architecture. The right context for the task — not all the context, all the time.
 

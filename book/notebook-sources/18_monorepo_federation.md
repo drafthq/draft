@@ -4,69 +4,59 @@ Part VI: Enterprise· Chapter 18
 
 4 min read
 
-A monorepo with twelve services has twelvedraft/directories after initialization. Each service has its own architecture documentation, its own tech stack, its own context files. But nobody has a unified view of the whole system — which services depend on which, what technologies are used where, or how the pieces fit together./draft:indexbuilds that view.
+Draft has no separate index command. Monorepo support is built directly into `/draft:init`, which is scope-aware and root-first. Run it at the repo root to build the whole-repo knowledge graph; run it inside a sub-module and it resolves the repo root automatically, builds that module's snapshot, and writes `draft/graph/root-link.json` pointing up to the root graph — so every module has full cross-module understanding without an extra step. Federation is the root-link mechanism, not a separate command.
 
 ## The Monorepo Context Problem
 
-Running/draft:initon each service in a monorepo produces excellent per-service context. The auth service has a detailed.ai-context.mdexplaining its JWT validation flow. The billing service documents its Stripe integration. But cross-service questions remain unanswered: what happens when auth goes down? Which services share PostgreSQL? Is anyone still using the deprecated notification API?
+A monorepo with twelve services raises a cross-module question that per-service context cannot answer: what happens when the auth service changes? Which services share PostgreSQL? Which team owns the notification API? Per-service `/draft:init` runs produce excellent local context — detailed `.ai-context.md` files for each service — but answering cross-service questions requires connecting those views.
 
-/draft:indexanswers these questions by aggregating service-level context into root-level knowledge files, without deep code analysis. It reads what/draft:initalready produced and synthesizes a system-of-systems view.
+Draft solves this through the root-link mechanism built into `/draft:init`. There is no separate aggregation step. Running `/draft:init` anywhere in the monorepo is enough.
 
-## Auto-Detection
+## How Scope-Aware Init Works
 
-Draft detects services by scanning immediate child directories (depth=1 only, never recursive) for standard project markers:
+`/draft:init` is root-first. When invoked at the repo root, it builds the whole-repo knowledge graph in `draft/graph/`. When invoked inside a sub-module (for example, `services/billing/`), it:
 
-* package.json— Node.js services
-* go.mod— Go services
-* Cargo.toml— Rust services
-* pom.xml/build.gradle— Java services
-* pyproject.toml/requirements.txt— Python services
-* Dockerfile— Containerized services
-* src/directory with code files
-It excludesnode_modules/,vendor/,.git/, and hidden directories. Each detected directory is categorized as initialized (has adraft/subdirectory) or uninitialized. Only initialized services contribute to the index.
+1. **Resolves the repo root** — walks ancestor directories looking for an existing `draft/` directory, then falls back to `git rev-parse --show-toplevel`, then falls back to cwd.
+2. **Builds the module snapshot** — runs full analysis for the sub-module and writes its graph under the module's own `draft/graph/`.
+3. **Writes `draft/graph/root-link.json`** — a pointer from the module's graph to the root graph. This file tells any Draft command running inside the module where the whole-repo graph lives.
 
-## What Gets Generated
+The result: a Draft command running inside `services/billing/` can answer cross-module questions by following the root link to the root graph, without re-running any analysis at the root level.
 
-/draft:indexproduces six root-level files that together form a complete system map:
+## The root-link.json File
 
-### service-index.md
+`draft/graph/root-link.json` is a small JSON file written by `/draft:init` when it detects it is running inside a sub-module. It contains the absolute path to the root `draft/graph/` directory and metadata about when the link was established. Commands that need cross-module context read this file and query the root graph directly.
 
-A directory of all detected services with their status, tech stack, dependencies, team ownership, and links to their individual context files. This is the entry point — the table of contents for the entire monorepo.
+If no root graph exists yet, the root link points to a pending state and falls back gracefully to module-local context. Running `/draft:init` at the repo root later fills the gap — no re-initialization of sub-modules required.
 
-### dependency-graph.md
+## The Committed Graph: Only schema.yaml
 
-Cross-service dependency mapping with a Mermaid topology diagram, a dependency matrix (depends-on and depended-by for every service), and a topological implementation order. This file answers "what breaks if this service changes?" and "what must exist before this service can function?"
+The knowledge graph itself is engine-only. The `codebase-memory-mcp` engine (by DeusData, 159 languages, 100% local) maintains the structural graph in-process. No `architecture.json`, `hotspots.jsonl`, or `*.mermaid` files are committed to the repository.
 
-### tech-matrix.md
+The only committed file in `draft/graph/` is `schema.yaml` — a gate marker containing engine metadata, project identity, and point-of-index counts. Its `access: engine-live` field signals that structural data is queried live from the engine, not read from committed files.
 
-A technology distribution report showing which languages, databases, frameworks, and infrastructure components are used across which services. It identifies organizational standards (technologies used by the majority of services) and variances (services that deviate, with documented justifications).
+## Flags
 
-### Synthesized Root Context
+`/draft:init` supports two flags relevant to monorepo workflows:
 
-If the root-leveldraft/product.md,draft/architecture.md, anddraft/tech-stack.mdare missing or are placeholders,/draft:indexsynthesizes them from service-level data:
+* `--module-only` — Analyzes only the current sub-module; skips root-level synthesis. Use when you want to refresh a single service without touching the root graph.
+* `--graph-only` — Builds or refreshes the graph without regenerating prose context files (architecture.md, .ai-context.md, etc.). Use for fast graph updates after code changes.
 
-* product.md— Aggregated product vision from all service visions, deduplicated target users, capability matrix mapping features to services
-* architecture.md— System-of-systems view with topology diagram, service directory, shared infrastructure, and cross-cutting patterns
-* tech-stack.md— Organizational standards derived from majority usage, approved variances, shared libraries
-After generatingarchitecture.md, the Condensation Subroutine runs to produce a root-level.ai-context.md— a token-optimized aggregate of all service knowledge.
+## The Workflow
 
-## Root-Level vs. Service-Level Context
+A typical monorepo onboarding sequence:
 
-After indexing, the monorepo has two layers of context:
+1. Run `/draft:init` at the repo root — builds the whole-repo graph and generates root-level context files.
+2. Run `/draft:init` inside each sub-module that needs its own spec/plan context — each one generates module-local context and writes a `draft/graph/root-link.json` pointing to the root.
+3. Work inside any sub-module — Draft automatically loads module-local context for implementation tasks and follows the root link for cross-module analysis (impact, deep-review, bughunt across services).
 
-When working within a single service, the AI loads that service's context. When making cross-service decisions — adding a new API dependency, changing a shared schema, planning a migration — the AI loads root-level context.
+Re-run `/draft:init` (or `/draft:init --graph-only`) after significant architecture changes to any service, before major cross-service planning, or as part of documentation hygiene. The graph engine handles incremental updates; unchanged modules are not re-analyzed.
 
-## Service Manifests
+## Cross-Module Analysis
 
-For each initialized service,/draft:indexcreates or updates amanifest.jsoninside the service'sdraft/directory. This manifest contains the service name, type, summary, primary technology, dependencies on other services, dependents (reverse lookup), team ownership, and indexing timestamps. Manifests enable fast re-indexing without re-reading all markdown files.
+Once root links are in place, any graph-aware Draft command can scope across modules:
 
-## Initializing Missing Services
+* `/draft:impact` — follows the root link to find downstream dependencies across service boundaries.
+* `/draft:deep-review` — loads cross-module invariants from the root graph when reviewing a service that calls others.
+* `/draft:bughunt` — can be scoped to a single service or run against the root graph for a system-wide sweep.
 
-Running/draft:index --init-missingoffers to initialize uninitialized services. For each one, Draft prompts with four options:y(initialize this service),n(skip),all(initialize all remaining), orskip-rest(skip all remaining). This makes it practical to bring an entire monorepo under Draft management incrementally.
-
-## Bughunt Mode
-
-/draft:indexalso supports a bughunt aggregation mode. Running/draft:index bughuntexecutes/draft:bughuntsequentially across all initialized services (or a specified subset), then generatesdraft/bughunt-summary.md— an aggregate report showing bug counts by severity across all services, directories requiring immediate attention, and links to individual service reports.
-
-Re-run/draft:indexafter initializing a new service, after significant architecture changes to any service, before major cross-service planning, or as part of weekly documentation hygiene. The command preserves manual edits in sections marked with<!-- MANUAL START -->and<!-- MANUAL END -->comments.
-
+The federation is transparent: commands do not need to know whether they are running in a mono-module repo or a large monorepo. The root-link mechanism handles the routing.

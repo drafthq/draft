@@ -12,7 +12,7 @@ Draft installs with a single command. No API keys, no accounts, no hosted servic
 
 ### Claude Code (Recommended)
 
-That's it. You now have all 28 commands available as/draft:*slash commands.
+That's it. You now have all 33 commands available as/draft:*slash commands.
 
 ### Cursor
 
@@ -85,7 +85,7 @@ After the five-phase analysis, Draft creates thedraft/directory with these files
 
 ### architecture.md (Source of Truth)
 
-A comprehensive 25-section engineering reference with appendices. This is the primary artifact — designed for both human engineers and AI agents. It includes:
+A comprehensive 10-section engineering reference. This is the primary artifact — designed for both human engineers and AI agents. It includes:
 
 * Executive summary and system identity
 * Component map and module documentation

@@ -84,7 +84,7 @@ Execution instructions...
 ```
 
 2. The body **must** start with `# Title` followed by a blank line (build script skips first 3 body lines via `tail -n +4`)
-3. Add the skill name to `SKILL_ORDER` array and add header/trigger case entries in `scripts/build-integrations.sh`
+3. Add the skill name to the `SKILL_ORDER` array in `scripts/lib.sh`, then add a case entry in `get_skill_header()` AND `get_copilot_trigger()` in `scripts/build-integrations.sh`
 4. Run `make build && make test`
 5. Add the command to `README.md`
 6. Add a test if the skill has validatable behavior

@@ -3,7 +3,7 @@
     <p class="chapter-meta"><span class="part-name">Part VI: Enterprise</span> &middot; Chapter 18</p>
     <p class="read-time">4 min read</p>
 
-    <p class="chapter-intro">A monorepo with twelve services has twelve <code>draft/</code> directories after initialization. Each service has its own architecture documentation, its own tech stack, its own context files. But nobody has a unified view of the whole system &mdash; which services depend on which, what technologies are used where, or how the pieces fit together. <code>/draft:index</code> builds that view.</p>
+    <p class="chapter-intro">Draft has no separate index command. Monorepo support is built directly into <code>/draft:init</code>, which is <strong>scope-aware and root-first</strong>. Run it at the repo root to build the whole-repo knowledge graph. Run it inside any sub-module and it resolves the repo root automatically, builds that module's graph snapshot, and writes a <code>draft/graph/root-link.json</code> pointing up to the root graph &mdash; so any module has full cross-module understanding without any extra commands.</p>
 
     <div class="figure">
         <div class="figure-content">
@@ -13,10 +13,10 @@
                         <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#1a1a2e" flood-opacity="0.08"/>
                     </filter>
                 </defs>
-                <!-- Root context -->
+                <!-- Root graph -->
                 <rect x="150" y="10" width="260" height="56" rx="8" fill="#2563eb" filter="url(#mono-shadow)"/>
-                <text x="280" y="33" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif" font-size="13" font-weight="bold">Root draft/</text>
-                <text x="280" y="52" text-anchor="middle" fill="rgba(255,255,255,0.8)" font-family="Arial,sans-serif" font-size="11">service-index &#183; dependency-graph &#183; tech-matrix</text>
+                <text x="280" y="33" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif" font-size="13" font-weight="bold">Root draft/graph/</text>
+                <text x="280" y="52" text-anchor="middle" fill="rgba(255,255,255,0.8)" font-family="Arial,sans-serif" font-size="11">schema.yaml &#183; codebase-memory-mcp engine (live)</text>
                 <!-- Connectors -->
                 <line x1="200" y1="66" x2="100" y2="110" stroke="#e2e8f0" stroke-width="2"/>
                 <line x1="280" y1="66" x2="280" y2="110" stroke="#e2e8f0" stroke-width="2"/>
@@ -28,7 +28,7 @@
                 <text x="100" y="131" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif" font-size="12" font-weight="bold">auth-service/</text>
                 <text x="100" y="157" text-anchor="middle" fill="#1a1a2e" font-family="Arial,sans-serif" font-size="11">draft/</text>
                 <text x="100" y="173" text-anchor="middle" fill="#718096" font-family="Arial,sans-serif" font-size="10">architecture.md</text>
-                <text x="100" y="187" text-anchor="middle" fill="#718096" font-family="Arial,sans-serif" font-size="10">.ai-context.md</text>
+                <text x="100" y="187" text-anchor="middle" fill="#718096" font-family="Arial,sans-serif" font-size="10">graph/root-link.json &#8593;</text>
                 <!-- Service B -->
                 <rect x="200" y="110" width="160" height="90" rx="8" fill="#f8f9fa" stroke="#e2e8f0" stroke-width="1.5" filter="url(#mono-shadow)"/>
                 <rect x="200" y="110" width="160" height="28" rx="8" fill="#059669"/>
@@ -36,7 +36,7 @@
                 <text x="280" y="131" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif" font-size="12" font-weight="bold">billing-service/</text>
                 <text x="280" y="157" text-anchor="middle" fill="#1a1a2e" font-family="Arial,sans-serif" font-size="11">draft/</text>
                 <text x="280" y="173" text-anchor="middle" fill="#718096" font-family="Arial,sans-serif" font-size="10">architecture.md</text>
-                <text x="280" y="187" text-anchor="middle" fill="#718096" font-family="Arial,sans-serif" font-size="10">.ai-context.md</text>
+                <text x="280" y="187" text-anchor="middle" fill="#718096" font-family="Arial,sans-serif" font-size="10">graph/root-link.json &#8593;</text>
                 <!-- Service C -->
                 <rect x="380" y="110" width="160" height="90" rx="8" fill="#f8f9fa" stroke="#e2e8f0" stroke-width="1.5" filter="url(#mono-shadow)"/>
                 <rect x="380" y="110" width="160" height="28" rx="8" fill="#d97706"/>
@@ -44,143 +44,87 @@
                 <text x="460" y="131" text-anchor="middle" fill="#fff" font-family="Arial,sans-serif" font-size="12" font-weight="bold">api-gateway/</text>
                 <text x="460" y="157" text-anchor="middle" fill="#1a1a2e" font-family="Arial,sans-serif" font-size="11">draft/</text>
                 <text x="460" y="173" text-anchor="middle" fill="#718096" font-family="Arial,sans-serif" font-size="10">architecture.md</text>
-                <text x="460" y="187" text-anchor="middle" fill="#718096" font-family="Arial,sans-serif" font-size="10">.ai-context.md</text>
-                <!-- /draft:index arrow -->
-                <text x="280" y="235" text-anchor="middle" fill="#2563eb" font-family="Arial,sans-serif" font-size="12" font-weight="bold">/draft:index</text>
-                <text x="280" y="252" text-anchor="middle" fill="#718096" font-family="Arial,sans-serif" font-size="11">aggregates service contexts into unified root view</text>
+                <text x="460" y="187" text-anchor="middle" fill="#718096" font-family="Arial,sans-serif" font-size="10">graph/root-link.json &#8593;</text>
+                <!-- label -->
+                <text x="280" y="240" text-anchor="middle" fill="#2563eb" font-family="Arial,sans-serif" font-size="12" font-weight="bold">/draft:init (scope-aware)</text>
+                <text x="280" y="258" text-anchor="middle" fill="#718096" font-family="Arial,sans-serif" font-size="11">root-link.json in each module points to the root graph</text>
             </svg>
         </div>
-        <div class="figure-caption">Monorepo federation: each service maintains its own draft/ context, while /draft:index aggregates them into a shared root-level system view.</div>
+        <div class="figure-caption">Monorepo federation via scope-aware <code>/draft:init</code>: each sub-module's <code>draft/graph/root-link.json</code> points up to the root knowledge graph, giving every module full cross-module understanding without a separate aggregation command.</div>
     </div>
 
-    <h2>The Monorepo Context Problem</h2>
-    <p>Running <code>/draft:init</code> on each service in a monorepo produces excellent per-service context. The auth service has a detailed <code>.ai-context.md</code> explaining its JWT validation flow. The billing service documents its Stripe integration. But cross-service questions remain unanswered: what happens when auth goes down? Which services share PostgreSQL? Is anyone still using the deprecated notification API?</p>
+    <h2>How Scope-Aware Init Works</h2>
+    <p>When you run <code>/draft:init</code> inside a sub-module directory, Draft does not stop at that directory. It resolves the <strong>repository root</strong> by walking ancestor directories until it finds either an existing <code>draft/</code> directory or the git toplevel. It then:</p>
 
-    <p><code>/draft:index</code> answers these questions by aggregating service-level context into root-level knowledge files, without deep code analysis. It reads what <code>/draft:init</code> already produced and synthesizes a system-of-systems view.</p>
+    <ol>
+        <li>Builds the root knowledge graph (or refreshes it if it already exists).</li>
+        <li>Builds the module-level snapshot for the current sub-module.</li>
+        <li>Writes <code>draft/graph/root-link.json</code> inside the sub-module, pointing to the root graph path.</li>
+    </ol>
 
-    <h2>Auto-Detection</h2>
-    <p>Draft detects services by scanning immediate child directories (depth=1 only, never recursive) for standard project markers:</p>
+    <p>The result: any AI session started inside <code>auth-service/</code> loads both the auth-service context <em>and</em> the cross-module knowledge graph at the root. Cross-service questions &mdash; which services share PostgreSQL, what breaks if the auth API changes, what the billing service depends on &mdash; are answered from the live root graph without any manual aggregation step.</p>
+
+    <h2>Federation = The Root-Link Mechanism</h2>
+    <p>Federation in Draft is not a separate aggregation command. It is a structural property of how <code>/draft:init</code> writes artifacts:</p>
 
     <ul>
-        <li><code>package.json</code> &mdash; Node.js services</li>
-        <li><code>go.mod</code> &mdash; Go services</li>
-        <li><code>Cargo.toml</code> &mdash; Rust services</li>
-        <li><code>pom.xml</code> / <code>build.gradle</code> &mdash; Java services</li>
-        <li><code>pyproject.toml</code> / <code>requirements.txt</code> &mdash; Python services</li>
-        <li><code>Dockerfile</code> &mdash; Containerized services</li>
-        <li><code>src/</code> directory with code files</li>
+        <li>The <strong>root graph</strong> (at the repo root) is the whole-repo knowledge graph queried live from the <code>codebase-memory-mcp</code> engine (159 languages, 100% local). It is never a committed snapshot &mdash; it is always a live query.</li>
+        <li>Each <strong>module's <code>root-link.json</code></strong> is a pointer file (a few bytes) that tells Draft where the root graph lives relative to this module. This is what enables cross-module queries from within any sub-directory.</li>
+        <li>The <strong>module-level <code>draft/</code> directory</strong> contains the module's own <code>architecture.md</code>, <code>.ai-context.md</code>, and <code>.ai-profile.md</code> &mdash; scoped to that service's code.</li>
     </ul>
-
-    <p>It excludes <code>node_modules/</code>, <code>vendor/</code>, <code>.git/</code>, and hidden directories. Each detected directory is categorized as initialized (has a <code>draft/</code> subdirectory) or uninitialized. Only initialized services contribute to the index.</p>
-
-    <h2>What Gets Generated</h2>
-    <p><code>/draft:index</code> produces six root-level files that together form a complete system map:</p>
-
-    <h3>service-index.md</h3>
-    <p>A directory of all detected services with their status, tech stack, dependencies, team ownership, and links to their individual context files. This is the entry point &mdash; the table of contents for the entire monorepo.</p>
-
-    <table>
-        <thead>
-            <tr><th>Service</th><th>Status</th><th>Tech Stack</th><th>Dependencies</th><th>Team</th></tr>
-        </thead>
-        <tbody>
-            <tr><td>auth</td><td>Initialized</td><td>Go, Postgres</td><td>&mdash;</td><td>@auth-team</td></tr>
-            <tr><td>billing</td><td>Initialized</td><td>Node, Stripe</td><td>auth</td><td>@billing</td></tr>
-            <tr><td>legacy-reports</td><td>Not initialized</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td></tr>
-        </tbody>
-    </table>
-
-    <h3>dependency-graph.md</h3>
-    <p>Cross-service dependency mapping with a Mermaid topology diagram, a dependency matrix (depends-on and depended-by for every service), and a topological implementation order. This file answers "what breaks if this service changes?" and "what must exist before this service can function?"</p>
-
-    <h3>tech-matrix.md</h3>
-    <p>A technology distribution report showing which languages, databases, frameworks, and infrastructure components are used across which services. It identifies organizational standards (technologies used by the majority of services) and variances (services that deviate, with documented justifications).</p>
-
-    <h3>Synthesized Root Context</h3>
-    <p>If the root-level <code>draft/product.md</code>, <code>draft/architecture.md</code>, and <code>draft/tech-stack.md</code> are missing or are placeholders, <code>/draft:index</code> synthesizes them from service-level data:</p>
-    <ul>
-        <li><strong>product.md</strong> &mdash; Aggregated product vision from all service visions, deduplicated target users, capability matrix mapping features to services</li>
-        <li><strong>architecture.md</strong> &mdash; System-of-systems view with topology diagram, service directory, shared infrastructure, and cross-cutting patterns</li>
-        <li><strong>tech-stack.md</strong> &mdash; Organizational standards derived from majority usage, approved variances, shared libraries</li>
-    </ul>
-
-    <p>After generating <code>architecture.md</code>, the Condensation Subroutine runs to produce a root-level <code>.ai-context.md</code> &mdash; a token-optimized aggregate of all service knowledge.</p>
-
-    <div class="figure">
-        <div class="figure-content">
-            <svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg" width="100%" style="max-width:700px;display:block;margin:0 auto">
-                <defs>
-                    <filter id="stack-shadow" x="-4%" y="-4%" width="108%" height="112%">
-                        <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#1a1a2e" flood-opacity="0.08"/>
-                    </filter>
-                </defs>
-                <!-- Label: Generated -->
-                <text x="160" y="24" text-anchor="middle" fill="#718096" font-family="Arial,sans-serif" font-size="11" font-weight="bold">GENERATED</text>
-                <!-- Card 1: service-index.md -->
-                <rect x="30" y="38" width="260" height="68" rx="8" fill="#2563eb" filter="url(#stack-shadow)" transform="rotate(-3, 160, 72)"/>
-                <text x="56" y="64" fill="#fff" font-family="Arial,sans-serif" font-size="13" font-weight="bold" transform="rotate(-3, 160, 72)">service-index.md</text>
-                <text x="56" y="82" fill="rgba(255,255,255,0.8)" font-family="Arial,sans-serif" font-size="11" transform="rotate(-3, 160, 72)">Directory of all services</text>
-                <!-- Card 2: dependency-graph.md -->
-                <rect x="30" y="110" width="260" height="68" rx="8" fill="#7c3aed" filter="url(#stack-shadow)" transform="rotate(-1.5, 160, 144)"/>
-                <text x="56" y="136" fill="#fff" font-family="Arial,sans-serif" font-size="13" font-weight="bold" transform="rotate(-1.5, 160, 144)">dependency-graph.md</text>
-                <text x="56" y="154" fill="rgba(255,255,255,0.8)" font-family="Arial,sans-serif" font-size="11" transform="rotate(-1.5, 160, 144)">Cross-service dependencies</text>
-                <!-- Card 3: tech-matrix.md -->
-                <rect x="30" y="182" width="260" height="68" rx="8" fill="#d97706" filter="url(#stack-shadow)"/>
-                <text x="56" y="208" fill="#fff" font-family="Arial,sans-serif" font-size="13" font-weight="bold">tech-matrix.md</text>
-                <text x="56" y="226" fill="rgba(255,255,255,0.8)" font-family="Arial,sans-serif" font-size="11">Technology distribution</text>
-
-                <!-- Divider arrow -->
-                <line x1="340" y1="100" x2="340" y2="250" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="6,4"/>
-                <text x="348" y="176" fill="#718096" font-family="Arial,sans-serif" font-size="18">+</text>
-
-                <!-- Label: Synthesized -->
-                <text x="530" y="24" text-anchor="middle" fill="#718096" font-family="Arial,sans-serif" font-size="11" font-weight="bold">SYNTHESIZED</text>
-                <!-- Card 4: product.md -->
-                <rect x="400" y="38" width="260" height="60" rx="8" fill="#059669" filter="url(#stack-shadow)" transform="rotate(2, 530, 68)"/>
-                <text x="426" y="62" fill="#fff" font-family="Arial,sans-serif" font-size="13" font-weight="bold" transform="rotate(2, 530, 68)">product.md</text>
-                <text x="426" y="78" fill="rgba(255,255,255,0.8)" font-family="Arial,sans-serif" font-size="11" transform="rotate(2, 530, 68)">Aggregated product vision</text>
-                <!-- Card 5: architecture.md -->
-                <rect x="400" y="104" width="260" height="60" rx="8" fill="#059669" filter="url(#stack-shadow)" transform="rotate(1, 530, 134)"/>
-                <text x="426" y="128" fill="#fff" font-family="Arial,sans-serif" font-size="13" font-weight="bold" transform="rotate(1, 530, 134)">architecture.md</text>
-                <text x="426" y="144" fill="rgba(255,255,255,0.8)" font-family="Arial,sans-serif" font-size="11" transform="rotate(1, 530, 134)">System-of-systems view</text>
-                <!-- Card 6: tech-stack.md -->
-                <rect x="400" y="170" width="260" height="60" rx="8" fill="#059669" filter="url(#stack-shadow)"/>
-                <text x="426" y="194" fill="#fff" font-family="Arial,sans-serif" font-size="13" font-weight="bold">tech-stack.md</text>
-                <text x="426" y="210" fill="rgba(255,255,255,0.8)" font-family="Arial,sans-serif" font-size="11">Org standards</text>
-
-                <!-- Legend -->
-                <text x="350" y="280" text-anchor="middle" fill="#718096" font-family="Arial,sans-serif" font-size="11">Generated files map what exists; synthesized files aggregate service-level context into system-level knowledge</text>
-            </svg>
-        </div>
-        <div class="figure-caption">The six root-level files produced by /draft:index: three generated files that map the monorepo structure, plus three synthesized files that aggregate service-level context into a unified system view.</div>
-    </div>
 
     <h2>Root-Level vs. Service-Level Context</h2>
-    <p>After indexing, the monorepo has two layers of context:</p>
+    <p>After running <code>/draft:init</code> at the root and in each service, the monorepo has two layers of context:</p>
 
     <table>
         <thead>
             <tr><th>Layer</th><th>Location</th><th>Contains</th><th>Purpose</th></tr>
         </thead>
         <tbody>
-            <tr><td>Root</td><td><code>draft/</code></td><td>Service index, dependency graph, tech matrix, synthesized product/architecture/tech-stack, aggregated <code>.ai-context.md</code></td><td>Cross-service decisions, system topology, organizational standards</td></tr>
-            <tr><td>Service</td><td><code>&lt;service&gt;/draft/</code></td><td>Service-specific architecture, product, tech-stack, tracks, guardrails</td><td>Per-service implementation, feature work within a service</td></tr>
+            <tr><td>Root</td><td><code>draft/</code> at repo root</td><td>Root <code>architecture.md</code>, <code>.ai-context.md</code>, <code>.ai-profile.md</code>, live graph (engine)</td><td>Cross-service decisions, system topology, organizational standards</td></tr>
+            <tr><td>Module</td><td><code>&lt;service&gt;/draft/</code></td><td>Service-specific architecture, product, tech-stack, tracks, guardrails, <code>graph/root-link.json</code></td><td>Per-service implementation, feature work within a service</td></tr>
         </tbody>
     </table>
 
-    <p>When working within a single service, the AI loads that service's context. When making cross-service decisions &mdash; adding a new API dependency, changing a shared schema, planning a migration &mdash; the AI loads root-level context.</p>
+    <p>When working within a single service, the AI loads that service's context plus follows <code>root-link.json</code> to also load root-level context for cross-service awareness. When making cross-service decisions &mdash; adding a new API dependency, changing a shared schema, planning a migration &mdash; the AI queries the root graph directly.</p>
 
-    <h2>Service Manifests</h2>
-    <p>For each initialized service, <code>/draft:index</code> creates or updates a <code>manifest.json</code> inside the service's <code>draft/</code> directory. This manifest contains the service name, type, summary, primary technology, dependencies on other services, dependents (reverse lookup), team ownership, and indexing timestamps. Manifests enable fast re-indexing without re-reading all markdown files.</p>
+    <h2>Flags for Monorepo Workflows</h2>
+    <p><code>/draft:init</code> supports two flags that are especially useful in monorepos:</p>
 
-    <h2>Initializing Missing Services</h2>
-    <p>Running <code>/draft:index --init-missing</code> offers to initialize uninitialized services. For each one, Draft prompts with four options: <strong>y</strong> (initialize this service), <strong>n</strong> (skip), <strong>all</strong> (initialize all remaining), or <strong>skip-rest</strong> (skip all remaining). This makes it practical to bring an entire monorepo under Draft management incrementally.</p>
+    <table>
+        <thead>
+            <tr><th>Flag</th><th>What it does</th><th>When to use it</th></tr>
+        </thead>
+        <tbody>
+            <tr><td><code>--module-only</code></td><td>Builds only the current module's snapshot; does not touch the root graph</td><td>When the root graph is already current and you only need to update a single service</td></tr>
+            <tr><td><code>--graph-only</code></td><td>(Re)builds graph memory without regenerating markdown context files</td><td>After large merges or refactors where the graph may have drifted but the narrative docs are still accurate</td></tr>
+        </tbody>
+    </table>
 
-    <h2>Bughunt Mode</h2>
-    <p><code>/draft:index</code> also supports a bughunt aggregation mode. Running <code>/draft:index bughunt</code> executes <code>/draft:bughunt</code> sequentially across all initialized services (or a specified subset), then generates <code>draft/bughunt-summary.md</code> &mdash; an aggregate report showing bug counts by severity across all services, directories requiring immediate attention, and links to individual service reports.</p>
+    <h2>Onboarding a Monorepo Incrementally</h2>
+    <p>You do not need to initialize every service at once. The recommended sequence:</p>
+
+    <ol>
+        <li>Run <code>/draft:init</code> at the repo root &mdash; this establishes the root graph and generates the system-level context files.</li>
+        <li>For each service you are actively working on, run <code>/draft:init</code> from inside that service directory. Draft automatically writes <code>root-link.json</code> and connects the module to the root graph.</li>
+        <li>Services you have not initialized yet are invisible to the per-module context but still visible to the root graph (since the engine indexes the full codebase). Module-level docs for those services simply do not exist yet.</li>
+    </ol>
 
     <div class="callout callout-concept">
-        <div class="callout-title">When to Re-Index</div>
-        <p>Re-run <code>/draft:index</code> after initializing a new service, after significant architecture changes to any service, before major cross-service planning, or as part of weekly documentation hygiene. The command preserves manual edits in sections marked with <code>&lt;!-- MANUAL START --&gt;</code> and <code>&lt;!-- MANUAL END --&gt;</code> comments.</p>
+        <div class="callout-title">No Aggregation Command Needed</div>
+        <p>Draft's monorepo support requires no extra command beyond <code>/draft:init</code>. There is no <code>/draft:index</code>, no separate aggregation step, and no maintenance burden to keep a root index in sync. The knowledge graph engine handles cross-module queries live. The <code>root-link.json</code> pointer is the entire federation mechanism.</p>
+    </div>
+
+    <h2>Cross-Module Queries via /draft:graph</h2>
+    <p>Once the root graph is established, use <code>/draft:graph</code> for live cross-module queries:</p>
+
+    <pre><code>/draft:graph --mode hotspots          # Most-changed files across the whole repo
+/draft:graph --mode impact --file auth-service/pkg/jwt.go   # What breaks if this changes?</code></pre>
+
+    <p>These queries run against the live <code>codebase-memory-mcp</code> engine and do not require any pre-committed graph data. Results reflect the current state of your working tree.</p>
+
+    <div class="callout callout-tip">
+        <div class="callout-title">When to Re-Init</div>
+        <p>Run <code>/draft:init refresh</code> (or <code>--graph-only</code>) after significant structural changes: new services added, major refactors, shared library API changes. For day-to-day feature work, the existing graph stays accurate enough. The engine queries your live codebase, so hotspot and impact queries are always current.</p>
     </div>
 </div>

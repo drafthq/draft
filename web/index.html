@@ -4,21 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Draft â Code Intelligence Built Into Your AI Coding Agent</title>
-    <meta name="description" content="Free open-source plugin for Claude Code, Cursor, Copilot, Antigravity, and Gemini. Powered by codebase-memory-mcp — a 159-language local knowledge-graph engine. Spec-driven planning, three-stage review, 14-dimension bug hunting. 34 commands, MIT.">
+    <meta name="description" content="Free open-source plugin for Claude Code, Cursor, Copilot, Antigravity, and Gemini. Powered by codebase-memory-mcp — a 159-language local knowledge-graph engine. Spec-driven planning, three-stage review, 14-dimension bug hunting. 33 commands, MIT.">
     <meta name="author" content="mayurpise">
     <meta name="theme-color" content="#7c3aed">
     <meta name="keywords" content="claude code plugin, code intelligence, knowledge graph, knowledge graph engine, codebase-memory-mcp, ai code review, ai tdd, context-driven development, spec-driven development, tree-sitter, callers, blast radius, hotspots, ai bug hunting, github copilot plugin, gemini plugin, cursor ai plugin, antigravity ide, ai coding agent, ACID audit, open source developer tools, MIT licensed">
     <meta name="robots" content="index, follow">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <meta property="og:title" content="Draft â Code Intelligence for Your AI Coding Agent">
-    <meta property="og:description" content="Powered by codebase-memory-mcp — 159-language local knowledge-graph engine. Spec-driven planning, three-stage review — in one plugin for Claude Code, Cursor, Copilot, Antigravity, and Gemini. 34 commands, free forever.">
+    <meta property="og:description" content="Powered by codebase-memory-mcp — 159-language local knowledge-graph engine. Spec-driven planning, three-stage review — in one plugin for Claude Code, Cursor, Copilot, Antigravity, and Gemini. 33 commands, free forever.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://getdraft.dev">
     <meta property="og:image" content="https://getdraft.dev/social-preview.png">
     <meta property="og:image:alt" content="Draft: Code intelligence built into your AI coding agent">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Draft â Code Intelligence for Your AI Coding Agent">
-    <meta name="twitter:description" content="Powered by codebase-memory-mcp — 159 languages, 100% local. Spec-driven planning + three-stage review. One plugin for Claude Code, Cursor, Copilot, Antigravity, Gemini. 34 commands. Free forever.">
+    <meta name="twitter:description" content="Powered by codebase-memory-mcp — 159 languages, 100% local. Spec-driven planning + three-stage review. One plugin for Claude Code, Cursor, Copilot, Antigravity, Gemini. 33 commands. Free forever.">
     <meta name="twitter:image" content="https://getdraft.dev/social-preview.png">
     <meta name="twitter:image:alt" content="Draft: Code intelligence built into your AI coding agent">
     <link rel="canonical" href="https://getdraft.dev">
@@ -78,7 +78,7 @@
           "name": "What is Draft?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Draft is a free, open-source plugin that adds Context-Driven Development to AI coding agents. It provides 34 commands covering spec-driven planning, TDD enforcement, 3-stage code review, 14-dimension bug hunting, and architecture discovery for Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Gemini."
+            "text": "Draft is a free, open-source plugin that adds Context-Driven Development to AI coding agents. It provides 33 commands covering spec-driven planning, TDD enforcement, 3-stage code review, 14-dimension bug hunting, and architecture discovery for Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Gemini."
           }
         },
         {
@@ -102,7 +102,7 @@
           "name": "How do I install Draft?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "For Claude Code, run '/plugin marketplace add drafthq/draft' then '/plugin install draft'. For Cursor, add the GitHub repo via Settings > Rules. For Copilot, download copilot-instructions.md into your .github directory. Each platform takes under 30 seconds to set up."
+            "text": "Run 'npx @drafthq/draft install claude-code' to install for Claude Code (recommended). Alternatively: '/plugin marketplace add drafthq/draft' then '/plugin install draft'. For Cursor, run 'npx @drafthq/draft install cursor'. For Copilot, download copilot-instructions.md into your .github directory. Each platform takes under 30 seconds to set up."
           }
         },
         {
@@ -142,7 +142,7 @@
           "name": "Can Draft work with monorepos?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes. The /draft:index command provides monorepo federation â it discovers services, builds dependency graphs, and aggregates context across multiple packages or services. Each service gets its own context while maintaining a unified root-level view."
+            "text": "Yes. Run /draft:init at each module root — it is scope-aware and links each module graph to the root graph for full cross-module understanding."
           }
         },
         {
@@ -262,7 +262,7 @@
             <!-- Hero stats strip -->
             <div class="hero-stats">
                 <div class="hero-stat">
-                    <span class="hero-stat-num">34</span>
+                    <span class="hero-stat-num">33</span>
                     <span class="hero-stat-label">Commands</span>
                 </div>
                 <div class="hero-stat-divider"></div>
@@ -381,7 +381,7 @@
     <section id="playground" class="section section-playground">
         <div class="section-glow section-glow--violet"></div>
         <div class="section-inner">
-            <span class="section-label">v2.8 &middot; Built-in</span>
+            <span class="section-label">v3.0 &middot; Built-in</span>
             <h2>Your repo, <span class="text-violet">queryable.</span></h2>
             <p class="section-subtitle">Draft installs a local knowledge-graph engine that maps every module, call, dependency, and hotspot in your codebase. No daemon. No external service. No code leaves your machine. Try the queries below &mdash; these are real outputs from running Draft against itself.</p>
 
@@ -512,7 +512,7 @@
                     </tbody>
                 </table>
             </div>
-            <p class="vs-foot-note">Comparison reflects Draft 2.8 vs. publicly-documented features of named alternatives as of June 2026. Draft is the open-source plugin you install once and own forever.</p>
+            <p class="vs-foot-note">Comparison reflects Draft 3.0 vs. publicly-documented features of named alternatives as of June 2026. Draft is the open-source plugin you install once and own forever.</p>
         </div>
     </section>
 
@@ -555,7 +555,7 @@
                 <a href="book/multi-ide-support/" class="persona-card persona-card--amber">
                     <div class="persona-card-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="9" y1="6" x2="15" y2="6"/><line x1="6" y1="9" x2="6" y2="15"/><line x1="18" y1="9" x2="18" y2="15"/><line x1="9" y1="18" x2="15" y2="18"/></svg></div>
                     <h3>Platform engineers</h3>
-                    <p class="persona-claim">Knowledge graph + 34 deterministic helpers.</p>
+                    <p class="persona-claim">Knowledge graph + 32 deterministic helpers.</p>
                     <p class="persona-detail">Tree-sitter + LSP across 159 languages. Incremental, git-aware indexing. 100% local — no API key, no code leaves your machine. Track-level impact memory. Skills delegate mechanical work to JSON-emitting shell tools.</p>
                     <ul class="persona-bullets">
                         <li>Six graph query modes</li>
@@ -784,7 +784,7 @@
                         <div class="bento-icon bento-icon--violet">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="9" y1="6" x2="15" y2="6"/><line x1="6" y1="9" x2="6" y2="15"/><line x1="18" y1="9" x2="18" y2="15"/><line x1="9" y1="18" x2="15" y2="18"/></svg>
                         </div>
-                        <span class="bento-tag">v2.8 &middot; Built-in</span>
+                        <span class="bento-tag">v3.0 &middot; Built-in</span>
                     </div>
                     <h3>Knowledge Graph Engine</h3>
                     <p>Tree-sitter + LSP-grade resolution across 159 languages, 100% local. Query tools &mdash; <strong>callers</strong>, <strong>callees</strong>, <strong>impact</strong>, <strong>cycles</strong>, <strong>hotspots</strong>, <strong>mermaid</strong>. Incremental, git-aware indexing. Impact queries break results down by code/test/doc/config. Powers <code>/draft:impact</code>, enriches <code>/draft:bughunt</code> and <code>/draft:review</code>.</p>
@@ -800,7 +800,7 @@
                         <div class="bento-icon bento-icon--amber">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         </div>
-                        <span class="bento-tag">v2.8</span>
+                        <span class="bento-tag">v3.0</span>
                     </div>
                     <h3>Track Impact Memory</h3>
                     <p>Each completed track records its blast radius in <code>metadata.json</code> &mdash; files touched, modules affected, downstream count, by-category breakdown. <code>/draft:plan</code> reads recent tracks' impact during context load and surfaces overlap warnings before you even write a spec.</p>
@@ -815,10 +815,10 @@
                         <div class="bento-icon bento-icon--emerald">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
                         </div>
-                        <span class="bento-tag">34 helpers</span>
+                        <span class="bento-tag">32 helpers</span>
                     </div>
                     <h3>Deterministic Helpers</h3>
-                    <p>Skills delegate mechanical work to 34 shell tools under <code>scripts/tools/</code> &mdash; git metadata, file classification, hotspot ranking, cycle detection, freshness checks, ADR indexing, test-framework detection, Open Knowledge Format emission/validation, and more. Uniform JSON output and exit-code contract; graceful degradation when input is missing.</p>
+                    <p>Skills delegate mechanical work to 32 shell tools under <code>scripts/tools/</code> &mdash; git metadata, file classification, hotspot ranking, cycle detection, freshness checks, ADR indexing, test-framework detection, and more. Uniform JSON output and exit-code contract; graceful degradation when input is missing.</p>
                     <div class="bento-stats">
                         <span>JSON contract</span><span>Reproducible</span>
                     </div>
@@ -847,7 +847,7 @@
     <section id="commands" class="section">
         <div class="section-glow section-glow--emerald"></div>
         <div class="section-inner">
-            <span class="section-label">34 Commands &middot; 7 Specialized Agents</span>
+            <span class="section-label">33 Commands &middot; 7 Specialized Agents</span>
             <h2>Full development <span class="text-emerald">lifecycle</span></h2>
 
             <!-- Interactive terminal -->
@@ -880,10 +880,7 @@
                     <span class="cmd-name">/draft:init</span>
                     <span class="cmd-desc">Initialize project context</span>
                 </div>
-                <div class="cmd-card" data-category="setup">
-                    <span class="cmd-name">/draft:index</span>
-                    <span class="cmd-desc">Monorepo federation</span>
-                </div>
+
                 <div class="cmd-card" data-category="setup">
                     <span class="cmd-name">/draft:discover</span>
                     <span class="cmd-desc">Discover features and patterns</span>
@@ -944,13 +941,18 @@
                     <span class="cmd-name">/draft:jira</span>
                     <span class="cmd-desc">Unified Jira (preview / create / review)</span>
                 </div>
-                <div class="cmd-card" data-category="enterprise">
-                    <span class="cmd-name">/draft:jira</span>
-                    <span class="cmd-desc">Unified Jira (preview / create / review)</span>
-                </div>
+
                 <div class="cmd-card" data-category="enterprise">
                     <span class="cmd-name">/draft:integrations</span>
                     <span class="cmd-desc">Canonical integrations parent command</span>
+                </div>
+                <div class="cmd-card" data-category="setup">
+                    <span class="cmd-name">/draft:graph</span>
+                    <span class="cmd-desc">Knowledge graph queries and analysis</span>
+                </div>
+                <div class="cmd-card" data-category="enterprise">
+                    <span class="cmd-name">/draft:upload</span>
+                    <span class="cmd-desc">Upload context and artifacts</span>
                 </div>
                 <div class="cmd-card" data-category="quality">
                     <span class="cmd-name">/draft:debug</span>
@@ -1310,7 +1312,7 @@
                         <tr>
                             <td><strong>1</strong></td>
                             <td>Monorepo / Shared Context</td>
-                            <td>/draft:index federation</td>
+                            <td>/draft:init (scope-aware, run per module root)</td>
                             <td>Unified codebase, dependency graphing</td>
                             <td>Google, Meta, Twitter</td>
                         </tr>
@@ -1397,7 +1399,7 @@
                 <details class="faq-item glass-card">
                     <summary class="faq-question">What is Draft?</summary>
                     <div class="faq-answer">
-                        <p>Draft is a free, open-source plugin that adds Context-Driven Development to AI coding agents. It provides 34 commands covering spec-driven planning, TDD enforcement, 3-stage code review, 14-dimension bug hunting, and architecture discovery for Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Gemini.</p>
+                        <p>Draft is a free, open-source plugin that adds Context-Driven Development to AI coding agents. It provides 33 commands covering spec-driven planning, TDD enforcement, 3-stage code review, 14-dimension bug hunting, and architecture discovery for Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Gemini.</p>
                     </div>
                 </details>
 
@@ -1418,7 +1420,7 @@
                 <details class="faq-item glass-card">
                     <summary class="faq-question">How do I install Draft?</summary>
                     <div class="faq-answer">
-                        <p>For Claude Code, run <code>/plugin marketplace add drafthq/draft</code> then <code>/plugin install draft</code>. For Cursor, add the GitHub repo via Settings > Rules. For Copilot, download copilot-instructions.md into your .github directory. Each platform takes under 30 seconds to set up.</p>
+                        <p>Run <code>npx @drafthq/draft install claude-code</code> to install for Claude Code. Alternatively: <code>/plugin marketplace add drafthq/draft</code> then <code>/plugin install draft</code>. For Cursor, run <code>npx @drafthq/draft install cursor</code>. For Copilot, download copilot-instructions.md into your .github directory. Each platform takes under 30 seconds to set up.</p>
                     </div>
                 </details>
 
@@ -1453,7 +1455,7 @@
                 <details class="faq-item glass-card">
                     <summary class="faq-question">Can Draft work with monorepos?</summary>
                     <div class="faq-answer">
-                        <p>Yes. The <code>/draft:index</code> command provides monorepo federation â it discovers services, builds dependency graphs, and aggregates context across multiple packages or services. Each service gets its own context while maintaining a unified root-level view.</p>
+                        <p>Yes. Run <code>/draft:init</code> at each module root — it is scope-aware and links each module graph to the root graph for full cross-module understanding.</p>
                     </div>
                 </details>
 

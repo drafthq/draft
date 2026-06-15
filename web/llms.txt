@@ -32,7 +32,7 @@ For Claude Code you can alternatively use the native marketplace (`/plugin marke
 - **ACID Compliance:** Enterprise-grade module lifecycle audits
 - **Incremental Refresh:** File-hash-based re-analysis of only changed files
 - **Knowledge Graph Engine:** codebase-memory-mcp: tree-sitter + LSP, 159 languages, 100% local. Query tools: callers, callees, impact, cycles, hotspots, mermaid. Incremental, git-aware indexing.
-- **Deterministic Tools:** 34 shell helpers under `scripts/tools/` for mechanical work — git metadata, file classification, hotspot ranking, freshness checks, ADR indexing, Open Knowledge Format emission/validation.
+- **Deterministic Tools:** 32 shell helpers under `scripts/tools/` for mechanical work — git metadata, file classification, hotspot ranking, freshness checks, ADR indexing, citation verification.
 
 ## Graph Engine
 
