@@ -158,11 +158,9 @@ TOOLS=(
     "mermaid-from-graph.sh"
     "graph-snapshot.sh"
     "graph-init.sh"
-    "okf-emit.sh"
-    "okf-bundle.sh"
-    "okf-check.sh"
     "graph-impact.sh"
     "graph-callers.sh"
+    "graph-arch.sh"
     "validate-frontmatter.sh"
     # Foundations hygiene/verification tools
     "check-graph-usage-report.sh"

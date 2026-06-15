@@ -104,8 +104,8 @@ engine_unavailable() {
     exit 2
 }
 
-# Build a committed snapshot for a repo dir; returns graph-snapshot's exit code.
-# Snapshot progress goes to stderr so stdout stays clean for --json consumers.
+# Index a repo dir and write its schema.yaml gate marker; returns graph-snapshot's exit code.
+# Progress goes to stderr so stdout stays clean for --json consumers.
 build_snapshot() {
     local rc=0
     "$TOOLS_DIR/graph-snapshot.sh" --repo "$1" 1>&2 || rc=$?
