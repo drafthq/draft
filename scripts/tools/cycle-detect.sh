@@ -15,8 +15,8 @@
 # Exit codes: 0 OK, 1 invocation error, 2 graph engine/data unavailable.
 set -euo pipefail
 
-# shellcheck source=_lib.sh
-source "$(dirname "${BASH_SOURCE[0]}")/_lib.sh"
+# shellcheck source=_graph_queries.sh
+source "$(dirname "${BASH_SOURCE[0]}")/_graph_queries.sh"
 
 REPO="."
 
@@ -31,8 +31,10 @@ Flags:
   --repo DIR  Repository root (default: cwd).
   --help      Show this help.
 
-Output: JSON {cycles:[[a,b],[a,b,c]], source}. Fallback when the engine is
-unavailable: {"cycles":[],"source":"unavailable"}, exit 2.
+Output: JSON {cycles:[[a,b],[a,b,c]], truncated, source}. `truncated` is true
+when either cycle query hit its LIMIT (results are a sample, not exhaustive).
+Fallback when the engine is unavailable: {"cycles":[],"source":"unavailable"},
+exit 2.
 EOF
 }
 
@@ -60,20 +62,21 @@ command -v jq >/dev/null 2>&1 || unavailable
 PROJECT="$(memory_ensure_index "$REPO_ABS" || true)"
 [[ -n "$PROJECT" ]] || unavailable
 
-# 2-cycles: a -> b -> a (dedup with a.qualified_name < b.qualified_name).
-Q2="MATCH (a:Function)-[:CALLS]->(b:Function)-[:CALLS]->(a) WHERE a.qualified_name < b.qualified_name RETURN a.qualified_name AS a, b.qualified_name AS b LIMIT 100"
-# 3-cycles: a -> b -> c -> a.
-Q3="MATCH (a:Function)-[:CALLS]->(b:Function)-[:CALLS]->(c:Function)-[:CALLS]->(a) RETURN a.qualified_name AS a, b.qualified_name AS b, c.qualified_name AS c LIMIT 100"
-
-R2="$(memory_cli query_graph "{\"project\":\"$PROJECT\",\"query\":\"$Q2\"}" || echo '{}')"
-R3="$(memory_cli query_graph "{\"project\":\"$PROJECT\",\"query\":\"$Q3\"}" || echo '{}')"
+# 2- and 3-node CALLS cycles. Cypher lives in _graph_queries.sh (label-agnostic;
+# the Phase 0 fix — code units are mostly :Method, and CALLS only connects
+# callables). LIMIT 100 caps each, so results are a sample, not exhaustive.
+R2="$(gq_run "$PROJECT" "$(gq_q_cycles2)" || echo '{}')"
+R3="$(gq_run "$PROJECT" "$(gq_q_cycles3)" || echo '{}')"
 
 # Guard against empty/non-JSON engine output so --argjson never aborts the script.
 echo "$R2" | jq -e . >/dev/null 2>&1 || R2='{}'
 echo "$R3" | jq -e . >/dev/null 2>&1 || R3='{}'
 
 jq -n --argjson r2 "$R2" --argjson r3 "$R3" '
-    {
-      cycles: (((($r2.rows) // []) + (($r3.rows) // []))),
-      source: "memory-graph"
-    }'
+    ( ((($r2.rows) // []) | length) >= 100
+      or ((($r3.rows) // []) | length) >= 100 ) as $trunc
+    | {
+        cycles: (((($r2.rows) // []) + (($r3.rows) // []))),
+        truncated: $trunc,
+        source: "memory-graph"
+      }'

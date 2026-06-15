@@ -35,6 +35,11 @@ if command -v jq >/dev/null 2>&1; then
     else
         assert "Mock engine yields cycles (source=memory-graph)" "false"
     fi
+    if echo "$out2" | jq -e '.truncated | type == "boolean"' >/dev/null 2>&1; then
+        assert "Cycles output carries a boolean truncated flag" "true"
+    else
+        assert "Cycles output carries a boolean truncated flag" "false"
+    fi
 fi
 
 echo ""

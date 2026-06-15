@@ -161,6 +161,16 @@ TOOLS=(
     "graph-impact.sh"
     "graph-callers.sh"
     "graph-arch.sh"
+    # graph-tooling-v2: generic passthrough + purpose-built capability wrappers
+    "graph-query.sh"
+    "graph-snippet.sh"
+    "graph-search.sh"
+    "graph-tests.sh"
+    "graph-deps.sh"
+    "graph-hierarchy.sh"
+    "graph-errors.sh"
+    "graph-risk.sh"
+    "graph-traces.sh"
     "validate-frontmatter.sh"
     # Foundations hygiene/verification tools
     "check-graph-usage-report.sh"

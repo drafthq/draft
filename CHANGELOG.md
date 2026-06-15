@@ -8,6 +8,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Full codebase-memory-mcp capability adoption (graph tooling v2).** Draft now
+  uses the whole graph engine instead of a thin ~3-edge slice. All Cypher is
+  centralized in a new sourced module `scripts/tools/_graph_queries.sh` (single
+  source of query truth, with verified dialect-safe builders), so a label/dialect
+  fix is a one-line edit. New wrappers: `graph-query.sh` (generic read-only
+  passthrough — Cypher or any read-only tool, write verbs rejected), `graph-snippet.sh`
+  (verified source + caller/callee counts), `graph-search.sh` (semantic/ranked
+  search), `graph-tests.sh` (TESTS coverage / `--untested`), `graph-deps.sh` (real
+  `IMPORTS` graph), `graph-hierarchy.sh` (`INHERITS`), `graph-errors.sh`
+  (`RAISES`/`THROWS`), `graph-risk.sh` (engine-precomputed risk flags), and
+  `graph-traces.sh` (experimental `ingest_traces`). `graph-callers.sh` gains
+  `--transitive[=N]`, `--prod-only`, and `--qualified`. Symbol-scoped wrappers emit
+  a fail-loud `status` (`ok`/`no-edges`/`no-match`/`unavailable`) so an empty result
+  is never mistaken for a confirmed true negative. Every wrapper degrades to
+  `source:"unavailable"` (exit 2) without the engine and ships a `tests/test-tools-*.sh`.
+- **Richer architecture/refresh data.** `hotspot-rank.sh` now ranks by
+  `fanIn + complexity + cognitive` (de-skewing name-collision generics) and
+  annotates entry points; `mermaid-from-graph.sh --diagram module-deps` derives the
+  dependency diagram from real `IMPORTS` edges (closing the `architecture.md §9`
+  synthesized-edges gap), with the prior co-change proxy preserved as
+  `--diagram co-change`; `graph-snapshot.sh` records the `detect_changes` delta
+  (`changed_files`/`impacted_symbols`) in the gate marker. The graph-query contract
+  (`core/shared/graph-query.md`) documents every new wrapper, verified engine param
+  shapes, the Cypher dialect limits, and the `--prod-only`/`--transitive` caveats.
+  A regression test locks the Phase 0 `:Function`→label-agnostic fix and enforces
+  that no Cypher literal lives outside `_graph_queries.sh`.
 - **Single-source-of-truth version sync.** `package.json` is now the canonical
   version; `scripts/sync-version.sh` propagates it into `.claude-plugin/plugin.json`,
   `.claude-plugin/marketplace.json`, and the `web/index.html` release labels. It

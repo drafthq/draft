@@ -54,6 +54,14 @@ case "$tool" in
     echo '{"function":"foo","direction":"both","callees":[],"callers":[{"name":"bar","qualified_name":"mock.bar","hop":1}]}' ;;
   detect_changes)
     echo '{"changed_files":["a.sh"],"changed_count":1,"impacted_symbols":[{"name":"foo","label":"Function","file":"a.sh"}]}' ;;
+  get_code_snippet)
+    echo '{"qualified_name":"mock.foo","name":"foo","file_path":"a.sh","start_line":1,"end_line":3,"callers":2,"callees":1,"transitive_loop_depth":0,"complexity":4,"source":"foo() { :; }"}' ;;
+  search_graph)
+    echo '{"results":[{"name":"foo","qualified_name":"mock.foo","label":"Function","file_path":"a.sh","start_line":1,"end_line":3,"rank":-1.5}],"total":1,"has_more":false,"search_mode":"vector"}' ;;
+  get_graph_schema)
+    echo '{"node_labels":[{"label":"Function","count":2,"properties":["name","complexity"]}],"edge_types":[{"type":"CALLS","count":3}]}' ;;
+  ingest_traces)
+    echo '{"status":"accepted","traces_received":1,"note":"mock"}' ;;
   *) echo '{}' ;;
 esac
 exit 0

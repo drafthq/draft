@@ -31,11 +31,26 @@ if command -v jq >/dev/null 2>&1; then
     assert "Fallback emits {callers:[], source:unavailable}" \
         "$(echo "$out" | jq -e '.callers == [] and .source == "unavailable"' >/dev/null 2>&1 && echo true || echo false)"
 
+    assert "Fallback carries status:unavailable" \
+        "$(echo "$out" | jq -e '.status == "unavailable"' >/dev/null 2>&1 && echo true || echo false)"
+
     # --- Happy path via mock engine ---
     MOCK="$(make_mock_memory_engine "$FIXTURE/mockbin")"
     out2="$(DRAFT_MEMORY_BIN="$MOCK" "$TOOL" --repo "$FIXTURE" --symbol foo)"
     assert "Mock engine yields callers (source=memory-graph)" \
         "$(echo "$out2" | jq -e '.source == "memory-graph" and (.callers | length >= 1)' >/dev/null 2>&1 && echo true || echo false)"
+    assert "Direct callers carry a fail-loud status" \
+        "$(echo "$out2" | jq -e '.status == "ok"' >/dev/null 2>&1 && echo true || echo false)"
+
+    # --- Transitive callers via the trace_path expander (mock) ---
+    out3="$(DRAFT_MEMORY_BIN="$MOCK" "$TOOL" --repo "$FIXTURE" --symbol foo --transitive=2)"
+    assert "Transitive callers include a hop field" \
+        "$(echo "$out3" | jq -e '.source == "memory-graph" and (.callers[0] | has("hop"))' >/dev/null 2>&1 && echo true || echo false)"
+
+    # --- prod-only is accepted and still resolves via the mock ---
+    out4="$(DRAFT_MEMORY_BIN="$MOCK" "$TOOL" --repo "$FIXTURE" --symbol foo --prod-only)"
+    assert "--prod-only resolves (source=memory-graph)" \
+        "$(echo "$out4" | jq -e '.source == "memory-graph"' >/dev/null 2>&1 && echo true || echo false)"
 fi
 
 echo ""

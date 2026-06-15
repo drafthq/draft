@@ -55,7 +55,7 @@ A single "no" / "list" answer is a halt — fix and re-check before output.
 
 Use this recipe whenever the user names a concept, feature, or domain term ("in-memory shuffle", "auth flow", "ingest pipeline") and you need to locate the implementing files. **Run it before any filesystem search.**
 
-1. **Concept → modules** — query the engine for the package list (`scripts/tools/graph-arch.sh --repo . | jq -r '.packages[].name'`) and cross-reference `draft/.ai-context.md` (module headings). Record the candidate module list.
+1. **Concept → modules** — query the engine for the package list (`scripts/tools/graph-arch.sh --repo . | jq -r '.packages[].name'`) and cross-reference `draft/.ai-context.md` (module headings). Record the candidate module list. For an **intent/concept** name (not an exact symbol), start with semantic search: `scripts/tools/graph-search.sh --repo . --query "<concept>"` returns ranked candidate symbols directly.
 2. **Concept → symbols/callers** — for a named function, run `scripts/tools/graph-callers.sh --repo . --symbol <name>` to find call sites, and `scripts/tools/graph-impact.sh --repo . --symbol <name>` for transitive dependents. These are the authoritative structural answers.
 3. **Modules → risk ranking** — rank with `scripts/tools/hotspot-rank.sh --repo . [--top N]`. High-fanIn symbols are the most likely entry points for impact.
 4. **Concept → public API** — for API-shaped concepts, read the engine's `.routes` (`get_architecture` output, detected HTTP/gRPC/GraphQL routes) for matching service surface.
@@ -102,11 +102,75 @@ DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
 
 | Wrapper | Graph mode | Behavior on missing graph |
 |---|---|---|
-| `bash "$DRAFT_TOOLS/hotspot-rank.sh" [--top N] [--module NAME]` | `--mode hotspots` | Emits `{hotspots:[],source:"unavailable"}` and exits 2 |
-| `bash "$DRAFT_TOOLS/cycle-detect.sh"` | `--mode cycles` | Emits `{cycles:[],source:"unavailable"}` and exits 2 |
-| `bash "$DRAFT_TOOLS/mermaid-from-graph.sh" [--diagram module-deps\|proto-map]` | `--mode mermaid` | Emits an empty mermaid block and exits 2 |
+| `bash "$DRAFT_TOOLS/hotspot-rank.sh" [--top N]` | complexity-weighted hotspots | Emits `{hotspots:[],source:"unavailable"}` and exits 2 |
+| `bash "$DRAFT_TOOLS/cycle-detect.sh"` | call cycles | Emits `{cycles:[],source:"unavailable"}` and exits 2 |
+| `bash "$DRAFT_TOOLS/mermaid-from-graph.sh" [--diagram module-deps\|co-change\|proto-map]` | diagram text | Emits an empty mermaid block and exits 2 |
+| `bash "$DRAFT_TOOLS/graph-callers.sh" --symbol N [--transitive[=N]] [--prod-only] [--qualified]` | callers | `{callers:[],status:"unavailable",source:"unavailable"}`, exit 2 |
+| `bash "$DRAFT_TOOLS/graph-snippet.sh" --qualified N` | verified source + caller/callee counts | `{status:"unavailable",source:"unavailable"}`, exit 2 |
+| `bash "$DRAFT_TOOLS/graph-search.sh" --query "STR" [--limit N]` | semantic/ranked search | `{results:[],source:"unavailable"}`, exit 2 |
+| `bash "$DRAFT_TOOLS/graph-tests.sh" (--symbol N \| --untested)` | test→symbol coverage | `{tests:[]/untested:[],source:"unavailable"}`, exit 2 |
+| `bash "$DRAFT_TOOLS/graph-deps.sh" [--file PATH]` | real IMPORTS graph | `{imports:[],source:"unavailable"}`, exit 2 |
+| `bash "$DRAFT_TOOLS/graph-hierarchy.sh" [--symbol N \| --derived N]` | INHERITS tree | `{edges:[],source:"unavailable"}`, exit 2 |
+| `bash "$DRAFT_TOOLS/graph-errors.sh" (--symbol N \| --type N)` | RAISES/THROWS | `{raises:[]/raisers:[],source:"unavailable"}`, exit 2 |
+| `bash "$DRAFT_TOOLS/graph-risk.sh" [--min-complexity N]` | pre-computed risk flags | `{risky:[],source:"unavailable"}`, exit 2 |
+| `bash "$DRAFT_TOOLS/graph-query.sh" (--cypher STR \| --tool NAME --json '{...}')` | generic read-only passthrough | `{source:"unavailable"}`, exit 2 |
+| `bash "$DRAFT_TOOLS/graph-traces.sh" ingest --file F --experimental` | runtime traces (experimental write) | `{source:"unavailable"}`, exit 2 |
 
 For lower-level modes, call the engine directly: `codebase-memory-mcp cli <tool> '<json>'` (see the tool list in [bin/README.md](../../bin/README.md)).
+
+### Capability wrappers & dialect limits (graph-tooling-v2)
+
+All Cypher lives in `scripts/tools/_graph_queries.sh` (the single source of query
+truth). Wrappers are thin arg-parse → builder → fail-loud JSON. Three contracts
+matter when consuming them:
+
+**Fail-loud status.** Symbol-scoped wrappers (`graph-callers`, `graph-snippet`,
+`graph-tests --symbol`, `graph-hierarchy --symbol/--derived`, `graph-errors`)
+emit a `status` field that distinguishes the three real outcomes — never read a
+bare `[]` as a confirmed true negative:
+
+| `status` | Meaning |
+|---|---|
+| `ok` | node found, edges returned |
+| `no-edges` | node exists but has no matching edge (a *real* negative) |
+| `no-match` | the named symbol was not found at all (check the name / try `--qualified`) |
+| `unavailable` | engine could not be resolved (exit 2) |
+
+**Verified engine param shapes** (engine v0.8.x — the runtime source of truth is
+`get_graph_schema`; do not hardcode a property set):
+
+```bash
+get_code_snippet '{"project":P,"qualified_name":"pkg.Mod.Class.method"}'   # → source + callers/callees counts + transitive_loop_depth
+search_graph     '{"project":P,"query":"order submission to broker","limit":5}'  # → {results:[{name,qualified_name,label,file_path,rank}]}
+trace_path       '{"project":P,"function_name":"submit_order","depth":3,"direction":"both"}'  # depth-bounded caller EXPANDER, not an A→B pathfinder
+detect_changes   '{"project":P}'    # → {changed_files, changed_count, impacted_symbols, depth}
+get_graph_schema '{"project":P}'    # → {node_labels:[{label,count,properties}], edge_types:[{type,count}]}
+```
+
+**Cypher dialect — keep queries inside the SAFE set:**
+
+- ✅ SAFE: fixed-length patterns, single/multi-hop explicit patterns, `=`, `<`,
+  `STARTS WITH`, `NOT x STARTS WITH`, `AND`, `OR`, relationship-type alternation
+  `[:A|B]`, simple `count(x)`.
+- ❌ UNSAFE (rejected or silently empty): `coalesce()`, `<>` / `!=` / `<=` / `>=`,
+  `NOT EXISTS(...)`, `NOT (pattern)`, `WITH`-grouping aggregation, multi-pattern
+  joins. `graph-query.sh --cypher` returns the engine's raw error, not a silent
+  empty — but the builders never emit these forms.
+
+**Caveats consumers must respect:**
+
+- **`--prod-only` is best-effort.** It filters `is_test=false AND NOT file_path
+  STARTS WITH 'tests/'`. `is_test` is partially populated by the engine, so test
+  helpers/mocks can leak through. Treat it as a heuristic, not a guarantee.
+- **`--transitive` uses the `trace_path` expander** (a depth-bounded caller
+  expansion from one symbol), not a from→to pathfinder. "Path between A and B"
+  still needs an explicit fixed-length `graph-query.sh --cypher` pattern.
+- **Honest caps.** `cycle-detect`, `graph-deps`, `graph-risk`, `graph-tests
+  --untested` cap their output and report `"truncated": true` when the cap is
+  hit — results are a sample, not exhaustive.
+- **`graph-tests --untested`** is a set difference (exported symbols minus TESTS
+  targets) because the dialect has no anti-join; coverage depends on the engine
+  resolving test→symbol links, which varies by language/framework.
 
 ## Pre-Check
 
@@ -196,13 +260,80 @@ scripts/tools/mermaid-from-graph.sh --repo . --diagram proto-map     # detected 
 
 Emits a ready-to-inject ` ```mermaid ``` ` block on the fly (computed live by the engine), or an empty stub (exit 2) when the engine is unavailable. Diagrams are generated at the moment of use — they are never committed.
 
+### Snippet — verified source + caller/callee counts
+
+```bash
+scripts/tools/graph-snippet.sh --repo . --qualified <pkg.Mod.Class.method>
+```
+
+Output: `{qualified_name, file, start_line, end_line, callers, callees, transitive_loop_depth, complexity, code, status, source}`. Prefer this over grep+Read when you have a qualified name — it returns the engine's attributed source plus pre-computed counts.
+
+### Search — semantic / ranked symbol lookup
+
+```bash
+scripts/tools/graph-search.sh --repo . --query "auth token refresh" [--limit N]
+```
+
+Output: `{query, results[{name, qualified_name, label, file, rank}], total, source}`. Use when the user names an **intent/concept** rather than an exact symbol — this is the first move in the Concept-to-Files recipe.
+
+### Tests — coverage edges and untested surface
+
+```bash
+scripts/tools/graph-tests.sh --repo . --symbol <name>     # tests covering a symbol
+scripts/tools/graph-tests.sh --repo . --untested          # exported symbols with no TESTS edge
+```
+
+Output: `{symbol, tests[{test,file}], status, source}` or `{untested[{symbol,file}], total, truncated, source}`. Feeds coverage gaps for `init`/`testing-strategy`/`coverage`.
+
+### Deps — real module/file import graph
+
+```bash
+scripts/tools/graph-deps.sh --repo . [--file PATH]
+```
+
+Output: `{imports[{src,dst}], total, truncated, source}` from actual `IMPORTS` edges (self-imports filtered). This is the auto-derived dependency graph behind `mermaid-from-graph.sh --diagram module-deps` and `architecture.md §9`.
+
+### Hierarchy — class inheritance
+
+```bash
+scripts/tools/graph-hierarchy.sh --repo . [--symbol <Class> | --derived <Base>]
+```
+
+Output: `{edges[{child,parent}], status, source}`. `--derived` gives the blast radius of changing a base class.
+
+### Errors — error-propagation paths
+
+```bash
+scripts/tools/graph-errors.sh --repo . --symbol <name>   # what it raises/throws
+scripts/tools/graph-errors.sh --repo . --type <ErrType>  # who raises/throws that type
+```
+
+Output: `{symbol, raises[...], status, source}` or `{type, raisers[...], status, source}`. `--type` drives fail-closed audits.
+
+### Risk — pre-computed risk hotspots
+
+```bash
+scripts/tools/graph-risk.sh --repo . [--min-complexity N]
+```
+
+Output: `{risky[{symbol, file, complexity, flags}], total, truncated, source}` from the engine's pre-computed flags (`unguarded_recursion`, `recursion_in_loop`, `alloc_in_loop`, `linear_scan_in_loop`). High-signal input for `bughunt`/`deep-review` — the engine already found these.
+
+### Generic — read-only escape hatch (all 20 edges / ~30 properties)
+
+```bash
+scripts/tools/graph-query.sh --repo . --cypher 'MATCH (f)-[:WRITES]->(v) RETURN f.name, v.name LIMIT 50'
+scripts/tools/graph-query.sh --repo . --tool get_graph_schema --json '{}'
+```
+
+Unlocks any edge type or node property without a purpose-built wrapper. Write verbs are rejected; stay inside the SAFE dialect set (above). Emits raw engine JSON.
+
 ### Indexing / refreshing the gate marker
 
 ```bash
 scripts/tools/graph-snapshot.sh --repo .
 ```
 
-Indexes the repo into the engine and writes the `draft/graph/schema.yaml` gate marker. It writes **no** graph data. Run during `/draft:init` and `/draft:graph`, or whenever the index should be refreshed.
+Indexes the repo into the engine and writes the `draft/graph/schema.yaml` gate marker (now including the `detect_changes` delta: `changed_files`/`impacted_symbols`). It writes **no** graph data. Run during `/draft:init` and `/draft:graph`, or whenever the index should be refreshed.
 
 ## Finding the Engine (Resolution + Usage Report)
 
