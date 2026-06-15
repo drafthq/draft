@@ -177,7 +177,7 @@ emit() {
     if ((EMIT_JSON)); then
         printf '{"violation_count": %d, "violations": [\n' "$violation_count"
         local first=1 v track kind file line detail
-        for v in "${violations[@]}"; do
+        for v in ${violations[@]+"${violations[@]}"}; do
             IFS='|' read -r track kind file line detail <<< "$v"
             if ((first)); then first=0; else printf ',\n'; fi
             printf ' {"track":"%s","kind":"%s","file":"%s","line":%s,"detail":"%s"}' \
@@ -192,7 +192,7 @@ emit() {
             printf 'ANCHORS: %d violation(s) across %d track(s).\n' \
                 "$violation_count" "${#TRACK_PATHS[@]}" >&2
             local v track kind file line detail
-            for v in "${violations[@]}"; do
+            for v in ${violations[@]+"${violations[@]}"}; do
                 IFS='|' read -r track kind file line detail <<< "$v"
                 printf ' [%s] %s/%s:%s — %s\n' "$kind" "$track" "$file" "$line" "$detail" >&2
             done

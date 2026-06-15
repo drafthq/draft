@@ -141,7 +141,7 @@ if [[ -d "$REPO/draft" ]]; then
   mkdir -p "$REPO/draft"
   cat > "$REPO/draft/.graph-binary-report.json" <<EOF
 {
-  "detected_at": "$(date -Iseconds 2>/dev/null || date)",
+  "detected_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
   "engine_bin": "$(json_escape "$MEMORY_BIN")",
   "source": "$(json_escape "$SOURCE")",
   "arch": "$(json_escape "$ARCH")",

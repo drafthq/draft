@@ -112,7 +112,7 @@ emit() {
     if ((EMIT_JSON)); then
         printf '{"conflict_count": %d, "conflicts": [\n' "$conflict_count"
         local first=1 c track kind detail
-        for c in "${conflicts[@]}"; do
+        for c in ${conflicts[@]+"${conflicts[@]}"}; do
             IFS='|' read -r track kind detail <<< "$c"
             if ((first)); then first=0; else printf ',\n'; fi
             printf ' {"track":"%s","kind":"%s","detail":"%s"}' \
@@ -127,7 +127,7 @@ emit() {
             printf 'SCOPE: %d conflict(s) across %d track(s).\n' \
                 "$conflict_count" "${#TRACK_PATHS[@]}" >&2
             local c track kind detail
-            for c in "${conflicts[@]}"; do
+            for c in ${conflicts[@]+"${conflicts[@]}"}; do
                 IFS='|' read -r track kind detail <<< "$c"
                 printf ' [%s] %s — %s\n' "$kind" "$track" "$detail" >&2
             done

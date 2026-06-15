@@ -84,7 +84,7 @@ while IFS= read -r -d '' file; do
 
     # If no title in frontmatter, fallback to first H1.
     if [[ -z "$title" ]]; then
-        title="$(grep -m1 '^# ' "$file" 2>/dev/null | sed 's/^#\s*//' || true)"
+        title="$(grep -m1 '^# ' "$file" 2>/dev/null | sed 's/^#[[:space:]]*//' || true)"
     fi
 
     tracks=()
@@ -108,7 +108,7 @@ while IFS= read -r -d '' file; do
         "$(json_escape "$status")" \
         "$(json_escape "$file")" \
         "$tr_json"
-done < <(find "$ROOT" -maxdepth 2 -type f -name '*.md' -print0 2>/dev/null | sort -z)
+done < <(find "$ROOT" -maxdepth 2 -type f -name '*.md' 2>/dev/null | sort | tr '\n' '\0')
 
 if $first; then
     printf ']}\n'

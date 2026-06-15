@@ -105,7 +105,7 @@ while IFS= read -r -d '' file; do
         "$([[ -n "$track_id" ]] && echo "\"$(json_escape "$track_id")\"" || echo "null")" \
         "$(json_escape "$generated_at")" \
         "${crit:-0}" "${high:-0}" "${med:-0}" "${low:-0}" "${info:-0}"
-done < <(find "$ROOT" -type f -name '*-report-*.md' -print0 2>/dev/null | sort -z)
+done < <(find "$ROOT" -type f -name '*-report-*.md' 2>/dev/null | sort | tr '\n' '\0')
 
 if $first; then
     printf ']\n'

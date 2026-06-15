@@ -54,6 +54,7 @@ done
 
 [[ -d "$REPO" ]] || { echo "ERROR: --repo '$REPO' is not a directory" >&2; exit 1; }
 [[ -n "$FILE" || -n "$SYMBOL" ]] || { echo "ERROR: provide --file or --symbol" >&2; usage >&2; exit 1; }
+[[ "$DEPTH" =~ ^[0-9]+$ ]] || { echo "ERROR: --depth must be a non-negative integer" >&2; exit 1; }
 
 REPO_ABS="$(cd "$REPO" && pwd)"
 SELF_REPO="$(cd "$(dirname "$0")/../.." && pwd)"

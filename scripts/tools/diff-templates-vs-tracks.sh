@@ -146,7 +146,7 @@ emit_records() {
     if ((EMIT_JSON)); then
         printf '{"drift_count": %d, "records": [\n' "$drift_count"
         local first=1
-        for r in "${drift_records[@]}"; do
+        for r in ${drift_records[@]+"${drift_records[@]}"}; do
             local track kind detail
             IFS='|' read -r track kind detail <<< "$r"
             if ((first)); then first=0; else printf ',\n'; fi
@@ -163,7 +163,7 @@ emit_records() {
             printf 'DRIFT: %d defect(s) across %d track(s).\n' \
                 "$drift_count" "${#TRACK_PATHS[@]}" >&2
             local r track kind detail
-            for r in "${drift_records[@]}"; do
+            for r in ${drift_records[@]+"${drift_records[@]}"}; do
                 IFS='|' read -r track kind detail <<< "$r"
                 printf ' [%s] %s — %s\n' "$kind" "$track" "$detail" >&2
             done

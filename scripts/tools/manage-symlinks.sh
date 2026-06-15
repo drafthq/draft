@@ -74,7 +74,7 @@ while IFS= read -r -d '' f; do
     # File-only (not symlink we already manage)
     if [[ -L "$f" ]]; then continue; fi
     newest="$base"
-done < <(find "$DIR" -maxdepth 1 -name "$pattern" -print0 | sort -z)
+done < <(find "$DIR" -maxdepth 1 -name "$pattern" | sort | tr '\n' '\0')
 
 if [[ -z "$newest" ]]; then
     echo "No matching $pattern files in $DIR" >&2

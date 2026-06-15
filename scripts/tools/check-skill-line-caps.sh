@@ -78,7 +78,7 @@ emit() {
         printf '{"over_cap_count": %d, "global_cap": %d, "findings": [\n' \
             "$over_count" "$GLOBAL_CAP"
         local first=1 v name lines cap
-        for v in "${findings[@]}"; do
+        for v in ${findings[@]+"${findings[@]}"}; do
             IFS='|' read -r name lines cap <<< "$v"
             if ((first)); then first=0; else printf ',\n'; fi
             printf ' {"skill":"%s","lines":%d,"cap":%d}' \
@@ -100,7 +100,7 @@ emit() {
                 "$over_count" "$mode"
         fi
         local v name lines cap
-        for v in "${findings[@]}"; do
+        for v in ${findings[@]+"${findings[@]}"}; do
             IFS='|' read -r name lines cap <<< "$v"
             if ((ENFORCE)); then
                 printf ' %s: %d lines (cap %d)\n' "$name" "$lines" "$cap" >&2

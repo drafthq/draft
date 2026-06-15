@@ -68,7 +68,11 @@ Q3="MATCH (a:Function)-[:CALLS]->(b:Function)-[:CALLS]->(c:Function)-[:CALLS]->(
 R2="$(memory_cli query_graph "{\"project\":\"$PROJECT\",\"query\":\"$Q2\"}" || echo '{}')"
 R3="$(memory_cli query_graph "{\"project\":\"$PROJECT\",\"query\":\"$Q3\"}" || echo '{}')"
 
-jq -n --argjson r2 "${R2:-{\}}" --argjson r3 "${R3:-{\}}" '
+# Guard against empty/non-JSON engine output so --argjson never aborts the script.
+echo "$R2" | jq -e . >/dev/null 2>&1 || R2='{}'
+echo "$R3" | jq -e . >/dev/null 2>&1 || R3='{}'
+
+jq -n --argjson r2 "$R2" --argjson r3 "$R3" '
     {
       cycles: (((($r2.rows) // []) + (($r3.rows) // []))),
       source: "memory-graph"

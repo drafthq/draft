@@ -134,7 +134,7 @@ write_root_link() {
         [[ -n "$root_project" ]] || root_project="unknown"
     fi
     root_commit="$(git -C "$ROOT_ABS" rev-parse --verify --quiet HEAD 2>/dev/null || echo none)"
-    ts="$(date -Iseconds 2>/dev/null || date)"
+    ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
     cat > "$mod_graph/root-link.json" <<EOF
 {
   "root_graph": "$rel",

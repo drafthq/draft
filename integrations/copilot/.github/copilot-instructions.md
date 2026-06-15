@@ -1819,7 +1819,7 @@ For **Brownfield** projects, announce:
 "Draft initialized successfully with comprehensive analysis!
 
 Created:
-- draft/index.md (Open Knowledge Format bundle root — cross-links every concept)
+- draft/index.md (plain docs index — navigable table of contents for the draft/ bundle)
 - draft/.ai-profile.md (20-50 lines — ultra-compact always-injected profile, Tier 0)
 - draft/.ai-context.md (200-400 lines — token-optimized AI context, self-contained, Tier 1)
 - draft/architecture.md (comprehensive human-readable engineering reference, Tier 2)
@@ -1854,7 +1854,7 @@ For **Greenfield** projects, announce:
 "Draft initialized successfully!
 
 Created:
-- draft/index.md (Open Knowledge Format bundle root — cross-links every concept)
+- draft/index.md (plain docs index — navigable table of contents for the draft/ bundle)
 - draft/product.md
 - draft/tech-stack.md
 - draft/workflow.md

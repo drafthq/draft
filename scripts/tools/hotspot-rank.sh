@@ -48,6 +48,8 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+[[ "$TOP" =~ ^[0-9]+$ ]] || { echo "ERROR: --top must be a non-negative integer" >&2; exit 1; }
+
 if [[ ! -d "$REPO" ]]; then
     echo "ERROR: --repo '$REPO' is not a directory" >&2
     exit 1

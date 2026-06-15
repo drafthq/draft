@@ -54,6 +54,11 @@ fix_file() {
         return 2
     fi
 
+    # Empty file: nothing to normalize (avoid writing a spurious newline).
+    if [[ ! -s "$file" ]]; then
+        return 1
+    fi
+
     local original
     original="$(cat "$file")"
 
@@ -66,18 +71,19 @@ fix_file() {
         | sed -e :a -e '/^\n*$/{$d;N;ba}'
     )"$'\n'
 
-    if [[ "$fixed" == "$original" ]]; then
-        return 1 # already clean
-    fi
-
+    # Compare the bytes we would write against the file on disk — NOT the
+    # command-substitution copies (which strip then re-add the trailing newline,
+    # so they could never compare equal). This keeps fix_file idempotent.
     local _tmp
     _tmp="$(mktemp "${file}.XXXXXX")"
-    if printf '%s' "$fixed" > "$_tmp"; then
-        mv -f "$_tmp" "$file"
-    else
+    printf '%s' "$fixed" > "$_tmp" || { rm -f "$_tmp"; return 2; }
+
+    if cmp -s "$_tmp" "$file"; then
         rm -f "$_tmp"
-        return 2
+        return 1 # already clean — no change on disk
     fi
+
+    mv -f "$_tmp" "$file"
     return 0
 }
 
@@ -109,7 +115,7 @@ case "$1" in
         fi
         while IFS= read -r -d '' f; do
             TARGETS+=("$f")
-        done < <(find "$TRACK_DIR" -maxdepth 1 -name "*.md" -print0 | sort -z)
+        done < <(find "$TRACK_DIR" -maxdepth 1 -name "*.md" | sort | tr '\n' '\0')
         ;;
     --draft)
         REPO_ROOT="${2:-$(pwd)}"

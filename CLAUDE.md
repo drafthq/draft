@@ -6,14 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Draft is a Claude Code plugin that implements Context-Driven Development methodology. It provides a two-tier command surface: 4 primary workflow commands (`/draft:init`, `/draft:new-track`, `/draft:implement`, `/draft:review`) plus 5 routers (`/draft:plan`, `/draft:ops`, `/draft:docs`, `/draft:discover`, `/draft:jira`) as the recommended public interface. 24 specialist commands are dispatched underneath the routers. The unified `/draft:jira` router supports `preview`, `create`, and the advanced `review <JIRA-ID>` qualification pipeline (deep-review + bughunt + coverage + test-gap analysis). Run `/draft` for the full intent map. Total surface: 33 skills.
 
-Draft also ships a **knowledge graph engine** under `bin/<arch>/` (native Aether binaries) + `scripts/tools/` (34 deterministic shell helpers). Skills are markdown (source of truth, processed by a bash build script into platform-specific integration files for Copilot and Gemini); the graph engine and shell helpers handle mechanical work that markdown can't.
+Draft also ships a **knowledge graph engine** — `codebase-memory-mcp`, fetched on install to `~/.cache/draft/bin/` (not vendored; see `bin/README.md`) — driven by `scripts/tools/` (32 deterministic shell helpers). Skills are markdown (source of truth, processed by a bash build script into platform-specific integration files for Copilot and Gemini); the graph engine and shell helpers handle mechanical work that markdown can't.
 
 ## Build & Test Commands
 
 ```bash
 make build              # Generate integration files from skills
 make build-integrations # Same as above (explicit target)
-make test               # Run all 44 test suites (skills, build, tools)
+make test               # Run all 43 test suites (skills, build, tools)
 make lint               # Run shellcheck + markdownlint
 make clean              # Remove generated integrations
 
@@ -23,13 +23,13 @@ make clean              # Remove generated integrations
 ./tests/test-tools-classify-files.sh
 # etc. — any test in tests/ is independently executable
 
-# Graph engine
-cd graph && npm install && node build.js   # Rebuild dist/bundle.cjs after src/ changes
-graph --repo . --out draft/graph
-graph --repo . --query --mode hotspots
-graph --repo . --query --file <path> --mode impact
+# Graph engine (codebase-memory-mcp — fetched on install, not vendored)
+scripts/fetch-memory-engine.sh                          # install engine to ~/.cache/draft/bin/
+scripts/tools/graph-snapshot.sh --repo .                # index repo + write draft/graph/schema.yaml gate
+scripts/tools/hotspot-rank.sh --repo .                  # fan-in-ranked hotspots (live query)
+scripts/tools/graph-impact.sh --repo . --symbol <name>  # blast radius for a symbol (live query)
 
-# Prerequisites: Bash 4.0+, Node 18+, shellcheck, markdownlint-cli (lint only)
+# Prerequisites: Bash 4.0+, jq (graph tools), Node 18+ (draft CLI), shellcheck, markdownlint-cli (lint only)
 ```
 
 Tests use a custom bash framework (`tests/test-helpers.sh`) with `assert()`, `pass()`, `fail()` helpers. No external test runner.
@@ -41,7 +41,7 @@ Tests use a custom bash framework (`tests/test-helpers.sh`) with `assert()`, `pa
 ```
 skills/<name>/SKILL.md  ──┐
 core/methodology.md       ├──→  scripts/build-integrations.sh  ──→  integrations/copilot/.github/copilot-instructions.md
-core/shared/*.md          │                                          (~21,000 lines, auto-generated)
+core/shared/*.md          │                                          (~23,600 lines, auto-generated)
 core/templates/*.md       ├──→  (Gemini uses bootstrap .gemini.md — no longer generated)
 core/agents/*.md          ──┘
 ```
@@ -52,7 +52,7 @@ The build script (`scripts/build-integrations.sh`) reads `SKILL_ORDER`, `CORE_FI
 3. Validates body format: blank, `# Title`, blank, then content
 4. Extracts body via `extract_body()`, skipping frontmatter
 5. Applies syntax transforms (`/draft:command` → `draft command`; `@architect`, `@debugger`, etc. → `@workspace` for Copilot)
-6. Inlines 38 core reference files (methodology, shared procedures, templates, agents)
+6. Inlines 62 core reference files (methodology, shared procedures, templates, agents, guardrails)
 7. Writes atomically to a temp file then renames into place
 8. Runs `verify_output()` — line count, completeness, syntax
 
@@ -66,9 +66,9 @@ The build script (`scripts/build-integrations.sh`) reads `SKILL_ORDER`, `CORE_FI
 
 - **`core/shared/`** — Shared procedures loaded by skills (context loading, git metadata, pattern learning, cross-skill dispatch, Jira sync, **graph queries**, **parallel analysis**, VCS commands)
 - **`core/agents/`** — Behavioral protocols for specialized agents (architect, debugger, planner, rca, reviewer, ops, writer)
-- **`core/templates/`** — 20 templates for files that `/draft:init` generates in user projects
-- **`bin/<arch>/`** — Knowledge graph engine native binaries (from Aether). `bin/<arch>/graph` (+ optional `graph-clang`). Output artifacts under `draft/graph/`. CLI and schema documented in `bin/README.md`. Legacy `graph/bin/` layout supported for transition.
-- **`scripts/tools/`** — 34 deterministic shell helpers (git-metadata, classify-files, hotspot-rank, cycle-detect, etc.). Skills call these for mechanical work.
+- **`core/templates/`** — 26 templates for files that `/draft:init` generates in user projects
+- **`bin/`** — Holds only `README.md`. The graph engine (`codebase-memory-mcp`) is **not vendored** — it is fetched on install (`scripts/fetch-memory-engine.sh`) to `~/.cache/draft/bin/` and resolved by `scripts/tools/_lib.sh:find_memory_bin()` (`DRAFT_MEMORY_BIN` → `$PATH` → cache). Output gate marker under `draft/graph/schema.yaml`; all structural data is queried live. CLI and schema documented in `bin/README.md`.
+- **`scripts/tools/`** — 32 deterministic shell helpers (git-metadata, classify-files, hotspot-rank, cycle-detect, etc.). Skills call these for mechanical work.
 - **`scripts/lib.sh`** — Shared definitions sourced by build script: `SKILL_ORDER`, `CORE_FILES`, `TOOLS`.
 - **`web/`** — Static website deployed to GitHub Pages (`getdraft.dev`), deployed via `.github/workflows/pages.yml`. Includes the Draft Book (22 chapters + 2 appendices) under `web/book/`.
 - **`draft/`** — Dogfooding: Draft's own context files, generated by running `/draft:init` on this repo
@@ -120,10 +120,9 @@ The build script transforms skill content for platform compatibility:
 ### Adding a New Tool
 
 1. Create `scripts/tools/<tool-name>.sh` (kebab-case, lowercase)
-2. Add to `TOOLS` array in `scripts/lib.sh`
-3. Add to the `EXPECTED_TOOLS` allowlist in `tests/test-tools-registered.sh`
-4. Create a test at `tests/test-tools-<tool-name>.sh` and add it to `TEST_SCRIPTS` in `Makefile`
-5. Run `make test`
+2. Add to `TOOLS` array in `scripts/lib.sh` (`tests/test-tools-registered.sh` reads this array dynamically and validates the new entry — no separate allowlist to update)
+3. Create a test at `tests/test-tools-<tool-name>.sh` and add it to `TEST_SCRIPTS` in `Makefile`
+4. Run `make test`
 
 ### Plugin Manifest
 
