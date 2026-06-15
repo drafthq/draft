@@ -87,7 +87,7 @@
             }
         },
         modules: {
-            cmd: 'graph-snapshot --modules',
+            cmd: 'graph-arch --repo .',
             json: {
                 modules: [
                     { kind: 'node', id: 'src',         sizeKB: 1284 },
