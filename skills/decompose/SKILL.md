@@ -11,8 +11,8 @@ You are decomposing a project or track into modules with clear responsibilities,
 
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Module identification (Step 3) and dependency mapping (Step 4) **start from the graph**:
 
-1. Load `draft/graph/architecture.json` (`.packages`) for the authoritative module list and fan-in/out.
-2. Load `draft/graph/hotspots.jsonl` to identify candidate modules to split.
+1. Query `scripts/tools/graph-arch.sh --repo .` for the authoritative module list and fan-in/out.
+2. Run `scripts/tools/hotspot-rank.sh --repo .` to identify candidate modules to split.
 3. Use `scripts/tools/graph-callers.sh`/`graph-impact.sh` on demand for symbols/callers inside a candidate module.
 4. Run `scripts/tools/cycle-detect.sh --repo .` to enumerate existing cycles before proposing new boundaries.
 
@@ -156,10 +156,10 @@ ls -d src/*/ lib/*/ app/*/ packages/*/ 2>/dev/null
 
 When graph data is available, the graph is the **primary** (not optional) source for module discovery — manual scanning above is reserved for the graph-miss fallback path:
 
-- **Module boundaries**: Read `draft/graph/architecture.json` (`.packages`, `.languages`) — module list with node counts and per-language file counts
+- **Module boundaries**: Query `scripts/tools/graph-arch.sh --repo .` — module list with node counts and per-language file counts
 - **Dependency edges**: Weighted inter-module dependencies with exact include counts — replaces manual import tracing
 - **Cycle detection**: Circular dependency paths already computed — use for identifying tight coupling and decomposition candidates
-- **Hotspots**: Load `draft/graph/hotspots.jsonl` — high-complexity files that may need further decomposition
+- **Hotspots**: Run `scripts/tools/hotspot-rank.sh --repo .` — high-complexity files that may need further decomposition
 - **Per-module detail**: query `scripts/tools/graph-callers.sh`/`graph-impact.sh` for symbol/call detail within modules of interest
 
 This data is deterministic and exhaustive. The manual scanning recipes above only run **after** the graph misses on the concept the user named — and the miss must be reported in the Graph Usage Report footer. See [core/shared/graph-query.md](../../core/shared/graph-query.md) §Concept-to-Files Recipe.
@@ -615,7 +615,7 @@ When decomposition involves breaking a monolith, choosing module boundaries, or 
 
 Before printing the completion announcement, internally verify and report:
 
-1. **Graph files queried** — which JSONL files were loaded (e.g. `architecture.json, hotspots.jsonl` and tools like `cycle-detect.sh`).
+1. **Graph data queried** — which live-engine tools were invoked (e.g. `get_architecture`, `hotspot-rank.sh`, `cycle-detect.sh`).
 2. **Layer 1 files deliberately skipped** — list any `.ai-context.md` sections, `tech-stack.md`, `product.md`, `workflow.md` you skipped as irrelevant to this decomposition. Be explicit; do not silently skip.
 3. **Filesystem grep fallback justification** — for every `grep`/`find` run, state the concept it searched for and quote the graph-miss sentence.
 4. **Citation Gate audit** — scan every Citation column in the generated component table, dependencies table, and LLD class table. Report:

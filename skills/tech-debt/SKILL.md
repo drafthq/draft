@@ -11,8 +11,8 @@ You are conducting a technical debt analysis to catalog, prioritize, and plan re
 
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Tech-debt prioritization is fundamentally driven by graph data:
 
-1. Load `draft/graph/hotspots.jsonl` — **rank candidates by `fanIn × complexity`** to surface high-leverage debt first.
-2. Read `draft/graph/architecture.json` (`.packages`) and run `scripts/tools/cycle-detect.sh --repo .` — flag debt in modules involved in cycles as higher priority.
+1. Run `scripts/tools/hotspot-rank.sh --repo .` — **rank candidates by `fanIn × complexity`** to surface high-leverage debt first.
+2. Query `scripts/tools/graph-arch.sh --repo .` and run `scripts/tools/cycle-detect.sh --repo .` — flag debt in modules involved in cycles as higher priority.
 3. Run `scripts/tools/cycle-detect.sh --repo .` to enumerate dependency cycles — every cycle is a candidate architecture-debt entry.
 4. For each catalogued finding, run `scripts/tools/graph-impact.sh --repo . --file <path>` so the remediation plan includes blast-radius.
 

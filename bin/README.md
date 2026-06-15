@@ -46,16 +46,13 @@ and `verify-graph-binary.sh`. The shared wrappers (`memory_cli`,
 
 ## Snapshot artifacts
 
-`scripts/tools/graph-snapshot.sh` writes a small, committed, PR-reviewable snapshot under `<repo>/draft/graph/`:
+`draft/graph/` holds a single committed file:
 
 | Artifact | Content |
 |----------|---------|
-| `schema.yaml` | Engine + project metadata, node/edge counts, artifact list (gates graph use). |
-| `architecture.json` | `get_architecture(all)`: node labels, edge types, languages, packages (fan-in/out), entry points, routes, hotspots. |
-| `hotspots.jsonl` | Fan-in-ranked symbols, one JSON object per line. |
-| `module-deps.mermaid` | File co-change coupling diagram. |
-| `proto-map.mermaid` | Detected service-route diagram. |
-| `okf/` | Open Knowledge Format v0.1 bundle (`index.md` + cross-linked `modules/<name>.md`), emitted by default — a portable markdown mirror of the graph. Validate with `okf-check.sh`. |
+| `schema.yaml` | Engine + project metadata, node/edge counts, point-of-index counts (gates graph use). |
+
+Structural graph data (architecture, hotspots, module deps, service routes) is queried **live** from the `codebase-memory-mcp` engine — either via the wrapper scripts under `scripts/tools/` (`graph-callers.sh`, `graph-impact.sh`, `hotspot-rank.sh`, `cycle-detect.sh`, `mermaid-from-graph.sh`) or directly with `codebase-memory-mcp cli <tool> '<json>'`.
 
 ## Offline / air-gapped distributions
 

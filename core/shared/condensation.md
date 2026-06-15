@@ -88,16 +88,16 @@ Transform each `architecture.md` section into machine-optimized format using thi
 
 #### Step 3.5: Generate Graph Summary Sections
 
-If `draft/graph/schema.yaml` exists, generate these sections from the snapshot (`draft/graph/architecture.json`, `draft/graph/hotspots.jsonl`) and the live query tools:
+If `draft/graph/schema.yaml` exists, generate these sections via live engine queries.
 
 **GRAPH:MODULES** (tier ≥ 2 only):
-- Read `draft/graph/architecture.json` → `.packages[]` (each has `name`, `node_count`, `fan_in`, `fan_out`)
+- Query: `scripts/tools/graph-arch.sh --repo . | jq '.packages[]'` (each has `name`, `node_count`, `fan_in`, `fan_out`)
 - Format: `{name}|{node_count} nodes|fan_in:{fan_in} fan_out:{fan_out}`
 - Order by `node_count` descending
 - Omit this section entirely for tier-1 codebases (≤5 modules) where Component Graph is sufficient
 
 **GRAPH:HOTSPOTS** (all tiers):
-- Read `draft/graph/hotspots.jsonl` (already fan-in-ranked), take top 10
+- Query: `scripts/tools/hotspot-rank.sh --repo . --top 10`; take top 10 results
 - Format: `{name}|fanIn:{fanIn}` (use `id` for disambiguation when names collide)
 - Always include regardless of tier
 
@@ -108,20 +108,20 @@ If `draft/graph/schema.yaml` exists, generate these sections from the snapshot (
 - Always include — absence is positive signal that the call graph is acyclic
 
 **GRAPH:MODULE-HOTSPOTS** (tier ≥ 3 only):
-- Read `draft/graph/hotspots.jsonl`; group by the package segment of each `id` (the qualified name minus the leaf symbol)
+- Query: `scripts/tools/hotspot-rank.sh --repo .`; group results by the package segment of each `id` (the qualified name minus the leaf symbol)
 - For each module: take its top 3 symbols by `fanIn`, format as indented lines under the module name
 - Format: `{module}: {name}|fanIn:{N}` with subsequent symbols indented to align
 - Order modules by their highest-fanIn symbol, descending
 - Omit modules with no hotspot entries; omit entire section for tier 1–2 (covered by global GRAPH:HOTSPOTS)
 
 **GRAPH:FAN-IN** (tier ≥ 3 only):
-- Read `architecture.json` → `.packages[]`, use the `fan_in` field per module
+- Query: `scripts/tools/graph-arch.sh --repo . | jq '.packages[]'`, use the `fan_in` field per module
 - Format: `{name}|fanIn:{fan_in}|fanOut:{fan_out}`
 - Order by `fan_in` descending; include only modules with `fan_in ≥ 2`; cap at 15 rows
 - Omit entire section for tier 1–2 (trivially small graph)
 
-**GRAPH:PROTO-MAP** (only when `architecture.json` `.routes` is non-empty):
-- Read `architecture.json` → `.routes[]` (each has `method`, `path`, `handler`)
+**GRAPH:PROTO-MAP** (only when routes are non-empty):
+- Query: `scripts/tools/graph-arch.sh --repo . | jq '.routes[]'` (each has `method`, `path`, `handler`)
 - Format: `{method} {path} → {handler}`
 - One line per route
 - Omit entire section if `.routes` is empty — do not write an empty section
@@ -168,7 +168,7 @@ Before writing `draft/.ai-context.md`, verify:
 - [ ] GRAPH:CYCLES present ("None ✓" or cycle list; or note if graph absent)
 - [ ] GRAPH:MODULE-HOTSPOTS present for tier ≥ 3 (or note if no hotspot data)
 - [ ] GRAPH:FAN-IN present for tier ≥ 3
-- [ ] GRAPH:PROTO-MAP present when `stats.proto_rpcs > 0` (omit entirely if no protos)
+- [ ] GRAPH:PROTO-MAP present when engine reports non-empty routes (omit entirely if no protos)
 - [ ] YAML frontmatter metadata is present at the top
 
 #### Step 7: Write Output

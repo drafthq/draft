@@ -49,7 +49,7 @@ generated_at: "{ISO_TIMESTAMP}"
 ```
 
 > Include immediate sub-directories for all major modules (not just top-level).
-> Use graph data (`draft/graph/modules/*.jsonl`) for exhaustive sub-module enumeration.
+> Use live engine queries (`get_architecture .packages[]` or `graph-callers.sh`) for exhaustive sub-module enumeration.
 > Show file counts per sub-module to indicate relative size/importance.
 
 ## GRAPH:MODULES

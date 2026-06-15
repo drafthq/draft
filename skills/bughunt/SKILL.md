@@ -68,7 +68,7 @@ Read and follow the base procedure in `core/shared/draft-context-loading.md`.
 - **Leverage Storage Topology** — Identify data loss risks at each tier (cache eviction without writeback, event log gaps, missing archive)
 - **Leverage Consistency Boundaries** — Find bugs at eventual consistency seams (stale reads, lost events, missing reconciliation)
 - **Leverage Failure Recovery Matrix** — Verify idempotency claims, check for partial failure states without recovery paths
-- **Leverage Graph Data** (if `draft/graph/` exists) — Read `architecture.json` (`.packages`) for dependency awareness. Flag dependencies on unexpected modules. Flag code in modules involved in dependency cycles as higher risk. Use `hotspots.jsonl` to prioritize analysis of high-complexity, high-fanIn files. See `core/shared/graph-query.md`.
+- **Leverage Graph Data** (if `draft/graph/` exists) — Query `scripts/tools/graph-arch.sh --repo .` for dependency awareness. Flag dependencies on unexpected modules. Flag code in modules involved in dependency cycles as higher risk. Run `scripts/tools/hotspot-rank.sh --repo .` to prioritize analysis of high-complexity, high-fanIn files. See `core/shared/graph-query.md`.
 - **Leverage Learned Anti-Patterns** — If `draft/guardrails.md` exists, read the `## Learned Anti-Patterns` section. During the bug sweep, when a bug matches a learned anti-pattern, prefix the report entry with `[KNOWN-ANTI-PATTERN: {pattern name}]`. This distinguishes recurring documented patterns from newly discovered bugs, and signals that a systemic fix may be needed rather than a one-off patch.
 
 ### 2. Confirm Scope

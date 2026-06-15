@@ -30,9 +30,9 @@ graph:
     go: "{approximate | high}"
   stats:
     modules: "{N from schema.yaml}"
-    edges: "{total_edges from architecture.json}"
+    edges: "{total_edges from engine: get_architecture .edges}"
     hotspots: "{N}"
-  notes: "{explicit fidelity summary from architecture.json languages/packages}"
+  notes: "{explicit fidelity summary from engine: get_architecture .languages/.packages}"
 generation_notes: "{High existing context detected via audit — see §10 Relationship for deference | Standard graph-primary generation}"
 ---
 
@@ -114,7 +114,7 @@ Each backed by:
 
 ## 4. Module & Dependency Map (Primarily Graph-Derived)
 
-- Module dependency graph rendered from `draft/graph/architecture.json` (`.packages`) + `module-deps.mermaid`
+- Module dependency graph rendered from live engine query `scripts/tools/graph-arch.sh --repo . | jq '.packages'` + `scripts/tools/mermaid-from-graph.sh --repo . --diagram module-deps` (generated live, never committed)
 - High fan-in / fan-out modules highlighted
 - Cyclic dependencies called out
 - Cross-language boundaries (FFI, RPC, shared memory) explicitly surfaced with coverage notes

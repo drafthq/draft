@@ -52,7 +52,7 @@ Initialize a Draft project for Context-Driven Development.
 
 ## Graph Fidelity & Diagram-First Priority (MANDATORY)
 
-The knowledge graph in `draft/graph/` (architecture.json with packages, languages, routes, and fan-in/out; hotspots.jsonl) is the **deterministic structural ground truth** for the system's actual architecture.
+The knowledge graph — served live by the local `codebase-memory-mcp` engine (packages, languages, routes, fan-in/out, hotspots) and queried via the `graph-*.sh` wrappers — is the **deterministic structural ground truth** for the system's actual architecture. Draft is engine-only: `draft/graph/` holds only the `schema.yaml` gate marker; all graph data comes from live queries.
 
 **You are running inside a powerful agentic coding environment** (Cursor, Claude Code, Copilot, Windsurf, etc.) that maintains its own rich, continuously updated index of the entire codebase. **Use that indexed knowledge aggressively** in addition to the explicit graph data and direct source reads. Your environment's index often captures higher-level intent, naming patterns, cross-file workflows, and architectural signals that the static graph may not fully express yet. Combine both sources:
 - Graph = authoritative modules, edges, public surfaces, hotspots, call relationships.
@@ -499,9 +499,9 @@ else
 fi
 ```
 
-- **Root init** writes `<root>/draft/graph/` — the committed, git-tracked whole-repo memory.
+- **Root init** writes `<root>/draft/graph/schema.yaml` — the committed gate marker. Draft is engine-only: graph data is served live by the engine, never committed.
 - **Module init** also writes `draft/graph/root-link.json` (module→root); follow `root_graph` for cross-module understanding. The root spine is rebuilt first so the link is live.
-- Only `draft/graph/` is committed. The engine's `~/.cache` index is a disposable accelerator — never commit it; it rebuilds deterministically from source.
+- Only `schema.yaml` (and `root-link.json` in a module) is committed. The engine's `~/.cache` index is the live structural store — never commit it; it rebuilds deterministically from source.
 
 Optionally record which engine was selected (usage-report contract):
 
@@ -511,15 +511,20 @@ scripts/tools/verify-graph-binary.sh --repo . --json 2>/dev/null || true
 
 See `core/shared/graph-query.md` and `bin/README.md` for the query contract and engine resolution.
 
-If the build succeeds, `draft/graph/` is populated and later steps consume the always-load artifacts + injection slots.
+If indexing succeeds, `draft/graph/schema.yaml` is written and later steps query the engine live for structure + populate the injection slots.
 
-### 2. If graph build succeeds, load the always-load artifacts
+### 2. If indexing succeeds, query the engine for structural context
 
-Read these files to get structural context for all subsequent phases:
-- `draft/graph/schema.yaml` — module count, file count, edge count, language stats per module
-- `draft/graph/architecture.json` — module list (`.packages`) with fan-in/out
-- `draft/graph/architecture.json` `.routes` — detected service endpoints
-- `draft/graph/hotspots.jsonl` — all complexity hotspots (files ranked by lines + fanIn * 50)
+Pull the architecture view once and reuse it across phases:
+
+```bash
+ARCH=$(scripts/tools/graph-arch.sh --repo .)
+```
+
+- `$ARCH | jq '.packages'` — module list with fan-in/out
+- `$ARCH | jq '.routes'` — detected service endpoints
+- `$ARCH | jq '.languages, .node_labels, .layers, .boundaries'` — language mix, node shape, layering
+- `scripts/tools/hotspot-rank.sh --repo . --top 20` — complexity/fan-in hotspots (live)
 
 ### 3. Use graph data to accelerate Step 1.5
 
@@ -533,10 +538,10 @@ Read these files to get structural context for all subsequent phases:
 ### 4. Compute codebase tier and module priority
 
 **Step 1.4.5 — Compute Codebase Tier:**
-Read `draft/graph/schema.yaml`. Extract:
-- `M = stats.modules`
-- `F = stats.go_functions + stats.py_functions`
-- `P = stats.proto_rpcs`
+From the live `$ARCH` (above), extract:
+- `M = $ARCH | jq '.packages | length'` (modules)
+- `F = $ARCH | jq '[.node_labels[] | select(.label=="Function" or .label=="Method") | .count] | add // 0'` (functions+methods)
+- `P = $ARCH | jq '.routes | length'` (routes / RPCs)
 
 Apply tier table:
 
@@ -551,8 +556,8 @@ Apply tier table:
 Hold tier in memory. This governs: architecture.md length minimum, .ai-context.md budget, and module deep-dive depth.
 
 **Step 1.4.6 — Build Module Priority List:**
-From `draft/graph/hotspots.jsonl`: count hotspot files per module (group by `module` field).
-From `draft/graph/architecture.json` `.packages[]`: read `fan_in` per module.
+From `scripts/tools/hotspot-rank.sh --repo .`: count hotspot symbols per module.
+From `$ARCH | jq '.packages[]'`: read `fan_in` per module.
 Rank modules by: `(hotspot_count × 2) + fan_in_count`.
 Top-ranked modules drive Section 6 deep-dive ordering and depth. Modules ranked zero on both: summary treatment only.
 Hold ranked list in memory — it replaces directory scanning for module discovery.
@@ -572,7 +577,7 @@ The tool emits a ready-to-inject ` ```mermaid ``` ` block (or an empty stub on e
 ```
 
 For Section 20 (hotspots slot):
-Read `draft/graph/hotspots.jsonl` (or run `scripts/tools/hotspot-rank.sh --repo . --top 10`), take the top 10 by fanIn, build a markdown table:
+Run `scripts/tools/hotspot-rank.sh --repo . --top 10`, take the top 10 by fanIn, build a markdown table:
 ```
 <!-- GRAPH:hotspots:START -->
 | Symbol | fanIn |
@@ -631,7 +636,7 @@ Perform a **one-time, exhaustive analysis** of the existing codebase. This is NO
 
 If the codebase is large (200+ files), focus on the module boundaries but still enumerate exhaustively within each module.
 
-> **Large codebase guardrail:** If the codebase exceeds 500 source files, limit Section 7 deep dives to the top 20 most-imported modules and summarize others in a table. Rank modules by the number of unique files that import/reference them (descending) — use `draft/graph/architecture.json` `.packages[].fan_in` if graph data is available. For dynamic languages where static import counting is impractical, rank by file count within each module directory (larger modules first). **Even for summarized modules, enumerate immediate sub-directories with file counts** (one-line per sub-dir) — this is cheap with graph data and provides essential navigation context.
+> **Large codebase guardrail:** If the codebase exceeds 500 source files, limit Section 7 deep dives to the top 20 most-imported modules and summarize others in a table. Rank modules by the number of unique files that import/reference them (descending) — use the engine's `.packages[].fan_in` (`get_architecture`, captured as `$ARCH` in Step 1.4.2) if the engine is available. For dynamic languages where static import counting is impractical, rank by file count within each module directory (larger modules first). **Even for summarized modules, enumerate immediate sub-directories with file counts** (one-line per sub-dir) — this is cheap with graph data and provides essential navigation context.
 
 ### Parallel Analysis Protocol (Tiers 3–5)
 
@@ -658,16 +663,16 @@ For tier 3+, readers run simultaneously; wall clock = slowest reader, not the su
 
 #### Phase 0: Graph Data (already done in Step 1.4)
 
-The graph binary has already run. Use its output throughout this protocol:
-- `draft.tmp/graph/schema.yaml` — module list, file counts, tier metrics
-- `draft.tmp/graph/architecture.json` — `.packages[].fan_in` per module (for grouping)
-- `draft.tmp/graph/hotspots.jsonl` — top hotspot files per module (feed to readers)
+The engine is already indexed. Query it live throughout this protocol (reuse `$ARCH` from Step 1.4.2):
+- `$ARCH | jq '.packages'` — module list with `.fan_in`/`.fan_out` (for grouping)
+- `$ARCH | jq '.languages, .node_labels'` — file/symbol counts, tier metrics
+- `scripts/tools/hotspot-rank.sh --repo .` — top hotspot symbols per module (feed to readers)
 
 #### Phase 1: Spawn Parallel Module Readers
 
 **Step 1: Group modules.**
 
-From `draft.tmp/graph/architecture.json` `.packages[]`, extract all module names and their `fan_in` counts.
+From `$ARCH | jq '.packages[]'`, extract all module names and their `fan_in` counts.
 Apply dependency-aware grouping (see `core/shared/parallel-analysis.md`).
 Use the modules-per-agent count from the tier table above (4 for tier 4/5; all modules in one agent for tier 1):
 - Assign highest fan-in modules to separate readers (tier 3+)
@@ -683,7 +688,7 @@ Hotspot files:
   execution/engine.go (847 lines, fanIn=12)
   execution/router.go (412 lines, fanIn=8)
   fill_processor/handler.go (623 lines, fanIn=5)
-Module edges (from architecture.json .packages fan-in/out):
+Module edges (from $ARCH .packages fan-in/out):
   execution → [risk, data, services]
   fill_processor → [execution, persistence]
 ```
@@ -788,7 +793,7 @@ If any reader agent fails to produce valid JSON after one retry:
 When the Agent tool is unavailable or reader agents fail after retry, write `draft/architecture.md` using the **10-section graph-primary structure** (checklist above + `core/templates/architecture.md`). Do not use legacy 28-section or Pass 1/2/3 volume protocols.
 
 1. Use the ranked module list from Step 1.4.6 (graph-first — do not re-scan by directory if Phase 0 succeeded).
-2. For each top module (up to 20 by fan-in), read `draft/graph/modules/{name}.jsonl`, hotspot files, and 3–5 key sources; embed graph blocks and at least one workflow/state diagram per significant module inside §4–§8 as appropriate.
+2. For each top module (up to 20 by fan-in), query the engine for its symbols/callers (`scripts/tools/graph-callers.sh`, `graph-impact.sh`, or `$ARCH | jq '.packages[] | select(.name=="<m>")'`), read the hotspot files and 3–5 key sources; embed graph blocks and at least one workflow/state diagram per significant module inside §4–§8 as appropriate.
 3. Always include §9 Graph Coverage Gaps and §10 Relationship when the Context Audit requires them.
 4. Run Completion Verification (defined later in this skill) before condensation. Fidelity, provenance, and gap honesty block completion — not line counts.
 
@@ -911,11 +916,11 @@ Follow these steps in order. The specific files to look for depend on the langua
 
 #### Phase 1: Discovery (Broad Scan)
 
-1. **Map the directory tree**: Recursively list the project to understand the file layout. Note subdirectory groupings. (If Step 1.4 graph analysis succeeded, use `draft.tmp/graph/schema.yaml` module list instead — it is exhaustive and includes file counts.)
+1. **Map the directory tree**: Recursively list the project to understand the file layout. Note subdirectory groupings. (If Step 1.4 graph analysis succeeded, use the engine's `$ARCH | jq '.packages, .file_tree'` instead — it is exhaustive and includes file counts.)
 
 2. **Read build / dependency files**: These reveal the module structure, dependencies, and targets. (See language guide above for which files.)
 
-3. **Read API definition files**: These define the module's data model and service interfaces. (See language guide above for which files. If Step 1.4 succeeded, `draft.tmp/graph/architecture.json` `.routes` already has all detected service endpoints.)
+3. **Read API definition files**: These define the module's data model and service interfaces. (See language guide above for which files. If Step 1.4 succeeded, the engine's `$ARCH | jq '.routes'` already has all detected service endpoints.)
 
 4. **Read interface / type definition files**: Class declarations, interface definitions, and type annotations reveal the public API and design intent.
 
@@ -1653,22 +1658,37 @@ For **brownfield** projects, run `/draft:learn` (no arguments — full codebase 
 
 ## Completion
 
-**Finalize OKF bundle:** After all `draft/` files are written, run the bundle tool
-to (re)generate the Open Knowledge Format root index so the whole `draft/` tree is
-a portable, vendor-neutral OKF bundle. This is the default — no flag required.
+**Finalize the context index:** After all `draft/` files are written, author (or refresh)
+`draft/index.md` — a plain, navigable index over the context bundle. No OKF framing, no
+special frontmatter; it is a human- and agent-readable table of contents.
 
-```bash
-scripts/tools/okf-bundle.sh --dir draft   # writes the bundle-root draft/index.md
-scripts/tools/okf-check.sh  --dir draft   # OKF v0.1 conformance (advisory, non-fatal)
+Write `draft/index.md` with this structure (omit rows whose files were not generated):
+
+```md
+# <project> — Draft Context
+
+Start here. This indexes the Draft context for this repo.
+
+## Context
+- [Architecture](architecture.md) — module map, dependencies, hotspots (graph-grounded)
+- [Product](product.md) — what this system does and for whom
+- [Tech Stack](tech-stack.md) — languages, frameworks, infra
+- [Workflow](workflow.md) — how work flows through the repo
+- [Guardrails](guardrails.md) — learned conventions and anti-patterns
+- [AI Context Map](.ai-context.md) — condensed orientation for agents
+- [AI Profile](.ai-profile.md) — repo profile + tiering
+
+## Tracks
+- [Track Index](tracks.md) — active, completed, and archived tracks
+
+## Knowledge graph
+- Engine-only (`codebase-memory-mcp`). Structural data is queried live via the
+  `graph-*.sh` wrappers; `draft/graph/schema.yaml` is the gate marker. There is no
+  committed graph mirror to browse.
 ```
 
-`okf-bundle.sh` links every concept file present (`.ai-profile.md`, `.ai-context.md`,
-`architecture.md`, `product.md`, `tech-stack.md`, `workflow.md`, `guardrails.md`), the
-tracks, and the graph sub-bundle (`graph/okf/`). Concept `type:` frontmatter comes from
-the templates; `okf-check.sh` validates §9 conformance (frontmatter + `type` on every
-concept; reserved `index.md`/`log.md` structure). It is advisory — report the result,
-do not fail init. Note: operational reports later written into `draft/` (e.g.
-`deep-review-report.md`) are not OKF concepts and will be flagged.
+Keep one-line descriptions accurate to what each file actually contains. This index is
+the single committed entry point to the `draft/` bundle.
 
 **Finalize run memory:** Update `draft/.state/run-memory.json`:
 - `status`: `"completed"`

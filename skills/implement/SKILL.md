@@ -133,7 +133,7 @@ If one of these applies, route directly to the specialist workflow and stop this
    - Keep matching invariants as **active constraints** for this task — these govern code generation, not just review
    - If invariants reference lock ordering, fail-closed behavior, or data integrity rules: these are non-negotiable during implementation
 9. **Load graph context** (if `draft/graph/schema.yaml` exists):
-   - Read `draft/graph/hotspots.jsonl` — check if any files this task will modify appear as hotspots
+   - Run `scripts/tools/hotspot-rank.sh --repo .` — check if any files this task will modify appear as hotspots
    - If modifying a hotspot file (high fanIn), warn: "This task modifies {file} (fanIn={N}). Changes here affect many downstream files. Consider running a graph impact query."
    - Query `scripts/tools/graph-impact.sh`/`graph-callers.sh` for the module(s) being modified — gives file-level dependency context
    - See `core/shared/graph-query.md` for on-demand query subroutines (callers, impact)

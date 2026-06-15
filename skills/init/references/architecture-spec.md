@@ -275,13 +275,13 @@ Only when material: authentication/authorization checkpoints, distributed transa
 
 **Core rule:** The graph is the source of truth for structure. LLM synthesis exists only to interpret the graph into actionable design understanding — primarily via one accurate workflow or state diagram per module — plus tiny supporting notes. The previous volume-oriented deep-dive expectations are superseded.
 
-For each module in `draft/graph/architecture.json` (`.packages[]`), produce a subsection whose **primary content** is the deterministic graph block followed by one synthesized behavioral diagram. Every module gets a slot; do not sample. The block's fan-in/out and node counts come from `.packages[]`; public API and key call edges come from live per-package queries (`scripts/tools/graph-callers.sh`, `graph-impact.sh`) and `hotspots.jsonl`.
+For each module returned by `scripts/tools/graph-arch.sh --repo . | jq '.packages[]'`, produce a subsection whose **primary content** is the deterministic graph block followed by one synthesized behavioral diagram. Every module gets a slot; do not sample. The block's fan-in/out and node counts come from `.packages[]`; public API and key call edges come from live per-package queries (`scripts/tools/graph-callers.sh`, `graph-impact.sh`) and `scripts/tools/hotspot-rank.sh --repo .`.
 
 #### 7.{N} {module-name}
 
 <!-- GRAPH:module-deep/{module-name}:START -->
 <!-- Rendered deterministic block: package name, node count, public API list, fan-in/fan-out (from
-     architecture.json .packages), hotspot fan-in (from hotspots.jsonl), key call edges (from
+     get_architecture .packages), hotspot fan-in (from hotspot-rank.sh), key call edges (from
      graph-callers.sh/graph-impact.sh), entry points if known. No LLM prose inside fence. -->
 <!-- GRAPH:module-deep/{module-name}:END -->
 
@@ -300,7 +300,7 @@ Synthesize a single, accurate Mermaid diagram (`stateDiagram-v2`, `sequenceDiagr
 
 #### Sub-Module Guidance (when graph justifies recursion)
 
-When a module has clear internal structure visible in `draft/graph/architecture.json` (`.packages` fan-in/out) or live per-package queries:
+When a module has clear internal structure visible in live engine query `get_architecture .packages` (fan-in/out) or live per-package queries:
 - Create `##### 7.X.Y {Parent}/{Child}` subsections only for children that have their own meaningful public surface or high internal fan-in.
 - Each sub-module subsection follows the same compact pattern: graph facts + **one mandatory workflow/state diagram** + ≤60 words Design Notes.
 - Do not descend further unless the child itself shows additional clear boundaries in the graph data.
@@ -362,7 +362,7 @@ Regardless of tier, any directory whose name contains `ops`, `handlers`, `execut
 | ... | (enumerate ALL — no sampling, no "and others") | | | |
 ```
 
-Use `draft/graph/modules/{module}.jsonl` to get the complete file list with line counts. Use `draft/graph/hotspots.jsonl` to flag high-complexity operations.
+Use `scripts/tools/graph-callers.sh --symbol <module>` or `scripts/tools/graph-arch.sh --repo .` to get the complete file list. Use `scripts/tools/hotspot-rank.sh --repo .` to flag high-complexity operations.
 
 #### Example: Full Sub-Module Treatment for `icebox/` (917 files)
 
@@ -409,7 +409,7 @@ stateDiagram-v2
 After writing Section 7, run these checks before proceeding. **If any check fails, STOP and fix.**
 
 **Check 1 — Graph block present and faithful for every module:**
-Every top-level module from `draft/graph/architecture.json` (`.packages`) has its `<!-- GRAPH:module-deep/...:START --> ... <!-- GRAPH:module-deep/...:END -->` fence rendered verbatim. No LLM prose inside the fence. No modules missing.
+Every top-level module from the live engine (`get_architecture .packages`) has its `<!-- GRAPH:module-deep/...:START --> ... <!-- GRAPH:module-deep/...:END -->` fence rendered verbatim. No LLM prose inside the fence. No modules missing.
 
 **Check 2 — One mandatory workflow/state diagram per module:**
 Every `#### 7.X` (and every `##### 7.X.Y` that the graph justified) contains exactly one high-signal `Primary Workflow / State` Mermaid diagram (`stateDiagram-v2`, `sequenceDiagram`, or clear `flowchart`). The diagram must reflect facts from the module's graph record (entry points, public symbols, call targets). Generic placeholder diagrams fail this check.
@@ -513,12 +513,13 @@ Include architecturally significant implementations (high fan-in, core extension
 |---|-----------|-------------|-------|-------------|
 | 1 | ArchiveFilesOp | `icebox/master/ops/archive_files_op.cc` | 2100 | Archives files to cloud vault |
 | 2 | CancelJobOp | `icebox/master/ops/cancel_job_op.cc` | 450 | Cancels running archive job |
-| (enumerate ALL — use graph hotspots.jsonl and per-module JSONL for file list and line counts) |
+| (enumerate ALL — use hotspot-rank.sh and graph-callers.sh / get_architecture for file list and line counts) |
 ```
 
-> **MANDATORY (graph data)**: Read `draft/graph/modules/{module}.jsonl` to get the complete file
-> list with line counts. Filter for files in operation sub-directories (paths containing `/ops/`,
-> `/handlers/`, `/executors/`, `/workers/`). Use `draft/graph/hotspots.jsonl` to flag
+> **MANDATORY (graph data)**: Query `scripts/tools/graph-arch.sh --repo .` or
+> `scripts/tools/graph-callers.sh --symbol <module>` to get the complete file list with line counts.
+> Filter for files in operation sub-directories (paths containing `/ops/`,
+> `/handlers/`, `/executors/`, `/workers/`). Use `scripts/tools/hotspot-rank.sh --repo .` to flag
 > high-complexity operations (high line count or fanIn). Do NOT skip this step — incomplete
 > catalogs cause AI agents to reinvent existing functionality.
 
@@ -1209,11 +1210,11 @@ Fix: Add actual payload descriptions on arrows, `alt`/`opt` blocks for condition
 
 **FAILURE 3 — Empty Appendices:**
 Detection: Appendix B, C, or D tables have fewer than 10 data rows.
-Fix: Cross-reference ALL data sources (Appendix B), ALL implementation outputs (Appendix C), and add 2-3 detailed sequence diagrams to Appendix D. Use graph data (`architecture.json` `.packages`/`.routes`) to enumerate exhaustively.
+Fix: Cross-reference ALL data sources (Appendix B), ALL implementation outputs (Appendix C), and add 2-3 detailed sequence diagrams to Appendix D. Use live engine queries (`get_architecture .packages`/`.routes`) to enumerate exhaustively.
 
 **FAILURE 4 — Missing Sub-Modules:**
 Detection: A module with 100+ source files (check graph data) has no Sub-Module Structure table.
-Fix: Read `draft/graph/modules/{name}.jsonl`, group files by immediate sub-directory, and generate the table with file counts and one-line role descriptions per sub-directory.
+Fix: Query `scripts/tools/graph-arch.sh --repo .` or `scripts/tools/graph-callers.sh --symbol <name>`, group results by immediate sub-directory, and generate the table with file counts and one-line role descriptions per sub-directory.
 
 **FAILURE 4b — Shallow Sub-Module Treatment:**
 Detection: Large sub-modules (50+ files) listed only as table rows with no dedicated deep-dive subsection. Or ops/handler directories have no operation catalog.

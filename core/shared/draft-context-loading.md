@@ -71,13 +71,9 @@ If `draft/graph/schema.yaml` exists, the project has automated graph analysis da
 
 | File | Purpose | Content |
 |------|---------|---------|
-| `draft/graph/schema.yaml` | Snapshot metadata (engine, project, node/edge counts) | YAML, ~15 lines |
-| `draft/graph/architecture.json` | Node labels, edge types, languages, packages (fan-in/out), entry points, routes, hotspots | JSON |
-| `draft/graph/hotspots.jsonl` | Fan-in-ranked symbols, one object per line: `{id, name, fanIn}` | JSONL |
+| `draft/graph/schema.yaml` | Gate marker (engine + project metadata + point-of-index counts); presence gates graph use | YAML, ~15 lines |
 
-The snapshot also includes `draft/graph/okf/` — an Open Knowledge Format v0.1 bundle (`index.md` + `modules/*.md`) emitted by default. It is a portable mirror of the graph, not an always-load target.
-
-Note: `.ai-context.md` embeds a condensed graph summary (`GRAPH:MODULES`, `GRAPH:HOTSPOTS`, `GRAPH:CYCLES`) for first-pass structural ground truth. `architecture.json` is authoritative for deep structure.
+Note: `.ai-context.md` embeds a condensed graph summary (`GRAPH:MODULES`, `GRAPH:HOTSPOTS`, `GRAPH:CYCLES`) for first-pass structural ground truth. Deep structural data is queried live from the engine (see Live structural queries below).
 
 Note: The canonical embedded mermaid diagrams are in architecture.md injection slots (`<!-- GRAPH:module-deps:START/END -->`, `<!-- GRAPH:proto-map:START/END -->`), refreshed by `draft:init`. For current data, regenerate via `scripts/tools/mermaid-from-graph.sh`.
 
@@ -151,12 +147,12 @@ Do NOT apply relevance scoring for commands that need full context (`/draft:init
 | `## FILES` | Always (need file locations) |
 | `## VOCAB` | Domain-specific tasks |
 
-3. **Score graph files** (if `draft/graph/` exists) against the task concepts:
+3. **Score graph queries** (if `draft/graph/schema.yaml` exists) against the task concepts:
 
 | Graph source | Use When Task Involves... |
 |------------|--------------------------|
-| `architecture.json` | Module boundary changes, cross-module work, architecture analysis, API/route surface |
-| `hotspots.jsonl` | Performance work, refactoring, changes to high-fanIn symbols |
+| `scripts/tools/graph-arch.sh --repo .` | Module boundary changes, cross-module work, architecture analysis, API/route surface |
+| `scripts/tools/hotspot-rank.sh --repo .` | Performance work, refactoring, changes to high-fanIn symbols |
 | `scripts/tools/graph-callers.sh --symbol <name>` | Enumerating callers before a change |
 | `scripts/tools/graph-impact.sh --file <path>` / `--symbol <name>` | Tracing call paths, root cause analysis, function-level impact |
 | `scripts/tools/cycle-detect.sh` | Checking for call cycles |

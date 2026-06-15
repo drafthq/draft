@@ -10,7 +10,7 @@ Referenced by: `/draft:init`, `/draft:implement`, `/draft:bughunt`, `/draft:revi
 
 Any code-touching skill that needs to discover files, modules, symbols, callers, or blast-radius **MUST** follow this lookup order whenever `draft/graph/schema.yaml` exists:
 
-1. **Graph first** — the committed snapshot (`architecture.json`, `hotspots.jsonl`) and the live query tools (`scripts/tools/graph-callers.sh`, `graph-impact.sh`, `cycle-detect.sh`, `hotspot-rank.sh`).
+1. **Graph first** — live engine queries via the query tools (`scripts/tools/graph-callers.sh`, `graph-impact.sh`, `cycle-detect.sh`, `hotspot-rank.sh`, `mermaid-from-graph.sh`), which drive the local `codebase-memory-mcp` engine on demand. Draft is **engine-only**: there is no committed machine-readable graph to read — `draft/graph/` holds only `schema.yaml` (the gate marker).
 2. **Generated context second** — `draft/.ai-context.md`, relevant `draft/architecture.md` slices, track-level `hld.md`/`lld.md`.
 3. **Source file reads third** — narrow via tiers 1–2, then **Read** the candidate files. Reading is **not optional**: see §Ground-Truth Discipline below.
 4. **Filesystem `grep`/`find`/`rg` last** — only after an explicit graph miss.
@@ -55,10 +55,10 @@ A single "no" / "list" answer is a halt — fix and re-check before output.
 
 Use this recipe whenever the user names a concept, feature, or domain term ("in-memory shuffle", "auth flow", "ingest pipeline") and you need to locate the implementing files. **Run it before any filesystem search.**
 
-1. **Concept → modules** — `grep` the concept token against `draft/graph/architecture.json` (`.packages[].name`) and `draft/.ai-context.md` (module headings). Record the candidate module list.
+1. **Concept → modules** — query the engine for the package list (`scripts/tools/graph-arch.sh --repo . | jq -r '.packages[].name'`) and cross-reference `draft/.ai-context.md` (module headings). Record the candidate module list.
 2. **Concept → symbols/callers** — for a named function, run `scripts/tools/graph-callers.sh --repo . --symbol <name>` to find call sites, and `scripts/tools/graph-impact.sh --repo . --symbol <name>` for transitive dependents. These are the authoritative structural answers.
-3. **Modules → risk ranking** — cross-reference `draft/graph/hotspots.jsonl` (or `scripts/tools/hotspot-rank.sh`). High-fanIn symbols are the most likely entry points for impact.
-4. **Concept → public API** — for API-shaped concepts, consult `architecture.json` `.routes` (detected HTTP/gRPC/GraphQL routes) for matching service surface.
+3. **Modules → risk ranking** — rank with `scripts/tools/hotspot-rank.sh --repo . [--top N]`. High-fanIn symbols are the most likely entry points for impact.
+4. **Concept → public API** — for API-shaped concepts, read the engine's `.routes` (`get_architecture` output, detected HTTP/gRPC/GraphQL routes) for matching service surface.
 5. **Graph miss → grep fallback** — only if steps 1–4 return nothing relevant, emit the fallback sentence and use `grep`/`find`. Narrow the search by file extension and exclude `node_modules`, `vendor`, `dist`, `build`, `.git`.
 
 ## Graph Usage Report (Mandatory Footer)
@@ -68,7 +68,7 @@ Every code-touching skill output MUST end with this footer block. The lint check
 ```md
 ## Graph Usage Report
 
-- Graph files queried: <comma-separated list, e.g. `architecture.json, hotspots.jsonl` and/or query tools like `graph-callers.sh` — or `NONE` with justification below>
+- Graph files queried: <comma-separated list of query tools invoked, e.g. `graph-callers.sh, hotspot-rank.sh` — or `NONE` with justification below>
 - Modules identified via graph: <comma-separated module names, or `none`>
 - Files identified via graph: <integer count>
 - Filesystem grep fallbacks: <list of `<pattern>` searches with one-line justification each, or `none`>
@@ -106,7 +106,7 @@ DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
 | `bash "$DRAFT_TOOLS/cycle-detect.sh"` | `--mode cycles` | Emits `{cycles:[],source:"unavailable"}` and exits 2 |
 | `bash "$DRAFT_TOOLS/mermaid-from-graph.sh" [--diagram module-deps\|proto-map]` | `--mode mermaid` | Emits an empty mermaid block and exits 2 |
 
-Use the raw `graph` CLI directly for the lower-level modes documented below.
+For lower-level modes, call the engine directly: `codebase-memory-mcp cli <tool> '<json>'` (see the tool list in [bin/README.md](../../bin/README.md)).
 
 ## Pre-Check
 
@@ -118,27 +118,26 @@ ls draft/graph/schema.yaml 2>/dev/null
 
 If absent, **skip all graph operations silently**. Graph enriches analysis — it never gates it. All skills must work identically without graph data.
 
-## Engine + snapshot model
+## Engine model (engine-only)
 
-The graph is produced by the **codebase-memory-mcp** engine (a single binary; see [bin/README.md](../../bin/README.md)). There are two ways skills consume it:
+The graph is produced by the **codebase-memory-mcp** engine (a single binary; see [bin/README.md](../../bin/README.md)). Draft is **engine-only and opinionated**: the engine is the one structural source of truth, queried live. There is **no committed machine-readable mirror** of the graph — no `architecture.json`, `hotspots.jsonl`, `*.mermaid`, or `okf/`. Those were lossy, went stale on the next commit, and duplicated what the engine serves precisely on demand.
 
-1. **Live queries** (preferred when the engine is resolvable) — the shell tools under `scripts/tools/` drive the engine on demand (it auto-indexes into its own cache). No committed files required.
-2. **Committed snapshot** (`draft/graph/`) — a small, derived, PR-reviewable snapshot written by `scripts/tools/graph-snapshot.sh`. It exists for reviewability and for the Copilot/Gemini integrations, which cannot run the engine but can read committed files. Git remains the source of truth.
+The only committed file is the gate marker:
 
-When `draft/graph/` exists, the snapshot contains:
+| File | Role |
+|------|------|
+| `draft/graph/schema.yaml` | Engine + project metadata and point-of-index counts (provenance, not authoritative). Carries **no graph data**. Its presence is the **gate** (see Pre-Check) — it signals the engine is wired for this repo. Written by `scripts/tools/graph-snapshot.sh`. |
 
-| File | Load | Content |
-|------|------|---------|
-| `schema.yaml` | Always | Engine + project metadata, node/edge counts, artifact list. Its presence **gates** graph use (see Pre-Check). |
-| `architecture.json` | Always | `get_architecture(all)` output: node labels, edge types, languages, packages (with fan-in/out), entry points, routes, hotspots. |
-| `hotspots.jsonl` | Always | Fan-in-ranked symbols, one JSON object per line: `{id, name, fanIn}`. |
-| `module-deps.mermaid` | Diagram injection | File co-change coupling diagram (`FILE_CHANGES_WITH`). |
-| `proto-map.mermaid` | Diagram injection | Detected service-route diagram (`Route` nodes). |
-| `okf/` | On demand | Open Knowledge Format v0.1 bundle (emitted by default): `index.md` (reserved bundle root, no frontmatter) + cross-linked `modules/<name>.md` concept pages. Portable, vendor-neutral mirror of the graph; validate with `okf-check.sh`. |
+All structural data is obtained live by shelling out to the engine — either through the query-tool wrappers under `scripts/tools/` or directly via `codebase-memory-mcp cli <tool> '<json>'`. The shell tools auto-index the repo into the engine's own cache on demand, so no committed files are required.
 
-The engine uses a **unified, language-agnostic** node model — `Function`, `Method`, `Class`, `Module`, `File`, `Folder`, `Route`, `Section`, `Variable` (language is inferred from file extension) — and edges `CALLS`, `DEFINES`, `CONTAINS_FILE`, `IMPORTS`, `HTTP_CALLS`, `FILE_CHANGES_WITH`, `SEMANTICALLY_RELATED`, `SIMILAR_TO`. There are **no** per-language index files and no `ctags-sym` fallback; that detail is served by live queries against the unified model.
+### How skills query (engine is the interface; jq is optional)
 
-**Always-load files** are compact and should be read during context loading for any task that touches code structure.
+- **The engine is the query.** `codebase-memory-mcp cli <tool> '<json>'` (and the wrappers that call it) is how you ask — it takes JSON args and returns JSON. There is no other query surface.
+- **Prefer the wrappers — they resolve the engine for you.** `graph-arch.sh` (architecture view: packages/routes/layers/hotspots), `graph-callers.sh`, `hotspot-rank.sh`, `graph-impact.sh`, `cycle-detect.sh`, `mermaid-from-graph.sh` return already-shaped JSON. The engine binary is usually **not on `$PATH`** (it lives under `~/.cache/draft/bin/`); the wrappers locate it via `_lib.sh:find_memory_bin`, so a skill using a wrapper needs no resolution step.
+- **Raw `codebase-memory-mcp cli` requires resolving the binary first** (it is not on `$PATH`): `CM="${DRAFT_MEMORY_BIN:-$HOME/.cache/draft/bin/codebase-memory-mcp}"; "$CM" cli <tool> '<json>'`. Reach for this only for tools without a wrapper (`search_graph`, `search_code`, `trace_path`).
+- **`jq` is not a query tool — it only trims output.** Reach for it solely to slice a *large* response (chiefly the `get_architecture` blob) down to the field you need, for token economy. The agent can read raw JSON directly; jq is an optimization, not a requirement. Don't pipe wrapper output through jq unless you genuinely need a sub-field.
+
+The engine uses a **unified, language-agnostic** node model — `Function`, `Method`, `Class`, `Module`, `File`, `Folder`, `Route`, `Section`, `Variable` (language is inferred from file extension) — and edges `CALLS`, `DEFINES`, `CONTAINS_FILE`, `IMPORTS`, `HTTP_CALLS`, `FILE_CHANGES_WITH`, `SEMANTICALLY_RELATED`, `SIMILAR_TO`. Each node carries `file_path` + `start_line`/`end_line` and rich `properties` (complexity, signature, parent_class), and the engine exposes full-text (`search_code`) and semantic search — none of which a committed snapshot reproduced.
 
 ## Query Tools
 
@@ -179,7 +178,14 @@ Output: `{cycles[[a,b],[a,b,c]], source}` — fixed-length 2- and 3-node `CALLS`
 
 ### Modules — dependency overview
 
-Read `draft/graph/architecture.json` (`.packages` for module fan-in/out, `.node_labels`/`.edge_types` for shape, `.routes` for service surface), or regenerate it with `scripts/tools/graph-snapshot.sh --repo .`.
+Query the engine's architecture view live with the `graph-arch.sh` wrapper (it resolves the engine, indexes on demand, and auto-resolves the project):
+
+```bash
+scripts/tools/graph-arch.sh --repo . \
+  | jq '{packages, node_labels, edge_types, routes, layers, boundaries}'
+```
+
+`.packages` gives module fan-in/out, `.node_labels`/`.edge_types` the shape, `.routes` the service surface, `.layers`/`.boundaries` the dependency direction.
 
 ### Mermaid — diagram text
 
@@ -188,15 +194,15 @@ scripts/tools/mermaid-from-graph.sh --repo . --diagram module-deps   # co-change
 scripts/tools/mermaid-from-graph.sh --repo . --diagram proto-map     # detected routes
 ```
 
-Emits a ready-to-inject ` ```mermaid ``` ` block, or an empty stub (exit 2) when the engine is unavailable. The committed `draft/graph/*.mermaid` snapshots are written by `graph-snapshot.sh`.
+Emits a ready-to-inject ` ```mermaid ``` ` block on the fly (computed live by the engine), or an empty stub (exit 2) when the engine is unavailable. Diagrams are generated at the moment of use — they are never committed.
 
-### Building / refreshing the snapshot
+### Indexing / refreshing the gate marker
 
 ```bash
 scripts/tools/graph-snapshot.sh --repo .
 ```
 
-Writes the committed `draft/graph/` snapshot (`schema.yaml`, `architecture.json`, `hotspots.jsonl`, `*.mermaid`, plus the Open Knowledge Format bundle under `okf/`). Run during `/draft:init` and `/draft:graph`, or whenever the reviewable graph state should be refreshed.
+Indexes the repo into the engine and writes the `draft/graph/schema.yaml` gate marker. It writes **no** graph data. Run during `/draft:init` and `/draft:graph`, or whenever the index should be refreshed.
 
 ## Finding the Engine (Resolution + Usage Report)
 
@@ -220,7 +226,7 @@ ENGINE_INFO="$(scripts/tools/verify-graph-binary.sh --repo . --json 2>/dev/null 
 
 After successful detection, `draft/.graph-binary-report.json` contains: `detected_at`, `engine_bin`, `source` (`path` | `managed` | `bundled:<arch>` | `override`), `arch`, `status`. It is a derived artifact (safe to prune), regenerated by each graph-using command that calls the verifier.
 
-## Building the Snapshot
+## Indexing the Repo
 
 Run during `draft:init` / `draft:graph`, or manually:
 
@@ -228,13 +234,13 @@ Run during `draft:init` / `draft:graph`, or manually:
 scripts/tools/graph-snapshot.sh --repo .
 ```
 
-The engine indexes C/C++, Go, Python, TypeScript/JS, and more (tree-sitter, 159 languages) plus LSP-assisted resolution for the major ones, and detects HTTP/gRPC/GraphQL routes. Indexing is incremental in the engine (content-based, git-aware); the snapshot is re-derived on each run.
+The engine indexes C/C++, Go, Python, TypeScript/JS, and more (tree-sitter, 159 languages) plus LSP-assisted resolution for the major ones, and detects HTTP/gRPC/GraphQL routes. Indexing is incremental in the engine (content-based, git-aware). This refreshes the engine index and rewrites the `schema.yaml` gate marker; it produces no committed graph data.
 
 ## Graceful Degradation
 
 | Scenario | Behavior |
 |----------|----------|
-| No engine resolvable (or `DRAFT_MEMORY_DISABLE=1`) | Skip graph build in init; all skills proceed without graph data; tools emit `source: unavailable` |
+| No engine resolvable (or `DRAFT_MEMORY_DISABLE=1`) | Skip graph indexing in init; all skills proceed without graph data; tools emit `source: unavailable` |
 | Engine present but a query fails | Warn and proceed; skills work without graph data |
-| `draft/graph/` snapshot exists | Load always-load files during context loading; use live query tools as needed |
-| Stale snapshot | Still useful — structural changes are infrequent. Re-run `graph-snapshot.sh` (or init) to refresh. |
+| `draft/graph/schema.yaml` exists | Engine is wired — use live query tools as needed during the run |
+| Engine index out of date | The engine indexes incrementally (content-based, git-aware) on each query, so it self-freshens. Re-run `graph-snapshot.sh` (or init) to force a reindex and refresh the marker. |

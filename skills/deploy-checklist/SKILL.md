@@ -12,8 +12,8 @@ You are generating a pre-deployment verification checklist customized to this pr
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Use the graph to validate module boundaries before the deploy:
 
 1. For each file in the deploy diff, run `scripts/tools/graph-impact.sh --repo . --file <path>` to enumerate the modules affected — flag any module **not** declared in `hld.md` §Detailed Design as a deployment-scope miss.
-2. Run `scripts/tools/cycle-detect.sh --repo .` (and read `draft/graph/architecture.json` for the module overview) to ensure no fresh cycles were introduced after HLD sign-off.
-3. Load `draft/graph/hotspots.jsonl` — any hotspot in the diff escalates the Resiliency row of Phase 0.
+2. Run `scripts/tools/cycle-detect.sh --repo .` (and query `scripts/tools/graph-arch.sh --repo .` for the module overview) to ensure no fresh cycles were introduced after HLD sign-off.
+3. Run `scripts/tools/hotspot-rank.sh --repo .` — any hotspot in the diff escalates the Resiliency row of Phase 0.
 
 Filesystem `grep` is reserved for source-text scans (migration file names, flag-key strings). Module/impact discovery goes through the graph.
 

@@ -11,8 +11,8 @@ Scan the codebase to discover recurring coding patterns and update `draft/guardr
 
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Use the graph to:
 
-1. Enumerate a module's symbols/files via `scripts/tools/graph-callers.sh`/`graph-impact.sh` and `architecture.json` (preferred over `find`).
-2. Prioritize hotspots from `draft/graph/hotspots.jsonl` — patterns in high-fanIn files are more impactful when learned.
+1. Enumerate a module's symbols/files via `scripts/tools/graph-callers.sh`/`graph-impact.sh` and `scripts/tools/graph-arch.sh --repo .` (preferred over `find`).
+2. Prioritize hotspots via `scripts/tools/hotspot-rank.sh --repo .` — patterns in high-fanIn files are more impactful when learned.
 3. For TS/Python/Go/C/C++, use `*-index.jsonl` to identify class/function definitions rather than re-discovering them via regex.
 
 Filesystem `find` for source discovery (Step 2.1) is permitted **as a complement** to the graph for languages not covered by indexes (e.g. Ruby, Java without ctags). Record the rationale in the Graph Usage Report.
@@ -246,15 +246,15 @@ git log --follow --oneline -1 -- {file_containing_pattern}
 
 ### 2.7: Graph-Aware Severity Enrichment
 
-If `draft/graph/hotspots.jsonl` exists, derive objective severity for all anti-pattern candidates based on the fanIn of files where the pattern was found.
+If `draft/graph/schema.yaml` exists (engine live), derive objective severity for all anti-pattern candidates based on the fanIn of files where the pattern was found via `scripts/tools/hotspot-rank.sh --repo .`.
 
 For each anti-pattern candidate from Step 2.2:
-1. Check if any evidence files appear in `draft/graph/hotspots.jsonl`
+1. Check if any evidence files appear in the hotspot output from `scripts/tools/hotspot-rank.sh --repo .`
 2. Take the highest fanIn value across all evidence files:
    - fanIn ≥ 10 → `graph_severity: critical` (breakage propagates to many callers)
    - fanIn 5–9 → `graph_severity: high`
    - fanIn 1–4 → `graph_severity: medium`
-   - fanIn 0 or file not in hotspots.jsonl → `graph_severity: low`
+   - fanIn 0 or file not in hotspot output → `graph_severity: low`
 3. If no graph data exists → `graph_severity: unresolved`
 
 Collect all evidence files with fanIn ≥ 5 for the `high_fanin_files` field.

@@ -187,7 +187,7 @@ The graph powers `/draft:graph` and `/draft:impact`, enriches `/draft:bughunt` a
 
 ### Deterministic helper tools
 
-Skills also call into **34 shell helpers** under `scripts/tools/` for mechanical work — git metadata, file classification, test-framework detection, hotspot ranking, freshness checks, ADR indexing, and Open Knowledge Format emission/validation (`okf-emit.sh`, `okf-bundle.sh`, `okf-check.sh`). All emit JSON or markdown, follow a uniform exit-code contract, and degrade gracefully when their input source is unavailable.
+Skills also call into **shell helpers** under `scripts/tools/` for mechanical work — git metadata, file classification, test-framework detection, hotspot ranking, freshness checks, ADR indexing, and live graph queries (`graph-callers.sh`, `graph-impact.sh`, `hotspot-rank.sh`, `cycle-detect.sh`, `mermaid-from-graph.sh`). All emit JSON or markdown, follow a uniform exit-code contract, and degrade gracefully when their input source is unavailable.
 
 ---
 

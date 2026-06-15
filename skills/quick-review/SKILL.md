@@ -11,7 +11,7 @@ You are performing a lightweight, ad-hoc code review. This is the fast alternati
 
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Quick-review keeps the graph load light:
 
-1. Always check `draft/graph/hotspots.jsonl` for every changed file (Step 2 blast-radius pre-check below).
+1. Always run `scripts/tools/hotspot-rank.sh --repo .` for every changed file (Step 2 blast-radius pre-check below).
 2. If a finding spans more than one file, run `scripts/tools/graph-callers.sh --repo . --symbol <name>` to enumerate the call sites before claiming "no other usages".
 
 Filesystem `grep` is reserved for source-text scans (literal strings, regex patterns). Symbol and caller discovery go through the graph.
@@ -68,9 +68,9 @@ Determine the diff to review:
 3. If commit range: `git diff <range>`
 4. Default: `git diff HEAD~1..HEAD` (last commit)
 
-## Step 2: Blast Radius Pre-check (if `draft/graph/hotspots.jsonl` exists)
+## Step 2: Blast Radius Pre-check (if `draft/graph/schema.yaml` exists)
 
-Before the four-dimension review, check if any files in scope appear in `draft/graph/hotspots.jsonl`. If any file has a `fanIn` in the top 20% of the list, add this warning at the top of the review report:
+Before the four-dimension review, run `scripts/tools/hotspot-rank.sh --repo .` and check if any files in scope appear in the output. If any file has a `fanIn` in the top 20% of the list, add this warning at the top of the review report:
 
 ```
 ⚠ HIGH IMPACT: {file} is a high-fanIn hotspot (fanIn={N}). Changes here propagate to many callers — review with extra care.

@@ -109,11 +109,11 @@ Append under `## Learned Anti-Patterns`:
 - **Suggested fix:** [Brief description of the correct approach]
 ```
 
-`graph_severity` derivation rules (from `draft/graph/hotspots.jsonl` fanIn values):
+`graph_severity` derivation rules (from live hotspot query `scripts/tools/hotspot-rank.sh --repo .` fanIn values):
 - fanIn ≥ 10 in any evidence file → `critical`
 - fanIn 5–9 → `high`
 - fanIn 1–4 → `medium`
-- fanIn 0 or file not in hotspots.jsonl → `low`
+- fanIn 0 or file not returned by hotspot query → `low`
 - Graph data absent → `unresolved`
 
 When `graph_severity` differs from `severity`, use `graph_severity` as the enforcement priority — it is objective and graph-derived.

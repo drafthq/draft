@@ -12,7 +12,7 @@ See [graph-query.md](graph-query.md) §Graph Usage Report (Mandatory Footer) for
 ```md
 ## Graph Usage Report
 
-- Graph files queried: <comma-separated list, e.g. `architecture.json, hotspots.jsonl` and/or query tools like `graph-callers.sh` — or `NONE` with justification below>
+- Graph files queried: <comma-separated list, e.g. `get_architecture, hotspot-rank.sh` and/or query tools like `graph-callers.sh` — or `NONE` with justification below>
 - Modules identified via graph: <comma-separated module names, or `none`>
 - Files identified via graph: <integer count>
 - Filesystem grep fallbacks: <list of `<pattern>` searches with one-line justification each, or `none`>

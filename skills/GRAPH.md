@@ -301,8 +301,8 @@ init → learn → (updates guardrails.md)
   init ──────────►  │  architecture.md ──► .ai-context.md         │
                     │  product.md  tech-stack.md  guardrails.md   │
                     │  workflow.md  tracks.md  tech-debt.md       │
-                    │  graph/ (module-graph, hotspots, proto,      │
-                    │         module-deps.mermaid, proto-map..)   │
+                    │  graph/ (schema.yaml gate; all data queried  │
+                    │         live via codebase-memory-mcp engine) │
                     └──────────────────┬──────────────────────────┘
                                        │ read by all skills
            ┌───────────────────────────┼───────────────────────┐
