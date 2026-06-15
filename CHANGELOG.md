@@ -5,6 +5,29 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- **The knowledge graph is now engine-only.** Draft no longer commits a
+  machine-readable mirror of the graph. `scripts/tools/graph-snapshot.sh` indexes
+  the repo into the local `codebase-memory-mcp` engine and writes a single committed
+  file — `draft/graph/schema.yaml`, a gate marker carrying no graph data
+  (`access: engine-live`). All structural data is queried live via the
+  `scripts/tools/graph-*.sh` wrappers or `codebase-memory-mcp cli <tool>`. A
+  re-index prunes any stale fat-snapshot artifacts left by 3.0.0. The graph-query
+  contract (`core/shared/graph-query.md`) and every consuming skill now query the
+  engine live instead of reading committed files.
+- **`draft/index.md` is a plain docs index.** It lists the prose context files and
+  tracks with one-line descriptions — no OKF framing or `okf_version` frontmatter.
+
+### Removed
+- **Open Knowledge Format (OKF) emission** added in 3.0.0. Deleted
+  `scripts/tools/okf-emit.sh`, `okf-bundle.sh`, `okf-check.sh` (and their tests).
+  No more `draft/graph/okf/` bundle.
+- **Committed graph snapshot files**: `architecture.json`, `hotspots.jsonl`,
+  `module-deps.mermaid`, `proto-map.mermaid` are no longer generated. They were
+  lossy, went stale on the next commit, and duplicated what the engine serves live.
+
 ## [3.0.0] - 2026-06-14
 
 ### Added

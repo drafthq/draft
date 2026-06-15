@@ -172,7 +172,7 @@ Initialize a Draft project for Context-Driven Development.
 
 ## Graph Fidelity & Diagram-First Priority (MANDATORY)
 
-The knowledge graph in `draft/graph/` (architecture.json with packages, languages, routes, and fan-in/out; hotspots.jsonl) is the **deterministic structural ground truth** for the system's actual architecture.
+The knowledge graph — served live by the local `codebase-memory-mcp` engine (packages, languages, routes, fan-in/out, hotspots) and queried via the `graph-*.sh` wrappers — is the **deterministic structural ground truth** for the system's actual architecture. Draft is engine-only: `draft/graph/` holds only the `schema.yaml` gate marker; all graph data comes from live queries.
 
 **You are running inside a powerful agentic coding environment** (Cursor, Claude Code, Copilot, Windsurf, etc.) that maintains its own rich, continuously updated index of the entire codebase. **Use that indexed knowledge aggressively** in addition to the explicit graph data and direct source reads. Your environment's index often captures higher-level intent, naming patterns, cross-file workflows, and architectural signals that the static graph may not fully express yet. Combine both sources:
 - Graph = authoritative modules, edges, public surfaces, hotspots, call relationships.
@@ -619,9 +619,9 @@ else
 fi
 ```
 
-- **Root init** writes `<root>/draft/graph/` — the committed, git-tracked whole-repo memory.
+- **Root init** writes `<root>/draft/graph/schema.yaml` — the committed gate marker. Draft is engine-only: graph data is served live by the engine, never committed.
 - **Module init** also writes `draft/graph/root-link.json` (module→root); follow `root_graph` for cross-module understanding. The root spine is rebuilt first so the link is live.
-- Only `draft/graph/` is committed. The engine's `~/.cache` index is a disposable accelerator — never commit it; it rebuilds deterministically from source.
+- Only `schema.yaml` (and `root-link.json` in a module) is committed. The engine's `~/.cache` index is the live structural store — never commit it; it rebuilds deterministically from source.
 
 Optionally record which engine was selected (usage-report contract):
 
@@ -631,15 +631,20 @@ scripts/tools/verify-graph-binary.sh --repo . --json 2>/dev/null || true
 
 See `core/shared/graph-query.md` and `bin/README.md` for the query contract and engine resolution.
 
-If the build succeeds, `draft/graph/` is populated and later steps consume the always-load artifacts + injection slots.
+If indexing succeeds, `draft/graph/schema.yaml` is written and later steps query the engine live for structure + populate the injection slots.
 
-### 2. If graph build succeeds, load the always-load artifacts
+### 2. If indexing succeeds, query the engine for structural context
 
-Read these files to get structural context for all subsequent phases:
-- `draft/graph/schema.yaml` — module count, file count, edge count, language stats per module
-- `draft/graph/architecture.json` — module list (`.packages`) with fan-in/out
-- `draft/graph/architecture.json` `.routes` — detected service endpoints
-- `draft/graph/hotspots.jsonl` — all complexity hotspots (files ranked by lines + fanIn * 50)
+Pull the architecture view once and reuse it across phases:
+
+```bash
+ARCH=$(scripts/tools/graph-arch.sh --repo .)
+```
+
+- `$ARCH | jq '.packages'` — module list with fan-in/out
+- `$ARCH | jq '.routes'` — detected service endpoints
+- `$ARCH | jq '.languages, .node_labels, .layers, .boundaries'` — language mix, node shape, layering
+- `scripts/tools/hotspot-rank.sh --repo . --top 20` — complexity/fan-in hotspots (live)
 
 ### 3. Use graph data to accelerate Step 1.5
 
@@ -653,10 +658,10 @@ Read these files to get structural context for all subsequent phases:
 ### 4. Compute codebase tier and module priority
 
 **Step 1.4.5 — Compute Codebase Tier:**
-Read `draft/graph/schema.yaml`. Extract:
-- `M = stats.modules`
-- `F = stats.go_functions + stats.py_functions`
-- `P = stats.proto_rpcs`
+From the live `$ARCH` (above), extract:
+- `M = $ARCH | jq '.packages | length'` (modules)
+- `F = $ARCH | jq '[.node_labels[] | select(.label=="Function" or .label=="Method") | .count] | add // 0'` (functions+methods)
+- `P = $ARCH | jq '.routes | length'` (routes / RPCs)
 
 Apply tier table:
 
@@ -671,8 +676,8 @@ Apply tier table:
 Hold tier in memory. This governs: architecture.md length minimum, .ai-context.md budget, and module deep-dive depth.
 
 **Step 1.4.6 — Build Module Priority List:**
-From `draft/graph/hotspots.jsonl`: count hotspot files per module (group by `module` field).
-From `draft/graph/architecture.json` `.packages[]`: read `fan_in` per module.
+From `scripts/tools/hotspot-rank.sh --repo .`: count hotspot symbols per module.
+From `$ARCH | jq '.packages[]'`: read `fan_in` per module.
 Rank modules by: `(hotspot_count × 2) + fan_in_count`.
 Top-ranked modules drive Section 6 deep-dive ordering and depth. Modules ranked zero on both: summary treatment only.
 Hold ranked list in memory — it replaces directory scanning for module discovery.
@@ -692,7 +697,7 @@ The tool emits a ready-to-inject ` ```mermaid ``` ` block (or an empty stub on e
 ```
 
 For Section 20 (hotspots slot):
-Read `draft/graph/hotspots.jsonl` (or run `scripts/tools/hotspot-rank.sh --repo . --top 10`), take the top 10 by fanIn, build a markdown table:
+Run `scripts/tools/hotspot-rank.sh --repo . --top 10`, take the top 10 by fanIn, build a markdown table:
 ```
 <!-- GRAPH:hotspots:START -->
 | Symbol | fanIn |
@@ -751,7 +756,7 @@ Perform a **one-time, exhaustive analysis** of the existing codebase. This is NO
 
 If the codebase is large (200+ files), focus on the module boundaries but still enumerate exhaustively within each module.
 
-> **Large codebase guardrail:** If the codebase exceeds 500 source files, limit Section 7 deep dives to the top 20 most-imported modules and summarize others in a table. Rank modules by the number of unique files that import/reference them (descending) — use `draft/graph/architecture.json` `.packages[].fan_in` if graph data is available. For dynamic languages where static import counting is impractical, rank by file count within each module directory (larger modules first). **Even for summarized modules, enumerate immediate sub-directories with file counts** (one-line per sub-dir) — this is cheap with graph data and provides essential navigation context.
+> **Large codebase guardrail:** If the codebase exceeds 500 source files, limit Section 7 deep dives to the top 20 most-imported modules and summarize others in a table. Rank modules by the number of unique files that import/reference them (descending) — use the engine's `.packages[].fan_in` (`get_architecture`, captured as `$ARCH` in Step 1.4.2) if the engine is available. For dynamic languages where static import counting is impractical, rank by file count within each module directory (larger modules first). **Even for summarized modules, enumerate immediate sub-directories with file counts** (one-line per sub-dir) — this is cheap with graph data and provides essential navigation context.
 
 ### Parallel Analysis Protocol (Tiers 3–5)
 
@@ -778,16 +783,16 @@ For tier 3+, readers run simultaneously; wall clock = slowest reader, not the su
 
 #### Phase 0: Graph Data (already done in Step 1.4)
 
-The graph binary has already run. Use its output throughout this protocol:
-- `draft.tmp/graph/schema.yaml` — module list, file counts, tier metrics
-- `draft.tmp/graph/architecture.json` — `.packages[].fan_in` per module (for grouping)
-- `draft.tmp/graph/hotspots.jsonl` — top hotspot files per module (feed to readers)
+The engine is already indexed. Query it live throughout this protocol (reuse `$ARCH` from Step 1.4.2):
+- `$ARCH | jq '.packages'` — module list with `.fan_in`/`.fan_out` (for grouping)
+- `$ARCH | jq '.languages, .node_labels'` — file/symbol counts, tier metrics
+- `scripts/tools/hotspot-rank.sh --repo .` — top hotspot symbols per module (feed to readers)
 
 #### Phase 1: Spawn Parallel Module Readers
 
 **Step 1: Group modules.**
 
-From `draft.tmp/graph/architecture.json` `.packages[]`, extract all module names and their `fan_in` counts.
+From `$ARCH | jq '.packages[]'`, extract all module names and their `fan_in` counts.
 Apply dependency-aware grouping (see `core/shared/parallel-analysis.md`).
 Use the modules-per-agent count from the tier table above (4 for tier 4/5; all modules in one agent for tier 1):
 - Assign highest fan-in modules to separate readers (tier 3+)
@@ -803,7 +808,7 @@ Hotspot files:
   execution/engine.go (847 lines, fanIn=12)
   execution/router.go (412 lines, fanIn=8)
   fill_processor/handler.go (623 lines, fanIn=5)
-Module edges (from architecture.json .packages fan-in/out):
+Module edges (from $ARCH .packages fan-in/out):
   execution → [risk, data, services]
   fill_processor → [execution, persistence]
 ```
@@ -908,7 +913,7 @@ If any reader agent fails to produce valid JSON after one retry:
 When the Agent tool is unavailable or reader agents fail after retry, write `draft/architecture.md` using the **10-section graph-primary structure** (checklist above + `core/templates/architecture.md`). Do not use legacy 28-section or Pass 1/2/3 volume protocols.
 
 1. Use the ranked module list from Step 1.4.6 (graph-first — do not re-scan by directory if Phase 0 succeeded).
-2. For each top module (up to 20 by fan-in), read `draft/graph/modules/{name}.jsonl`, hotspot files, and 3–5 key sources; embed graph blocks and at least one workflow/state diagram per significant module inside §4–§8 as appropriate.
+2. For each top module (up to 20 by fan-in), query the engine for its symbols/callers (`scripts/tools/graph-callers.sh`, `graph-impact.sh`, or `$ARCH | jq '.packages[] | select(.name=="<m>")'`), read the hotspot files and 3–5 key sources; embed graph blocks and at least one workflow/state diagram per significant module inside §4–§8 as appropriate.
 3. Always include §9 Graph Coverage Gaps and §10 Relationship when the Context Audit requires them.
 4. Run Completion Verification (defined later in this skill) before condensation. Fidelity, provenance, and gap honesty block completion — not line counts.
 
@@ -1031,11 +1036,11 @@ Follow these steps in order. The specific files to look for depend on the langua
 
 #### Phase 1: Discovery (Broad Scan)
 
-1. **Map the directory tree**: Recursively list the project to understand the file layout. Note subdirectory groupings. (If Step 1.4 graph analysis succeeded, use `draft.tmp/graph/schema.yaml` module list instead — it is exhaustive and includes file counts.)
+1. **Map the directory tree**: Recursively list the project to understand the file layout. Note subdirectory groupings. (If Step 1.4 graph analysis succeeded, use the engine's `$ARCH | jq '.packages, .file_tree'` instead — it is exhaustive and includes file counts.)
 
 2. **Read build / dependency files**: These reveal the module structure, dependencies, and targets. (See language guide above for which files.)
 
-3. **Read API definition files**: These define the module's data model and service interfaces. (See language guide above for which files. If Step 1.4 succeeded, `draft.tmp/graph/architecture.json` `.routes` already has all detected service endpoints.)
+3. **Read API definition files**: These define the module's data model and service interfaces. (See language guide above for which files. If Step 1.4 succeeded, the engine's `$ARCH | jq '.routes'` already has all detected service endpoints.)
 
 4. **Read interface / type definition files**: Class declarations, interface definitions, and type annotations reveal the public API and design intent.
 
@@ -1773,22 +1778,37 @@ For **brownfield** projects, run `draft learn` (no arguments — full codebase s
 
 ## Completion
 
-**Finalize OKF bundle:** After all `draft/` files are written, run the bundle tool
-to (re)generate the Open Knowledge Format root index so the whole `draft/` tree is
-a portable, vendor-neutral OKF bundle. This is the default — no flag required.
+**Finalize the context index:** After all `draft/` files are written, author (or refresh)
+`draft/index.md` — a plain, navigable index over the context bundle. No OKF framing, no
+special frontmatter; it is a human- and agent-readable table of contents.
 
-```bash
-scripts/tools/okf-bundle.sh --dir draft   # writes the bundle-root draft/index.md
-scripts/tools/okf-check.sh  --dir draft   # OKF v0.1 conformance (advisory, non-fatal)
+Write `draft/index.md` with this structure (omit rows whose files were not generated):
+
+```md
+# <project> — Draft Context
+
+Start here. This indexes the Draft context for this repo.
+
+## Context
+- [Architecture](architecture.md) — module map, dependencies, hotspots (graph-grounded)
+- [Product](product.md) — what this system does and for whom
+- [Tech Stack](tech-stack.md) — languages, frameworks, infra
+- [Workflow](workflow.md) — how work flows through the repo
+- [Guardrails](guardrails.md) — learned conventions and anti-patterns
+- [AI Context Map](.ai-context.md) — condensed orientation for agents
+- [AI Profile](.ai-profile.md) — repo profile + tiering
+
+## Tracks
+- [Track Index](tracks.md) — active, completed, and archived tracks
+
+## Knowledge graph
+- Engine-only (`codebase-memory-mcp`). Structural data is queried live via the
+  `graph-*.sh` wrappers; `draft/graph/schema.yaml` is the gate marker. There is no
+  committed graph mirror to browse.
 ```
 
-`okf-bundle.sh` links every concept file present (`.ai-profile.md`, `.ai-context.md`,
-`architecture.md`, `product.md`, `tech-stack.md`, `workflow.md`, `guardrails.md`), the
-tracks, and the graph sub-bundle (`graph/okf/`). Concept `type:` frontmatter comes from
-the templates; `okf-check.sh` validates §9 conformance (frontmatter + `type` on every
-concept; reserved `index.md`/`log.md` structure). It is advisory — report the result,
-do not fail init. Note: operational reports later written into `draft/` (e.g.
-`deep-review-report.md`) are not OKF concepts and will be flagged.
+Keep one-line descriptions accurate to what each file actually contains. This index is
+the single committed entry point to the `draft/` bundle.
 
 **Finalize run memory:** Update `draft/.state/run-memory.json`:
 - `status`: `"completed"`
@@ -2219,13 +2239,13 @@ Only when material: authentication/authorization checkpoints, distributed transa
 
 **Core rule:** The graph is the source of truth for structure. LLM synthesis exists only to interpret the graph into actionable design understanding — primarily via one accurate workflow or state diagram per module — plus tiny supporting notes. The previous volume-oriented deep-dive expectations are superseded.
 
-For each module in `draft/graph/architecture.json` (`.packages[]`), produce a subsection whose **primary content** is the deterministic graph block followed by one synthesized behavioral diagram. Every module gets a slot; do not sample. The block's fan-in/out and node counts come from `.packages[]`; public API and key call edges come from live per-package queries (`scripts/tools/graph-callers.sh`, `graph-impact.sh`) and `hotspots.jsonl`.
+For each module returned by `scripts/tools/graph-arch.sh --repo . | jq '.packages[]'`, produce a subsection whose **primary content** is the deterministic graph block followed by one synthesized behavioral diagram. Every module gets a slot; do not sample. The block's fan-in/out and node counts come from `.packages[]`; public API and key call edges come from live per-package queries (`scripts/tools/graph-callers.sh`, `graph-impact.sh`) and `scripts/tools/hotspot-rank.sh --repo .`.
 
 #### 7.{N} {module-name}
 
 <!-- GRAPH:module-deep/{module-name}:START -->
 <!-- Rendered deterministic block: package name, node count, public API list, fan-in/fan-out (from
-     architecture.json .packages), hotspot fan-in (from hotspots.jsonl), key call edges (from
+     get_architecture .packages), hotspot fan-in (from hotspot-rank.sh), key call edges (from
      graph-callers.sh/graph-impact.sh), entry points if known. No LLM prose inside fence. -->
 <!-- GRAPH:module-deep/{module-name}:END -->
 
@@ -2244,7 +2264,7 @@ Synthesize a single, accurate Mermaid diagram (`stateDiagram-v2`, `sequenceDiagr
 
 #### Sub-Module Guidance (when graph justifies recursion)
 
-When a module has clear internal structure visible in `draft/graph/architecture.json` (`.packages` fan-in/out) or live per-package queries:
+When a module has clear internal structure visible in live engine query `get_architecture .packages` (fan-in/out) or live per-package queries:
 - Create `##### 7.X.Y {Parent}/{Child}` subsections only for children that have their own meaningful public surface or high internal fan-in.
 - Each sub-module subsection follows the same compact pattern: graph facts + **one mandatory workflow/state diagram** + ≤60 words Design Notes.
 - Do not descend further unless the child itself shows additional clear boundaries in the graph data.
@@ -2306,7 +2326,7 @@ Regardless of tier, any directory whose name contains `ops`, `handlers`, `execut
 | ... | (enumerate ALL — no sampling, no "and others") | | | |
 ```
 
-Use `draft/graph/modules/{module}.jsonl` to get the complete file list with line counts. Use `draft/graph/hotspots.jsonl` to flag high-complexity operations.
+Use `scripts/tools/graph-callers.sh --symbol <module>` or `scripts/tools/graph-arch.sh --repo .` to get the complete file list. Use `scripts/tools/hotspot-rank.sh --repo .` to flag high-complexity operations.
 
 #### Example: Full Sub-Module Treatment for `icebox/` (917 files)
 
@@ -2353,7 +2373,7 @@ stateDiagram-v2
 After writing Section 7, run these checks before proceeding. **If any check fails, STOP and fix.**
 
 **Check 1 — Graph block present and faithful for every module:**
-Every top-level module from `draft/graph/architecture.json` (`.packages`) has its `<!-- GRAPH:module-deep/...:START --> ... <!-- GRAPH:module-deep/...:END -->` fence rendered verbatim. No LLM prose inside the fence. No modules missing.
+Every top-level module from the live engine (`get_architecture .packages`) has its `<!-- GRAPH:module-deep/...:START --> ... <!-- GRAPH:module-deep/...:END -->` fence rendered verbatim. No LLM prose inside the fence. No modules missing.
 
 **Check 2 — One mandatory workflow/state diagram per module:**
 Every `#### 7.X` (and every `##### 7.X.Y` that the graph justified) contains exactly one high-signal `Primary Workflow / State` Mermaid diagram (`stateDiagram-v2`, `sequenceDiagram`, or clear `flowchart`). The diagram must reflect facts from the module's graph record (entry points, public symbols, call targets). Generic placeholder diagrams fail this check.
@@ -2457,12 +2477,13 @@ Include architecturally significant implementations (high fan-in, core extension
 |---|-----------|-------------|-------|-------------|
 | 1 | ArchiveFilesOp | `icebox/master/ops/archive_files_op.cc` | 2100 | Archives files to cloud vault |
 | 2 | CancelJobOp | `icebox/master/ops/cancel_job_op.cc` | 450 | Cancels running archive job |
-| (enumerate ALL — use graph hotspots.jsonl and per-module JSONL for file list and line counts) |
+| (enumerate ALL — use hotspot-rank.sh and graph-callers.sh / get_architecture for file list and line counts) |
 ```
 
-> **MANDATORY (graph data)**: Read `draft/graph/modules/{module}.jsonl` to get the complete file
-> list with line counts. Filter for files in operation sub-directories (paths containing `/ops/`,
-> `/handlers/`, `/executors/`, `/workers/`). Use `draft/graph/hotspots.jsonl` to flag
+> **MANDATORY (graph data)**: Query `scripts/tools/graph-arch.sh --repo .` or
+> `scripts/tools/graph-callers.sh --symbol <module>` to get the complete file list with line counts.
+> Filter for files in operation sub-directories (paths containing `/ops/`,
+> `/handlers/`, `/executors/`, `/workers/`). Use `scripts/tools/hotspot-rank.sh --repo .` to flag
 > high-complexity operations (high line count or fanIn). Do NOT skip this step — incomplete
 > catalogs cause AI agents to reinvent existing functionality.
 
@@ -3153,11 +3174,11 @@ Fix: Add actual payload descriptions on arrows, `alt`/`opt` blocks for condition
 
 **FAILURE 3 — Empty Appendices:**
 Detection: Appendix B, C, or D tables have fewer than 10 data rows.
-Fix: Cross-reference ALL data sources (Appendix B), ALL implementation outputs (Appendix C), and add 2-3 detailed sequence diagrams to Appendix D. Use graph data (`architecture.json` `.packages`/`.routes`) to enumerate exhaustively.
+Fix: Cross-reference ALL data sources (Appendix B), ALL implementation outputs (Appendix C), and add 2-3 detailed sequence diagrams to Appendix D. Use live engine queries (`get_architecture .packages`/`.routes`) to enumerate exhaustively.
 
 **FAILURE 4 — Missing Sub-Modules:**
 Detection: A module with 100+ source files (check graph data) has no Sub-Module Structure table.
-Fix: Read `draft/graph/modules/{name}.jsonl`, group files by immediate sub-directory, and generate the table with file counts and one-line role descriptions per sub-directory.
+Fix: Query `scripts/tools/graph-arch.sh --repo .` or `scripts/tools/graph-callers.sh --symbol <name>`, group results by immediate sub-directory, and generate the table with file counts and one-line role descriptions per sub-directory.
 
 **FAILURE 4b — Shallow Sub-Module Treatment:**
 Detection: Large sub-modules (50+ files) listed only as table rows with no dedicated deep-dive subsection. Or ops/handler directories have no operation catalog.
@@ -3258,7 +3279,7 @@ echo "Engine: $ENGINE"
 
 ## Step 3: Build / refresh the snapshot
 
-One call resolves the engine, indexes the repo (incrementally on refresh), and writes the committed snapshot under `<repo>/draft/graph/` — `schema.yaml`, `architecture.json`, `hotspots.jsonl`, `module-deps.mermaid`, `proto-map.mermaid`, and an Open Knowledge Format bundle under `okf/` (a portable, vendor-neutral markdown mirror of the graph — `index.md` + one cross-linked `modules/<name>.md` concept per module).
+One call resolves the engine, indexes the repo (incrementally on refresh), and updates the gate marker `<repo>/draft/graph/schema.yaml` (engine metadata + point-of-index counts; `access: engine-live`). All structural graph data is queried live from the engine — no snapshot files are committed beyond `schema.yaml`.
 
 ```bash
 scripts/tools/graph-snapshot.sh --repo "$REPO_ABS"
@@ -4162,8 +4183,8 @@ You are decomposing a project or track into modules with clear responsibilities,
 
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Module identification (Step 3) and dependency mapping (Step 4) **start from the graph**:
 
-1. Load `draft/graph/architecture.json` (`.packages`) for the authoritative module list and fan-in/out.
-2. Load `draft/graph/hotspots.jsonl` to identify candidate modules to split.
+1. Query `scripts/tools/graph-arch.sh --repo .` for the authoritative module list and fan-in/out.
+2. Run `scripts/tools/hotspot-rank.sh --repo .` to identify candidate modules to split.
 3. Use `scripts/tools/graph-callers.sh`/`graph-impact.sh` on demand for symbols/callers inside a candidate module.
 4. Run `scripts/tools/cycle-detect.sh --repo .` to enumerate existing cycles before proposing new boundaries.
 
@@ -4307,10 +4328,10 @@ ls -d src/*/ lib/*/ app/*/ packages/*/ 2>/dev/null
 
 When graph data is available, the graph is the **primary** (not optional) source for module discovery — manual scanning above is reserved for the graph-miss fallback path:
 
-- **Module boundaries**: Read `draft/graph/architecture.json` (`.packages`, `.languages`) — module list with node counts and per-language file counts
+- **Module boundaries**: Query `scripts/tools/graph-arch.sh --repo .` — module list with node counts and per-language file counts
 - **Dependency edges**: Weighted inter-module dependencies with exact include counts — replaces manual import tracing
 - **Cycle detection**: Circular dependency paths already computed — use for identifying tight coupling and decomposition candidates
-- **Hotspots**: Load `draft/graph/hotspots.jsonl` — high-complexity files that may need further decomposition
+- **Hotspots**: Run `scripts/tools/hotspot-rank.sh --repo .` — high-complexity files that may need further decomposition
 - **Per-module detail**: query `scripts/tools/graph-callers.sh`/`graph-impact.sh` for symbol/call detail within modules of interest
 
 This data is deterministic and exhaustive. The manual scanning recipes above only run **after** the graph misses on the concept the user named — and the miss must be reported in the Graph Usage Report footer. See [core/shared/graph-query.md](../../core/shared/graph-query.md) §Concept-to-Files Recipe.
@@ -4766,7 +4787,7 @@ When decomposition involves breaking a monolith, choosing module boundaries, or 
 
 Before printing the completion announcement, internally verify and report:
 
-1. **Graph files queried** — which JSONL files were loaded (e.g. `architecture.json, hotspots.jsonl` and tools like `cycle-detect.sh`).
+1. **Graph data queried** — which live-engine tools were invoked (e.g. `get_architecture`, `hotspot-rank.sh`, `cycle-detect.sh`).
 2. **Layer 1 files deliberately skipped** — list any `.ai-context.md` sections, `tech-stack.md`, `product.md`, `workflow.md` you skipped as irrelevant to this decomposition. Be explicit; do not silently skip.
 3. **Filesystem grep fallback justification** — for every `grep`/`find` run, state the concept it searched for and quote the graph-miss sentence.
 4. **Citation Gate audit** — scan every Citation column in the generated component table, dependencies table, and LLD class table. Report:
@@ -4940,7 +4961,7 @@ If one of these applies, route directly to the specialist workflow and stop this
    - Keep matching invariants as **active constraints** for this task — these govern code generation, not just review
    - If invariants reference lock ordering, fail-closed behavior, or data integrity rules: these are non-negotiable during implementation
 9. **Load graph context** (if `draft/graph/schema.yaml` exists):
-   - Read `draft/graph/hotspots.jsonl` — check if any files this task will modify appear as hotspots
+   - Run `scripts/tools/hotspot-rank.sh --repo .` — check if any files this task will modify appear as hotspots
    - If modifying a hotspot file (high fanIn), warn: "This task modifies {file} (fanIn={N}). Changes here affect many downstream files. Consider running a graph impact query."
    - Query `scripts/tools/graph-impact.sh`/`graph-callers.sh` for the module(s) being modified — gives file-level dependency context
    - See `core/shared/graph-query.md` for on-demand query subroutines (callers, impact)
@@ -5949,8 +5970,8 @@ You are generating a pre-deployment verification checklist customized to this pr
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Use the graph to validate module boundaries before the deploy:
 
 1. For each file in the deploy diff, run `scripts/tools/graph-impact.sh --repo . --file <path>` to enumerate the modules affected — flag any module **not** declared in `hld.md` §Detailed Design as a deployment-scope miss.
-2. Run `scripts/tools/cycle-detect.sh --repo .` (and read `draft/graph/architecture.json` for the module overview) to ensure no fresh cycles were introduced after HLD sign-off.
-3. Load `draft/graph/hotspots.jsonl` — any hotspot in the diff escalates the Resiliency row of Phase 0.
+2. Run `scripts/tools/cycle-detect.sh --repo .` (and query `scripts/tools/graph-arch.sh --repo .` for the module overview) to ensure no fresh cycles were introduced after HLD sign-off.
+3. Run `scripts/tools/hotspot-rank.sh --repo .` — any hotspot in the diff escalates the Resiliency row of Phase 0.
 
 Filesystem `grep` is reserved for source-text scans (migration file names, flag-key strings). Module/impact discovery goes through the graph.
 
@@ -6259,7 +6280,7 @@ Read and follow the base procedure in `core/shared/draft-context-loading.md`.
 - **Leverage Storage Topology** — Identify data loss risks at each tier (cache eviction without writeback, event log gaps, missing archive)
 - **Leverage Consistency Boundaries** — Find bugs at eventual consistency seams (stale reads, lost events, missing reconciliation)
 - **Leverage Failure Recovery Matrix** — Verify idempotency claims, check for partial failure states without recovery paths
-- **Leverage Graph Data** (if `draft/graph/` exists) — Read `architecture.json` (`.packages`) for dependency awareness. Flag dependencies on unexpected modules. Flag code in modules involved in dependency cycles as higher risk. Use `hotspots.jsonl` to prioritize analysis of high-complexity, high-fanIn files. See `core/shared/graph-query.md`.
+- **Leverage Graph Data** (if `draft/graph/` exists) — Query `scripts/tools/graph-arch.sh --repo .` for dependency awareness. Flag dependencies on unexpected modules. Flag code in modules involved in dependency cycles as higher risk. Run `scripts/tools/hotspot-rank.sh --repo .` to prioritize analysis of high-complexity, high-fanIn files. See `core/shared/graph-query.md`.
 - **Leverage Learned Anti-Patterns** — If `draft/guardrails.md` exists, read the `## Learned Anti-Patterns` section. During the bug sweep, when a bug matches a learned anti-pattern, prefix the report entry with `[KNOWN-ANTI-PATTERN: {pattern name}]`. This distinguishes recurring documented patterns from newly discovered bugs, and signals that a systemic fix may be needed rather than a one-off patch.
 
 ### 2. Confirm Scope
@@ -7283,7 +7304,7 @@ You are conducting a code review using Draft's Context-Driven Development method
 
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Stage 1 (Automated Validation) **starts from the graph**:
 
-1. Run blast-radius assessment from `draft/graph/hotspots.jsonl` and `scripts/tools/graph-impact.sh` (see Stage 1).
+1. Run blast-radius assessment via `scripts/tools/hotspot-rank.sh --repo .` and `scripts/tools/graph-impact.sh` (see Stage 1).
 2. For each changed file with non-trivial diff size, run `scripts/tools/graph-impact.sh --repo . --file <path>` to obtain the affected module set deterministically.
 3. For each public symbol modified, run `scripts/tools/graph-callers.sh --repo . --symbol <name>` to enumerate downstream callers before judging breaking-change severity.
 
@@ -7642,18 +7663,18 @@ For the files changed in the diff, perform static checks using `grep` or similar
 
 - **Blast Radius Assessment** (if the `draft/graph/` snapshot exists):
    - List all changed files from the diff
-   - For each changed file, check if it appears in `hotspots.jsonl` — if yes, record its `fanIn` value
-   - Classify: files with fanIn in the top 20% of the hotspots list = **HIGH IMPACT**; top 21–50% = **MEDIUM**; below 50% or not in list = **STANDARD**
-   - For any file in a HIGH or MEDIUM module, check `architecture.json` `.packages[].fan_in` (how many modules depend on this module)
+   - For each changed file, check if it appears in `scripts/tools/hotspot-rank.sh --repo .` output — if yes, record its `fanIn` value
+   - Classify: files with fanIn in the top 20% of the hotspot output = **HIGH IMPACT**; top 21–50% = **MEDIUM**; below 50% or not in output = **STANDARD**
+   - For any file in a HIGH or MEDIUM module, query `scripts/tools/graph-arch.sh --repo . | jq '.packages[].fan_in'` (how many modules depend on this module)
    - Include a `Blast Radius` line in the Stage 1 report summary: `Blast Radius: HIGH | MEDIUM | STANDARD — <N> changed files affect high-fanIn modules: [file list]`
    - If any changed file is HIGH IMPACT: escalate Stage 3 thoroughness (check all callers of changed functions) and note this in the report header
 - **Architecture Conformance:** Search for pattern violations documented in `draft/.ai-context.md`. (e.g. `import * from 'database'` in a React component).
 - **Dead Code:** Check for newly exported functions/classes in the diff that have 0 references across the codebase.
 - **Dependency Cycles:** Trace the import chains for new imports to ensure no circular dependencies (e.g., A → B → C → A) are introduced.
-- **Graph Boundary Check** (if `draft/graph/architecture.json` exists) `[RC-013]`:
+- **Graph Boundary Check** (if `draft/graph/schema.yaml` exists) `[RC-013]`:
    - For each changed file, identify its module from the graph
    - Check if any new cross-module includes were added in the diff
-   - Verify they follow the established dependency direction from `architecture.json` package fan-in/out
+   - Verify they follow the established dependency direction from `scripts/tools/graph-arch.sh --repo .` package fan-in/out
    - Flag reverse-direction dependencies (module A now depends on module B, but only B→A existed before) as "Potential architecture violation — new dependency direction"
    - Check if changes introduce files in modules listed in graph cycles — flag as higher risk
 - **Security Scan** `[RC-001, RC-002, RC-003, RC-011]`:
@@ -8347,7 +8368,7 @@ If Jira ticket linked, sync via `core/shared/jira-sync.md`:
 
 Before printing the final verdict, internally verify and report:
 
-1. **Graph files queried** — which JSONL files were loaded (e.g. `architecture.json, hotspots.jsonl`) plus any live graph query-tool invocations (impact, callers, cycles).
+1. **Graph data queried** — which live-engine tools were invoked (e.g. `get_architecture`, `hotspot-rank.sh`, `graph-impact.sh`, `graph-callers.sh`, `cycle-detect.sh`).
 2. **Layer 1 files deliberately skipped** — list any context sections skipped as irrelevant to the diff under review.
 3. **Filesystem grep fallback justification** — for every `grep`/`find` run, state the concept it searched for. Source-text scans (string literals, regex matches in code) are exempt — they are not symbol/file discovery.
 
@@ -10690,7 +10711,7 @@ You are performing a lightweight, ad-hoc code review. This is the fast alternati
 
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Quick-review keeps the graph load light:
 
-1. Always check `draft/graph/hotspots.jsonl` for every changed file (Step 2 blast-radius pre-check below).
+1. Always run `scripts/tools/hotspot-rank.sh --repo .` for every changed file (Step 2 blast-radius pre-check below).
 2. If a finding spans more than one file, run `scripts/tools/graph-callers.sh --repo . --symbol <name>` to enumerate the call sites before claiming "no other usages".
 
 Filesystem `grep` is reserved for source-text scans (literal strings, regex patterns). Symbol and caller discovery go through the graph.
@@ -10747,9 +10768,9 @@ Determine the diff to review:
 3. If commit range: `git diff <range>`
 4. Default: `git diff HEAD~1..HEAD` (last commit)
 
-## Step 2: Blast Radius Pre-check (if `draft/graph/hotspots.jsonl` exists)
+## Step 2: Blast Radius Pre-check (if `draft/graph/schema.yaml` exists)
 
-Before the four-dimension review, check if any files in scope appear in `draft/graph/hotspots.jsonl`. If any file has a `fanIn` in the top 20% of the list, add this warning at the top of the review report:
+Before the four-dimension review, run `scripts/tools/hotspot-rank.sh --repo .` and check if any files in scope appear in the output. If any file has a `fanIn` in the top 20% of the list, add this warning at the top of the review report:
 
 ```
 ⚠ HIGH IMPACT: {file} is a high-fanIn hotspot (fanIn={N}). Changes here propagate to many callers — review with extra care.
@@ -10906,10 +10927,10 @@ Perform an exhaustive end-to-end lifecycle review of a service, component, or mo
 
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Deep-review uses the graph to **narrow review scope** — a key 30–50% scope reduction:
 
-1. Use `scripts/tools/graph-impact.sh`/`graph-callers.sh` and `architecture.json` for the audited module's structure — do not enumerate via `find`.
+1. Use `scripts/tools/graph-impact.sh`/`graph-callers.sh` and `scripts/tools/graph-arch.sh --repo .` for the audited module's structure — do not enumerate via `find`.
 2. Run `scripts/tools/graph-impact.sh --repo . --file <each-changed-file>` per file in the diff (or per file in the module if no diff) to obtain the affected module set deterministically.
 3. Run `scripts/tools/cycle-detect.sh --repo .` and flag any cycle that includes the audited module as Architecture Resilience finding.
-4. Cross-check `draft/graph/hotspots.jsonl` to identify high-fanIn files inside the module — these get deeper inspection.
+4. Run `scripts/tools/hotspot-rank.sh --repo .` to identify high-fanIn files inside the module — these get deeper inspection.
 
 Filesystem `grep` is reserved for source-text scans (API contract strings, secret patterns, log message audits). Module enumeration and caller tracing go through the graph.
 
@@ -11427,8 +11448,8 @@ Scan the codebase to discover recurring coding patterns and update `draft/guardr
 
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Use the graph to:
 
-1. Enumerate a module's symbols/files via `scripts/tools/graph-callers.sh`/`graph-impact.sh` and `architecture.json` (preferred over `find`).
-2. Prioritize hotspots from `draft/graph/hotspots.jsonl` — patterns in high-fanIn files are more impactful when learned.
+1. Enumerate a module's symbols/files via `scripts/tools/graph-callers.sh`/`graph-impact.sh` and `scripts/tools/graph-arch.sh --repo .` (preferred over `find`).
+2. Prioritize hotspots via `scripts/tools/hotspot-rank.sh --repo .` — patterns in high-fanIn files are more impactful when learned.
 3. For TS/Python/Go/C/C++, use `*-index.jsonl` to identify class/function definitions rather than re-discovering them via regex.
 
 Filesystem `find` for source discovery (Step 2.1) is permitted **as a complement** to the graph for languages not covered by indexes (e.g. Ruby, Java without ctags). Record the rationale in the Graph Usage Report.
@@ -11662,15 +11683,15 @@ git log --follow --oneline -1 -- {file_containing_pattern}
 
 ### 2.7: Graph-Aware Severity Enrichment
 
-If `draft/graph/hotspots.jsonl` exists, derive objective severity for all anti-pattern candidates based on the fanIn of files where the pattern was found.
+If `draft/graph/schema.yaml` exists (engine live), derive objective severity for all anti-pattern candidates based on the fanIn of files where the pattern was found via `scripts/tools/hotspot-rank.sh --repo .`.
 
 For each anti-pattern candidate from Step 2.2:
-1. Check if any evidence files appear in `draft/graph/hotspots.jsonl`
+1. Check if any evidence files appear in the hotspot output from `scripts/tools/hotspot-rank.sh --repo .`
 2. Take the highest fanIn value across all evidence files:
    - fanIn ≥ 10 → `graph_severity: critical` (breakage propagates to many callers)
    - fanIn 5–9 → `graph_severity: high`
    - fanIn 1–4 → `graph_severity: medium`
-   - fanIn 0 or file not in hotspots.jsonl → `graph_severity: low`
+   - fanIn 0 or file not in hotspot output → `graph_severity: low`
 3. If no graph data exists → `graph_severity: unresolved`
 
 Collect all evidence files with fanIn ≥ 5 for the `high_fanin_files` field.
@@ -12279,10 +12300,10 @@ You are conducting a structured debugging session following systematic investiga
 
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. During Steps 3–4 (Isolate, Diagnose):
 
-1. Locate the suspect file's module via `draft/graph/architecture.json` (`.packages`) before tracing data flow.
+1. Locate the suspect file's module via `scripts/tools/graph-arch.sh --repo .` before tracing data flow.
 2. Use `scripts/tools/graph-callers.sh --repo . --symbol <fn>` to enumerate call sites of suspect functions — not `grep`.
 3. Use `scripts/tools/graph-impact.sh --repo . --file <path>` to size the blast radius before proposing a fix.
-4. Cross-check `draft/graph/hotspots.jsonl` to know whether the file is high-fanIn (any fix needs extra caution).
+4. Run `scripts/tools/hotspot-rank.sh --repo .` to know whether the file is high-fanIn (any fix needs extra caution).
 
 Filesystem `grep` is reserved for source-text scans (literal error strings, stack-trace symbols when the graph misses). Use the fallback sentence on graph miss.
 
@@ -12330,7 +12351,7 @@ Key context for debugging:
 - `.ai-context.md` — Module boundaries, data flows, invariants (crucial for tracing)
 - `tech-stack.md` — Language-specific debugging tools and techniques
 - `guardrails.md` — Known anti-patterns that may be causing the issue
-- `draft/graph/` (MANDATORY when present) — Load `architecture.json` for dependency/module context and `hotspots.jsonl` for complexity awareness. Use `scripts/tools/graph-callers.sh --repo . --symbol <fn>` to find all callers, and `scripts/tools/graph-impact.sh --repo . --file <path>` to size blast radius before any fix. See [core/shared/graph-query.md](../../core/shared/graph-query.md).
+- `draft/graph/` (MANDATORY when present) — Query `scripts/tools/graph-arch.sh --repo .` for dependency/module context and `scripts/tools/hotspot-rank.sh --repo .` for complexity awareness. Use `scripts/tools/graph-callers.sh --repo . --symbol <fn>` to find all callers, and `scripts/tools/graph-impact.sh --repo . --file <path>` to size blast radius before any fix. See [core/shared/graph-query.md](../../core/shared/graph-query.md).
 
 ## Step 1: Parse Arguments
 
@@ -12663,8 +12684,8 @@ You are conducting a technical debt analysis to catalog, prioritize, and plan re
 
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Tech-debt prioritization is fundamentally driven by graph data:
 
-1. Load `draft/graph/hotspots.jsonl` — **rank candidates by `fanIn × complexity`** to surface high-leverage debt first.
-2. Read `draft/graph/architecture.json` (`.packages`) and run `scripts/tools/cycle-detect.sh --repo .` — flag debt in modules involved in cycles as higher priority.
+1. Run `scripts/tools/hotspot-rank.sh --repo .` — **rank candidates by `fanIn × complexity`** to surface high-leverage debt first.
+2. Query `scripts/tools/graph-arch.sh --repo .` and run `scripts/tools/cycle-detect.sh --repo .` — flag debt in modules involved in cycles as higher priority.
 3. Run `scripts/tools/cycle-detect.sh --repo .` to enumerate dependency cycles — every cycle is a candidate architecture-debt entry.
 4. For each catalogued finding, run `scripts/tools/graph-impact.sh --repo . --file <path>` so the remediation plan includes blast-radius.
 
@@ -15787,13 +15808,9 @@ If `draft/graph/schema.yaml` exists, the project has automated graph analysis da
 
 | File | Purpose | Content |
 |------|---------|---------|
-| `draft/graph/schema.yaml` | Snapshot metadata (engine, project, node/edge counts) | YAML, ~15 lines |
-| `draft/graph/architecture.json` | Node labels, edge types, languages, packages (fan-in/out), entry points, routes, hotspots | JSON |
-| `draft/graph/hotspots.jsonl` | Fan-in-ranked symbols, one object per line: `{id, name, fanIn}` | JSONL |
+| `draft/graph/schema.yaml` | Gate marker (engine + project metadata + point-of-index counts); presence gates graph use | YAML, ~15 lines |
 
-The snapshot also includes `draft/graph/okf/` — an Open Knowledge Format v0.1 bundle (`index.md` + `modules/*.md`) emitted by default. It is a portable mirror of the graph, not an always-load target.
-
-Note: `.ai-context.md` embeds a condensed graph summary (`GRAPH:MODULES`, `GRAPH:HOTSPOTS`, `GRAPH:CYCLES`) for first-pass structural ground truth. `architecture.json` is authoritative for deep structure.
+Note: `.ai-context.md` embeds a condensed graph summary (`GRAPH:MODULES`, `GRAPH:HOTSPOTS`, `GRAPH:CYCLES`) for first-pass structural ground truth. Deep structural data is queried live from the engine (see Live structural queries below).
 
 Note: The canonical embedded mermaid diagrams are in architecture.md injection slots (`<!-- GRAPH:module-deps:START/END -->`, `<!-- GRAPH:proto-map:START/END -->`), refreshed by `draft:init`. For current data, regenerate via `scripts/tools/mermaid-from-graph.sh`.
 
@@ -15867,12 +15884,12 @@ Do NOT apply relevance scoring for commands that need full context (`draft init`
 | `## FILES` | Always (need file locations) |
 | `## VOCAB` | Domain-specific tasks |
 
-3. **Score graph files** (if `draft/graph/` exists) against the task concepts:
+3. **Score graph queries** (if `draft/graph/schema.yaml` exists) against the task concepts:
 
 | Graph source | Use When Task Involves... |
 |------------|--------------------------|
-| `architecture.json` | Module boundary changes, cross-module work, architecture analysis, API/route surface |
-| `hotspots.jsonl` | Performance work, refactoring, changes to high-fanIn symbols |
+| `scripts/tools/graph-arch.sh --repo .` | Module boundary changes, cross-module work, architecture analysis, API/route surface |
+| `scripts/tools/hotspot-rank.sh --repo .` | Performance work, refactoring, changes to high-fanIn symbols |
 | `scripts/tools/graph-callers.sh --symbol <name>` | Enumerating callers before a change |
 | `scripts/tools/graph-impact.sh --file <path>` / `--symbol <name>` | Tracing call paths, root cause analysis, function-level impact |
 | `scripts/tools/cycle-detect.sh` | Checking for call cycles |
@@ -16233,11 +16250,11 @@ Append under `## Learned Anti-Patterns`:
 - **Suggested fix:** [Brief description of the correct approach]
 ```
 
-`graph_severity` derivation rules (from `draft/graph/hotspots.jsonl` fanIn values):
+`graph_severity` derivation rules (from live hotspot query `scripts/tools/hotspot-rank.sh --repo .` fanIn values):
 - fanIn ≥ 10 in any evidence file → `critical`
 - fanIn 5–9 → `high`
 - fanIn 1–4 → `medium`
-- fanIn 0 or file not in hotspots.jsonl → `low`
+- fanIn 0 or file not returned by hotspot query → `low`
 - Graph data absent → `unresolved`
 
 When `graph_severity` differs from `severity`, use `graph_severity` as the enforcement priority — it is objective and graph-derived.
@@ -16367,16 +16384,16 @@ Transform each `architecture.md` section into machine-optimized format using thi
 
 #### Step 3.5: Generate Graph Summary Sections
 
-If `draft/graph/schema.yaml` exists, generate these sections from the snapshot (`draft/graph/architecture.json`, `draft/graph/hotspots.jsonl`) and the live query tools:
+If `draft/graph/schema.yaml` exists, generate these sections via live engine queries.
 
 **GRAPH:MODULES** (tier ≥ 2 only):
-- Read `draft/graph/architecture.json` → `.packages[]` (each has `name`, `node_count`, `fan_in`, `fan_out`)
+- Query: `scripts/tools/graph-arch.sh --repo . | jq '.packages[]'` (each has `name`, `node_count`, `fan_in`, `fan_out`)
 - Format: `{name}|{node_count} nodes|fan_in:{fan_in} fan_out:{fan_out}`
 - Order by `node_count` descending
 - Omit this section entirely for tier-1 codebases (≤5 modules) where Component Graph is sufficient
 
 **GRAPH:HOTSPOTS** (all tiers):
-- Read `draft/graph/hotspots.jsonl` (already fan-in-ranked), take top 10
+- Query: `scripts/tools/hotspot-rank.sh --repo . --top 10`; take top 10 results
 - Format: `{name}|fanIn:{fanIn}` (use `id` for disambiguation when names collide)
 - Always include regardless of tier
 
@@ -16387,20 +16404,20 @@ If `draft/graph/schema.yaml` exists, generate these sections from the snapshot (
 - Always include — absence is positive signal that the call graph is acyclic
 
 **GRAPH:MODULE-HOTSPOTS** (tier ≥ 3 only):
-- Read `draft/graph/hotspots.jsonl`; group by the package segment of each `id` (the qualified name minus the leaf symbol)
+- Query: `scripts/tools/hotspot-rank.sh --repo .`; group results by the package segment of each `id` (the qualified name minus the leaf symbol)
 - For each module: take its top 3 symbols by `fanIn`, format as indented lines under the module name
 - Format: `{module}: {name}|fanIn:{N}` with subsequent symbols indented to align
 - Order modules by their highest-fanIn symbol, descending
 - Omit modules with no hotspot entries; omit entire section for tier 1–2 (covered by global GRAPH:HOTSPOTS)
 
 **GRAPH:FAN-IN** (tier ≥ 3 only):
-- Read `architecture.json` → `.packages[]`, use the `fan_in` field per module
+- Query: `scripts/tools/graph-arch.sh --repo . | jq '.packages[]'`, use the `fan_in` field per module
 - Format: `{name}|fanIn:{fan_in}|fanOut:{fan_out}`
 - Order by `fan_in` descending; include only modules with `fan_in ≥ 2`; cap at 15 rows
 - Omit entire section for tier 1–2 (trivially small graph)
 
-**GRAPH:PROTO-MAP** (only when `architecture.json` `.routes` is non-empty):
-- Read `architecture.json` → `.routes[]` (each has `method`, `path`, `handler`)
+**GRAPH:PROTO-MAP** (only when routes are non-empty):
+- Query: `scripts/tools/graph-arch.sh --repo . | jq '.routes[]'` (each has `method`, `path`, `handler`)
 - Format: `{method} {path} → {handler}`
 - One line per route
 - Omit entire section if `.routes` is empty — do not write an empty section
@@ -16447,7 +16464,7 @@ Before writing `draft/.ai-context.md`, verify:
 - [ ] GRAPH:CYCLES present ("None ✓" or cycle list; or note if graph absent)
 - [ ] GRAPH:MODULE-HOTSPOTS present for tier ≥ 3 (or note if no hotspot data)
 - [ ] GRAPH:FAN-IN present for tier ≥ 3
-- [ ] GRAPH:PROTO-MAP present when `stats.proto_rpcs > 0` (omit entirely if no protos)
+- [ ] GRAPH:PROTO-MAP present when engine reports non-empty routes (omit entirely if no protos)
 - [ ] YAML frontmatter metadata is present at the top
 
 #### Step 7: Write Output
@@ -16837,7 +16854,7 @@ Referenced by: `draft init`, `draft implement`, `draft bughunt`, `draft review`,
 
 Any code-touching skill that needs to discover files, modules, symbols, callers, or blast-radius **MUST** follow this lookup order whenever `draft/graph/schema.yaml` exists:
 
-1. **Graph first** — the committed snapshot (`architecture.json`, `hotspots.jsonl`) and the live query tools (`scripts/tools/graph-callers.sh`, `graph-impact.sh`, `cycle-detect.sh`, `hotspot-rank.sh`).
+1. **Graph first** — live engine queries via the query tools (`scripts/tools/graph-callers.sh`, `graph-impact.sh`, `cycle-detect.sh`, `hotspot-rank.sh`, `mermaid-from-graph.sh`), which drive the local `codebase-memory-mcp` engine on demand. Draft is **engine-only**: there is no committed machine-readable graph to read — `draft/graph/` holds only `schema.yaml` (the gate marker).
 2. **Generated context second** — `draft/.ai-context.md`, relevant `draft/architecture.md` slices, track-level `hld.md`/`lld.md`.
 3. **Source file reads third** — narrow via tiers 1–2, then **Read** the candidate files. Reading is **not optional**: see §Ground-Truth Discipline below.
 4. **Filesystem `grep`/`find`/`rg` last** — only after an explicit graph miss.
@@ -16882,10 +16899,10 @@ A single "no" / "list" answer is a halt — fix and re-check before output.
 
 Use this recipe whenever the user names a concept, feature, or domain term ("in-memory shuffle", "auth flow", "ingest pipeline") and you need to locate the implementing files. **Run it before any filesystem search.**
 
-1. **Concept → modules** — `grep` the concept token against `draft/graph/architecture.json` (`.packages[].name`) and `draft/.ai-context.md` (module headings). Record the candidate module list.
+1. **Concept → modules** — query the engine for the package list (`scripts/tools/graph-arch.sh --repo . | jq -r '.packages[].name'`) and cross-reference `draft/.ai-context.md` (module headings). Record the candidate module list.
 2. **Concept → symbols/callers** — for a named function, run `scripts/tools/graph-callers.sh --repo . --symbol <name>` to find call sites, and `scripts/tools/graph-impact.sh --repo . --symbol <name>` for transitive dependents. These are the authoritative structural answers.
-3. **Modules → risk ranking** — cross-reference `draft/graph/hotspots.jsonl` (or `scripts/tools/hotspot-rank.sh`). High-fanIn symbols are the most likely entry points for impact.
-4. **Concept → public API** — for API-shaped concepts, consult `architecture.json` `.routes` (detected HTTP/gRPC/GraphQL routes) for matching service surface.
+3. **Modules → risk ranking** — rank with `scripts/tools/hotspot-rank.sh --repo . [--top N]`. High-fanIn symbols are the most likely entry points for impact.
+4. **Concept → public API** — for API-shaped concepts, read the engine's `.routes` (`get_architecture` output, detected HTTP/gRPC/GraphQL routes) for matching service surface.
 5. **Graph miss → grep fallback** — only if steps 1–4 return nothing relevant, emit the fallback sentence and use `grep`/`find`. Narrow the search by file extension and exclude `node_modules`, `vendor`, `dist`, `build`, `.git`.
 
 ## Graph Usage Report (Mandatory Footer)
@@ -16895,7 +16912,7 @@ Every code-touching skill output MUST end with this footer block. The lint check
 ```md
 ## Graph Usage Report
 
-- Graph files queried: <comma-separated list, e.g. `architecture.json, hotspots.jsonl` and/or query tools like `graph-callers.sh` — or `NONE` with justification below>
+- Graph files queried: <comma-separated list of query tools invoked, e.g. `graph-callers.sh, hotspot-rank.sh` — or `NONE` with justification below>
 - Modules identified via graph: <comma-separated module names, or `none`>
 - Files identified via graph: <integer count>
 - Filesystem grep fallbacks: <list of `<pattern>` searches with one-line justification each, or `none`>
@@ -16933,7 +16950,7 @@ DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
 | `bash "$DRAFT_TOOLS/cycle-detect.sh"` | `--mode cycles` | Emits `{cycles:[],source:"unavailable"}` and exits 2 |
 | `bash "$DRAFT_TOOLS/mermaid-from-graph.sh" [--diagram module-deps\|proto-map]` | `--mode mermaid` | Emits an empty mermaid block and exits 2 |
 
-Use the raw `graph` CLI directly for the lower-level modes documented below.
+For lower-level modes, call the engine directly: `codebase-memory-mcp cli <tool> '<json>'` (see the tool list in [bin/README.md](../../bin/README.md)).
 
 ## Pre-Check
 
@@ -16945,27 +16962,26 @@ ls draft/graph/schema.yaml 2>/dev/null
 
 If absent, **skip all graph operations silently**. Graph enriches analysis — it never gates it. All skills must work identically without graph data.
 
-## Engine + snapshot model
+## Engine model (engine-only)
 
-The graph is produced by the **codebase-memory-mcp** engine (a single binary; see [bin/README.md](../../bin/README.md)). There are two ways skills consume it:
+The graph is produced by the **codebase-memory-mcp** engine (a single binary; see [bin/README.md](../../bin/README.md)). Draft is **engine-only and opinionated**: the engine is the one structural source of truth, queried live. There is **no committed machine-readable mirror** of the graph — no `architecture.json`, `hotspots.jsonl`, `*.mermaid`, or `okf/`. Those were lossy, went stale on the next commit, and duplicated what the engine serves precisely on demand.
 
-1. **Live queries** (preferred when the engine is resolvable) — the shell tools under `scripts/tools/` drive the engine on demand (it auto-indexes into its own cache). No committed files required.
-2. **Committed snapshot** (`draft/graph/`) — a small, derived, PR-reviewable snapshot written by `scripts/tools/graph-snapshot.sh`. It exists for reviewability and for the Copilot/Gemini integrations, which cannot run the engine but can read committed files. Git remains the source of truth.
+The only committed file is the gate marker:
 
-When `draft/graph/` exists, the snapshot contains:
+| File | Role |
+|------|------|
+| `draft/graph/schema.yaml` | Engine + project metadata and point-of-index counts (provenance, not authoritative). Carries **no graph data**. Its presence is the **gate** (see Pre-Check) — it signals the engine is wired for this repo. Written by `scripts/tools/graph-snapshot.sh`. |
 
-| File | Load | Content |
-|------|------|---------|
-| `schema.yaml` | Always | Engine + project metadata, node/edge counts, artifact list. Its presence **gates** graph use (see Pre-Check). |
-| `architecture.json` | Always | `get_architecture(all)` output: node labels, edge types, languages, packages (with fan-in/out), entry points, routes, hotspots. |
-| `hotspots.jsonl` | Always | Fan-in-ranked symbols, one JSON object per line: `{id, name, fanIn}`. |
-| `module-deps.mermaid` | Diagram injection | File co-change coupling diagram (`FILE_CHANGES_WITH`). |
-| `proto-map.mermaid` | Diagram injection | Detected service-route diagram (`Route` nodes). |
-| `okf/` | On demand | Open Knowledge Format v0.1 bundle (emitted by default): `index.md` (reserved bundle root, no frontmatter) + cross-linked `modules/<name>.md` concept pages. Portable, vendor-neutral mirror of the graph; validate with `okf-check.sh`. |
+All structural data is obtained live by shelling out to the engine — either through the query-tool wrappers under `scripts/tools/` or directly via `codebase-memory-mcp cli <tool> '<json>'`. The shell tools auto-index the repo into the engine's own cache on demand, so no committed files are required.
 
-The engine uses a **unified, language-agnostic** node model — `Function`, `Method`, `Class`, `Module`, `File`, `Folder`, `Route`, `Section`, `Variable` (language is inferred from file extension) — and edges `CALLS`, `DEFINES`, `CONTAINS_FILE`, `IMPORTS`, `HTTP_CALLS`, `FILE_CHANGES_WITH`, `SEMANTICALLY_RELATED`, `SIMILAR_TO`. There are **no** per-language index files and no `ctags-sym` fallback; that detail is served by live queries against the unified model.
+### How skills query (engine is the interface; jq is optional)
 
-**Always-load files** are compact and should be read during context loading for any task that touches code structure.
+- **The engine is the query.** `codebase-memory-mcp cli <tool> '<json>'` (and the wrappers that call it) is how you ask — it takes JSON args and returns JSON. There is no other query surface.
+- **Prefer the wrappers — they resolve the engine for you.** `graph-arch.sh` (architecture view: packages/routes/layers/hotspots), `graph-callers.sh`, `hotspot-rank.sh`, `graph-impact.sh`, `cycle-detect.sh`, `mermaid-from-graph.sh` return already-shaped JSON. The engine binary is usually **not on `$PATH`** (it lives under `~/.cache/draft/bin/`); the wrappers locate it via `_lib.sh:find_memory_bin`, so a skill using a wrapper needs no resolution step.
+- **Raw `codebase-memory-mcp cli` requires resolving the binary first** (it is not on `$PATH`): `CM="${DRAFT_MEMORY_BIN:-$HOME/.cache/draft/bin/codebase-memory-mcp}"; "$CM" cli <tool> '<json>'`. Reach for this only for tools without a wrapper (`search_graph`, `search_code`, `trace_path`).
+- **`jq` is not a query tool — it only trims output.** Reach for it solely to slice a *large* response (chiefly the `get_architecture` blob) down to the field you need, for token economy. The agent can read raw JSON directly; jq is an optimization, not a requirement. Don't pipe wrapper output through jq unless you genuinely need a sub-field.
+
+The engine uses a **unified, language-agnostic** node model — `Function`, `Method`, `Class`, `Module`, `File`, `Folder`, `Route`, `Section`, `Variable` (language is inferred from file extension) — and edges `CALLS`, `DEFINES`, `CONTAINS_FILE`, `IMPORTS`, `HTTP_CALLS`, `FILE_CHANGES_WITH`, `SEMANTICALLY_RELATED`, `SIMILAR_TO`. Each node carries `file_path` + `start_line`/`end_line` and rich `properties` (complexity, signature, parent_class), and the engine exposes full-text (`search_code`) and semantic search — none of which a committed snapshot reproduced.
 
 ## Query Tools
 
@@ -17006,7 +17022,14 @@ Output: `{cycles[[a,b],[a,b,c]], source}` — fixed-length 2- and 3-node `CALLS`
 
 ### Modules — dependency overview
 
-Read `draft/graph/architecture.json` (`.packages` for module fan-in/out, `.node_labels`/`.edge_types` for shape, `.routes` for service surface), or regenerate it with `scripts/tools/graph-snapshot.sh --repo .`.
+Query the engine's architecture view live with the `graph-arch.sh` wrapper (it resolves the engine, indexes on demand, and auto-resolves the project):
+
+```bash
+scripts/tools/graph-arch.sh --repo . \
+  | jq '{packages, node_labels, edge_types, routes, layers, boundaries}'
+```
+
+`.packages` gives module fan-in/out, `.node_labels`/`.edge_types` the shape, `.routes` the service surface, `.layers`/`.boundaries` the dependency direction.
 
 ### Mermaid — diagram text
 
@@ -17015,15 +17038,15 @@ scripts/tools/mermaid-from-graph.sh --repo . --diagram module-deps   # co-change
 scripts/tools/mermaid-from-graph.sh --repo . --diagram proto-map     # detected routes
 ```
 
-Emits a ready-to-inject ` ```mermaid ``` ` block, or an empty stub (exit 2) when the engine is unavailable. The committed `draft/graph/*.mermaid` snapshots are written by `graph-snapshot.sh`.
+Emits a ready-to-inject ` ```mermaid ``` ` block on the fly (computed live by the engine), or an empty stub (exit 2) when the engine is unavailable. Diagrams are generated at the moment of use — they are never committed.
 
-### Building / refreshing the snapshot
+### Indexing / refreshing the gate marker
 
 ```bash
 scripts/tools/graph-snapshot.sh --repo .
 ```
 
-Writes the committed `draft/graph/` snapshot (`schema.yaml`, `architecture.json`, `hotspots.jsonl`, `*.mermaid`, plus the Open Knowledge Format bundle under `okf/`). Run during `draft init` and `draft graph`, or whenever the reviewable graph state should be refreshed.
+Indexes the repo into the engine and writes the `draft/graph/schema.yaml` gate marker. It writes **no** graph data. Run during `draft init` and `draft graph`, or whenever the index should be refreshed.
 
 ## Finding the Engine (Resolution + Usage Report)
 
@@ -17047,7 +17070,7 @@ ENGINE_INFO="$(scripts/tools/verify-graph-binary.sh --repo . --json 2>/dev/null 
 
 After successful detection, `draft/.graph-binary-report.json` contains: `detected_at`, `engine_bin`, `source` (`path` | `managed` | `bundled:<arch>` | `override`), `arch`, `status`. It is a derived artifact (safe to prune), regenerated by each graph-using command that calls the verifier.
 
-## Building the Snapshot
+## Indexing the Repo
 
 Run during `draft:init` / `draft:graph`, or manually:
 
@@ -17055,16 +17078,16 @@ Run during `draft:init` / `draft:graph`, or manually:
 scripts/tools/graph-snapshot.sh --repo .
 ```
 
-The engine indexes C/C++, Go, Python, TypeScript/JS, and more (tree-sitter, 159 languages) plus LSP-assisted resolution for the major ones, and detects HTTP/gRPC/GraphQL routes. Indexing is incremental in the engine (content-based, git-aware); the snapshot is re-derived on each run.
+The engine indexes C/C++, Go, Python, TypeScript/JS, and more (tree-sitter, 159 languages) plus LSP-assisted resolution for the major ones, and detects HTTP/gRPC/GraphQL routes. Indexing is incremental in the engine (content-based, git-aware). This refreshes the engine index and rewrites the `schema.yaml` gate marker; it produces no committed graph data.
 
 ## Graceful Degradation
 
 | Scenario | Behavior |
 |----------|----------|
-| No engine resolvable (or `DRAFT_MEMORY_DISABLE=1`) | Skip graph build in init; all skills proceed without graph data; tools emit `source: unavailable` |
+| No engine resolvable (or `DRAFT_MEMORY_DISABLE=1`) | Skip graph indexing in init; all skills proceed without graph data; tools emit `source: unavailable` |
 | Engine present but a query fails | Warn and proceed; skills work without graph data |
-| `draft/graph/` snapshot exists | Load always-load files during context loading; use live query tools as needed |
-| Stale snapshot | Still useful — structural changes are infrequent. Re-run `graph-snapshot.sh` (or init) to refresh. |
+| `draft/graph/schema.yaml` exists | Engine is wired — use live query tools as needed during the run |
+| Engine index out of date | The engine indexes incrementally (content-based, git-aware) on each query, so it self-freshens. Re-run `graph-snapshot.sh` (or init) to force a reindex and refresh the marker. |
 
 </core-file>
 
@@ -17620,7 +17643,7 @@ See [graph-query.md](graph-query.md) §Graph Usage Report (Mandatory Footer) for
 ```md
 ## Graph Usage Report
 
-- Graph files queried: <comma-separated list, e.g. `architecture.json, hotspots.jsonl` and/or query tools like `graph-callers.sh` — or `NONE` with justification below>
+- Graph files queried: <comma-separated list, e.g. `get_architecture, hotspot-rank.sh` and/or query tools like `graph-callers.sh` — or `NONE` with justification below>
 - Modules identified via graph: <comma-separated module names, or `none`>
 - Files identified via graph: <integer count>
 - Filesystem grep fallbacks: <list of `<pattern>` searches with one-line justification each, or `none`>
@@ -17669,7 +17692,7 @@ Referenced by: `draft decompose`, `draft implement`, `draft review`, `draft deep
 ## Universal Red Flags (STOP if any apply)
 
 - **Ran `grep`/`find`/`rg` for symbol or file discovery before consulting the graph** (when `draft/graph/schema.yaml` exists).
-- **Read more than 50 lines of source before consulting `draft/graph/hotspots.jsonl`** to know whether the file is a hotspot.
+- **Read more than 50 lines of source before querying hotspot rank** (`scripts/tools/hotspot-rank.sh --repo .`) to know whether the file is a hotspot.
 - **Omitted the Graph Usage Report footer** from the final output (see [graph-query.md](graph-query.md) §Mandatory Lookup Contract).
 - **Used a `grep` fallback without an explicit graph-miss statement** in the form: `Graph returned no match for <X>; falling back to grep.`
 - **Loaded full Layer 0.5 guardrails when the command type does not require them** (see selective-loading matrix in [draft-context-loading.md](draft-context-loading.md) §Layer 0.5).
@@ -17681,7 +17704,7 @@ Referenced by: `draft decompose`, `draft implement`, `draft review`, `draft deep
 These enforce [graph-query.md](graph-query.md) §Ground-Truth Discipline. Graph identifies candidates; Read confirms them. Shipping unread claims is the dominant correctness failure mode observed in Draft output.
 
 - **Wrote a `path:line` / `func()` / `symbol` reference into a deliverable without opening the file in this run.** Graph hit ≠ Read. (G1)
-- **Declared something in-scope or out-of-scope without Reading at least one file in that path.** Module names from `architecture.json` are a candidate set, not proof that the candidate contains the named cost. (G2)
+- **Declared something in-scope or out-of-scope without Reading at least one file in that path.** Module names from the live engine (`get_architecture`) are a candidate set, not proof that the candidate contains the named cost. (G2)
 - **Shipped `Citation: TBD` / `Path: TBD` / `Symbol: TBD` on a row whose Status is `Modified` or `Existing`.** TBD is reserved for `Status: New` rows with a planned path filled in. (G3)
 - **Claimed code behavior (writes / blocks / loops / fails / is the only path) from graph metadata alone.** Fan-in / fan-out / complexity scores are necessary signal, not sufficient evidence. (G4)
 - **Promoted a spec / generated an HLD or LLD / closed a review without checking that the in-scope file set covers every cost term in the problem statement.** Silent scope narrowing that excludes the named cost is the highest-impact failure class. (G5)
@@ -17691,7 +17714,7 @@ When in doubt, prefer "not yet validated against source" over an unbacked assert
 
 ## Graph-First Lookup Order (non-negotiable)
 
-1. **Graph first** — the committed snapshot (`draft/graph/architecture.json`, `draft/graph/hotspots.jsonl`) and the live query tools (`scripts/tools/graph-callers.sh`, `graph-impact.sh`, `cycle-detect.sh`, `hotspot-rank.sh`).
+1. **Graph first** — wrapper scripts (`scripts/tools/graph-arch.sh`, `graph-callers.sh`, `graph-impact.sh`, `cycle-detect.sh`, `hotspot-rank.sh`) and direct engine queries (`search_graph`, `search_code`). The gate marker `draft/graph/schema.yaml` (present = engine available) is the only committed graph file.
 2. **Generated context second** — `draft/.ai-context.md`, relevant `draft/architecture.md` slices, track-level `hld.md`/`lld.md`.
 3. **Source file reads third** — only narrowed targets identified via graph or generated context.
 4. **Filesystem `grep`/`find` last** — only after a graph miss, with the explicit fallback sentence above.
@@ -18462,7 +18485,7 @@ generated_at: "{ISO_TIMESTAMP}"
 ```
 
 > Include immediate sub-directories for all major modules (not just top-level).
-> Use graph data (`draft/graph/modules/*.jsonl`) for exhaustive sub-module enumeration.
+> Use live engine queries (`get_architecture .packages[]` or `graph-callers.sh`) for exhaustive sub-module enumeration.
 > Show file counts per sub-module to indicate relative size/importance.
 
 ## GRAPH:MODULES
@@ -18774,9 +18797,9 @@ graph:
     go: "{approximate | high}"
   stats:
     modules: "{N from schema.yaml}"
-    edges: "{total_edges from architecture.json}"
+    edges: "{total_edges from engine: get_architecture .edges}"
     hotspots: "{N}"
-  notes: "{explicit fidelity summary from architecture.json languages/packages}"
+  notes: "{explicit fidelity summary from engine: get_architecture .languages/.packages}"
 generation_notes: "{High existing context detected via audit — see §10 Relationship for deference | Standard graph-primary generation}"
 ---
 
@@ -18858,7 +18881,7 @@ Each backed by:
 
 ## 4. Module & Dependency Map (Primarily Graph-Derived)
 
-- Module dependency graph rendered from `draft/graph/architecture.json` (`.packages`) + `module-deps.mermaid`
+- Module dependency graph rendered from live engine query `scripts/tools/graph-arch.sh --repo . | jq '.packages'` + `scripts/tools/mermaid-from-graph.sh --repo . --diagram module-deps` (generated live, never committed)
 - High fan-in / fan-out modules highlighted
 - Cyclic dependencies called out
 - Cross-language boundaries (FFI, RPC, shared memory) explicitly surfaced with coverage notes
