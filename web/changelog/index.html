@@ -210,12 +210,28 @@
     <!-- Changelog entries -->
     <main class="changelog-content">
 
+        <!-- v3.2 -->
+        <article class="changelog-entry">
+            <div class="changelog-entry-header">
+                <span class="changelog-version">v3.2.0</span>
+                <span class="changelog-date">2026-06-14</span>
+                <span class="changelog-tag changelog-tag--latest">Latest</span>
+                <span class="changelog-tag">Knowledge Graph</span>
+                <span class="changelog-tag">Tooling</span>
+            </div>
+            <div class="changelog-category">Added</div>
+            <ul class="changelog-changes">
+                <li><strong>Full codebase-memory-mcp capability adoption (graph tooling v2)</strong> &mdash; Draft now uses the whole graph engine instead of a thin ~3-edge slice. All Cypher is centralized in a new sourced module <code>scripts/tools/_graph_queries.sh</code> (single source of query truth), so a label/dialect fix is a one-line edit. New wrappers: <code>graph-query.sh</code> (read-only passthrough), <code>graph-snippet.sh</code> (verified source + caller/callee counts), <code>graph-search.sh</code> (semantic/ranked search), <code>graph-tests.sh</code> (TESTS coverage / <code>--untested</code>), <code>graph-deps.sh</code> (real <code>IMPORTS</code> graph), <code>graph-hierarchy.sh</code> (<code>INHERITS</code>), <code>graph-errors.sh</code> (<code>RAISES</code>/<code>THROWS</code>), <code>graph-risk.sh</code> (engine-precomputed risk flags), and <code>graph-traces.sh</code>. <code>graph-callers.sh</code> gains <code>--transitive[=N]</code>, <code>--prod-only</code>, and <code>--qualified</code>. Symbol-scoped wrappers emit a fail-loud <code>status</code> so an empty result is never mistaken for a confirmed true negative.</li>
+                <li><strong>Richer architecture/refresh data</strong> &mdash; <code>hotspot-rank.sh</code> now ranks by <code>fanIn + complexity + cognitive</code> and annotates entry points; <code>mermaid-from-graph.sh --diagram module-deps</code> derives the dependency diagram from real <code>IMPORTS</code> edges (with the prior co-change proxy preserved as <code>--diagram co-change</code>); <code>graph-snapshot.sh</code> records the <code>detect_changes</code> delta in the gate marker.</li>
+                <li><strong>Single-source-of-truth version sync</strong> &mdash; <code>package.json</code> is now the canonical version; <code>scripts/sync-version.sh</code> propagates it into <code>.claude-plugin/plugin.json</code>, <code>.claude-plugin/marketplace.json</code>, and the <code>web/index.html</code> release labels. It runs automatically via the npm <code>version</code> lifecycle hook, and <code>tests/test-version-sync.sh</code> fails CI if any file drifts.</li>
+            </ul>
+        </article>
+
         <!-- v3.1 -->
         <article class="changelog-entry">
             <div class="changelog-entry-header">
                 <span class="changelog-version">v3.1.5</span>
                 <span class="changelog-date">2026-06-14</span>
-                <span class="changelog-tag changelog-tag--latest">Latest</span>
                 <span class="changelog-tag">Breaking</span>
                 <span class="changelog-tag">Knowledge Graph</span>
             </div>

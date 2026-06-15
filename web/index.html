@@ -295,7 +295,7 @@
     </section>
 
     <!-- ============================================================ -->
-    <!-- v3.1.5 RELEASE STRIP                                         -->
+    <!-- v3.2.0 RELEASE STRIP                                         -->
     <!-- ============================================================ -->
     <section id="changelog-strip" class="release-strip">
         <div class="release-strip-inner">
@@ -304,13 +304,13 @@
                 <span class="release-strip-version">v3.2.0 &middot; June 14, 2026</span>
             </div>
             <div class="release-strip-headline">
-                <h3>Draft 3.1.5: the knowledge graph is now engine-only</h3>
-                <p>Draft no longer commits a machine-readable mirror of the graph. The <code>codebase-memory-mcp</code> engine indexes your repo and every skill queries it live &mdash; so the graph can't go stale between commits. A single gate marker (<code>draft/graph/schema.yaml</code>) is all that's written. <a href="changelog/" class="link-cyan">View full changelog &rarr;</a></p>
+                <h3>Draft 3.2.0: the whole graph engine, now wired in</h3>
+                <p>Draft now uses the full <code>codebase-memory-mcp</code> capability set instead of a thin three-edge slice. New <code>graph-*</code> wrappers expose semantic search, real import / inheritance / error graphs, test coverage, and engine-precomputed risk &mdash; with every Cypher query centralized in one module and fail-loud, so an empty result is never mistaken for a confirmed true negative. <a href="changelog/" class="link-cyan">View full changelog &rarr;</a></p>
             </div>
             <div class="release-strip-tags">
-                <span class="release-strip-pill">Engine-only graph</span>
-                <span class="release-strip-pill">Queried live</span>
-                <span class="release-strip-pill">Nothing stale committed</span>
+                <span class="release-strip-pill">Whole graph engine</span>
+                <span class="release-strip-pill">Semantic + risk queries</span>
+                <span class="release-strip-pill">Fail-loud results</span>
                 <span class="release-strip-pill">Free forever</span>
             </div>
         </div>
