@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.5] - 2026-06-14
+
 ### Changed
 - **The knowledge graph is now engine-only.** Draft no longer commits a
   machine-readable mirror of the graph. `scripts/tools/graph-snapshot.sh` indexes
