@@ -13,7 +13,7 @@ Draft also ships a **knowledge graph engine** — `codebase-memory-mcp`, fetched
 ```bash
 make build              # Generate integration files from skills
 make build-integrations # Same as above (explicit target)
-make test               # Run all 43 test suites (skills, build, tools)
+make test               # Run all 44 test suites (skills, build, tools)
 make lint               # Run shellcheck + markdownlint
 make clean              # Remove generated integrations
 
@@ -127,6 +127,18 @@ The build script transforms skill content for platform compatibility:
 ### Plugin Manifest
 
 `.claude-plugin/plugin.json` — registers skills with Claude Code. The `skills` field uses a directory path (`"./skills/"`) for auto-discovery; `SKILL_ORDER` in the build script controls integration generation order (these are independent).
+
+### Releasing / Bumping the Version
+
+**`package.json` is the single source of truth for the version.** Never hand-edit the version anywhere else. Bump with:
+
+```bash
+npm version <patch|minor|major|x.y.z>   # writes package.json, runs the `version` hook
+git push --follow-tags origin main
+npm publish
+```
+
+The npm `version` lifecycle hook runs `scripts/sync-version.sh`, which propagates the new version into `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, and the `web/index.html` release labels, then `git add`s them — so all four land in the bump commit atomically. Release *copy* (headlines, dates, changelog prose) stays hand-written. `tests/test-version-sync.sh` (in `make test`) fails CI if any consumer drifts from `package.json`; run `bash scripts/sync-version.sh` to fix.
 
 ## End-User Context
 

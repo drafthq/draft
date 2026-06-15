@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Single-source-of-truth version sync.** `package.json` is now the canonical
+  version; `scripts/sync-version.sh` propagates it into `.claude-plugin/plugin.json`,
+  `.claude-plugin/marketplace.json`, and the `web/index.html` release labels. It
+  runs automatically via the npm `version` lifecycle hook (so `npm version <x>`
+  updates everything in one commit), and `tests/test-version-sync.sh` fails CI if
+  any file drifts from `package.json`.
+
 ## [3.1.5] - 2026-06-14
 
 ### Changed

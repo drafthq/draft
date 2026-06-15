@@ -9,6 +9,7 @@ TEST_SCRIPTS = \
 	./tests/test-skill-references.sh \
 	./tests/test-core-files.sh \
 	./tests/test-plugin-manifest.sh \
+	./tests/test-version-sync.sh \
 	./tests/test-build-integrations.sh \
 	./tests/test-cli.sh \
 	./tests/test-syntax-transforms.sh \
