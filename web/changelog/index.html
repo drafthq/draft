@@ -210,12 +210,32 @@
     <!-- Changelog entries -->
     <main class="changelog-content">
 
-        <!-- v2.8 -->
+        <!-- v3.1 -->
+        <article class="changelog-entry">
+            <div class="changelog-entry-header">
+                <span class="changelog-version">v3.1.5</span>
+                <span class="changelog-date">2026-06-14</span>
+                <span class="changelog-tag changelog-tag--latest">Latest</span>
+                <span class="changelog-tag">Breaking</span>
+                <span class="changelog-tag">Knowledge Graph</span>
+            </div>
+            <div class="changelog-category">Changed</div>
+            <ul class="changelog-changes">
+                <li><strong>The knowledge graph is now engine-only</strong> &mdash; Draft no longer commits a machine-readable mirror of the graph. <code>scripts/tools/graph-snapshot.sh</code> indexes the repo into the local <code>codebase-memory-mcp</code> engine and writes one committed file: <code>draft/graph/schema.yaml</code>, a gate marker carrying no graph data (<code>access: engine-live</code>). All structural data is queried live via the <code>graph-*.sh</code> wrappers, so it can't go stale between commits.</li>
+                <li><strong><code>draft/index.md</code> is a plain docs index</strong> &mdash; it lists the prose context files and tracks with one-line descriptions, with no OKF framing or <code>okf_version</code> frontmatter.</li>
+            </ul>
+            <div class="changelog-category">Removed</div>
+            <ul class="changelog-changes">
+                <li><strong>Open Knowledge Format (OKF) emission</strong> &mdash; deleted <code>okf-emit.sh</code>, <code>okf-bundle.sh</code>, <code>okf-check.sh</code> (and their tests). No more <code>draft/graph/okf/</code> bundle.</li>
+                <li><strong>Committed graph snapshot files</strong> &mdash; <code>architecture.json</code>, <code>hotspots.jsonl</code>, <code>module-deps.mermaid</code>, and <code>proto-map.mermaid</code> are no longer generated. They were lossy, went stale on the next commit, and duplicated what the engine serves live.</li>
+            </ul>
+        </article>
+
+        <!-- v3.0 -->
         <article class="changelog-entry">
             <div class="changelog-entry-header">
                 <span class="changelog-version">v3.0</span>
                 <span class="changelog-date">2026-06-14</span>
-                <span class="changelog-tag changelog-tag--latest">Latest</span>
                 <span class="changelog-tag">Breaking</span>
                 <span class="changelog-tag">Knowledge Graph</span>
             </div>

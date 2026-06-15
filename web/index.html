@@ -233,8 +233,8 @@
         <canvas id="hero-canvas" aria-hidden="true"></canvas>
         <div class="hero-content">
             <a href="#changelog-strip" class="release-pill">
-                <span class="release-pill-tag">v3.0.0</span>
-                <span class="release-pill-text">One entry point: /draft:init now builds a root-first code-graph knowledge memory across your whole repo</span>
+                <span class="release-pill-tag">v3.1.5</span>
+                <span class="release-pill-text">The knowledge graph is now engine-only &mdash; indexed locally and queried live, with no machine-readable snapshot committed to your repo</span>
                 <span class="release-pill-arrow">â</span>
             </a>
             <h1>Stop shipping<br><span class="gradient-text">AI-generated bugs</span>.</h1>
@@ -295,22 +295,22 @@
     </section>
 
     <!-- ============================================================ -->
-    <!-- v3.0.0 RELEASE STRIP                                         -->
+    <!-- v3.1.5 RELEASE STRIP                                         -->
     <!-- ============================================================ -->
     <section id="changelog-strip" class="release-strip">
         <div class="release-strip-inner">
             <div class="release-strip-meta">
                 <span class="release-strip-tag">Latest</span>
-                <span class="release-strip-version">v3.0.0 &middot; June 14, 2026</span>
+                <span class="release-strip-version">v3.1.5 &middot; June 14, 2026</span>
             </div>
             <div class="release-strip-headline">
-                <h3>Draft 3.0: one scope-aware <code>/draft:init</code>, root-first code-graph memory</h3>
-                <p><code>/draft:init</code> is now the single entry point. Run it anywhere &mdash; it builds the whole-repo code-graph knowledge memory first, and a sub-module links up to that root graph for full cross-module understanding. The old <code>/draft:index</code> is folded in (breaking change). <a href="changelog/" class="link-cyan">View full changelog &rarr;</a></p>
+                <h3>Draft 3.1.5: the knowledge graph is now engine-only</h3>
+                <p>Draft no longer commits a machine-readable mirror of the graph. The <code>codebase-memory-mcp</code> engine indexes your repo and every skill queries it live &mdash; so the graph can't go stale between commits. A single gate marker (<code>draft/graph/schema.yaml</code>) is all that's written. <a href="changelog/" class="link-cyan">View full changelog &rarr;</a></p>
             </div>
             <div class="release-strip-tags">
-                <span class="release-strip-pill">Single entry point</span>
-                <span class="release-strip-pill">Root-first graph</span>
-                <span class="release-strip-pill">Monorepo-aware</span>
+                <span class="release-strip-pill">Engine-only graph</span>
+                <span class="release-strip-pill">Queried live</span>
+                <span class="release-strip-pill">Nothing stale committed</span>
                 <span class="release-strip-pill">Free forever</span>
             </div>
         </div>
