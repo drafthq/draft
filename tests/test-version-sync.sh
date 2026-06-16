@@ -28,10 +28,8 @@ echo ""
 # Extract the relevant version string from each consumer.
 plugin_v="$(node -p "require('./.claude-plugin/plugin.json').version")"
 market_v="$(node -p "require('./.claude-plugin/marketplace.json').plugins[0].version")"
-pill_v="$(grep -oE 'release-pill-tag">v[0-9][0-9.]*' web/index.html | grep -oE '[0-9][0-9.]*' | head -1)"
 
 assert ".claude-plugin/plugin.json matches ($plugin_v)"        "$([[ "$plugin_v" == "$VERSION" ]] && echo true || echo false)"
 assert ".claude-plugin/marketplace.json matches ($market_v)"   "$([[ "$market_v" == "$VERSION" ]] && echo true || echo false)"
-assert "web/index.html release pill matches ($pill_v)"         "$([[ "$pill_v"  == "$VERSION" ]] && echo true || echo false)"
 
 finish_test "version sync"

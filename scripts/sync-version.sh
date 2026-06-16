@@ -27,7 +27,4 @@ sed_i() { sed -i.bak -E "$1" "$2" && rm -f "$2.bak"; }
 sed_i "s/(\"version\":[[:space:]]*\")[0-9][^\"]*(\")/\1${VERSION}\2/" .claude-plugin/plugin.json
 sed_i "s/(\"version\":[[:space:]]*\")[0-9][^\"]*(\")/\1${VERSION}\2/" .claude-plugin/marketplace.json
 
-# Website: release pill tag (number only).
-sed_i "s|(release-pill-tag\">v)[0-9][0-9.]*|\1${VERSION}|" web/index.html
-
 echo "sync-version: all version-bearing files set to ${VERSION}"
