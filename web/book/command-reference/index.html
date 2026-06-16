@@ -210,7 +210,7 @@
     <h1>Appendix A: Command Reference</h1>
     <p class="chapter-meta"><span class="part-name">Appendix</span></p>
 
-    <p class="chapter-intro">Quick-reference for all 33 Draft commands. Syntax shown is for Claude Code; Copilot uses <code>draft command</code> (no slash), Cursor uses <code>@draft command</code>.</p>
+    <p class="chapter-intro">Quick-reference for all 33 Draft commands. Syntax shown is for Claude Code; Cursor uses the same <code>/draft:command</code> syntax (it reads the native plugin structure), Copilot uses <code>draft command</code> (no slash), and Gemini uses natural-language <code>@draft</code> prompts.</p>
 
     <div class="figure">
         <div class="figure-content">
@@ -504,6 +504,13 @@
                 <td>Create Jira issues from export file via MCP</td>
                 <td><code>[track-id]</code> &mdash; specific track; auto-generates export if missing</td>
                 <td><code>/draft:jira preview</code> (or auto-generates), MCP-Jira configured</td>
+                <td>19</td>
+            </tr>
+            <tr>
+                <td><code>/draft:jira review &lt;JIRA-ID&gt;</code></td>
+                <td>Qualification pipeline for a Jira ticket: deep-review + bughunt + coverage + test-gap analysis</td>
+                <td><code>&lt;JIRA-ID&gt;</code> &mdash; the ticket to qualify</td>
+                <td>MCP-Jira configured</td>
                 <td>19</td>
             </tr>
             <tr>

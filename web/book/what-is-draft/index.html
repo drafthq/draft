@@ -282,7 +282,7 @@
         <li><strong>Strategy</strong> &mdash; <code>/draft:tech-debt</code> for technical debt analysis across 6 dimensions with prioritization</li>
         <li><strong>Documentation</strong> &mdash; <code>/draft:docs</code> orchestrates doc generation: readme, runbook, api, onboarding via <code>/draft:documentation</code></li>
         <li><strong>Knowledge &amp; Governance</strong> &mdash; <code>/draft:adr</code>, <code>/draft:learn</code>, <code>/draft:decompose</code>, <code>/draft:graph</code></li>
-        <li><strong>Integration</strong> &mdash; <code>/draft:jira preview</code>, <code>/draft:jira create</code></li>
+        <li><strong>Integration</strong> &mdash; <code>/draft:jira preview</code>, <code>/draft:jira create</code>, <code>/draft:jira review &lt;JIRA-ID&gt;</code></li>
     </ul>
 
     <p><strong>7 specialized agents</strong> &mdash; Architect, Debugger, Planner, RCA, Reviewer, Ops, and Writer &mdash; each with behavioral protocols tuned for their domain.</p>
@@ -379,10 +379,11 @@
     <p>Draft works with the AI coding tools you already use:</p>
     <ul>
         <li><strong>Claude Code</strong> &mdash; Native plugin installation via <code>/plugin install</code></li>
-        <li><strong>Cursor</strong> &mdash; Native support for the <code>.claude/</code> plugin structure</li>
+        <li><strong>Cursor</strong> &mdash; Native support for the <code>.claude-plugin/</code> structure</li>
+        <li><strong>Codex</strong> &mdash; Via an <code>AGENTS.md</code> file that Codex reads automatically</li>
+        <li><strong>opencode</strong> &mdash; Via <code>AGENTS.md</code> plus a global <code>skills/</code> directory, both auto-discovered</li>
         <li><strong>GitHub Copilot</strong> &mdash; Via <code>.github/copilot-instructions.md</code></li>
-        <li><strong>Gemini</strong> &mdash; Via <code>.gemini.md</code> bootstrap file</li>
-        <li><strong>Antigravity IDE</strong> &mdash; Via global skill installation</li>
+        <li><strong>Gemini</strong> &mdash; Via the <code>.gemini.md</code> bootstrap file (including the Antigravity global-skills path)</li>
     </ul>
 
     <div class="callout callout-tip">

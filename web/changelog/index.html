@@ -210,12 +210,31 @@
     <!-- Changelog entries -->
     <main class="changelog-content">
 
-        <!-- v3.2 -->
+        <!-- v3.2.1 -->
+        <article class="changelog-entry">
+            <div class="changelog-entry-header">
+                <span class="changelog-version">v3.2.1</span>
+                <span class="changelog-date">2026-06-15</span>
+                <span class="changelog-tag changelog-tag--latest">Latest</span>
+                <span class="changelog-tag">Tooling</span>
+                <span class="changelog-tag">Fix</span>
+            </div>
+            <div class="changelog-category">Fixed</div>
+            <ul class="changelog-changes">
+                <li><strong>Graph tooling unreachable on Claude Code marketplace / npm installs</strong> &mdash; skills invoked the bundled <code>scripts/tools/*.sh</code> helpers by bare, cwd-relative paths. Because a skill's shell runs with the cwd set to the <em>user's project</em> &mdash; not the plugin &mdash; and <code>${CLAUDE_PLUGIN_ROOT}</code> is not exported into skill-driven Bash, every graph wrapper silently failed and the knowledge-graph engine appeared unavailable. Skills now resolve a <code>DRAFT_TOOLS</code> directory (install marker &rarr; plugin cache glob &rarr; marketplace clone &rarr; cwd) and invoke helpers as <code>"$DRAFT_TOOLS/&lt;tool&gt;.sh"</code>.</li>
+            </ul>
+            <div class="changelog-category">Added</div>
+            <ul class="changelog-changes">
+                <li><strong><code>scripts/tools/resolve-tools.sh</code></strong> &mdash; canonical resolver that locates the bundled <code>scripts/tools/</code> dir regardless of install layout (Claude Code cache, marketplace clone, Cursor, or in-repo dev). Documented in <code>core/shared/tool-resolver.md</code>.</li>
+                <li><strong><code>draft install</code> writes <code>~/.cache/draft/plugin-root</code></strong> &mdash; an authoritative install-path marker so skills resolve the helper directory on the fast path (best-effort; resolution falls back to globbing the plugin cache if absent).</li>
+            </ul>
+        </article>
+
+        <!-- v3.2.0 -->
         <article class="changelog-entry">
             <div class="changelog-entry-header">
                 <span class="changelog-version">v3.2.0</span>
                 <span class="changelog-date">2026-06-14</span>
-                <span class="changelog-tag changelog-tag--latest">Latest</span>
                 <span class="changelog-tag">Knowledge Graph</span>
                 <span class="changelog-tag">Tooling</span>
             </div>

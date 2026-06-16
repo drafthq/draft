@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="/feed.xsl"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
     <title>Draft -- Context-Driven Development</title>
@@ -6,7 +7,7 @@
     <description>A comprehensive guide to Draft's Context-Driven Development methodology. 24 chapters covering specs, plans, TDD enforcement, 3-stage code review, 14-dimension bug hunting, and ACID audits for AI coding agents.</description>
     <language>en-us</language>
     <managingEditor>mayur@getdraft.dev (Mayur Pise)</managingEditor>
-    <lastBuildDate>Wed, 11 Jun 2026 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Tue, 16 Jun 2026 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://getdraft.dev/feed.xml" rel="self" type="application/rss+xml"/>
     <image>
       <url>https://getdraft.dev/social-preview.png</url>
@@ -15,10 +16,19 @@
     </image>
 
     <item>
+      <title>Speed Is the Wrong Axis: Benchmarking Draft's Graph Engine Against grep</title>
+      <link>https://getdraft.dev/blog/graph-engine-vs-grep/</link>
+      <description>We ran Draft's local code-graph engine head-to-head against GNU grep on two real repositories -- a 17K-LOC Rust service and a 221K-LOC polyglot platform. grep is often faster on raw latency. It is also wrong far more often (10% vs 100% hotspot precision) and costs an AI agent up to 108x more tokens to reach the correct answer -- and the gap grows with codebase size. The full benchmark: latency, accuracy, tokens, cost, and the context-window wall.</description>
+      <pubDate>Tue, 16 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>https://getdraft.dev/blog/graph-engine-vs-grep/</guid>
+      <category>Blog</category>
+    </item>
+
+    <item>
       <title>Draft v2.6: Graph Engine Upgrade — codebase-memory-mcp Now Powers All Code Intelligence</title>
       <link>https://getdraft.dev/changelog/</link>
       <description>Draft v2.6 replaces the bundled graph engine with codebase-memory-mcp by DeusData — a tree-sitter + LSP-grade, 159-language, 100% local knowledge-graph engine. No API key, no external service, checksum-verified on install. The /draft:graph command builds and refreshes the draft/graph snapshot. All 33 commands and 30 deterministic tools now route graph queries through codebase-memory-mcp.</description>
-      <pubDate>Wed, 11 Jun 2026 00:00:00 +0000</pubDate>
+      <pubDate>Thu, 11 Jun 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/changelog/</guid>
       <category>Release</category>
     </item>
@@ -71,7 +81,7 @@
       <title>Chapter 0: What is Draft?</title>
       <link>https://getdraft.dev/book/what-is-draft/</link>
       <description>What Draft is, what it is not, who it is for, and what you get. An overview of 33 commands and 7 specialized agents for structured AI development.</description>
-      <pubDate>Sat, 05 Apr 2026 00:00:00 +0000</pubDate>
+      <pubDate>Sun, 05 Apr 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/book/what-is-draft/</guid>
     </item>
 
@@ -79,7 +89,7 @@
       <title>Chapter 1: The Problem</title>
       <link>https://getdraft.dev/book/the-problem/</link>
       <description>Why AI coding assistants produce wrong code without structure. Explores the gap between speed and correctness, and why better prompting is not the answer.</description>
-      <pubDate>Fri, 04 Apr 2026 00:00:00 +0000</pubDate>
+      <pubDate>Sat, 04 Apr 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/book/the-problem/</guid>
     </item>
 
@@ -87,7 +97,7 @@
       <title>Chapter 2: Context-Driven Development</title>
       <link>https://getdraft.dev/book/context-driven-development/</link>
       <description>The Context-Driven Development methodology explained. Every decision grounded in explicit, versioned, reviewable documents rather than implicit assumptions.</description>
-      <pubDate>Thu, 03 Apr 2026 00:00:00 +0000</pubDate>
+      <pubDate>Fri, 03 Apr 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/book/context-driven-development/</guid>
     </item>
 
@@ -95,7 +105,7 @@
       <title>Chapter 3: Getting Started</title>
       <link>https://getdraft.dev/book/getting-started/</link>
       <description>Install Draft and run your first commands in five minutes. Set up architecture discovery, create a track, and start implementing with structured AI assistance.</description>
-      <pubDate>Wed, 02 Apr 2026 00:00:00 +0000</pubDate>
+      <pubDate>Thu, 02 Apr 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/book/getting-started/</guid>
     </item>
 
@@ -103,7 +113,7 @@
       <title>Chapter 4: Specs and Plans</title>
       <link>https://getdraft.dev/book/specs-and-plans/</link>
       <description>Collaborative spec intake and phased plan generation. Requirements to specification to implementation plan, reviewed before code exists.</description>
-      <pubDate>Tue, 01 Apr 2026 00:00:00 +0000</pubDate>
+      <pubDate>Wed, 01 Apr 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/book/specs-and-plans/</guid>
     </item>
 
@@ -111,7 +121,7 @@
       <title>Chapter 5: Implementation</title>
       <link>https://getdraft.dev/book/implementation/</link>
       <description>Task-by-task implementation with TDD enforcement. RED, GREEN, REFACTOR cycles with architecture checkpoints and production robustness patterns.</description>
-      <pubDate>Mon, 31 Mar 2026 00:00:00 +0000</pubDate>
+      <pubDate>Tue, 31 Mar 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/book/implementation/</guid>
     </item>
 
@@ -119,7 +129,7 @@
       <title>Chapter 6: Review Pipeline</title>
       <link>https://getdraft.dev/book/review-pipeline/</link>
       <description>Three-stage code review pipeline covering automated validation, spec compliance checking, and code quality analysis with STRIDE threat modeling.</description>
-      <pubDate>Sun, 30 Mar 2026 00:00:00 +0000</pubDate>
+      <pubDate>Mon, 30 Mar 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/book/review-pipeline/</guid>
     </item>
 
@@ -127,7 +137,7 @@
       <title>Chapter 7: Managing Tracks</title>
       <link>https://getdraft.dev/book/managing-tracks/</link>
       <description>Track lifecycle management including status markers, parallel tracks, blocked state handling, and git-aware rollback capabilities.</description>
-      <pubDate>Sat, 29 Mar 2026 00:00:00 +0000</pubDate>
+      <pubDate>Sun, 29 Mar 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/book/managing-tracks/</guid>
     </item>
 
@@ -135,7 +145,7 @@
       <title>Chapter 8: Decomposition</title>
       <link>https://getdraft.dev/book/decomposition/</link>
       <description>Breaking large features into independently shippable sub-tasks. Tree decomposition with dependency ordering and blast radius scoping.</description>
-      <pubDate>Fri, 28 Mar 2026 00:00:00 +0000</pubDate>
+      <pubDate>Sat, 28 Mar 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/book/decomposition/</guid>
     </item>
 
@@ -143,7 +153,7 @@
       <title>Chapter 9: Architecture Decision Records</title>
       <link>https://getdraft.dev/book/adrs/</link>
       <description>Structured decision capture with context, rationale, consequences, and lifecycle management. How ADRs create an auditable trail of architectural choices.</description>
-      <pubDate>Thu, 27 Mar 2026 00:00:00 +0000</pubDate>
+      <pubDate>Fri, 27 Mar 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/book/adrs/</guid>
     </item>
 
@@ -151,7 +161,7 @@
       <title>Chapter 10: Context Tiering</title>
       <link>https://getdraft.dev/book/context-tiering/</link>
       <description>How Draft organizes project context into three tiers -- always-loaded profiles, working memory, and deep storage -- modeled after CPU memory hierarchy.</description>
-      <pubDate>Wed, 26 Mar 2026 00:00:00 +0000</pubDate>
+      <pubDate>Thu, 26 Mar 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/book/context-tiering/</guid>
     </item>
 
@@ -159,7 +169,7 @@
       <title>Chapter 11: The Agent System</title>
       <link>https://getdraft.dev/book/agent-system/</link>
       <description>Seven specialized agents -- Architect, Debugger, Ops, Planner, RCA, Reviewer, and Writer -- each with behavioral protocols tuned for their domain.</description>
-      <pubDate>Tue, 25 Mar 2026 00:00:00 +0000</pubDate>
+      <pubDate>Wed, 25 Mar 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/book/agent-system/</guid>
     </item>
 
@@ -167,7 +177,7 @@
       <title>Chapter 12: Signal Classification</title>
       <link>https://getdraft.dev/book/signal-classification/</link>
       <description>How Draft classifies source files into 11 signal categories to determine which architecture sections get deep treatment, brief mention, or skip.</description>
-      <pubDate>Mon, 24 Mar 2026 00:00:00 +0000</pubDate>
+      <pubDate>Tue, 24 Mar 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/book/signal-classification/</guid>
     </item>
 
@@ -175,7 +185,7 @@
       <title>Chapter 13: Incremental Refresh</title>
       <link>https://getdraft.dev/book/incremental-refresh/</link>
       <description>How Draft detects changes and updates only what has drifted. Covers freshness hashing, signal drift detection, and targeted regeneration.</description>
-      <pubDate>Sun, 23 Mar 2026 00:00:00 +0000</pubDate>
+      <pubDate>Mon, 23 Mar 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/book/incremental-refresh/</guid>
     </item>
 
@@ -183,7 +193,7 @@
       <title>Chapter 14: Deep Review</title>
       <link>https://getdraft.dev/book/deep-review/</link>
       <description>Production-grade deep review with ACID compliance audits. Checks atomicity, isolation, durability, idempotency, resilience, and observability.</description>
-      <pubDate>Sat, 22 Mar 2026 00:00:00 +0000</pubDate>
+      <pubDate>Sun, 22 Mar 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/book/deep-review/</guid>
     </item>
 
@@ -191,7 +201,7 @@
       <title>Chapter 15: Bug Hunt</title>
       <link>https://getdraft.dev/book/bug-hunt/</link>
       <description>14-dimension bug hunting sweep covering null safety, concurrency, security, and algorithmic complexity. Only HIGH/CONFIRMED confidence findings are reported.</description>
-      <pubDate>Fri, 21 Mar 2026 00:00:00 +0000</pubDate>
+      <pubDate>Sat, 21 Mar 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/book/bug-hunt/</guid>
     </item>
 
@@ -199,7 +209,7 @@
       <title>Chapter 16: Coverage</title>
       <link>https://getdraft.dev/book/coverage/</link>
       <description>Spec-to-implementation coverage analysis. Gap identification, untested paths, and target enforcement at 95%+ coverage.</description>
-      <pubDate>Thu, 20 Mar 2026 00:00:00 +0000</pubDate>
+      <pubDate>Fri, 20 Mar 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/book/coverage/</guid>
     </item>
 
@@ -207,7 +217,7 @@
       <title>Chapter 17: Pattern Learning</title>
       <link>https://getdraft.dev/book/pattern-learning/</link>
       <description>How Draft detects codebase patterns, records them to guardrails, and applies learned conventions to future work automatically.</description>
-      <pubDate>Wed, 19 Mar 2026 00:00:00 +0000</pubDate>
+      <pubDate>Thu, 19 Mar 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/book/pattern-learning/</guid>
     </item>
 
@@ -215,7 +225,7 @@
       <title>Chapter 18: Monorepo Federation</title>
       <link>https://getdraft.dev/book/monorepo-federation/</link>
       <description>Context federation across monorepo services. Per-service draft directories with shared root context and service aggregation.</description>
-      <pubDate>Tue, 18 Mar 2026 00:00:00 +0000</pubDate>
+      <pubDate>Wed, 18 Mar 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/book/monorepo-federation/</guid>
     </item>
 
@@ -223,7 +233,7 @@
       <title>Chapter 19: Jira Integration</title>
       <link>https://getdraft.dev/book/jira-integration/</link>
       <description>Mapping Draft tracks to Jira issues. Preview before creation, epic/story/sub-task mapping, and bidirectional sync between Draft and Jira.</description>
-      <pubDate>Mon, 17 Mar 2026 00:00:00 +0000</pubDate>
+      <pubDate>Tue, 17 Mar 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/book/jira-integration/</guid>
     </item>
 
@@ -231,7 +241,7 @@
       <title>Chapter 20: Multi-IDE Support</title>
       <link>https://getdraft.dev/book/multi-ide-support/</link>
       <description>How Draft works across Claude Code, Copilot, Cursor, Gemini, and Antigravity IDE with platform-specific syntax transforms.</description>
-      <pubDate>Sun, 16 Mar 2026 00:00:00 +0000</pubDate>
+      <pubDate>Mon, 16 Mar 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/book/multi-ide-support/</guid>
     </item>
 
@@ -239,7 +249,7 @@
       <title>Chapter 21: Philosophy and References</title>
       <link>https://getdraft.dev/book/philosophy-references/</link>
       <description>The philosophical foundations of Context-Driven Development. Structured development principles, quality gates, and incremental refinement philosophy.</description>
-      <pubDate>Sat, 15 Mar 2026 00:00:00 +0000</pubDate>
+      <pubDate>Sun, 15 Mar 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/book/philosophy-references/</guid>
     </item>
 
@@ -247,7 +257,7 @@
       <title>Appendix A: Command Reference</title>
       <link>https://getdraft.dev/book/command-reference/</link>
       <description>Complete reference for all 28 Draft commands. Usage, options, examples, and output for each slash command.</description>
-      <pubDate>Fri, 14 Mar 2026 00:00:00 +0000</pubDate>
+      <pubDate>Sat, 14 Mar 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/book/command-reference/</guid>
     </item>
 
@@ -255,7 +265,7 @@
       <title>Appendix B: File Reference</title>
       <link>https://getdraft.dev/book/file-reference/</link>
       <description>Complete reference for all Draft-generated files including architecture.md, .ai-context.md, .ai-profile.md, specs, plans, and state files.</description>
-      <pubDate>Thu, 13 Mar 2026 00:00:00 +0000</pubDate>
+      <pubDate>Fri, 13 Mar 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/book/file-reference/</guid>
     </item>
 
