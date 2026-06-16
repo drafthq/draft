@@ -324,6 +324,125 @@
     margin: 2.75rem 0;
 }
 
+/* ─── BAR CHARTS (in-post data viz) ───────────────────── */
+
+.chart {
+    margin: 0 0 1.75rem;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-secondary);
+    padding: 1.4rem 1.5rem 1.5rem;
+}
+
+.chart-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 0.35rem;
+    letter-spacing: -0.01em;
+}
+
+.chart-note {
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--text-muted);
+    margin: 0 0 1.15rem;
+}
+
+.chart-legend {
+    display: flex;
+    gap: 1.1rem;
+    flex-wrap: wrap;
+    margin: 0 0 1.15rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.74rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-muted);
+}
+
+.chart-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.chart-legend span::before {
+    content: '';
+    width: 11px;
+    height: 11px;
+    border-radius: 3px;
+    background: var(--swatch, var(--text-muted));
+}
+
+.chart-legend .lg-engine { --swatch: var(--accent-emerald); }
+.chart-legend .lg-grep   { --swatch: var(--accent-rose); }
+.chart-legend .lg-neutral { --swatch: var(--accent-cyan); }
+
+/* A row = one labelled group of bars */
+.chart-row {
+    margin-bottom: 1.15rem;
+}
+
+.chart-row:last-child { margin-bottom: 0; }
+
+.chart-row-label {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.45rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+}
+
+.chart-row-label .ratio {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    color: var(--accent-emerald);
+    white-space: nowrap;
+}
+
+.bar {
+    position: relative;
+    height: 1.45rem;
+    border-radius: 5px;
+    margin-bottom: 0.3rem;
+    min-width: 2px;
+    display: flex;
+    align-items: center;
+    transition: width 0.5s var(--ease-out);
+    background: var(--bar-color, var(--accent-cyan));
+}
+
+.bar:last-child { margin-bottom: 0; }
+
+.bar.engine { background: var(--accent-emerald); }
+.bar.grep   { background: var(--accent-rose); }
+.bar.neutral { background: var(--accent-cyan); }
+
+.bar-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.74rem;
+    font-weight: 500;
+    color: #fff;
+    padding: 0 0.55rem;
+    white-space: nowrap;
+}
+
+/* When a bar is too short to hold its label, the label sits outside */
+.bar.tiny .bar-value {
+    color: var(--text-secondary);
+    position: absolute;
+    left: calc(100% + 0.4rem);
+}
+
+@media (max-width: 600px) {
+    .chart { padding: 1.1rem 1.1rem 1.2rem; }
+    .chart-row-label { flex-direction: column; gap: 0.15rem; }
+}
+
 /* ─── SHARE BAR ───────────────────────────────────────── */
 
 .post-share {
