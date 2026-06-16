@@ -242,7 +242,7 @@ All emit JSON, follow uniform exit-code contract (0 = success, 1 = invocation er
 - **Context as a managed artifact:** Structured documents constrain AI behavior
 - **Three-tier context loading:** Only loads what's needed per task, saving tokens
 - **Incremental refresh:** Hash-based change detection avoids full re-scans
-- **Platform-agnostic:** Same methodology across Claude Code, Cursor, Copilot, Gemini, Antigravity IDE
+- **Platform-agnostic:** Same methodology across Claude Code, Cursor, Codex, opencode, Copilot, and Gemini
 - **TDD enforcement:** RED → GREEN → REFACTOR cycle with verification
 - **14-dimension bug hunting:** Exhaustive defect discovery beyond simple linting
 - **Built-in code intelligence:** Knowledge graph engine + 32 deterministic helpers — no external services required

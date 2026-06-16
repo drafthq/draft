@@ -240,7 +240,7 @@
     <item>
       <title>Chapter 20: Multi-IDE Support</title>
       <link>https://getdraft.dev/book/multi-ide-support/</link>
-      <description>How Draft works across Claude Code, Copilot, Cursor, Gemini, and Antigravity IDE with platform-specific syntax transforms.</description>
+      <description>How Draft works across Claude Code, Cursor, Codex, opencode, Copilot, and Gemini with platform-specific syntax transforms.</description>
       <pubDate>Mon, 16 Mar 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/book/multi-ide-support/</guid>
     </item>

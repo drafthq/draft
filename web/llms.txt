@@ -4,7 +4,7 @@
 
 Draft is a plugin that adds a knowledge graph engine, spec-driven planning, and a three-stage review pipeline to AI coding agents — so they stop guessing and start executing pre-approved work, grounded in real understanding of your codebase.
 
-Draft works with Claude Code, Cursor, GitHub Copilot, Antigravity IDE, and Google Gemini. It provides 34 slash commands, 7 specialized agents, 14-dimension bug hunting, ACID-style module audits, and a built-in **knowledge graph engine** (codebase-memory-mcp: tree-sitter + LSP, 159 languages, 100% local) with query tools — callers, impact, hotspots, modules, cycles, mermaid.
+Draft works with Claude Code, Cursor, Codex, opencode, GitHub Copilot, and Google Gemini. It provides 33 slash commands, 7 specialized agents, 14-dimension bug hunting, ACID-style module audits, and a built-in **knowledge graph engine** (codebase-memory-mcp: tree-sitter + LSP, 159 languages, 100% local) with query tools — callers, impact, hotspots, modules, cycles, mermaid.
 
 ## Installation
 
