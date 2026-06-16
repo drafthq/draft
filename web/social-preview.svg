@@ -25,7 +25,7 @@
   <!-- Brand -->
   <g transform="translate(80, 80)">
     <text x="0" y="0" font-family="JetBrains Mono, monospace" font-size="22" font-weight="600" fill="#a371f7" letter-spacing="6">DRAFT</text>
-    <text x="0" y="32" font-family="JetBrains Mono, monospace" font-size="14" fill="#768390" letter-spacing="2">v2.8 · MIT · open source</text>
+    <text x="0" y="32" font-family="JetBrains Mono, monospace" font-size="14" fill="#768390" letter-spacing="2">v3.2.1 · MIT · open source</text>
   </g>
 
   <!-- Headline -->
@@ -45,7 +45,7 @@
   <!-- Stats strip -->
   <g transform="translate(80, 540)">
     <g font-family="JetBrains Mono, monospace" fill="#e6edf3">
-      <text x="0"   y="0" font-size="36" font-weight="700">28</text>
+      <text x="0"   y="0" font-size="36" font-weight="700">33</text>
       <text x="0"   y="22" font-size="13" fill="#768390" letter-spacing="1">COMMANDS</text>
 
       <text x="180" y="0" font-size="36" font-weight="700">9</text>
@@ -54,7 +54,7 @@
       <text x="320" y="0" font-size="36" font-weight="700">6</text>
       <text x="320" y="22" font-size="13" fill="#768390" letter-spacing="1">QUERY MODES</text>
 
-      <text x="510" y="0" font-size="36" font-weight="700">5</text>
+      <text x="510" y="0" font-size="36" font-weight="700">6</text>
       <text x="510" y="22" font-size="13" fill="#768390" letter-spacing="1">IDE INTEGRATIONS</text>
     </g>
   </g>
@@ -62,8 +62,8 @@
   <!-- IDE logos badge area (right) -->
   <g transform="translate(880, 470)">
     <text x="0" y="0" font-family="DM Sans, sans-serif" font-size="13" font-weight="500" fill="#768390" letter-spacing="2">WORKS WITH</text>
-    <text x="0" y="28" font-family="DM Sans, sans-serif" font-size="18" font-weight="600" fill="#e6edf3">Claude Code · Cursor</text>
-    <text x="0" y="54" font-family="DM Sans, sans-serif" font-size="18" font-weight="600" fill="#e6edf3">Copilot · Antigravity · Gemini</text>
+    <text x="0" y="28" font-family="DM Sans, sans-serif" font-size="18" font-weight="600" fill="#e6edf3">Claude Code · Cursor · Codex</text>
+    <text x="0" y="54" font-family="DM Sans, sans-serif" font-size="18" font-weight="600" fill="#e6edf3">opencode · Copilot · Gemini</text>
   </g>
 
   <!-- URL footer -->
