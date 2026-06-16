@@ -9,10 +9,21 @@ Scan the codebase to discover recurring coding patterns and update `draft/guardr
 
 ## MANDATORY GRAPH LOOKUP (read before pattern scanning)
 
+First resolve the bundled helpers:
+
+```bash
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+```
+
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Use the graph to:
 
-1. Enumerate a module's symbols/files via `scripts/tools/graph-callers.sh`/`graph-impact.sh` and `scripts/tools/graph-arch.sh --repo .` (preferred over `find`).
-2. Prioritize hotspots via `scripts/tools/hotspot-rank.sh --repo .` — patterns in high-fanIn files are more impactful when learned.
+1. Enumerate a module's symbols/files via `"$DRAFT_TOOLS/graph-callers.sh"`/`"$DRAFT_TOOLS/graph-impact.sh"` and `"$DRAFT_TOOLS/graph-arch.sh" --repo .` (preferred over `find`).
+2. Prioritize hotspots via `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` — patterns in high-fanIn files are more impactful when learned.
 3. For TS/Python/Go/C/C++, use `*-index.jsonl` to identify class/function definitions rather than re-discovering them via regex.
 
 Filesystem `find` for source discovery (Step 2.1) is permitted **as a complement** to the graph for languages not covered by indexes (e.g. Ruby, Java without ctags). Record the rationale in the Graph Usage Report.
@@ -246,10 +257,10 @@ git log --follow --oneline -1 -- {file_containing_pattern}
 
 ### 2.7: Graph-Aware Severity Enrichment
 
-If `draft/graph/schema.yaml` exists (engine live), derive objective severity for all anti-pattern candidates based on the fanIn of files where the pattern was found via `scripts/tools/hotspot-rank.sh --repo .`.
+If `draft/graph/schema.yaml` exists (engine live), derive objective severity for all anti-pattern candidates based on the fanIn of files where the pattern was found via `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .`.
 
 For each anti-pattern candidate from Step 2.2:
-1. Check if any evidence files appear in the hotspot output from `scripts/tools/hotspot-rank.sh --repo .`
+1. Check if any evidence files appear in the hotspot output from `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .`
 2. Take the highest fanIn value across all evidence files:
    - fanIn ≥ 10 → `graph_severity: critical` (breakage propagates to many callers)
    - fanIn 5–9 → `graph_severity: high`

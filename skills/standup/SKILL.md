@@ -54,8 +54,9 @@ Check for arguments:
 **Preferred:** invoke `parse-git-log.sh` — it parses conventional commits into structured JSONL `{sha,type,scope,track_id,subject,author,timestamp,files_changed}`, eliminating ambiguity in `type(track-id): subject` parsing. Resolve via the canonical tool resolver (see [core/shared/tool-resolver.md](../../core/shared/tool-resolver.md)):
 
 ```bash
-DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
-[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
 if [ -x "$DRAFT_TOOLS/parse-git-log.sh" ]; then
   bash "$DRAFT_TOOLS/parse-git-log.sh" --since "24 hours ago" --author "$(git config user.name)"

@@ -491,8 +491,15 @@ The knowledge-graph engine `codebase-memory-mcp` is Draft's **default** capabili
 One command resolves ROOT, ensures the engine, builds the whole-repo spine, and — in a sub-module — builds the module snapshot and writes the `root-link.json` pointer:
 
 ```bash
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+
 # Add --module-only to skip touching the root (link marked "pending").
-if scripts/tools/graph-init.sh --scope .; then
+if "$DRAFT_TOOLS/graph-init.sh" --scope .; then
     echo "Graph memory ready under draft/graph/ (the root spine is the structural source of truth)."
 else
     echo "Graph engine unavailable — proceeding with degraded manual discovery. Downstream skills degrade gracefully."
@@ -506,7 +513,7 @@ fi
 Optionally record which engine was selected (usage-report contract):
 
 ```bash
-scripts/tools/verify-graph-binary.sh --repo . --json 2>/dev/null || true
+"$DRAFT_TOOLS/verify-graph-binary.sh" --repo . --json 2>/dev/null || true
 ```
 
 See `core/shared/graph-query.md` and `bin/README.md` for the query contract and engine resolution.
@@ -518,13 +525,13 @@ If indexing succeeds, `draft/graph/schema.yaml` is written and later steps query
 Pull the architecture view once and reuse it across phases:
 
 ```bash
-ARCH=$(scripts/tools/graph-arch.sh --repo .)
+ARCH=$("$DRAFT_TOOLS/graph-arch.sh" --repo .)
 ```
 
 - `$ARCH | jq '.packages'` — module list with fan-in/out
 - `$ARCH | jq '.routes'` — detected service endpoints
 - `$ARCH | jq '.languages, .node_labels, .layers, .boundaries'` — language mix, node shape, layering
-- `scripts/tools/hotspot-rank.sh --repo . --top 20` — complexity/fan-in hotspots (live)
+- `"$DRAFT_TOOLS/hotspot-rank.sh" --repo . --top 20` — complexity/fan-in hotspots (live)
 
 ### 3. Use graph data to accelerate Step 1.5
 
@@ -556,7 +563,7 @@ Apply tier table:
 Hold tier in memory. This governs: architecture.md length minimum, .ai-context.md budget, and module deep-dive depth.
 
 **Step 1.4.6 — Build Module Priority List:**
-From `scripts/tools/hotspot-rank.sh --repo .`: count hotspot symbols per module.
+From `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .`: count hotspot symbols per module.
 From `$ARCH | jq '.packages[]'`: read `fan_in` per module.
 Rank modules by: `(hotspot_count × 2) + fan_in_count`.
 Top-ranked modules drive Section 6 deep-dive ordering and depth. Modules ranked zero on both: summary treatment only.
@@ -567,7 +574,7 @@ Query for diagram content and write into architecture.md slots using the standar
 
 For Section 4.4 (module-deps slot):
 ```bash
-scripts/tools/mermaid-from-graph.sh --repo . --diagram module-deps
+"$DRAFT_TOOLS/mermaid-from-graph.sh" --repo . --diagram module-deps
 ```
 The tool emits a ready-to-inject ` ```mermaid ``` ` block (or an empty stub on exit 2). Write between the markers:
 ```
@@ -577,7 +584,7 @@ The tool emits a ready-to-inject ` ```mermaid ``` ` block (or an empty stub on e
 ```
 
 For Section 20 (hotspots slot):
-Run `scripts/tools/hotspot-rank.sh --repo . --top 10`, take the top 10 by fanIn, build a markdown table:
+Run `"$DRAFT_TOOLS/hotspot-rank.sh" --repo . --top 10`, take the top 10 by fanIn, build a markdown table:
 ```
 <!-- GRAPH:hotspots:START -->
 | Symbol | fanIn |
@@ -589,7 +596,7 @@ Run `scripts/tools/hotspot-rank.sh --repo . --top 10`, take the top 10 by fanIn,
 
 For Appendix E (proto-map slot):
 ```bash
-scripts/tools/mermaid-from-graph.sh --repo . --diagram proto-map
+"$DRAFT_TOOLS/mermaid-from-graph.sh" --repo . --diagram proto-map
 ```
 The tool emits a ` ```mermaid ``` ` block from detected routes (empty stub if none). Write:
 ```
@@ -666,7 +673,7 @@ For tier 3+, readers run simultaneously; wall clock = slowest reader, not the su
 The engine is already indexed. Query it live throughout this protocol (reuse `$ARCH` from Step 1.4.2):
 - `$ARCH | jq '.packages'` — module list with `.fan_in`/`.fan_out` (for grouping)
 - `$ARCH | jq '.languages, .node_labels'` — file/symbol counts, tier metrics
-- `scripts/tools/hotspot-rank.sh --repo .` — top hotspot symbols per module (feed to readers)
+- `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` — top hotspot symbols per module (feed to readers)
 
 #### Phase 1: Spawn Parallel Module Readers
 
@@ -793,7 +800,7 @@ If any reader agent fails to produce valid JSON after one retry:
 When the Agent tool is unavailable or reader agents fail after retry, write `draft/architecture.md` using the **10-section graph-primary structure** (checklist above + `core/templates/architecture.md`). Do not use legacy 28-section or Pass 1/2/3 volume protocols.
 
 1. Use the ranked module list from Step 1.4.6 (graph-first — do not re-scan by directory if Phase 0 succeeded).
-2. For each top module (up to 20 by fan-in), query the engine for its symbols/callers (`scripts/tools/graph-callers.sh`, `graph-impact.sh`, or `$ARCH | jq '.packages[] | select(.name=="<m>")'`), read the hotspot files and 3–5 key sources; embed graph blocks and at least one workflow/state diagram per significant module inside §4–§8 as appropriate.
+2. For each top module (up to 20 by fan-in), query the engine for its symbols/callers (`"$DRAFT_TOOLS/graph-callers.sh"`, `"$DRAFT_TOOLS/graph-impact.sh"`, or `$ARCH | jq '.packages[] | select(.name=="<m>")'`), read the hotspot files and 3–5 key sources; embed graph blocks and at least one workflow/state diagram per significant module inside §4–§8 as appropriate.
 3. Always include §9 Graph Coverage Gaps and §10 Relationship when the Context Audit requires them.
 4. Run Completion Verification (defined later in this skill) before condensation. Fidelity, provenance, and gap honesty block completion — not line counts.
 

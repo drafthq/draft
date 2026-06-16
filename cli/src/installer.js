@@ -4,6 +4,7 @@ const { spawnSync } = require('child_process');
 const fsx = require('./lib/fsx');
 const log = require('./lib/log');
 const { fetchGraph } = require('./lib/graph');
+const { writePluginRootMarker } = require('./lib/marker');
 
 // A short ceiling so a wedged `claude --version` can't hang the installer
 // before we even reach the real (separately-timed) install steps.
@@ -105,6 +106,13 @@ function install(host, ctx) {
 
   if (plan.graph && ctx.graph && !ctx.dryRun) {
     fetchGraph(ctx);
+  }
+
+  // Record the install path so skills can locate scripts/tools/ from the user's
+  // project cwd (best-effort; graph skills glob-fallback if the marker is absent).
+  if (!ctx.dryRun) {
+    const root = writePluginRootMarker(host.id);
+    if (root) log.note(`Recorded plugin path for graph tooling: ${root}`);
   }
 
   (plan.notes || []).forEach((n) => log.note(n));

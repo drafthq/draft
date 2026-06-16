@@ -186,6 +186,7 @@ TOOLS=(
     "verify-citations.sh"
     "verify-doc-anchors.sh"
     "verify-graph-binary.sh"
+    "resolve-tools.sh"
 )
 
 # ─────────────────────────────────────────────────────────

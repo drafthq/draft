@@ -611,8 +611,15 @@ The knowledge-graph engine `codebase-memory-mcp` is Draft's **default** capabili
 One command resolves ROOT, ensures the engine, builds the whole-repo spine, and — in a sub-module — builds the module snapshot and writes the `root-link.json` pointer:
 
 ```bash
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+
 # Add --module-only to skip touching the root (link marked "pending").
-if scripts/tools/graph-init.sh --scope .; then
+if "$DRAFT_TOOLS/graph-init.sh" --scope .; then
     echo "Graph memory ready under draft/graph/ (the root spine is the structural source of truth)."
 else
     echo "Graph engine unavailable — proceeding with degraded manual discovery. Downstream skills degrade gracefully."
@@ -626,7 +633,7 @@ fi
 Optionally record which engine was selected (usage-report contract):
 
 ```bash
-scripts/tools/verify-graph-binary.sh --repo . --json 2>/dev/null || true
+"$DRAFT_TOOLS/verify-graph-binary.sh" --repo . --json 2>/dev/null || true
 ```
 
 See `core/shared/graph-query.md` and `bin/README.md` for the query contract and engine resolution.
@@ -638,13 +645,13 @@ If indexing succeeds, `draft/graph/schema.yaml` is written and later steps query
 Pull the architecture view once and reuse it across phases:
 
 ```bash
-ARCH=$(scripts/tools/graph-arch.sh --repo .)
+ARCH=$("$DRAFT_TOOLS/graph-arch.sh" --repo .)
 ```
 
 - `$ARCH | jq '.packages'` — module list with fan-in/out
 - `$ARCH | jq '.routes'` — detected service endpoints
 - `$ARCH | jq '.languages, .node_labels, .layers, .boundaries'` — language mix, node shape, layering
-- `scripts/tools/hotspot-rank.sh --repo . --top 20` — complexity/fan-in hotspots (live)
+- `"$DRAFT_TOOLS/hotspot-rank.sh" --repo . --top 20` — complexity/fan-in hotspots (live)
 
 ### 3. Use graph data to accelerate Step 1.5
 
@@ -676,7 +683,7 @@ Apply tier table:
 Hold tier in memory. This governs: architecture.md length minimum, .ai-context.md budget, and module deep-dive depth.
 
 **Step 1.4.6 — Build Module Priority List:**
-From `scripts/tools/hotspot-rank.sh --repo .`: count hotspot symbols per module.
+From `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .`: count hotspot symbols per module.
 From `$ARCH | jq '.packages[]'`: read `fan_in` per module.
 Rank modules by: `(hotspot_count × 2) + fan_in_count`.
 Top-ranked modules drive Section 6 deep-dive ordering and depth. Modules ranked zero on both: summary treatment only.
@@ -687,7 +694,7 @@ Query for diagram content and write into architecture.md slots using the standar
 
 For Section 4.4 (module-deps slot):
 ```bash
-scripts/tools/mermaid-from-graph.sh --repo . --diagram module-deps
+"$DRAFT_TOOLS/mermaid-from-graph.sh" --repo . --diagram module-deps
 ```
 The tool emits a ready-to-inject ` ```mermaid ``` ` block (or an empty stub on exit 2). Write between the markers:
 ```
@@ -697,7 +704,7 @@ The tool emits a ready-to-inject ` ```mermaid ``` ` block (or an empty stub on e
 ```
 
 For Section 20 (hotspots slot):
-Run `scripts/tools/hotspot-rank.sh --repo . --top 10`, take the top 10 by fanIn, build a markdown table:
+Run `"$DRAFT_TOOLS/hotspot-rank.sh" --repo . --top 10`, take the top 10 by fanIn, build a markdown table:
 ```
 <!-- GRAPH:hotspots:START -->
 | Symbol | fanIn |
@@ -709,7 +716,7 @@ Run `scripts/tools/hotspot-rank.sh --repo . --top 10`, take the top 10 by fanIn,
 
 For Appendix E (proto-map slot):
 ```bash
-scripts/tools/mermaid-from-graph.sh --repo . --diagram proto-map
+"$DRAFT_TOOLS/mermaid-from-graph.sh" --repo . --diagram proto-map
 ```
 The tool emits a ` ```mermaid ``` ` block from detected routes (empty stub if none). Write:
 ```
@@ -786,7 +793,7 @@ For tier 3+, readers run simultaneously; wall clock = slowest reader, not the su
 The engine is already indexed. Query it live throughout this protocol (reuse `$ARCH` from Step 1.4.2):
 - `$ARCH | jq '.packages'` — module list with `.fan_in`/`.fan_out` (for grouping)
 - `$ARCH | jq '.languages, .node_labels'` — file/symbol counts, tier metrics
-- `scripts/tools/hotspot-rank.sh --repo .` — top hotspot symbols per module (feed to readers)
+- `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` — top hotspot symbols per module (feed to readers)
 
 #### Phase 1: Spawn Parallel Module Readers
 
@@ -913,7 +920,7 @@ If any reader agent fails to produce valid JSON after one retry:
 When the Agent tool is unavailable or reader agents fail after retry, write `draft/architecture.md` using the **10-section graph-primary structure** (checklist above + `core/templates/architecture.md`). Do not use legacy 28-section or Pass 1/2/3 volume protocols.
 
 1. Use the ranked module list from Step 1.4.6 (graph-first — do not re-scan by directory if Phase 0 succeeded).
-2. For each top module (up to 20 by fan-in), query the engine for its symbols/callers (`scripts/tools/graph-callers.sh`, `graph-impact.sh`, or `$ARCH | jq '.packages[] | select(.name=="<m>")'`), read the hotspot files and 3–5 key sources; embed graph blocks and at least one workflow/state diagram per significant module inside §4–§8 as appropriate.
+2. For each top module (up to 20 by fan-in), query the engine for its symbols/callers (`"$DRAFT_TOOLS/graph-callers.sh"`, `"$DRAFT_TOOLS/graph-impact.sh"`, or `$ARCH | jq '.packages[] | select(.name=="<m>")'`), read the hotspot files and 3–5 key sources; embed graph blocks and at least one workflow/state diagram per significant module inside §4–§8 as appropriate.
 3. Always include §9 Graph Coverage Gaps and §10 Relationship when the Context Audit requires them.
 4. Run Completion Verification (defined later in this skill) before condensation. Fidelity, provenance, and gap honesty block completion — not line counts.
 
@@ -2239,7 +2246,18 @@ Only when material: authentication/authorization checkpoints, distributed transa
 
 **Core rule:** The graph is the source of truth for structure. LLM synthesis exists only to interpret the graph into actionable design understanding — primarily via one accurate workflow or state diagram per module — plus tiny supporting notes. The previous volume-oriented deep-dive expectations are superseded.
 
-For each module returned by `scripts/tools/graph-arch.sh --repo . | jq '.packages[]'`, produce a subsection whose **primary content** is the deterministic graph block followed by one synthesized behavioral diagram. Every module gets a slot; do not sample. The block's fan-in/out and node counts come from `.packages[]`; public API and key call edges come from live per-package queries (`scripts/tools/graph-callers.sh`, `graph-impact.sh`) and `scripts/tools/hotspot-rank.sh --repo .`.
+First resolve the bundled helpers:
+
+```bash
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+```
+
+For each module returned by `"$DRAFT_TOOLS/graph-arch.sh" --repo . | jq '.packages[]'`, produce a subsection whose **primary content** is the deterministic graph block followed by one synthesized behavioral diagram. Every module gets a slot; do not sample. The block's fan-in/out and node counts come from `.packages[]`; public API and key call edges come from live per-package queries (`"$DRAFT_TOOLS/graph-callers.sh"`, `"$DRAFT_TOOLS/graph-impact.sh"`) and `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .`.
 
 #### 7.{N} {module-name}
 
@@ -2326,7 +2344,7 @@ Regardless of tier, any directory whose name contains `ops`, `handlers`, `execut
 | ... | (enumerate ALL — no sampling, no "and others") | | | |
 ```
 
-Use `scripts/tools/graph-callers.sh --symbol <module>` or `scripts/tools/graph-arch.sh --repo .` to get the complete file list. Use `scripts/tools/hotspot-rank.sh --repo .` to flag high-complexity operations.
+Use `"$DRAFT_TOOLS/graph-callers.sh" --symbol <module>` or `"$DRAFT_TOOLS/graph-arch.sh" --repo .` to get the complete file list. Use `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` to flag high-complexity operations.
 
 #### Example: Full Sub-Module Treatment for `icebox/` (917 files)
 
@@ -2480,10 +2498,10 @@ Include architecturally significant implementations (high fan-in, core extension
 | (enumerate ALL — use hotspot-rank.sh and graph-callers.sh / get_architecture for file list and line counts) |
 ```
 
-> **MANDATORY (graph data)**: Query `scripts/tools/graph-arch.sh --repo .` or
-> `scripts/tools/graph-callers.sh --symbol <module>` to get the complete file list with line counts.
+> **MANDATORY (graph data)**: Query `"$DRAFT_TOOLS/graph-arch.sh" --repo .` or
+> `"$DRAFT_TOOLS/graph-callers.sh" --symbol <module>` to get the complete file list with line counts.
 > Filter for files in operation sub-directories (paths containing `/ops/`,
-> `/handlers/`, `/executors/`, `/workers/`). Use `scripts/tools/hotspot-rank.sh --repo .` to flag
+> `/handlers/`, `/executors/`, `/workers/`). Use `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` to flag
 > high-complexity operations (high line count or fanIn). Do NOT skip this step — incomplete
 > catalogs cause AI agents to reinvent existing functionality.
 
@@ -3178,7 +3196,7 @@ Fix: Cross-reference ALL data sources (Appendix B), ALL implementation outputs (
 
 **FAILURE 4 — Missing Sub-Modules:**
 Detection: A module with 100+ source files (check graph data) has no Sub-Module Structure table.
-Fix: Query `scripts/tools/graph-arch.sh --repo .` or `scripts/tools/graph-callers.sh --symbol <name>`, group results by immediate sub-directory, and generate the table with file counts and one-line role descriptions per sub-directory.
+Fix: Query `"$DRAFT_TOOLS/graph-arch.sh" --repo .` or `"$DRAFT_TOOLS/graph-callers.sh" --symbol <name>`, group results by immediate sub-directory, and generate the table with file counts and one-line role descriptions per sub-directory.
 
 **FAILURE 4b — Shallow Sub-Module Treatment:**
 Detection: Large sub-modules (50+ files) listed only as table rows with no dedicated deep-dive subsection. Or ops/handler directories have no operation catalog.
@@ -3257,6 +3275,15 @@ if [ ! -d "$REPO" ]; then
 fi
 REPO_ABS="$(cd "$REPO" && pwd)"
 echo "Target repo: $REPO_ABS"
+
+# Locate Draft's bundled helpers. Skills run with cwd = the user's project and
+# ${CLAUDE_PLUGIN_ROOT} is not exported into skill Bash, so resolve DRAFT_TOOLS here
+# and call helpers as "$DRAFT_TOOLS/<tool>.sh". See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+DRAFT_SCRIPTS="${DRAFT_TOOLS%/tools}"   # parent dir holds fetch-memory-engine.sh
 ```
 
 ## Step 2: Ensure the engine is present
@@ -3264,12 +3291,12 @@ echo "Target repo: $REPO_ABS"
 Resolve the engine; if it is missing, fetch it once, then re-check. If it is still unavailable (e.g. offline, opted out via `DRAFT_MEMORY_DISABLE`), report and stop gracefully — graph features are optional everywhere in Draft.
 
 ```bash
-if ! scripts/tools/verify-graph-binary.sh --repo "$REPO_ABS" --json 2>/dev/null | grep -q '"status":"ok"'; then
+if ! "$DRAFT_TOOLS/verify-graph-binary.sh" --repo "$REPO_ABS" --json 2>/dev/null | grep -q '"status":"ok"'; then
   echo "Graph engine not found — attempting to fetch it..."
-  scripts/fetch-memory-engine.sh || true
+  "$DRAFT_SCRIPTS/fetch-memory-engine.sh" || true
 fi
 
-ENGINE="$(scripts/tools/verify-graph-binary.sh --repo "$REPO_ABS" --json 2>/dev/null || true)"
+ENGINE="$("$DRAFT_TOOLS/verify-graph-binary.sh" --repo "$REPO_ABS" --json 2>/dev/null || true)"
 if ! echo "$ENGINE" | grep -q '"status":"ok"'; then
   echo "Graph engine unavailable — skipping. Install with scripts/fetch-memory-engine.sh, or unset DRAFT_MEMORY_DISABLE."
   exit 0
@@ -3282,7 +3309,7 @@ echo "Engine: $ENGINE"
 One call resolves the engine, indexes the repo (incrementally on refresh), and updates the gate marker `<repo>/draft/graph/schema.yaml` (engine metadata + point-of-index counts; `access: engine-live`). All structural graph data is queried live from the engine — no snapshot files are committed beyond `schema.yaml`.
 
 ```bash
-scripts/tools/graph-snapshot.sh --repo "$REPO_ABS"
+"$DRAFT_TOOLS/graph-snapshot.sh" --repo "$REPO_ABS"
 ```
 
 If this exits non-zero, the engine became unavailable mid-run — report it and stop; do not fabricate results.
@@ -3296,10 +3323,10 @@ echo "--- Snapshot ---"
 cat "$REPO_ABS/draft/graph/schema.yaml"
 
 echo "--- Top hotspots ---"
-scripts/tools/hotspot-rank.sh --repo "$REPO_ABS" --top 5
+"$DRAFT_TOOLS/hotspot-rank.sh" --repo "$REPO_ABS" --top 5
 
 echo "--- Cycles ---"
-scripts/tools/cycle-detect.sh --repo "$REPO_ABS"
+"$DRAFT_TOOLS/cycle-detect.sh" --repo "$REPO_ABS"
 
 echo "--- Snapshot state ---"
 git -C "$REPO_ABS" rev-parse --short HEAD 2>/dev/null \
@@ -4181,12 +4208,23 @@ You are decomposing a project or track into modules with clear responsibilities,
 
 ## MANDATORY GRAPH LOOKUP (read before any analysis)
 
+First resolve the bundled helpers:
+
+```bash
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+```
+
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Module identification (Step 3) and dependency mapping (Step 4) **start from the graph**:
 
-1. Query `scripts/tools/graph-arch.sh --repo .` for the authoritative module list and fan-in/out.
-2. Run `scripts/tools/hotspot-rank.sh --repo .` to identify candidate modules to split.
-3. Use `scripts/tools/graph-callers.sh`/`graph-impact.sh` on demand for symbols/callers inside a candidate module.
-4. Run `scripts/tools/cycle-detect.sh --repo .` to enumerate existing cycles before proposing new boundaries.
+1. Query `"$DRAFT_TOOLS/graph-arch.sh" --repo .` for the authoritative module list and fan-in/out.
+2. Run `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` to identify candidate modules to split.
+3. Use `"$DRAFT_TOOLS/graph-callers.sh"`/`"$DRAFT_TOOLS/graph-impact.sh"` on demand for symbols/callers inside a candidate module.
+4. Run `"$DRAFT_TOOLS/cycle-detect.sh" --repo .` to enumerate existing cycles before proposing new boundaries.
 
 Filesystem `grep`/`find` for module discovery is only permitted **after** a documented graph miss, using the fallback sentence `Graph returned no match for <X>; falling back to grep.` and recorded in the Graph Usage Report.
 
@@ -4328,11 +4366,11 @@ ls -d src/*/ lib/*/ app/*/ packages/*/ 2>/dev/null
 
 When graph data is available, the graph is the **primary** (not optional) source for module discovery — manual scanning above is reserved for the graph-miss fallback path:
 
-- **Module boundaries**: Query `scripts/tools/graph-arch.sh --repo .` — module list with node counts and per-language file counts
+- **Module boundaries**: Query `"$DRAFT_TOOLS/graph-arch.sh" --repo .` — module list with node counts and per-language file counts
 - **Dependency edges**: Weighted inter-module dependencies with exact include counts — replaces manual import tracing
 - **Cycle detection**: Circular dependency paths already computed — use for identifying tight coupling and decomposition candidates
-- **Hotspots**: Run `scripts/tools/hotspot-rank.sh --repo .` — high-complexity files that may need further decomposition
-- **Per-module detail**: query `scripts/tools/graph-callers.sh`/`graph-impact.sh` for symbol/call detail within modules of interest
+- **Hotspots**: Run `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` — high-complexity files that may need further decomposition
+- **Per-module detail**: query `"$DRAFT_TOOLS/graph-callers.sh"`/`"$DRAFT_TOOLS/graph-impact.sh"` for symbol/call detail within modules of interest
 
 This data is deterministic and exhaustive. The manual scanning recipes above only run **after** the graph misses on the concept the user named — and the miss must be reported in the Graph Usage Report footer. See [core/shared/graph-query.md](../../core/shared/graph-query.md) §Concept-to-Files Recipe.
 
@@ -4576,8 +4614,11 @@ After writing all generated files, strip trailing whitespace and blank lines at 
 Resolve the script via the canonical tool resolver (see [core/shared/tool-resolver.md](../../core/shared/tool-resolver.md)):
 
 ```bash
-DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
-[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
 # Fix all generated markdown for this track:
 [ -x "$DRAFT_TOOLS/fix-whitespace.sh" ] && bash "$DRAFT_TOOLS/fix-whitespace.sh" --track <id>
@@ -4624,7 +4665,7 @@ references, sunset criteria) survive every regenerate. After rewriting:
 2. Update plan.md `generated_at:` to the current ISO-8601 timestamp.
 3. Ensure plan.md `generated_at` ≥ sibling hld.md / lld.md `generated_at`
    (the hygiene validator fails on stale plan).
-4. Run `scripts/tools/check-track-hygiene.sh <track_dir>` and resolve any
+4. Run `"$DRAFT_TOOLS/check-track-hygiene.sh" <track_dir>` and resolve any
    findings before promoting status past `draft`.
 
 If the plan does not yet have the bracket markers (pre-2.0 track), insert
@@ -4820,8 +4861,11 @@ As the last step after the completion announcement, emit a metrics record. Best-
 
 **Emit call:**
 ```bash
-DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
-[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
 [ -x "$DRAFT_TOOLS/emit-skill-metrics.sh" ] && bash "$DRAFT_TOOLS/emit-skill-metrics.sh" \
   '{"skill":"decompose","scope":"<scope>","track_id":"<id_or_null>","modules_count":<N>,"lld_generated":<bool>,"high_complexity_modules":<N>}'
@@ -4961,9 +5005,21 @@ If one of these applies, route directly to the specialist workflow and stop this
    - Keep matching invariants as **active constraints** for this task — these govern code generation, not just review
    - If invariants reference lock ordering, fail-closed behavior, or data integrity rules: these are non-negotiable during implementation
 9. **Load graph context** (if `draft/graph/schema.yaml` exists):
-   - Run `scripts/tools/hotspot-rank.sh --repo .` — check if any files this task will modify appear as hotspots
+
+   First resolve the bundled helpers:
+
+   ```bash
+   # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+   # is not exported into skill Bash). See core/shared/tool-resolver.md.
+   DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+   [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+   [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+   [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+   ```
+
+   - Run `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` — check if any files this task will modify appear as hotspots
    - If modifying a hotspot file (high fanIn), warn: "This task modifies {file} (fanIn={N}). Changes here affect many downstream files. Consider running a graph impact query."
-   - Query `scripts/tools/graph-impact.sh`/`graph-callers.sh` for the module(s) being modified — gives file-level dependency context
+   - Query `"$DRAFT_TOOLS/graph-impact.sh"`/`"$DRAFT_TOOLS/graph-callers.sh"` for the module(s) being modified — gives file-level dependency context
    - See `core/shared/graph-query.md` for on-demand query subroutines (callers, impact)
 10. Update the track's entry in `draft/tracks.md` from `[ ]` to `[~]` In Progress
 
@@ -5453,9 +5509,13 @@ After a phase passes review, refresh `metadata.json.impact` so future tracks can
    ```
    That is the `files_touched` list. Derive `modules_touched` as the unique top-level path segments (e.g. `auth/login.go` → `auth`).
 
-2. **Compute downstream blast radius (graph-aware, optional):** If `draft/graph/schema.yaml` exists, for each file in `files_touched` query:
+2. **Compute downstream blast radius (graph-aware, optional):** If `draft/graph/schema.yaml` exists, for each file in `files_touched` query (this runs in its own Bash session — re-resolve the helpers):
    ```bash
-   scripts/tools/graph-impact.sh --repo . --file <path>
+   DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+   [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+   [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+   [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+   "$DRAFT_TOOLS/graph-impact.sh" --repo . --file <path>
    ```
    Aggregate across all files: `downstream_files` = total unique downstream files (deduped), `downstream_modules` = union of `affected_modules`, `max_depth` = max across queries, `by_category` = sum of each query's `by_category`. If the graph is absent, leave these fields as zeros / empty arrays — the snapshot still records the directly-touched files.
 
@@ -5655,8 +5715,9 @@ If no active track and no argument provided:
 **Preferred:** use the deterministic `detect-test-framework.sh` wrapper — it emits JSON `{languages:[{language,framework,runner_command,test_globs,config_file}]}`. Resolve via the canonical tool resolver (see [core/shared/tool-resolver.md](../../core/shared/tool-resolver.md)):
 
 ```bash
-DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
-[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
 [ -x "$DRAFT_TOOLS/detect-test-framework.sh" ] && \
   bash "$DRAFT_TOOLS/detect-test-framework.sh" --root .
@@ -5695,7 +5756,11 @@ Build the coverage command with the appropriate scope/filter flags.
 **Preferred:** invoke the normalized `run-coverage.sh` dispatcher — it dispatches to the language-specific runner and emits a normalized JSON `{language,tool,total:{lines,branches},per_file:[{path,lines,branches,uncovered_lines}]}`. This avoids per-language ad-hoc parsing in Step 5.
 
 ```bash
-# DRAFT_TOOLS resolved in Step 2 above
+# Re-resolve helpers (this is a separate Bash session from Step 2).
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
 [ -x "$DRAFT_TOOLS/run-coverage.sh" ] && \
   bash "$DRAFT_TOOLS/run-coverage.sh" --root .
 ```
@@ -5969,9 +6034,9 @@ You are generating a pre-deployment verification checklist customized to this pr
 
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Use the graph to validate module boundaries before the deploy:
 
-1. For each file in the deploy diff, run `scripts/tools/graph-impact.sh --repo . --file <path>` to enumerate the modules affected — flag any module **not** declared in `hld.md` §Detailed Design as a deployment-scope miss.
-2. Run `scripts/tools/cycle-detect.sh --repo .` (and query `scripts/tools/graph-arch.sh --repo .` for the module overview) to ensure no fresh cycles were introduced after HLD sign-off.
-3. Run `scripts/tools/hotspot-rank.sh --repo .` — any hotspot in the diff escalates the Resiliency row of Phase 0.
+1. For each file in the deploy diff, run `"$DRAFT_TOOLS/graph-impact.sh" --repo . --file <path>` to enumerate the modules affected — flag any module **not** declared in `hld.md` §Detailed Design as a deployment-scope miss.
+2. Run `"$DRAFT_TOOLS/cycle-detect.sh" --repo .` (and query `"$DRAFT_TOOLS/graph-arch.sh" --repo .` for the module overview) to ensure no fresh cycles were introduced after HLD sign-off.
+3. Run `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` — any hotspot in the diff escalates the Resiliency row of Phase 0.
 
 Filesystem `grep` is reserved for source-text scans (migration file names, flag-key strings). Module/impact discovery goes through the graph.
 
@@ -6025,8 +6090,9 @@ by validator.
 ```bash
 TRACK_DIR="$1" # absolute path to track-under-deploy, or .
 
-DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
-[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
 
 "$DRAFT_TOOLS/check-track-hygiene.sh" "$TRACK_DIR" || rc=$?
@@ -6280,7 +6346,16 @@ Read and follow the base procedure in `core/shared/draft-context-loading.md`.
 - **Leverage Storage Topology** — Identify data loss risks at each tier (cache eviction without writeback, event log gaps, missing archive)
 - **Leverage Consistency Boundaries** — Find bugs at eventual consistency seams (stale reads, lost events, missing reconciliation)
 - **Leverage Failure Recovery Matrix** — Verify idempotency claims, check for partial failure states without recovery paths
-- **Leverage Graph Data** (if `draft/graph/` exists) — Query `scripts/tools/graph-arch.sh --repo .` for dependency awareness. Flag dependencies on unexpected modules. Flag code in modules involved in dependency cycles as higher risk. Run `scripts/tools/hotspot-rank.sh --repo .` to prioritize analysis of high-complexity, high-fanIn files. See `core/shared/graph-query.md`.
+- **Leverage Graph Data** (if `draft/graph/` exists) — First resolve the bundled helpers:
+  ```bash
+  # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+  # is not exported into skill Bash). See core/shared/tool-resolver.md.
+  DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+  [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+  [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+  [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+  ```
+  Query `"$DRAFT_TOOLS/graph-arch.sh" --repo .` for dependency awareness. Flag dependencies on unexpected modules. Flag code in modules involved in dependency cycles as higher risk. Run `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` to prioritize analysis of high-complexity, high-fanIn files. See `core/shared/graph-query.md`.
 - **Leverage Learned Anti-Patterns** — If `draft/guardrails.md` exists, read the `## Learned Anti-Patterns` section. During the bug sweep, when a bug matches a learned anti-pattern, prefix the report entry with `[KNOWN-ANTI-PATTERN: {pattern name}]`. This distinguishes recurring documented patterns from newly discovered bugs, and signals that a systemic fix may be needed rather than a one-off patch.
 
 ### 2. Confirm Scope
@@ -7304,9 +7379,19 @@ You are conducting a code review using Draft's Context-Driven Development method
 
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Stage 1 (Automated Validation) **starts from the graph**:
 
-1. Run blast-radius assessment via `scripts/tools/hotspot-rank.sh --repo .` and `scripts/tools/graph-impact.sh` (see Stage 1).
-2. For each changed file with non-trivial diff size, run `scripts/tools/graph-impact.sh --repo . --file <path>` to obtain the affected module set deterministically.
-3. For each public symbol modified, run `scripts/tools/graph-callers.sh --repo . --symbol <name>` to enumerate downstream callers before judging breaking-change severity.
+First resolve the bundled helpers:
+```bash
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+```
+
+1. Run blast-radius assessment via `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` and `"$DRAFT_TOOLS/graph-impact.sh"` (see Stage 1).
+2. For each changed file with non-trivial diff size, run `"$DRAFT_TOOLS/graph-impact.sh" --repo . --file <path>` to obtain the affected module set deterministically.
+3. For each public symbol modified, run `"$DRAFT_TOOLS/graph-callers.sh" --repo . --symbol <name>` to enumerate downstream callers before judging breaking-change severity.
 
 Filesystem `grep` is reserved for source-text scans (string literals, log messages, regex matches in code) — not for discovering modules, files, or callers when the graph can answer.
 
@@ -7662,10 +7747,21 @@ Load plugin guardrails before scanning: `core/guardrails/review-checks.md` (RC-#
 For the files changed in the diff, perform static checks using `grep` or similar tools:
 
 - **Blast Radius Assessment** (if the `draft/graph/` snapshot exists):
+
+   First resolve the bundled helpers:
+   ```bash
+   # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+   # is not exported into skill Bash). See core/shared/tool-resolver.md.
+   DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+   [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+   [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+   [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+   ```
+
    - List all changed files from the diff
-   - For each changed file, check if it appears in `scripts/tools/hotspot-rank.sh --repo .` output — if yes, record its `fanIn` value
+   - For each changed file, check if it appears in `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` output — if yes, record its `fanIn` value
    - Classify: files with fanIn in the top 20% of the hotspot output = **HIGH IMPACT**; top 21–50% = **MEDIUM**; below 50% or not in output = **STANDARD**
-   - For any file in a HIGH or MEDIUM module, query `scripts/tools/graph-arch.sh --repo . | jq '.packages[].fan_in'` (how many modules depend on this module)
+   - For any file in a HIGH or MEDIUM module, query `"$DRAFT_TOOLS/graph-arch.sh" --repo . | jq '.packages[].fan_in'` (how many modules depend on this module)
    - Include a `Blast Radius` line in the Stage 1 report summary: `Blast Radius: HIGH | MEDIUM | STANDARD — <N> changed files affect high-fanIn modules: [file list]`
    - If any changed file is HIGH IMPACT: escalate Stage 3 thoroughness (check all callers of changed functions) and note this in the report header
 - **Architecture Conformance:** Search for pattern violations documented in `draft/.ai-context.md`. (e.g. `import * from 'database'` in a React component).
@@ -7674,7 +7770,7 @@ For the files changed in the diff, perform static checks using `grep` or similar
 - **Graph Boundary Check** (if `draft/graph/schema.yaml` exists) `[RC-013]`:
    - For each changed file, identify its module from the graph
    - Check if any new cross-module includes were added in the diff
-   - Verify they follow the established dependency direction from `scripts/tools/graph-arch.sh --repo .` package fan-in/out
+   - Verify they follow the established dependency direction from `"$DRAFT_TOOLS/graph-arch.sh" --repo .` package fan-in/out
    - Flag reverse-direction dependencies (module A now depends on module B, but only B→A existed before) as "Potential architecture violation — new dependency direction"
    - Check if changes introduce files in modules listed in graph cycles — flag as higher risk
 - **Security Scan** `[RC-001, RC-002, RC-003, RC-011]`:
@@ -8399,8 +8495,11 @@ As the last step after saving the review report, emit a metrics record. Best-eff
 
 **Emit call:**
 ```bash
-DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
-[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
 [ -x "$DRAFT_TOOLS/emit-skill-metrics.sh" ] && bash "$DRAFT_TOOLS/emit-skill-metrics.sh" \
   '{"skill":"review","track_id":"<id_or_null>","stage_reached":"<stage>","verdict":"<v>","critical_count":<N>,"important_count":<N>,"blast_radius":"<br>","graph_queries":<N>,"fallback_grep_count":<N>}'
@@ -8459,8 +8558,9 @@ Run the WS-9 chain from [verification-gates.md](../../core/shared/verification-g
 
 ```bash
 TRACK_DIR="draft/tracks/<id>"
-DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
-[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
 
 "$DRAFT_TOOLS/check-track-hygiene.sh" "$TRACK_DIR"
@@ -10711,8 +10811,18 @@ You are performing a lightweight, ad-hoc code review. This is the fast alternati
 
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Quick-review keeps the graph load light:
 
-1. Always run `scripts/tools/hotspot-rank.sh --repo .` for every changed file (Step 2 blast-radius pre-check below).
-2. If a finding spans more than one file, run `scripts/tools/graph-callers.sh --repo . --symbol <name>` to enumerate the call sites before claiming "no other usages".
+First resolve the bundled helpers:
+```bash
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+```
+
+1. Always run `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` for every changed file (Step 2 blast-radius pre-check below).
+2. If a finding spans more than one file, run `"$DRAFT_TOOLS/graph-callers.sh" --repo . --symbol <name>` to enumerate the call sites before claiming "no other usages".
 
 Filesystem `grep` is reserved for source-text scans (literal strings, regex patterns). Symbol and caller discovery go through the graph.
 
@@ -10770,7 +10880,7 @@ Determine the diff to review:
 
 ## Step 2: Blast Radius Pre-check (if `draft/graph/schema.yaml` exists)
 
-Before the four-dimension review, run `scripts/tools/hotspot-rank.sh --repo .` and check if any files in scope appear in the output. If any file has a `fanIn` in the top 20% of the list, add this warning at the top of the review report:
+Before the four-dimension review, run `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` and check if any files in scope appear in the output. If any file has a `fanIn` in the top 20% of the list, add this warning at the top of the review report:
 
 ```
 ⚠ HIGH IMPACT: {file} is a high-fanIn hotspot (fanIn={N}). Changes here propagate to many callers — review with extra care.
@@ -10927,10 +11037,20 @@ Perform an exhaustive end-to-end lifecycle review of a service, component, or mo
 
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Deep-review uses the graph to **narrow review scope** — a key 30–50% scope reduction:
 
-1. Use `scripts/tools/graph-impact.sh`/`graph-callers.sh` and `scripts/tools/graph-arch.sh --repo .` for the audited module's structure — do not enumerate via `find`.
-2. Run `scripts/tools/graph-impact.sh --repo . --file <each-changed-file>` per file in the diff (or per file in the module if no diff) to obtain the affected module set deterministically.
-3. Run `scripts/tools/cycle-detect.sh --repo .` and flag any cycle that includes the audited module as Architecture Resilience finding.
-4. Run `scripts/tools/hotspot-rank.sh --repo .` to identify high-fanIn files inside the module — these get deeper inspection.
+First resolve the bundled helpers:
+```bash
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+```
+
+1. Use `"$DRAFT_TOOLS/graph-impact.sh"`/`graph-callers.sh` and `"$DRAFT_TOOLS/graph-arch.sh" --repo .` for the audited module's structure — do not enumerate via `find`.
+2. Run `"$DRAFT_TOOLS/graph-impact.sh" --repo . --file <each-changed-file>` per file in the diff (or per file in the module if no diff) to obtain the affected module set deterministically.
+3. Run `"$DRAFT_TOOLS/cycle-detect.sh" --repo .` and flag any cycle that includes the audited module as Architecture Resilience finding.
+4. Run `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` to identify high-fanIn files inside the module — these get deeper inspection.
 
 Filesystem `grep` is reserved for source-text scans (API contract strings, secret patterns, log message audits). Module enumeration and caller tracing go through the graph.
 
@@ -11234,8 +11354,11 @@ As the last step after saving the deep-review report, emit a metrics record. Bes
 
 **Emit call:**
 ```bash
-DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
-[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
 [ -x "$DRAFT_TOOLS/emit-skill-metrics.sh" ] && bash "$DRAFT_TOOLS/emit-skill-metrics.sh" \
   '{"skill":"deep-review","module":"<module>","phases_completed":<N>,"critical_count":<N>,"important_count":<N>,"sec_violations":<N>,"acid_violations":<N>,"graph_queries":<N>,"fallback_grep_count":<N>}'
@@ -11446,10 +11569,21 @@ Scan the codebase to discover recurring coding patterns and update `draft/guardr
 
 ## MANDATORY GRAPH LOOKUP (read before pattern scanning)
 
+First resolve the bundled helpers:
+
+```bash
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+```
+
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Use the graph to:
 
-1. Enumerate a module's symbols/files via `scripts/tools/graph-callers.sh`/`graph-impact.sh` and `scripts/tools/graph-arch.sh --repo .` (preferred over `find`).
-2. Prioritize hotspots via `scripts/tools/hotspot-rank.sh --repo .` — patterns in high-fanIn files are more impactful when learned.
+1. Enumerate a module's symbols/files via `"$DRAFT_TOOLS/graph-callers.sh"`/`"$DRAFT_TOOLS/graph-impact.sh"` and `"$DRAFT_TOOLS/graph-arch.sh" --repo .` (preferred over `find`).
+2. Prioritize hotspots via `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` — patterns in high-fanIn files are more impactful when learned.
 3. For TS/Python/Go/C/C++, use `*-index.jsonl` to identify class/function definitions rather than re-discovering them via regex.
 
 Filesystem `find` for source discovery (Step 2.1) is permitted **as a complement** to the graph for languages not covered by indexes (e.g. Ruby, Java without ctags). Record the rationale in the Graph Usage Report.
@@ -11683,10 +11817,10 @@ git log --follow --oneline -1 -- {file_containing_pattern}
 
 ### 2.7: Graph-Aware Severity Enrichment
 
-If `draft/graph/schema.yaml` exists (engine live), derive objective severity for all anti-pattern candidates based on the fanIn of files where the pattern was found via `scripts/tools/hotspot-rank.sh --repo .`.
+If `draft/graph/schema.yaml` exists (engine live), derive objective severity for all anti-pattern candidates based on the fanIn of files where the pattern was found via `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .`.
 
 For each anti-pattern candidate from Step 2.2:
-1. Check if any evidence files appear in the hotspot output from `scripts/tools/hotspot-rank.sh --repo .`
+1. Check if any evidence files appear in the hotspot output from `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .`
 2. Take the highest fanIn value across all evidence files:
    - fanIn ≥ 10 → `graph_severity: critical` (breakage propagates to many callers)
    - fanIn 5–9 → `graph_severity: high`
@@ -11969,8 +12103,9 @@ Check for arguments:
 If argument is `list`:
 1. Prefer the deterministic `adr-index.sh` wrapper for the listing — it returns a structured JSON `{adrs:[{id,title,date,status,path,related_tracks}]}` derived from each ADR's frontmatter. Resolve via the canonical tool resolver (see [core/shared/tool-resolver.md](../../core/shared/tool-resolver.md)):
    ```bash
-   DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
-   [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+   DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+   [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+   [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
    [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
    if [ -x "$DRAFT_TOOLS/adr-index.sh" ]; then
      bash "$DRAFT_TOOLS/adr-index.sh" --root draft/adrs
@@ -12298,12 +12433,23 @@ You are conducting a structured debugging session following systematic investiga
 
 ## MANDATORY GRAPH LOOKUP (read before Isolate/Diagnose)
 
+First resolve the bundled helpers:
+
+```bash
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+```
+
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. During Steps 3–4 (Isolate, Diagnose):
 
-1. Locate the suspect file's module via `scripts/tools/graph-arch.sh --repo .` before tracing data flow.
-2. Use `scripts/tools/graph-callers.sh --repo . --symbol <fn>` to enumerate call sites of suspect functions — not `grep`.
-3. Use `scripts/tools/graph-impact.sh --repo . --file <path>` to size the blast radius before proposing a fix.
-4. Run `scripts/tools/hotspot-rank.sh --repo .` to know whether the file is high-fanIn (any fix needs extra caution).
+1. Locate the suspect file's module via `"$DRAFT_TOOLS/graph-arch.sh" --repo .` before tracing data flow.
+2. Use `"$DRAFT_TOOLS/graph-callers.sh" --repo . --symbol <fn>` to enumerate call sites of suspect functions — not `grep`.
+3. Use `"$DRAFT_TOOLS/graph-impact.sh" --repo . --file <path>` to size the blast radius before proposing a fix.
+4. Run `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` to know whether the file is high-fanIn (any fix needs extra caution).
 
 Filesystem `grep` is reserved for source-text scans (literal error strings, stack-trace symbols when the graph misses). Use the fallback sentence on graph miss.
 
@@ -12351,7 +12497,7 @@ Key context for debugging:
 - `.ai-context.md` — Module boundaries, data flows, invariants (crucial for tracing)
 - `tech-stack.md` — Language-specific debugging tools and techniques
 - `guardrails.md` — Known anti-patterns that may be causing the issue
-- `draft/graph/` (MANDATORY when present) — Query `scripts/tools/graph-arch.sh --repo .` for dependency/module context and `scripts/tools/hotspot-rank.sh --repo .` for complexity awareness. Use `scripts/tools/graph-callers.sh --repo . --symbol <fn>` to find all callers, and `scripts/tools/graph-impact.sh --repo . --file <path>` to size blast radius before any fix. See [core/shared/graph-query.md](../../core/shared/graph-query.md).
+- `draft/graph/` (MANDATORY when present) — Query `"$DRAFT_TOOLS/graph-arch.sh" --repo .` for dependency/module context and `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` for complexity awareness. Use `"$DRAFT_TOOLS/graph-callers.sh" --repo . --symbol <fn>` to find all callers, and `"$DRAFT_TOOLS/graph-impact.sh" --repo . --file <path>` to size blast radius before any fix. See [core/shared/graph-query.md](../../core/shared/graph-query.md).
 
 ## Step 1: Parse Arguments
 
@@ -12544,8 +12690,9 @@ Check for arguments:
 **Preferred:** invoke `parse-git-log.sh` — it parses conventional commits into structured JSONL `{sha,type,scope,track_id,subject,author,timestamp,files_changed}`, eliminating ambiguity in `type(track-id): subject` parsing. Resolve via the canonical tool resolver (see [core/shared/tool-resolver.md](../../core/shared/tool-resolver.md)):
 
 ```bash
-DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
-[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
 if [ -x "$DRAFT_TOOLS/parse-git-log.sh" ]; then
   bash "$DRAFT_TOOLS/parse-git-log.sh" --since "24 hours ago" --author "$(git config user.name)"
@@ -12682,12 +12829,23 @@ You are conducting a technical debt analysis to catalog, prioritize, and plan re
 
 ## MANDATORY GRAPH LOOKUP (read before debt scan)
 
+First resolve the bundled helpers:
+
+```bash
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+```
+
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Tech-debt prioritization is fundamentally driven by graph data:
 
-1. Run `scripts/tools/hotspot-rank.sh --repo .` — **rank candidates by `fanIn × complexity`** to surface high-leverage debt first.
-2. Query `scripts/tools/graph-arch.sh --repo .` and run `scripts/tools/cycle-detect.sh --repo .` — flag debt in modules involved in cycles as higher priority.
-3. Run `scripts/tools/cycle-detect.sh --repo .` to enumerate dependency cycles — every cycle is a candidate architecture-debt entry.
-4. For each catalogued finding, run `scripts/tools/graph-impact.sh --repo . --file <path>` so the remediation plan includes blast-radius.
+1. Run `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` — **rank candidates by `fanIn × complexity`** to surface high-leverage debt first.
+2. Query `"$DRAFT_TOOLS/graph-arch.sh" --repo .` and run `"$DRAFT_TOOLS/cycle-detect.sh" --repo .` — flag debt in modules involved in cycles as higher priority.
+3. Run `"$DRAFT_TOOLS/cycle-detect.sh" --repo .` to enumerate dependency cycles — every cycle is a candidate architecture-debt entry.
+4. For each catalogued finding, run `"$DRAFT_TOOLS/graph-impact.sh" --repo . --file <path>` so the remediation plan includes blast-radius.
 
 Filesystem `grep` (e.g. `scan-markers.sh`) is still primary for TODO/FIXME marker discovery — markers are source-text, not graph-derived. The graph governs **prioritization**, the marker scan governs **discovery**.
 
@@ -12755,8 +12913,11 @@ Scan the codebase systematically across all seven categories. For each finding, 
 For TODO/FIXME/HACK/XXX/DEPRECATED markers, prefer the deterministic `scan-markers.sh` wrapper — it emits JSON `[{path,line,marker,text,sha,author,introduced,age_days}]` with blame ages already computed. Resolve via the canonical tool resolver (see [core/shared/tool-resolver.md](../../core/shared/tool-resolver.md)):
 
 ```bash
-DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
-[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
 [ -x "$DRAFT_TOOLS/scan-markers.sh" ] && bash "$DRAFT_TOOLS/scan-markers.sh" --root .
 # Fallback when script unavailable: grep -rn 'TODO\|FIXME\|HACK\|XXX\|DEPRECATED' .
@@ -13477,8 +13638,9 @@ Display a comprehensive overview of project progress.
 If `parse-reports.sh` and `freshness-check.sh` are available, gather structured signals to enrich the status output (severity counts per track, stale `draft/` docs). Resolve via the canonical tool resolver (see [core/shared/tool-resolver.md](../../core/shared/tool-resolver.md)):
 
 ```bash
-DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
-[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
 
 # Per-track report severity rollup (bughunt, review, tech-debt, etc.):
@@ -14115,11 +14277,22 @@ Generate a project-wide impact report measuring Context-Driven Development effec
 
 ## Execution Constraints
 
+First resolve the bundled helpers:
+
+```bash
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+```
+
 1. **Load Track State:**
    - Read all `draft/tracks.md` entries.
    - For each track, read `metadata.json` to extract: `created_at`, `updated`, `status`, phase counts, task counts, `scope_includes`, `scope_excludes`.
    - If no tracks exist, report "No tracks found. Run `draft new-track` to create your first track."
-   - Run `scripts/tools/check-scope-conflicts.sh` to surface adjacent
+   - Run `"$DRAFT_TOOLS/check-scope-conflicts.sh"` to surface adjacent
      tracks sharing scope tags — duplicate effort signals in impact
      reporting. Schema:
      [core/shared/template-contract.md](../../core/shared/template-contract.md).
@@ -16042,8 +16215,9 @@ Referenced by: All skills that generate Draft reports — including `draft bughu
 Use `git-metadata.sh` from the plugin install, resolved via the canonical tool resolver (see [tool-resolver.md](tool-resolver.md)):
 
 ```bash
-DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
-[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
 bash "$DRAFT_TOOLS/git-metadata.sh" --yaml \
     --project "$PROJECT" --module "$MODULE" \
@@ -16476,8 +16650,9 @@ Write the completed content to `draft/.ai-context.md`.
 After writing both output files, strip trailing whitespace and blank lines at EOF to prevent GitHub upload failures. Resolve the script via the canonical tool resolver (see [tool-resolver.md](tool-resolver.md)):
 
 ```bash
-DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
-[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
 [ -x "$DRAFT_TOOLS/fix-whitespace.sh" ] && bash "$DRAFT_TOOLS/fix-whitespace.sh" draft/architecture.md draft/.ai-context.md draft/.ai-profile.md 2>/dev/null || true
 ```
@@ -16936,11 +17111,12 @@ These fields are appended to `~/.draft/metrics.jsonl` along with the existing sk
 
 ## Tooling Wrappers
 
-For common query modes, prefer the deterministic wrappers that ship with the plugin. Resolve their location via the canonical tool resolver (see [tool-resolver.md](tool-resolver.md)) before invoking:
+For common query modes, prefer the deterministic wrappers that ship with the plugin. Resolve their location via the canonical tool resolver (see [tool-resolver.md](tool-resolver.md)) before invoking. Skills run with cwd = the user's project and `${CLAUDE_PLUGIN_ROOT}` is **not** exported into skill Bash, so a bare `scripts/tools/foo.sh` fails — establish `DRAFT_TOOLS` once before the first helper call, in the same Bash session as your tool calls (re-establish it if you split helper calls into a separate, later Bash block):
 
 ```bash
-DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
-[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
 ```
 
@@ -17927,14 +18103,81 @@ See verification-gates.md and template-hygiene.md for usage contracts.
 
 ---
 shared: tool-resolver
-applies_to: quality + init + graph skills
+applies_to: every skill that invokes scripts/tools/*
 ---
 
-# tool-resolver (Foundations Stub)
+# tool-resolver
 
-Portable generalized stub per manifest §2.1. Full content will be expanded in later agent tranche or manual follow-up.
+Canonical procedure for locating Draft's bundled shell helpers (`scripts/tools/*.sh`)
+from inside a skill.
 
-See verification-gates.md and template-hygiene.md for usage contracts.
+## Why this exists
+
+When Claude runs a draft skill, the shell's **working directory is the user's
+project**, not the plugin. The helpers live inside the plugin install directory,
+which on a marketplace/npm install is `~/.claude/plugins/cache/<marketplace>/draft/<version>/`
+— never the cwd. `${CLAUDE_PLUGIN_ROOT}` is **not** exported into skill-driven Bash
+(it is only set for hooks, MCP/LSP servers, and monitor commands), so a bare
+`scripts/tools/foo.sh` or `${CLAUDE_PLUGIN_ROOT}/...` invocation silently fails.
+
+Every skill MUST resolve `DRAFT_TOOLS` and invoke helpers as `"$DRAFT_TOOLS/<tool>.sh"`.
+
+## Resolution order
+
+`DRAFT_TOOLS` resolves to the first directory that exists, in this order:
+
+1. `${DRAFT_PLUGIN_ROOT}/scripts/tools` — explicit override (testing / pinned installs)
+2. `$(cat ~/.cache/draft/plugin-root)/scripts/tools` — install marker written by `draft install` (authoritative)
+3. `${CLAUDE_PLUGIN_ROOT}/scripts/tools` — set in hook/MCP contexts; harmless to probe
+4. `installed_plugins.json → installPath` for `draft@*` — Claude Code's own registry (needs `jq`)
+5. `~/.claude/plugins/cache/*/draft/*/scripts/tools` — newest cache install (glob, `sort -V`)
+6. `~/.claude/plugins/marketplaces/*draft*/scripts/tools` — marketplace clone
+7. `~/.cursor/plugins/local/draft/scripts/tools` — Cursor local install
+8. `$PWD/scripts/tools` — dev / dogfooding (running inside the draft repo itself)
+
+The marker (step 2) is the fast, authoritative path; steps 5–6 are the glob fallback
+that keeps resolution working on installs predating the marker (no reinstall required).
+
+## Skill preamble (copy verbatim)
+
+Establish `DRAFT_TOOLS` once, before the first helper call, in the **same Bash
+session** that runs your tool calls — exactly as skills already define `REPO_ABS`
+once and reuse it. Env vars do not persist across **separate** Bash tool
+invocations (only the cwd does), so if you split helper calls into a later, separate
+Bash block, re-establish `DRAFT_TOOLS` there too:
+
+```bash
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+```
+
+Then invoke helpers through the variable:
+
+```bash
+"$DRAFT_TOOLS/hotspot-rank.sh" --repo . --top 5
+"$DRAFT_TOOLS/graph-arch.sh"   --repo .
+```
+
+The four-line inline preamble is self-contained and is the recommended form for
+skills — it needs no marker file and no prior `source`. The full 8-step resolver
+(adding the `${DRAFT_PLUGIN_ROOT}` override, `${CLAUDE_PLUGIN_ROOT}`, the jq-registry
+lookup, and the Cursor path) is shipped as `scripts/tools/resolve-tools.sh` for tests
+and for callers that prefer a single source of truth:
+
+```bash
+DRAFT_TOOLS="$("$PWD/scripts/tools/resolve-tools.sh" 2>/dev/null)"   # dev/dogfood
+# installed: "$(cat ~/.cache/draft/plugin-root)/scripts/tools/resolve-tools.sh"
+```
+
+## The engine binary is separate
+
+`DRAFT_TOOLS` locates the **wrapper scripts**. Each wrapper then resolves the
+`codebase-memory-mcp` **engine binary** itself via `_lib.sh:find_memory_bin`
+(`DRAFT_MEMORY_BIN` → `$PATH` → `~/.cache/draft/bin/` → vendored). Do not conflate
+the two: a wrapper that runs but reports `source: unavailable` means the engine
+binary is missing, not the wrapper.
 
 </core-file>
 
@@ -20340,8 +20583,9 @@ validator chain via the canonical resolver pattern (see
 [core/shared/verification-gates.md](../../core/shared/verification-gates.md)):
 
 ```bash
-DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
-[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
 "$DRAFT_TOOLS/check-track-hygiene.sh" .; "$DRAFT_TOOLS/verify-citations.sh" .
 "$DRAFT_TOOLS/verify-doc-anchors.sh" .; "$DRAFT_TOOLS/check-graph-usage-report.sh" .

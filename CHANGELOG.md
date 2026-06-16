@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Graph tooling unreachable on Claude Code marketplace/npm installs.** Skills
+  invoked the bundled `scripts/tools/*.sh` helpers by bare, cwd-relative paths
+  (e.g. `scripts/tools/graph-arch.sh`). Because a skill's shell runs with the
+  cwd set to the *user's project* — not the plugin — and `${CLAUDE_PLUGIN_ROOT}`
+  is not exported into skill-driven Bash, every graph wrapper silently failed and
+  the knowledge-graph engine appeared unavailable. The pre-existing inline resolver
+  also pointed at a nonexistent path (`$HOME/.claude/plugins/draft`). Skills now
+  resolve a `DRAFT_TOOLS` directory (install marker → plugin cache glob →
+  marketplace clone → cwd) and invoke helpers as `"$DRAFT_TOOLS/<tool>.sh"`.
+
+### Added
+- **`scripts/tools/resolve-tools.sh`** — canonical resolver that locates the
+  bundled `scripts/tools/` dir regardless of install layout (Claude Code cache,
+  marketplace clone, Cursor, or in-repo dev). Documented in
+  `core/shared/tool-resolver.md`.
+- **`draft install` writes `~/.cache/draft/plugin-root`** — an authoritative
+  install-path marker so skills resolve the helper directory on the fast path
+  (best-effort; resolution falls back to globbing the plugin cache if absent).
+
 ## [3.2.0] - 2026-06-14
 
 ### Added

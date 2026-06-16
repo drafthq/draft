@@ -11,8 +11,18 @@ You are performing a lightweight, ad-hoc code review. This is the fast alternati
 
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Quick-review keeps the graph load light:
 
-1. Always run `scripts/tools/hotspot-rank.sh --repo .` for every changed file (Step 2 blast-radius pre-check below).
-2. If a finding spans more than one file, run `scripts/tools/graph-callers.sh --repo . --symbol <name>` to enumerate the call sites before claiming "no other usages".
+First resolve the bundled helpers:
+```bash
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+```
+
+1. Always run `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` for every changed file (Step 2 blast-radius pre-check below).
+2. If a finding spans more than one file, run `"$DRAFT_TOOLS/graph-callers.sh" --repo . --symbol <name>` to enumerate the call sites before claiming "no other usages".
 
 Filesystem `grep` is reserved for source-text scans (literal strings, regex patterns). Symbol and caller discovery go through the graph.
 
@@ -70,7 +80,7 @@ Determine the diff to review:
 
 ## Step 2: Blast Radius Pre-check (if `draft/graph/schema.yaml` exists)
 
-Before the four-dimension review, run `scripts/tools/hotspot-rank.sh --repo .` and check if any files in scope appear in the output. If any file has a `fanIn` in the top 20% of the list, add this warning at the top of the review report:
+Before the four-dimension review, run `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` and check if any files in scope appear in the output. If any file has a `fanIn` in the top 20% of the list, add this warning at the top of the review report:
 
 ```
 ⚠ HIGH IMPACT: {file} is a high-fanIn hotspot (fanIn={N}). Changes here propagate to many callers — review with extra care.

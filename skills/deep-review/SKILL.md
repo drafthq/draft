@@ -11,10 +11,20 @@ Perform an exhaustive end-to-end lifecycle review of a service, component, or mo
 
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Deep-review uses the graph to **narrow review scope** — a key 30–50% scope reduction:
 
-1. Use `scripts/tools/graph-impact.sh`/`graph-callers.sh` and `scripts/tools/graph-arch.sh --repo .` for the audited module's structure — do not enumerate via `find`.
-2. Run `scripts/tools/graph-impact.sh --repo . --file <each-changed-file>` per file in the diff (or per file in the module if no diff) to obtain the affected module set deterministically.
-3. Run `scripts/tools/cycle-detect.sh --repo .` and flag any cycle that includes the audited module as Architecture Resilience finding.
-4. Run `scripts/tools/hotspot-rank.sh --repo .` to identify high-fanIn files inside the module — these get deeper inspection.
+First resolve the bundled helpers:
+```bash
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+```
+
+1. Use `"$DRAFT_TOOLS/graph-impact.sh"`/`graph-callers.sh` and `"$DRAFT_TOOLS/graph-arch.sh" --repo .` for the audited module's structure — do not enumerate via `find`.
+2. Run `"$DRAFT_TOOLS/graph-impact.sh" --repo . --file <each-changed-file>` per file in the diff (or per file in the module if no diff) to obtain the affected module set deterministically.
+3. Run `"$DRAFT_TOOLS/cycle-detect.sh" --repo .` and flag any cycle that includes the audited module as Architecture Resilience finding.
+4. Run `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` to identify high-fanIn files inside the module — these get deeper inspection.
 
 Filesystem `grep` is reserved for source-text scans (API contract strings, secret patterns, log message audits). Module enumeration and caller tracing go through the graph.
 
@@ -318,8 +328,11 @@ As the last step after saving the deep-review report, emit a metrics record. Bes
 
 **Emit call:**
 ```bash
-DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
-[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
 [ -x "$DRAFT_TOOLS/emit-skill-metrics.sh" ] && bash "$DRAFT_TOOLS/emit-skill-metrics.sh" \
   '{"skill":"deep-review","module":"<module>","phases_completed":<N>,"critical_count":<N>,"important_count":<N>,"sec_violations":<N>,"acid_violations":<N>,"graph_queries":<N>,"fallback_grep_count":<N>}'

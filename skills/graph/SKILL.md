@@ -33,6 +33,15 @@ if [ ! -d "$REPO" ]; then
 fi
 REPO_ABS="$(cd "$REPO" && pwd)"
 echo "Target repo: $REPO_ABS"
+
+# Locate Draft's bundled helpers. Skills run with cwd = the user's project and
+# ${CLAUDE_PLUGIN_ROOT} is not exported into skill Bash, so resolve DRAFT_TOOLS here
+# and call helpers as "$DRAFT_TOOLS/<tool>.sh". See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+DRAFT_SCRIPTS="${DRAFT_TOOLS%/tools}"   # parent dir holds fetch-memory-engine.sh
 ```
 
 ## Step 2: Ensure the engine is present
@@ -40,12 +49,12 @@ echo "Target repo: $REPO_ABS"
 Resolve the engine; if it is missing, fetch it once, then re-check. If it is still unavailable (e.g. offline, opted out via `DRAFT_MEMORY_DISABLE`), report and stop gracefully — graph features are optional everywhere in Draft.
 
 ```bash
-if ! scripts/tools/verify-graph-binary.sh --repo "$REPO_ABS" --json 2>/dev/null | grep -q '"status":"ok"'; then
+if ! "$DRAFT_TOOLS/verify-graph-binary.sh" --repo "$REPO_ABS" --json 2>/dev/null | grep -q '"status":"ok"'; then
   echo "Graph engine not found — attempting to fetch it..."
-  scripts/fetch-memory-engine.sh || true
+  "$DRAFT_SCRIPTS/fetch-memory-engine.sh" || true
 fi
 
-ENGINE="$(scripts/tools/verify-graph-binary.sh --repo "$REPO_ABS" --json 2>/dev/null || true)"
+ENGINE="$("$DRAFT_TOOLS/verify-graph-binary.sh" --repo "$REPO_ABS" --json 2>/dev/null || true)"
 if ! echo "$ENGINE" | grep -q '"status":"ok"'; then
   echo "Graph engine unavailable — skipping. Install with scripts/fetch-memory-engine.sh, or unset DRAFT_MEMORY_DISABLE."
   exit 0
@@ -58,7 +67,7 @@ echo "Engine: $ENGINE"
 One call resolves the engine, indexes the repo (incrementally on refresh), and updates the gate marker `<repo>/draft/graph/schema.yaml` (engine metadata + point-of-index counts; `access: engine-live`). All structural graph data is queried live from the engine — no snapshot files are committed beyond `schema.yaml`.
 
 ```bash
-scripts/tools/graph-snapshot.sh --repo "$REPO_ABS"
+"$DRAFT_TOOLS/graph-snapshot.sh" --repo "$REPO_ABS"
 ```
 
 If this exits non-zero, the engine became unavailable mid-run — report it and stop; do not fabricate results.
@@ -72,10 +81,10 @@ echo "--- Snapshot ---"
 cat "$REPO_ABS/draft/graph/schema.yaml"
 
 echo "--- Top hotspots ---"
-scripts/tools/hotspot-rank.sh --repo "$REPO_ABS" --top 5
+"$DRAFT_TOOLS/hotspot-rank.sh" --repo "$REPO_ABS" --top 5
 
 echo "--- Cycles ---"
-scripts/tools/cycle-detect.sh --repo "$REPO_ABS"
+"$DRAFT_TOOLS/cycle-detect.sh" --repo "$REPO_ABS"
 
 echo "--- Snapshot state ---"
 git -C "$REPO_ABS" rev-parse --short HEAD 2>/dev/null \

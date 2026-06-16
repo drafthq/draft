@@ -9,12 +9,23 @@ You are decomposing a project or track into modules with clear responsibilities,
 
 ## MANDATORY GRAPH LOOKUP (read before any analysis)
 
+First resolve the bundled helpers:
+
+```bash
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+```
+
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Module identification (Step 3) and dependency mapping (Step 4) **start from the graph**:
 
-1. Query `scripts/tools/graph-arch.sh --repo .` for the authoritative module list and fan-in/out.
-2. Run `scripts/tools/hotspot-rank.sh --repo .` to identify candidate modules to split.
-3. Use `scripts/tools/graph-callers.sh`/`graph-impact.sh` on demand for symbols/callers inside a candidate module.
-4. Run `scripts/tools/cycle-detect.sh --repo .` to enumerate existing cycles before proposing new boundaries.
+1. Query `"$DRAFT_TOOLS/graph-arch.sh" --repo .` for the authoritative module list and fan-in/out.
+2. Run `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` to identify candidate modules to split.
+3. Use `"$DRAFT_TOOLS/graph-callers.sh"`/`"$DRAFT_TOOLS/graph-impact.sh"` on demand for symbols/callers inside a candidate module.
+4. Run `"$DRAFT_TOOLS/cycle-detect.sh" --repo .` to enumerate existing cycles before proposing new boundaries.
 
 Filesystem `grep`/`find` for module discovery is only permitted **after** a documented graph miss, using the fallback sentence `Graph returned no match for <X>; falling back to grep.` and recorded in the Graph Usage Report.
 
@@ -156,11 +167,11 @@ ls -d src/*/ lib/*/ app/*/ packages/*/ 2>/dev/null
 
 When graph data is available, the graph is the **primary** (not optional) source for module discovery — manual scanning above is reserved for the graph-miss fallback path:
 
-- **Module boundaries**: Query `scripts/tools/graph-arch.sh --repo .` — module list with node counts and per-language file counts
+- **Module boundaries**: Query `"$DRAFT_TOOLS/graph-arch.sh" --repo .` — module list with node counts and per-language file counts
 - **Dependency edges**: Weighted inter-module dependencies with exact include counts — replaces manual import tracing
 - **Cycle detection**: Circular dependency paths already computed — use for identifying tight coupling and decomposition candidates
-- **Hotspots**: Run `scripts/tools/hotspot-rank.sh --repo .` — high-complexity files that may need further decomposition
-- **Per-module detail**: query `scripts/tools/graph-callers.sh`/`graph-impact.sh` for symbol/call detail within modules of interest
+- **Hotspots**: Run `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` — high-complexity files that may need further decomposition
+- **Per-module detail**: query `"$DRAFT_TOOLS/graph-callers.sh"`/`"$DRAFT_TOOLS/graph-impact.sh"` for symbol/call detail within modules of interest
 
 This data is deterministic and exhaustive. The manual scanning recipes above only run **after** the graph misses on the concept the user named — and the miss must be reported in the Graph Usage Report footer. See [core/shared/graph-query.md](../../core/shared/graph-query.md) §Concept-to-Files Recipe.
 
@@ -404,8 +415,11 @@ After writing all generated files, strip trailing whitespace and blank lines at 
 Resolve the script via the canonical tool resolver (see [core/shared/tool-resolver.md](../../core/shared/tool-resolver.md)):
 
 ```bash
-DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
-[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
 # Fix all generated markdown for this track:
 [ -x "$DRAFT_TOOLS/fix-whitespace.sh" ] && bash "$DRAFT_TOOLS/fix-whitespace.sh" --track <id>
@@ -452,7 +466,7 @@ references, sunset criteria) survive every regenerate. After rewriting:
 2. Update plan.md `generated_at:` to the current ISO-8601 timestamp.
 3. Ensure plan.md `generated_at` ≥ sibling hld.md / lld.md `generated_at`
    (the hygiene validator fails on stale plan).
-4. Run `scripts/tools/check-track-hygiene.sh <track_dir>` and resolve any
+4. Run `"$DRAFT_TOOLS/check-track-hygiene.sh" <track_dir>` and resolve any
    findings before promoting status past `draft`.
 
 If the plan does not yet have the bracket markers (pre-2.0 track), insert
@@ -648,8 +662,11 @@ As the last step after the completion announcement, emit a metrics record. Best-
 
 **Emit call:**
 ```bash
-DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
-[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
 [ -x "$DRAFT_TOOLS/emit-skill-metrics.sh" ] && bash "$DRAFT_TOOLS/emit-skill-metrics.sh" \
   '{"skill":"decompose","scope":"<scope>","track_id":"<id_or_null>","modules_count":<N>,"lld_generated":<bool>,"high_complexity_modules":<N>}'

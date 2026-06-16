@@ -16,11 +16,22 @@ Generate a project-wide impact report measuring Context-Driven Development effec
 
 ## Execution Constraints
 
+First resolve the bundled helpers:
+
+```bash
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+```
+
 1. **Load Track State:**
    - Read all `draft/tracks.md` entries.
    - For each track, read `metadata.json` to extract: `created_at`, `updated`, `status`, phase counts, task counts, `scope_includes`, `scope_excludes`.
    - If no tracks exist, report "No tracks found. Run `/draft:new-track` to create your first track."
-   - Run `scripts/tools/check-scope-conflicts.sh` to surface adjacent
+   - Run `"$DRAFT_TOOLS/check-scope-conflicts.sh"` to surface adjacent
      tracks sharing scope tags — duplicate effort signals in impact
      reporting. Schema:
      [core/shared/template-contract.md](../../core/shared/template-contract.md).

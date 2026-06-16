@@ -11,9 +11,19 @@ You are conducting a code review using Draft's Context-Driven Development method
 
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Stage 1 (Automated Validation) **starts from the graph**:
 
-1. Run blast-radius assessment via `scripts/tools/hotspot-rank.sh --repo .` and `scripts/tools/graph-impact.sh` (see Stage 1).
-2. For each changed file with non-trivial diff size, run `scripts/tools/graph-impact.sh --repo . --file <path>` to obtain the affected module set deterministically.
-3. For each public symbol modified, run `scripts/tools/graph-callers.sh --repo . --symbol <name>` to enumerate downstream callers before judging breaking-change severity.
+First resolve the bundled helpers:
+```bash
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+```
+
+1. Run blast-radius assessment via `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` and `"$DRAFT_TOOLS/graph-impact.sh"` (see Stage 1).
+2. For each changed file with non-trivial diff size, run `"$DRAFT_TOOLS/graph-impact.sh" --repo . --file <path>` to obtain the affected module set deterministically.
+3. For each public symbol modified, run `"$DRAFT_TOOLS/graph-callers.sh" --repo . --symbol <name>` to enumerate downstream callers before judging breaking-change severity.
 
 Filesystem `grep` is reserved for source-text scans (string literals, log messages, regex matches in code) — not for discovering modules, files, or callers when the graph can answer.
 
@@ -369,10 +379,21 @@ Load plugin guardrails before scanning: `core/guardrails/review-checks.md` (RC-#
 For the files changed in the diff, perform static checks using `grep` or similar tools:
 
 - **Blast Radius Assessment** (if the `draft/graph/` snapshot exists):
+
+   First resolve the bundled helpers:
+   ```bash
+   # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+   # is not exported into skill Bash). See core/shared/tool-resolver.md.
+   DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+   [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+   [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+   [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+   ```
+
    - List all changed files from the diff
-   - For each changed file, check if it appears in `scripts/tools/hotspot-rank.sh --repo .` output — if yes, record its `fanIn` value
+   - For each changed file, check if it appears in `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` output — if yes, record its `fanIn` value
    - Classify: files with fanIn in the top 20% of the hotspot output = **HIGH IMPACT**; top 21–50% = **MEDIUM**; below 50% or not in output = **STANDARD**
-   - For any file in a HIGH or MEDIUM module, query `scripts/tools/graph-arch.sh --repo . | jq '.packages[].fan_in'` (how many modules depend on this module)
+   - For any file in a HIGH or MEDIUM module, query `"$DRAFT_TOOLS/graph-arch.sh" --repo . | jq '.packages[].fan_in'` (how many modules depend on this module)
    - Include a `Blast Radius` line in the Stage 1 report summary: `Blast Radius: HIGH | MEDIUM | STANDARD — <N> changed files affect high-fanIn modules: [file list]`
    - If any changed file is HIGH IMPACT: escalate Stage 3 thoroughness (check all callers of changed functions) and note this in the report header
 - **Architecture Conformance:** Search for pattern violations documented in `draft/.ai-context.md`. (e.g. `import * from 'database'` in a React component).
@@ -381,7 +402,7 @@ For the files changed in the diff, perform static checks using `grep` or similar
 - **Graph Boundary Check** (if `draft/graph/schema.yaml` exists) `[RC-013]`:
    - For each changed file, identify its module from the graph
    - Check if any new cross-module includes were added in the diff
-   - Verify they follow the established dependency direction from `scripts/tools/graph-arch.sh --repo .` package fan-in/out
+   - Verify they follow the established dependency direction from `"$DRAFT_TOOLS/graph-arch.sh" --repo .` package fan-in/out
    - Flag reverse-direction dependencies (module A now depends on module B, but only B→A existed before) as "Potential architecture violation — new dependency direction"
    - Check if changes introduce files in modules listed in graph cycles — flag as higher risk
 - **Security Scan** `[RC-001, RC-002, RC-003, RC-011]`:
@@ -1106,8 +1127,11 @@ As the last step after saving the review report, emit a metrics record. Best-eff
 
 **Emit call:**
 ```bash
-DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
-[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
 [ -x "$DRAFT_TOOLS/emit-skill-metrics.sh" ] && bash "$DRAFT_TOOLS/emit-skill-metrics.sh" \
   '{"skill":"review","track_id":"<id_or_null>","stage_reached":"<stage>","verdict":"<v>","critical_count":<N>,"important_count":<N>,"blast_radius":"<br>","graph_queries":<N>,"fallback_grep_count":<N>}'

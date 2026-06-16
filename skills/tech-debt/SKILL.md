@@ -9,12 +9,23 @@ You are conducting a technical debt analysis to catalog, prioritize, and plan re
 
 ## MANDATORY GRAPH LOOKUP (read before debt scan)
 
+First resolve the bundled helpers:
+
+```bash
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+```
+
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Tech-debt prioritization is fundamentally driven by graph data:
 
-1. Run `scripts/tools/hotspot-rank.sh --repo .` — **rank candidates by `fanIn × complexity`** to surface high-leverage debt first.
-2. Query `scripts/tools/graph-arch.sh --repo .` and run `scripts/tools/cycle-detect.sh --repo .` — flag debt in modules involved in cycles as higher priority.
-3. Run `scripts/tools/cycle-detect.sh --repo .` to enumerate dependency cycles — every cycle is a candidate architecture-debt entry.
-4. For each catalogued finding, run `scripts/tools/graph-impact.sh --repo . --file <path>` so the remediation plan includes blast-radius.
+1. Run `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` — **rank candidates by `fanIn × complexity`** to surface high-leverage debt first.
+2. Query `"$DRAFT_TOOLS/graph-arch.sh" --repo .` and run `"$DRAFT_TOOLS/cycle-detect.sh" --repo .` — flag debt in modules involved in cycles as higher priority.
+3. Run `"$DRAFT_TOOLS/cycle-detect.sh" --repo .` to enumerate dependency cycles — every cycle is a candidate architecture-debt entry.
+4. For each catalogued finding, run `"$DRAFT_TOOLS/graph-impact.sh" --repo . --file <path>` so the remediation plan includes blast-radius.
 
 Filesystem `grep` (e.g. `scan-markers.sh`) is still primary for TODO/FIXME marker discovery — markers are source-text, not graph-derived. The graph governs **prioritization**, the marker scan governs **discovery**.
 
@@ -82,8 +93,11 @@ Scan the codebase systematically across all seven categories. For each finding, 
 For TODO/FIXME/HACK/XXX/DEPRECATED markers, prefer the deterministic `scan-markers.sh` wrapper — it emits JSON `[{path,line,marker,text,sha,author,introduced,age_days}]` with blame ages already computed. Resolve via the canonical tool resolver (see [core/shared/tool-resolver.md](../../core/shared/tool-resolver.md)):
 
 ```bash
-DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
-[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
 [ -x "$DRAFT_TOOLS/scan-markers.sh" ] && bash "$DRAFT_TOOLS/scan-markers.sh" --root .
 # Fallback when script unavailable: grep -rn 'TODO\|FIXME\|HACK\|XXX\|DEPRECATED' .

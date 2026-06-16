@@ -11,9 +11,9 @@ You are generating a pre-deployment verification checklist customized to this pr
 
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Use the graph to validate module boundaries before the deploy:
 
-1. For each file in the deploy diff, run `scripts/tools/graph-impact.sh --repo . --file <path>` to enumerate the modules affected — flag any module **not** declared in `hld.md` §Detailed Design as a deployment-scope miss.
-2. Run `scripts/tools/cycle-detect.sh --repo .` (and query `scripts/tools/graph-arch.sh --repo .` for the module overview) to ensure no fresh cycles were introduced after HLD sign-off.
-3. Run `scripts/tools/hotspot-rank.sh --repo .` — any hotspot in the diff escalates the Resiliency row of Phase 0.
+1. For each file in the deploy diff, run `"$DRAFT_TOOLS/graph-impact.sh" --repo . --file <path>` to enumerate the modules affected — flag any module **not** declared in `hld.md` §Detailed Design as a deployment-scope miss.
+2. Run `"$DRAFT_TOOLS/cycle-detect.sh" --repo .` (and query `"$DRAFT_TOOLS/graph-arch.sh" --repo .` for the module overview) to ensure no fresh cycles were introduced after HLD sign-off.
+3. Run `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` — any hotspot in the diff escalates the Resiliency row of Phase 0.
 
 Filesystem `grep` is reserved for source-text scans (migration file names, flag-key strings). Module/impact discovery goes through the graph.
 
@@ -67,8 +67,9 @@ by validator.
 ```bash
 TRACK_DIR="$1" # absolute path to track-under-deploy, or .
 
-DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$HOME/.claude/plugins/draft}/scripts/tools"
-[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$HOME/.cursor/plugins/local/draft/scripts/tools"
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
 
 "$DRAFT_TOOLS/check-track-hygiene.sh" "$TRACK_DIR" || rc=$?

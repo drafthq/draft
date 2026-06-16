@@ -275,7 +275,18 @@ Only when material: authentication/authorization checkpoints, distributed transa
 
 **Core rule:** The graph is the source of truth for structure. LLM synthesis exists only to interpret the graph into actionable design understanding — primarily via one accurate workflow or state diagram per module — plus tiny supporting notes. The previous volume-oriented deep-dive expectations are superseded.
 
-For each module returned by `scripts/tools/graph-arch.sh --repo . | jq '.packages[]'`, produce a subsection whose **primary content** is the deterministic graph block followed by one synthesized behavioral diagram. Every module gets a slot; do not sample. The block's fan-in/out and node counts come from `.packages[]`; public API and key call edges come from live per-package queries (`scripts/tools/graph-callers.sh`, `graph-impact.sh`) and `scripts/tools/hotspot-rank.sh --repo .`.
+First resolve the bundled helpers:
+
+```bash
+# Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
+# is not exported into skill Bash). See core/shared/tool-resolver.md.
+DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
+[ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
+```
+
+For each module returned by `"$DRAFT_TOOLS/graph-arch.sh" --repo . | jq '.packages[]'`, produce a subsection whose **primary content** is the deterministic graph block followed by one synthesized behavioral diagram. Every module gets a slot; do not sample. The block's fan-in/out and node counts come from `.packages[]`; public API and key call edges come from live per-package queries (`"$DRAFT_TOOLS/graph-callers.sh"`, `"$DRAFT_TOOLS/graph-impact.sh"`) and `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .`.
 
 #### 7.{N} {module-name}
 
@@ -362,7 +373,7 @@ Regardless of tier, any directory whose name contains `ops`, `handlers`, `execut
 | ... | (enumerate ALL — no sampling, no "and others") | | | |
 ```
 
-Use `scripts/tools/graph-callers.sh --symbol <module>` or `scripts/tools/graph-arch.sh --repo .` to get the complete file list. Use `scripts/tools/hotspot-rank.sh --repo .` to flag high-complexity operations.
+Use `"$DRAFT_TOOLS/graph-callers.sh" --symbol <module>` or `"$DRAFT_TOOLS/graph-arch.sh" --repo .` to get the complete file list. Use `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` to flag high-complexity operations.
 
 #### Example: Full Sub-Module Treatment for `icebox/` (917 files)
 
@@ -516,10 +527,10 @@ Include architecturally significant implementations (high fan-in, core extension
 | (enumerate ALL — use hotspot-rank.sh and graph-callers.sh / get_architecture for file list and line counts) |
 ```
 
-> **MANDATORY (graph data)**: Query `scripts/tools/graph-arch.sh --repo .` or
-> `scripts/tools/graph-callers.sh --symbol <module>` to get the complete file list with line counts.
+> **MANDATORY (graph data)**: Query `"$DRAFT_TOOLS/graph-arch.sh" --repo .` or
+> `"$DRAFT_TOOLS/graph-callers.sh" --symbol <module>` to get the complete file list with line counts.
 > Filter for files in operation sub-directories (paths containing `/ops/`,
-> `/handlers/`, `/executors/`, `/workers/`). Use `scripts/tools/hotspot-rank.sh --repo .` to flag
+> `/handlers/`, `/executors/`, `/workers/`). Use `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` to flag
 > high-complexity operations (high line count or fanIn). Do NOT skip this step — incomplete
 > catalogs cause AI agents to reinvent existing functionality.
 
@@ -1214,7 +1225,7 @@ Fix: Cross-reference ALL data sources (Appendix B), ALL implementation outputs (
 
 **FAILURE 4 — Missing Sub-Modules:**
 Detection: A module with 100+ source files (check graph data) has no Sub-Module Structure table.
-Fix: Query `scripts/tools/graph-arch.sh --repo .` or `scripts/tools/graph-callers.sh --symbol <name>`, group results by immediate sub-directory, and generate the table with file counts and one-line role descriptions per sub-directory.
+Fix: Query `"$DRAFT_TOOLS/graph-arch.sh" --repo .` or `"$DRAFT_TOOLS/graph-callers.sh" --symbol <name>`, group results by immediate sub-directory, and generate the table with file counts and one-line role descriptions per sub-directory.
 
 **FAILURE 4b — Shallow Sub-Module Treatment:**
 Detection: Large sub-modules (50+ files) listed only as table rows with no dedicated deep-dive subsection. Or ops/handler directories have no operation catalog.
