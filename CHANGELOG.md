@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.1] - 2026-06-15
+
 ### Fixed
 - **Graph tooling unreachable on Claude Code marketplace/npm installs.** Skills
   invoked the bundled `scripts/tools/*.sh` helpers by bare, cwd-relative paths
