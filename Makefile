@@ -32,6 +32,7 @@ TEST_SCRIPTS = \
 	./tests/test-tools-mermaid-from-graph.sh \
 	./tests/test-tools-graph-snapshot.sh \
 	./tests/test-tools-graph-init.sh \
+	./tests/test-tools-graph-preflight.sh \
 	./tests/test-tools-graph-impact.sh \
 	./tests/test-tools-graph-callers.sh \
 	./tests/test-tools-graph-arch.sh \

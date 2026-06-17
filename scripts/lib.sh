@@ -158,6 +158,7 @@ TOOLS=(
     "mermaid-from-graph.sh"
     "graph-snapshot.sh"
     "graph-init.sh"
+    "graph-preflight.sh"
     "graph-impact.sh"
     "graph-callers.sh"
     "graph-arch.sh"
