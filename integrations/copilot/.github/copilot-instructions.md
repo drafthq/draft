@@ -319,6 +319,23 @@ Check for arguments:
 
 > `draft init` is the **single entry point** for building context — there is no separate `index` command. Init is scope-aware (root vs sub-module); see **Scope Detection** below.
 
+### Output Mode (`DRAFT_INIT_MODE`)
+
+Init has two output modes. The default is **tier-gated (`auto`)** — resolved from the codebase tier computed in Step 1.4.5 — and the `DRAFT_INIT_MODE` environment variable overrides it:
+
+```bash
+DRAFT_INIT_MODE="${DRAFT_INIT_MODE:-auto}"
+# auto  → resolved AFTER tier is known (Step 1.4.5):
+#           tier 1–2 (micro/small)     → monolith
+#           tier 3–5 (medium/large/XL) → okf
+# monolith / okf → explicit override; honored as-is.
+```
+
+- **`monolith`** — the standard path documented in this skill: a single `architecture.md` (10-section graph-primary) + derived `.ai-context.md` / `.ai-profile.md`. The default for **small repos (tier 1–2)**, where one linear document beats a taxonomy with little to navigate. Also the A/B baseline and the over-fetch fallback.
+- **`okf`** — emit an OKF-conformant concept taxonomy bundle (`draft/wiki/`) with `.ai-context.md` as the index root and `architecture.md` demoted to a generated rendered view. The default for **tier 3+ repos**, where navigation + maintainability pay off. When active, follow `references/okf-emitter.md` for the decomposition + serialization + validation stage; all shared phases (5-phase analysis, graph snapshot, `.state/` hashing, scope detection, atomic staging) are reused unchanged.
+
+The tier-gated default rests on **maintainability/readability** (one navigable concept per file, cleaner PRs, a generated `architecture.md` preserved for linear onboarding) — not on the A/B benchmark, which was accuracy-parity (`docs/audit/okf-benchmark.md`). `monolith` is **retained, not retired**: it is the tier-1/2 default, the A/B baseline, and the fallback. If `DRAFT_INIT_MODE` is unset, do not commit to a mode until **Step 1.4.5** has computed the tier.
+
 ### Route Explicit Modes Before Initialization
 
 If the user explicitly invoked a specialist mode, route directly:
@@ -681,6 +698,8 @@ Apply tier table:
 | 5    | XL     | M>100 OR F>5000 OR P>500              | 600–900 lines         |
 
 Hold tier in memory. This governs: architecture.md length minimum, .ai-context.md budget, and module deep-dive depth.
+
+**Resolve the output mode now (if `auto`).** If `DRAFT_INIT_MODE` is unset/`auto`, finalize it from the tier just computed: **tier 1–2 → `monolith`**, **tier 3–5 → `okf`** (see **Output Mode** in Pre-Check). An explicit `DRAFT_INIT_MODE=monolith|okf` always wins and skips this resolution. Announce the resolved mode, e.g. `Tier 4 (large) → okf mode (wiki taxonomy bundle).` If `okf`, switch to `references/okf-emitter.md` for the decomposition + serialization + render-views + validate stage from here on; all the shared analysis above is reused unchanged.
 
 **Step 1.4.6 — Build Module Priority List:**
 From `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .`: count hotspot symbols per module.
@@ -3240,6 +3259,230 @@ Run this checklist before writing architecture.md:
 **After completing analysis AND passing all checks: Write this content to `draft/architecture.md` using the Write tool. This is the PRIMARY output. Then run the Condensation Subroutine to derive .ai-context.md.**
 
 ---
+
+## Init — OKF Taxonomy Emitter (DRAFT_INIT_MODE=okf)
+
+> Progressive-disclosure reference for `draft init`. Covers the OKF emitter:
+> type vocabulary, frontmatter contract, generation pipeline, render views,
+> incremental refresh, and the `okf-validate.sh` gate. Authoritative HLD:
+> `hld-draft-init-okf-taxonomy.md` at the repo root.
+
+This is the `draft init` output mode for **tier 3+ repos**, where it is the
+**tier-gated default** (`DRAFT_INIT_MODE` unset → tier 1–2 `monolith`, tier 3–5
+`okf`; an explicit `DRAFT_INIT_MODE=monolith|okf` overrides). `monolith` is
+retained — the tier-1/2 default, the A/B baseline, and the over-fetch fallback.
+The default rests on maintainability/readability, not the benchmark (parity).
+
+```bash
+# Mode gate — default is tier-gated 'auto', finalized after Step 1.4.5 (tier):
+DRAFT_INIT_MODE="${DRAFT_INIT_MODE:-auto}"
+case "$DRAFT_INIT_MODE" in
+  monolith|okf) : ;;             # explicit override — honored as-is
+  auto) : ;;                     # resolve from tier: 1–2 → monolith, 3–5 → okf
+  *) echo "Unknown DRAFT_INIT_MODE='$DRAFT_INIT_MODE' (monolith|okf|auto); using auto" >&2
+     DRAFT_INIT_MODE=auto ;;
+esac
+```
+
+Everything else in `draft init` (5-phase analysis, graph snapshot, `.state/`
+hashing, scope detection, atomic staging) is **reused unchanged**. This mode adds
+a decomposition + serialization stage. It introduces **no new LLM analysis
+engine** and exactly **one** new deterministic helper, `okf-validate.sh`.
+
+## Target layout
+
+`okf` mode changes **only** the `architecture.md` / `.ai-context.md` packaging
+and adds `wiki/`. **Every other standard `draft init` file is still produced**
+— `product.md`, `tech-stack.md`, `workflow.md`, `guardrails.md`, `index.md`,
+`.ai-profile.md`, `tracks/` + `tracks.md`, `.state/`, `graph/` — exactly as in
+`monolith` mode. Do **not** skip them: emitting only the bundle is a regression.
+
+```
+draft/
+├── .ai-context.md         # INDEX ROOT: synopsis (150–250 lines) + Concept Map
+├── architecture.md        # RENDERED VIEW (generated from bundle; not source of truth)
+├── .ai-profile.md         # always-injected profile (derived from .ai-context.md)  [SAME AS MONOLITH]
+├── product.md             # [SAME AS MONOLITH]
+├── tech-stack.md          # [SAME AS MONOLITH]
+├── workflow.md            # [SAME AS MONOLITH]
+├── guardrails.md          # [SAME AS MONOLITH]
+├── index.md               # docs index — lists prose files + wiki/  [SAME AS MONOLITH, +wiki link]
+├── tracks.md  +  tracks/  # [SAME AS MONOLITH]
+├── wiki/                   # OKF bundle (source of truth) — okf-mode ONLY
+│   ├── index.md            # bundle root + Concept Map
+│   ├── overview/{index,architecture,getting-started,glossary}.md
+│   ├── systems/{index,<subsystem>}.md
+│   ├── features/{index,<feature>}.md
+│   ├── reference/{index,<ref>}.md      # config, deps, data models, ADRs, runbooks
+│   ├── entrypoints/<app>.md
+│   ├── web/index.html      # optional offline viewer (okf-render-views.sh --web)
+│   └── log.md              # chronological change history (from .state run memory)
+├── graph/schema.yaml       # [SAME AS MONOLITH] engine gate marker
+└── .state/
+    ├── hashes.json             # file → content hash  [SAME AS MONOLITH]
+    ├── path-to-concept.json    # NEW: source path → concept page(s) it grounds
+    └── signals.json            # [SAME AS MONOLITH]
+```
+
+The standard project files come from the same generators as `monolith` mode
+(intake questions → `product.md`; tech detection → `tech-stack.md`; `draft learn`
+→ `guardrails.md`; templates → `workflow.md`, `index.md`, `tracks.md`,
+`.ai-profile.md`). The OKF emitter only *replaces the architecture packaging*; it
+never owns or removes the rest of the context directory.
+
+Templates for each bundle page live in `core/templates/okf/` (`index.md`,
+`concept.md`, `section-index.md`, `ai-context-index.md`).
+
+## Frozen `type` vocabulary
+
+Every concept carries a `type` from this frozen set (changing it churns every
+file; versioned via `index.md` frontmatter `okf_types_version`):
+
+| type | Maps to | Home |
+|------|---------|------|
+| `Subsystem` | major graph cluster / package boundary | `systems/` |
+| `Module` | single package/dir, cohesive responsibility | `systems/` |
+| `Feature` | user-facing capability spanning modules | `features/` |
+| `Entrypoint` | binary / main / CLI / handler root | `entrypoints/` |
+| `API` | public interface, route group, RPC surface | `reference/` |
+| `DataModel` | schema, table, core struct/type | `reference/` |
+| `Dependency` | notable external dep + how it's used | `reference/` |
+| `ADR` | architecture decision record | `reference/` |
+| `Runbook` | operational procedure | `reference/` |
+
+`okf-validate.sh` enforces this set as ground truth — an out-of-vocab `type`
+fails the build.
+
+## Frontmatter contract
+
+Per concept page (see `core/templates/okf/concept.md`). Required OKF keys:
+`type`, `title`, `description`, `resource`. **`description` is the load-bearing
+routing key** — write it as a routing decision ("should the agent open this for
+the task at hand?"), never a summary. Draft extensions are namespaced `x-` and
+ignored by generic OKF consumers: `x-grounded-paths`, `x-hotspot-score`,
+`x-callers`.
+
+## Concept granularity (resolves open decision 1)
+
+Derive concepts from the graph, not by hand:
+
+- A **Subsystem** = a graph cluster (package/dir boundary) with `fan_in ≥ 2` from
+  other clusters, OR a top-ranked module from `hotspot-rank.sh`.
+- A **Module** = a cohesive package/dir below a subsystem that is *not* itself a
+  cluster boundary but has its own hotspot or public surface.
+- A **Feature** = a capability the graph shows spanning ≥2 modules (shared
+  callers / a route group touching multiple packages).
+- Default cap: one page per package boundary; do not split a package into
+  multiple concept pages unless it has >1 distinct public surface. This keeps
+  page count ≈ module count and navigation depth shallow.
+
+## Generation pipeline (M3)
+
+```
+1. Survey        → existing draft init 5-phase + graph snapshot (graph-snapshot.sh)
+2. Plan          → derive the concept list (above) from graph clusters +
+                   entrypoints + features. Topo-sort by dependency so pages that
+                   others link to (overview, core subsystems) generate FIRST —
+                   forward cross-links resolve.
+3. Generate      → per concept, pull grounding from the graph and write the page:
+                     x-callers        ← graph-callers.sh --symbol <c>
+                     x-grounded-paths  ← graph-impact.sh  --symbol <c>  (blast radius)
+                     x-hotspot-score   ← hotspot-rank.sh
+                     overview diagrams ← mermaid-from-graph.sh
+                   Record each source path → page in .state/path-to-concept.json.
+4. Render views  → ai-context.md (synopsis + Concept Map), architecture.md
+                   (concatenated view), wiki/log.md  (see M4).
+5. Validate      → okf-validate.sh draft/wiki \
+                     --path-index draft/.state/path-to-concept.json
+                   FAIL the build (do not atomic-rename) on any dangle, missing
+                   field, bad type, or path-index gap.
+6. Emit          → mv draft.tmp/ draft/ ; update .state/.
+```
+
+Page bodies are LLM-narrated for readability **but** the graph-derived
+frontmatter and the `Blast radius`/`Used by` sections are deterministic. To keep
+incremental carry-forward byte-identical (open decision 2), cache the narrated
+prose keyed by the source hash of `x-grounded-paths` — unchanged sources reuse
+the cached narration verbatim.
+
+## Render views (M4)
+
+Both are produced by the deterministic helper `okf-render-views.sh` (no LLM) —
+regenerated on every init/refresh so they never drift from the bundle:
+
+```bash
+okf-render-views.sh draft/wiki \
+  --arch-out draft/architecture.md \
+  --concept-map-into draft/wiki/index.md \
+  --concept-map-into draft/.ai-context.md \
+  --web draft/wiki/web/index.html
+```
+
+- `--arch-out` renders the linear `architecture.md` (banner + TOC + every concept
+  page in canonical section order, frontmatter stripped, Mermaid preserved).
+- `--concept-map-into` rebuilds the routing table between the
+  `<!-- CONCEPT-MAP:START -->` / `:END` markers from each concept's `title` +
+  `type` + `description` (section `index.md` pages excluded).
+- `--web` writes a **self-contained offline HTML viewer** (single file: all pages
+  inlined as JSON + a built-in markdown renderer + sidebar nav + search). Works by
+  double-click — no server, no internet, no CDN. Optional, human-facing; regenerate
+  on refresh like the other views. (Mermaid blocks render as labeled source since a
+  graphical engine can't be inlined offline.)
+
+All views write into `draft/` (the OKF emitter never creates a separate output
+dir): `draft/wiki/` is the bundle, `draft/architecture.md` + `draft/.ai-context.md`
+are the rendered views, `draft/wiki/web/index.html` is the optional viewer.
+
+The two views:
+
+- **`ai-context.md`** (index root) — from `core/templates/okf/ai-context-index.md`:
+  the Synopsis preserves the prior `.ai-context.md` content shape (so existing
+  downstream consumers keep working); the Concept Map is built from each
+  concept's `description`. Broad tasks terminate here.
+- **`architecture.md`** (rendered view) — TOC + per-concept section concat +
+  Mermaid, in topo order. Demoted, not deleted: the brownfield Context Quality
+  Audit and any command grepping `architecture.md` keep working (§9 of the HLD).
+- **`wiki/log.md`** — appended from `.state/` run memory.
+
+The `<!-- CONCEPT-MAP:START -->` / `:END` markers in `wiki/index.md` and the
+section `index.md` tables are the injection slots for the routing tables.
+
+## Incremental refresh at concept granularity (M5)
+
+`draft init refresh` under `okf` mode:
+
+```
+1. Diff hashes.json vs working tree     → changed source paths
+2. path-to-concept.json                 → affected concept pages
+3. Regenerate ONLY affected concepts; carry the rest verbatim (cached narration)
+4. Re-render ai-context.md / architecture.md / log.md (cheap; always regenerated)
+5. Re-validate: okf-validate.sh on the bundle + path-index (cross-links touching
+   changed concepts must still resolve)
+6. Append log.md; update hashes.json + path-to-concept.json
+```
+
+A 1-file change regenerates only the concept(s) that file grounds. Unchanged
+concepts are byte-identical across runs.
+
+## Backward compatibility (§9)
+
+- `architecture.md` is retained as a rendered view (brownfield audit + grep keep
+  working).
+- `ai-context.md`'s Synopsis preserves the prior content shape; the Concept Map
+  is additive.
+- `draft review` and downstream command contracts are unchanged — they consume
+  `architecture.md` / `ai-context.md`, both of which still exist.
+
+## Default policy & retirement of `monolith`
+
+`okf` is the **tier-gated default** (tier 3+); `monolith` is the tier-1/2 default
+and remains in place as the A/B baseline + over-fetch fallback. Full retirement of
+`monolith` is deferred until **both**: (1) the large-monolith A/B run shows `okf` ≥
+baseline on tokens at parity accuracy (the regime the §12 benchmark flagged), and
+(2) a human-onboarding eval confirms the wiki + generated `architecture.md` covers
+linear onboarding. Note: retiring `monolith` would not remove `architecture.md` —
+it is generated from the bundle regardless — so there is no readability gain from
+deletion, only lost optionality.
 
 ---
 
@@ -22215,6 +22458,209 @@ List down alerting thresholds on those metrics:
 | | | | |
 
 > `draft deploy-checklist` validates this table is populated before deploy.
+
+</core-file>
+
+---
+
+## core/templates/okf/index.md
+
+<core-file path="core/templates/okf/index.md">
+
+---
+type: Subsystem
+title: "{PROJECT_NAME} — Knowledge Bundle"
+description: >
+  Root index of the OKF taxonomy bundle. Start here, then route into
+  overview/, systems/, features/, reference/, or entrypoints/ via the
+  Concept Map. Open a concept only when its description matches the task.
+resource: .
+tags: [index]
+timestamp: "{ISO_TIMESTAMP}"
+okf_version: "0.1"
+okf_types_version: "0.1"
+---
+
+# {PROJECT_NAME} — Knowledge Bundle
+
+> OKF v0.1 bundle. One concept per file; cross-links form the graph. The
+> live call graph (`codebase-memory-mcp`) is the grounding source; this bundle
+> is the navigable serialization. `../ai-context.md` is the consumption entry point.
+
+## Sections
+
+| Section | Holds | Index |
+|---------|-------|-------|
+| `overview/` | System map, getting-started, glossary | [overview/index.md](overview/index.md) |
+| `systems/` | Subsystems & modules (graph clusters) | [systems/index.md](systems/index.md) |
+| `features/` | User-facing capabilities spanning modules | [features/index.md](features/index.md) |
+| `reference/` | APIs, data models, dependencies, ADRs, runbooks | [reference/index.md](reference/index.md) |
+| `entrypoints/` | Binaries / mains / CLIs / handler roots | see pages below |
+
+## Concept Map
+
+<!-- Built from each concept's frontmatter `description` (the routing key).
+     One line per concept. Regenerated on every init/refresh. -->
+<!-- CONCEPT-MAP:START -->
+<!-- CONCEPT-MAP:END -->
+
+## Change log
+
+See [log.md](log.md) for chronological regeneration history.
+
+</core-file>
+
+---
+
+## core/templates/okf/concept.md
+
+<core-file path="core/templates/okf/concept.md">
+
+---
+type: Subsystem                    # required (OKF) — one of the frozen vocab below
+title: "{CONCEPT_TITLE}"           # OKF
+description: >                     # OKF — LOAD-BEARING: the agent's routing key.
+  Write this as a ROUTING DECISION, not a summary. It must answer
+  "should the agent open this file for the task at hand?" from the index
+  alone. Name the responsibilities and the words a task would use.
+resource: "{CANONICAL_SOURCE_PATH}"   # OKF — canonical source path(s)
+tags: [tag1, tag2]                 # OKF
+timestamp: "{ISO_TIMESTAMP}"       # OKF — last regeneration
+# Draft extensions (ignored by generic OKF consumers; namespaced x-):
+x-grounded-paths: ["{path/a}", "{path/b}"]   # exact source files this page grounds
+x-hotspot-score: 0.0                          # from hotspot-rank.sh (0..1)
+x-callers: ["{module/a}", "{module/b}"]       # from graph-callers.sh
+---
+
+# {CONCEPT_TITLE}
+
+<!--
+Frozen `type` vocabulary (changing it churns every file — versioned via
+index.md: okf_types_version):
+  Subsystem  — major graph cluster / package boundary        → systems/
+  Module     — single package/dir with cohesive responsibility → systems/
+  Feature    — user-facing capability spanning modules         → features/
+  Entrypoint — binary / main / CLI / handler root              → entrypoints/
+  API        — public interface, route group, RPC surface      → reference/
+  DataModel  — schema, table, core struct/type                 → reference/
+  Dependency — notable external dep + how it's used            → reference/
+  ADR        — architecture decision record                    → reference/
+  Runbook    — operational procedure                           → reference/
+-->
+
+## What it is
+
+One paragraph: the concept's responsibility and boundary. Graph-grounded.
+
+## How it works
+
+Primary control/data flow. At least one Mermaid diagram for a significant
+concept (workflow, state, or sequence). Grounded in the call graph.
+
+## Used by
+
+Cross-links to callers (from `x-callers`). Each link is a relative path to
+another concept page so `okf-validate.sh` can resolve it.
+
+## Blast radius
+
+What breaks if this changes (from `graph-impact.sh`). Lists `x-grounded-paths`
+so a focused task knows exactly which source files to open.
+
+## See also
+
+- [Related concept](../systems/other.md)
+
+</core-file>
+
+---
+
+## core/templates/okf/section-index.md
+
+<core-file path="core/templates/okf/section-index.md">
+
+---
+type: Subsystem
+title: "{SECTION_TITLE}"
+description: >
+  Section index. Lists every concept in this section with its one-line
+  routing description so an agent can pick the right page without opening
+  each one. {SECTION_PURPOSE}
+resource: .
+tags: [index]
+timestamp: "{ISO_TIMESTAMP}"
+---
+
+# {SECTION_TITLE}
+
+> Section of the OKF bundle. Back to [bundle root](../index.md).
+
+## Concepts
+
+<!-- One row per concept page in this section. `description` is the routing key
+     copied from each page's frontmatter. Regenerated on every init/refresh. -->
+
+| Concept | Type | Routing description |
+|---------|------|---------------------|
+| [{concept-a}]({concept-a}.md) | Module | {one-line routing desc} |
+| [{concept-b}]({concept-b}.md) | Feature | {one-line routing desc} |
+
+</core-file>
+
+---
+
+## core/templates/okf/ai-context-index.md
+
+<core-file path="core/templates/okf/ai-context-index.md">
+
+---
+project: "{PROJECT_NAME}"
+module: "{MODULE_NAME or 'root'}"
+generated_by: "draft:init"
+generated_at: "{ISO_TIMESTAMP}"
+draft_init_mode: okf
+---
+
+# {PROJECT_NAME} — AI Context Index
+
+> Index root for the OKF taxonomy bundle (`wiki/`). Read **Synopsis** for broad
+> tasks (they usually terminate here). For focused tasks, route through the
+> **Concept Map** to ≤N concept pages — each lists `x-grounded-paths`. This is
+> both the cheap broad-context path AND the progressive-disclosure entry point.
+
+## Synopsis
+
+<!-- 150–250 lines: the cheap broad-context path (prior .ai-context.md value
+     preserved). Architecture in brief, key invariants, where to start, top
+     hotspots. A broad task should be answerable from this section alone. -->
+
+- **Architecture in brief:** {2–4 sentences}
+- **Key invariants:** {bullet list, provenance-tagged}
+- **Where to start:** {entrypoints + core subsystems}
+- **Top hotspots:** {from hotspot-rank.sh — symbol, fan-in}
+
+## Concept Map
+
+<!-- Routing table built from each concept's frontmatter `description`.
+     Open a section index for the full per-concept list. -->
+
+| Section | Routing |
+|---------|---------|
+| `wiki/systems/` | {one-line per subsystem — what it owns, when to open} |
+| `wiki/features/` | {one-line per feature} |
+| `wiki/reference/` | config, schemas, APIs, ADRs, runbooks |
+| `wiki/entrypoints/` | binaries / CLIs / handler roots |
+
+Full taxonomy: [wiki/index.md](wiki/index.md).
+
+## How to navigate
+
+1. **Broad task** (summarize, "what owns X", topology) → answer from **Synopsis**.
+2. **Focused task** ("what breaks if I change Y", "add a field to Z") → open the
+   matching concept via the **Concept Map**; follow its `x-grounded-paths` and
+   `Used by` cross-links. Do not read the whole bundle.
+3. Every concept page is verified against the live call graph; trust its
+   `Blast radius` section over re-deriving by hand.
 
 </core-file>
 

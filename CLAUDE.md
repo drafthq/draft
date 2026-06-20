@@ -6,14 +6,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Draft is a Claude Code plugin that implements Context-Driven Development methodology. It provides a two-tier command surface: 4 primary workflow commands (`/draft:init`, `/draft:new-track`, `/draft:implement`, `/draft:review`) plus 5 routers (`/draft:plan`, `/draft:ops`, `/draft:docs`, `/draft:discover`, `/draft:jira`) as the recommended public interface. 24 specialist commands are dispatched underneath the routers. The unified `/draft:jira` router supports `preview`, `create`, and the advanced `review <JIRA-ID>` qualification pipeline (deep-review + bughunt + coverage + test-gap analysis). Run `/draft` for the full intent map. Total surface: 33 skills.
 
-Draft also ships a **knowledge graph engine** — `codebase-memory-mcp`, fetched on install to `~/.cache/draft/bin/` (not vendored; see `bin/README.md`) — driven by `scripts/tools/` (43 deterministic shell helpers). Skills are markdown (source of truth, processed by a bash build script into platform-specific integration files for Copilot and Gemini); the graph engine and shell helpers handle mechanical work that markdown can't.
+Draft also ships a **knowledge graph engine** — `codebase-memory-mcp`, fetched on install to `~/.cache/draft/bin/` (not vendored; see `bin/README.md`) — driven by `scripts/tools/` (45 deterministic shell helpers). Skills are markdown (source of truth, processed by a bash build script into platform-specific integration files for Copilot and Gemini); the graph engine and shell helpers handle mechanical work that markdown can't.
 
 ## Build & Test Commands
 
 ```bash
 make build              # Generate integration files from skills
 make build-integrations # Same as above (explicit target)
-make test               # Run all 56 test suites (skills, build, tools)
+make test               # Run all 58 test suites (skills, build, tools)
 make lint               # Run shellcheck + markdownlint
 make clean              # Remove generated integrations
 
@@ -52,7 +52,7 @@ The build script (`scripts/build-integrations.sh`) reads `SKILL_ORDER`, `CORE_FI
 3. Validates body format: blank, `# Title`, blank, then content
 4. Extracts body via `extract_body()`, skipping frontmatter
 5. Applies syntax transforms (`/draft:command` → `draft command`; `@architect`, `@debugger`, etc. → `@workspace` for Copilot)
-6. Inlines 62 core reference files (methodology, shared procedures, templates, agents, guardrails)
+6. Inlines 66 core reference files (methodology, shared procedures, templates, agents, guardrails)
 7. Writes atomically to a temp file then renames into place
 8. Runs `verify_output()` — line count, completeness, syntax
 
@@ -66,9 +66,9 @@ The build script (`scripts/build-integrations.sh`) reads `SKILL_ORDER`, `CORE_FI
 
 - **`core/shared/`** — Shared procedures loaded by skills (context loading, git metadata, pattern learning, cross-skill dispatch, Jira sync, **graph queries**, **parallel analysis**, VCS commands)
 - **`core/agents/`** — Behavioral protocols for specialized agents (architect, debugger, planner, rca, reviewer, ops, writer)
-- **`core/templates/`** — 26 templates for files that `/draft:init` generates in user projects
+- **`core/templates/`** — 30 templates for files that `/draft:init` generates in user projects (includes `okf/` bundle templates for `DRAFT_INIT_MODE=okf`)
 - **`bin/`** — Holds only `README.md`. The graph engine (`codebase-memory-mcp`) is **not vendored** — it is fetched on install (`scripts/fetch-memory-engine.sh`) to `~/.cache/draft/bin/` and resolved by `scripts/tools/_lib.sh:find_memory_bin()` (`DRAFT_MEMORY_BIN` → `$PATH` → cache). Output gate marker under `draft/graph/schema.yaml`; all structural data is queried live. CLI and schema documented in `bin/README.md`.
-- **`scripts/tools/`** — 43 deterministic shell helpers (git-metadata, classify-files, hotspot-rank, cycle-detect, graph-* capability wrappers, `resolve-tools.sh`, etc.). Skills call these for mechanical work. All knowledge-graph Cypher lives in the sourced `_graph_queries.sh` module (single source of query truth); the `graph-*.sh` wrappers are thin arg-parse → builder → fail-loud JSON.
+- **`scripts/tools/`** — 45 deterministic shell helpers (git-metadata, classify-files, hotspot-rank, cycle-detect, graph-* capability wrappers, `resolve-tools.sh`, etc.). Skills call these for mechanical work. All knowledge-graph Cypher lives in the sourced `_graph_queries.sh` module (single source of query truth); the `graph-*.sh` wrappers are thin arg-parse → builder → fail-loud JSON.
 - **`scripts/lib.sh`** — Shared definitions sourced by build script: `SKILL_ORDER`, `CORE_FILES`, `TOOLS`.
 - **`web/`** — Static website deployed to GitHub Pages (`getdraft.dev`), deployed via `.github/workflows/pages.yml`. Includes the Draft Book (22 chapters + 2 appendices) under `web/book/`.
 - **`draft/`** — Dogfooding: Draft's own context files, generated by running `/draft:init` on this repo
@@ -142,15 +142,19 @@ The npm `version` lifecycle hook runs `scripts/sync-version.sh`, which propagate
 
 ## End-User Context
 
-When users run `/draft:init`, it creates a `draft/` directory in their project with:
-- **`index.md`** — Plain docs index listing the prose context files (architecture.md, product.md, tech-stack.md, workflow.md, guardrails.md, .ai-context.md, .ai-profile.md) and tracks.md; notes that the graph is engine-only.
-- **`architecture.md`** — Source of truth: 10-section graph-primary engineering reference with Mermaid diagrams
-- **`.ai-context.md`** — Token-optimized 200-400 line AI context (derived from architecture.md)
-- **`.ai-profile.md`** — Ultra-compact 20-50 line always-injected profile (derived from .ai-context.md)
+When users run `/draft:init`, it creates a `draft/` directory in their project. **Output mode is tier-gated** (`DRAFT_INIT_MODE` unset → tier 1–2 `monolith`, tier 3–5 `okf`; explicit `DRAFT_INIT_MODE=monolith|okf` overrides). Mode changes **only** the `architecture.md` / `.ai-context.md` packaging; **all other files below are produced in both modes.**
+
+Always produced (mode-independent):
+- **`index.md`** — Plain docs index listing the prose context files and tracks.md; notes the graph is engine-only.
 - **`product.md`**, **`tech-stack.md`**, **`workflow.md`**, **`guardrails.md`** — Project config files
-- **`tracks/`** — Individual feature/fix tracks with `spec.md`, `plan.md`, `metadata.json` (now includes `impact` block: files_touched, modules_touched, downstream_files, by_category)
+- **`.ai-profile.md`** — Ultra-compact 20-50 line always-injected profile (derived from .ai-context.md)
+- **`tracks/`** + **`tracks.md`** — Individual feature/fix tracks with `spec.md`, `plan.md`, `metadata.json` (includes `impact` block: files_touched, modules_touched, downstream_files, by_category)
 - **`.state/`** — Freshness hashes, signal classification, run memory for incremental refresh
 - **`graph/`** — Holds only `schema.yaml` (gate marker: engine + project metadata, point-of-index counts; `access: engine-live`). All structural graph data is queried live from the `codebase-memory-mcp` engine via the `scripts/tools/graph-*.sh` wrappers.
+
+Packaging differs by mode:
+- **`monolith`** (tier 1–2 default) — **`architecture.md`** is the source of truth (10-section graph-primary reference with Mermaid); **`.ai-context.md`** is the token-optimized 200-400 line AI context derived from it.
+- **`okf`** (tier 3+ default) — **`wiki/`** is the source of truth (OKF concept taxonomy, one concept per file); **`.ai-context.md`** is the index root (Synopsis + Concept Map); **`architecture.md`** is a generated rendered view of the bundle; **`wiki/web/index.html`** is an optional offline viewer. See `skills/init/references/okf-emitter.md`.
 
 Status markers in tracks: `[ ]` Pending, `[~]` In Progress, `[x]` Completed, `[!]` Blocked
 

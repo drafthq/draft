@@ -114,6 +114,11 @@ CORE_FILES=(
     "templates/discovery.md"
     "templates/hld.md"
     "templates/lld.md"
+    # OKF taxonomy bundle templates (DRAFT_INIT_MODE=okf)
+    "templates/okf/index.md"
+    "templates/okf/concept.md"
+    "templates/okf/section-index.md"
+    "templates/okf/ai-context-index.md"
     # Agents
     "agents/architect.md"
     "agents/debugger.md"
@@ -188,6 +193,9 @@ TOOLS=(
     "verify-doc-anchors.sh"
     "verify-graph-binary.sh"
     "resolve-tools.sh"
+    # OKF taxonomy emitter (DRAFT_INIT_MODE=okf)
+    "okf-validate.sh"
+    "okf-render-views.sh"
 )
 
 # ─────────────────────────────────────────────────────────
