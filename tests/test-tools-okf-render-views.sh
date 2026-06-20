@@ -56,6 +56,8 @@ resource: src/auth/
 
 # Auth Pipeline
 
+Inline danger: </script> must be neutralized when inlined.
+
 ```mermaid
 flowchart LR
   A --> B
@@ -96,6 +98,26 @@ assert "concept map excludes section index pages" \
     "$(grep -Eq '\| \[Overview\]\(overview/index.md\)' "$B/index.md" && echo false || echo true)"
 assert "markers preserved after injection" \
     "$(grep -q 'CONCEPT-MAP:END' "$B/index.md" && echo true || echo false)"
+
+# --- self-contained HTML viewer ---
+run "$B" --web "$FIXTURE/index.html"
+assert "web render → exit 0" "$([[ "$RC" == "0" ]] && echo true || echo false)"
+assert "index.html created" "$([[ -f "$FIXTURE/index.html" ]] && echo true || echo false)"
+assert "viewer is a single self-contained html doc" \
+    "$(grep -q '<!doctype html>' "$FIXTURE/index.html" && echo true || echo false)"
+assert "viewer inlines page content (PAGES object)" \
+    "$(grep -q 'const PAGES = {' "$FIXTURE/index.html" && echo true || echo false)"
+assert "viewer inlines a concept page title" \
+    "$(grep -q 'Auth Pipeline' "$FIXTURE/index.html" && echo true || echo false)"
+assert "viewer has no external script/CDN dependency" \
+    "$(grep -Eq '<script[^>]+src=' "$FIXTURE/index.html" && echo false || echo true)"
+assert "viewer tags mermaid blocks for special rendering" \
+    "$(grep -q 'mermaid-src' "$FIXTURE/index.html" && echo true || echo false)"
+# Embedded markdown must neutralize </ so a literal </script> can't break parsing.
+assert "embedded </script> neutralized to <\\/script>" \
+    "$(grep -Fq '<\/script>' "$FIXTURE/index.html" && echo true || echo false)"
+assert "no raw unescaped </script> leaked into inlined data" \
+    "$([[ "$(grep -Fc '</script>' "$FIXTURE/index.html")" -le 1 ]] && echo true || echo false)"
 
 # --- errors ---
 run "$FIXTURE/nope" --arch-out "$FIXTURE/x.md"

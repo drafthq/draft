@@ -30,7 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     (frontmatter stripped, canonical section order, banner + TOC), and the
     Concept Map routing table is injected between markers in index roots. Keeps
     the human "read one doc" onboarding view at zero extra maintenance —
-    architecture.md is **demoted, not deleted**.
+    architecture.md is **demoted, not deleted**. `--web` additionally emits a
+    self-contained offline HTML viewer (single file, all pages inlined, built-in
+    markdown renderer, sidebar + search; double-click to open, no server/CDN).
+    All views write into `draft/` — the OKF emitter never creates a separate dir.
 
 ## [3.2.1] - 2026-06-15
 

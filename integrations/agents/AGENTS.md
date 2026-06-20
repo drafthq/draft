@@ -3389,7 +3389,8 @@ regenerated on every init/refresh so they never drift from the bundle:
 okf-render-views.sh draft/wiki \
   --arch-out draft/architecture.md \
   --concept-map-into draft/wiki/index.md \
-  --concept-map-into draft/ai-context.md
+  --concept-map-into draft/.ai-context.md \
+  --web draft/wiki/web/index.html
 ```
 
 - `--arch-out` renders the linear `architecture.md` (banner + TOC + every concept
@@ -3397,6 +3398,15 @@ okf-render-views.sh draft/wiki \
 - `--concept-map-into` rebuilds the routing table between the
   `<!-- CONCEPT-MAP:START -->` / `:END` markers from each concept's `title` +
   `type` + `description` (section `index.md` pages excluded).
+- `--web` writes a **self-contained offline HTML viewer** (single file: all pages
+  inlined as JSON + a built-in markdown renderer + sidebar nav + search). Works by
+  double-click — no server, no internet, no CDN. Optional, human-facing; regenerate
+  on refresh like the other views. (Mermaid blocks render as labeled source since a
+  graphical engine can't be inlined offline.)
+
+All views write into `draft/` (the OKF emitter never creates a separate output
+dir): `draft/wiki/` is the bundle, `draft/architecture.md` + `draft/.ai-context.md`
+are the rendered views, `draft/wiki/web/index.html` is the optional viewer.
 
 The two views:
 
