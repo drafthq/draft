@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Cursor install never surfaced `/draft:*` commands.** `draft install cursor`
+  copied the plugin tree to `~/.cursor/plugins/local/draft/` but never registered
+  or enabled it, so skills and slash commands never appeared in Cursor chat. The
+  installer now ships a Cursor-native `.cursor-plugin/plugin.json` manifest and
+  registers + enables `draft@draft-plugins` in the shared Claude plugin registry
+  (`known_marketplaces.json`, `installed_plugins.json`, and `settings.json`) that
+  current Cursor builds read. Registry writes are atomic and non-destructive —
+  other plugins, hooks, and unknown keys are preserved. Existing installs can
+  upgrade with `draft install cursor --force`.
+
+### Added
+- **`.cursor-plugin/plugin.json`** — Cursor-native plugin manifest (source of
+  truth for Cursor discovery), version-synced alongside the Claude manifests.
+- **`cli/src/lib/cursor-registry.js`** — non-destructive merge/write helper for
+  Cursor's plugin registry, with a pure `registerCursorPlugin` and a
+  disk-writing `applyCursorRegistration`.
+- **`cli/src/lib/plugin-manifest.js`** — reads name/version from a plugin
+  manifest, failing loud on a missing required field.
+
 ## [3.2.1] - 2026-06-15
 
 ### Fixed

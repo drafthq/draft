@@ -108,6 +108,18 @@ function install(host, ctx) {
     fetchGraph(ctx);
   }
 
+  // Host-specific registration (e.g. Cursor's plugin registry). On a real
+  // install the hook performs the writes (logging each path); on a dry run it
+  // returns the planned paths so we can surface them without touching disk.
+  if (plan.postInstall) {
+    const reg = plan.postInstall(ctx);
+    if (reg && ctx.dryRun) {
+      log.plan(`would update registry: ${reg.kmPath}`);
+      log.plan(`would update registry: ${reg.ipPath}`);
+      log.plan(`would update registry: ${reg.settingsPath}`);
+    }
+  }
+
   // Record the install path so skills can locate scripts/tools/ from the user's
   // project cwd (best-effort; graph skills glob-fallback if the marker is absent).
   if (!ctx.dryRun) {

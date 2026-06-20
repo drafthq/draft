@@ -300,7 +300,7 @@ You should see the list of available Draft commands. If not, check that the plug
 
 ### Supported Platforms
 
-Draft works with **Claude Code** (native `.claude-plugin/` support) and **Cursor** (supports `.claude/` plugin structure natively). No build pipeline required.
+Draft works with **Claude Code** (native `.claude-plugin/` support) and **Cursor** (requires `.cursor-plugin/plugin.json` plus registration in the shared Claude plugin registry, both handled by `draft install cursor`). No build pipeline required.
 
 ---
 

@@ -26,5 +26,6 @@ sed_i() { sed -i.bak -E "$1" "$2" && rm -f "$2.bak"; }
 # JSON: top-level / first "version" field (plugin.json, marketplace.json each have one).
 sed_i "s/(\"version\":[[:space:]]*\")[0-9][^\"]*(\")/\1${VERSION}\2/" .claude-plugin/plugin.json
 sed_i "s/(\"version\":[[:space:]]*\")[0-9][^\"]*(\")/\1${VERSION}\2/" .claude-plugin/marketplace.json
+sed_i "s/(\"version\":[[:space:]]*\")[0-9][^\"]*(\")/\1${VERSION}\2/" .cursor-plugin/plugin.json
 
 echo "sync-version: all version-bearing files set to ${VERSION}"

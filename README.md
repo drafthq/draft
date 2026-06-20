@@ -67,7 +67,7 @@ Each host installs the way that host actually loads extensions — no manual ste
 | Host | `draft install …` | What it does |
 |------|-------------------|--------------|
 | **Claude Code** | `claude-code` | Registers the plugin via `claude plugin marketplace add` + `claude plugin install` (user scope). Restart Claude Code. |
-| **Cursor** | `cursor` | Copies the plugin into `~/.cursor/plugins/local/draft/` (auto-loaded). Restart Cursor. |
+| **Cursor** | `cursor` | Copies the plugin into `~/.cursor/plugins/local/draft/`, writes `.cursor-plugin/plugin.json`, registers `draft@draft-plugins` in Cursor's plugin registry, and enables it. Restart Cursor (or Developer: Reload Window). |
 | **Codex** | `codex` | Writes `./AGENTS.md`, which Codex reads automatically. |
 | **opencode** | `opencode` | Writes `./AGENTS.md` + `~/.agents/skills/draft/`, both auto-discovered. |
 
@@ -92,7 +92,7 @@ Run `/draft` for the full command map.
 ```
 
 ### Cursor — from GitHub
-Cursor natively supports the `.claude-plugin/` structure. Add via *Settings > Rules, Skills, Subagents > Rules > New > Add from Github*:
+Cursor requires `.cursor-plugin/plugin.json`; the `draft install cursor` command also registers the plugin via the shared Claude plugin registry that Cursor reads on many builds. To add from source instead, use *Settings > Rules, Skills, Subagents > Rules > New > Add from Github*:
 ```
 https://github.com/drafthq/draft.git
 ```

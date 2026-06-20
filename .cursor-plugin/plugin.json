@@ -1,0 +1,28 @@
+{
+  "name": "draft",
+  "displayName": "Draft",
+  "description": "Context-Driven Development: draft specs and plans before implementation. Structured workflows for features and fixes.",
+  "version": "3.2.1",
+  "skills": "./skills/",
+  "agents": "./core/agents/",
+  "author": {
+    "name": "mayurpise"
+  },
+  "homepage": "https://github.com/drafthq/draft",
+  "license": "MIT",
+  "keywords": [
+    "context-driven-development",
+    "ai-assisted",
+    "planning",
+    "specifications",
+    "architecture",
+    "code-review",
+    "monorepo",
+    "tdd",
+    "validation",
+    "enterprise",
+    "incremental-refresh",
+    "signal-detection",
+    "state-management"
+  ]
+}
