@@ -23,6 +23,12 @@ scripts/tools/okf-validate.sh draft/wiki \
   --path-index draft/.state/path-to-concept.json   # gate B before benchmarking
 ```
 
+> **Note on output dir.** The OKF emitter always writes into `draft/`
+> (`draft/wiki/`, `draft/architecture.md`, `draft/.ai-context.md`,
+> `draft/wiki/web/index.html`). The `draft-okf/` path used in the run below was a
+> **benchmark-only isolation** so Arm A's existing monolith `draft/` stayed intact
+> for side-by-side comparison; it is not part of the product layout.
+
 ## Target repo & task suite
 
 **Target:** `finbrainiac-platform` (multi-microservice trading platform). The
