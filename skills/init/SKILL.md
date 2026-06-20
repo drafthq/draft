@@ -199,6 +199,19 @@ Check for arguments:
 
 > `/draft:init` is the **single entry point** for building context — there is no separate `index` command. Init is scope-aware (root vs sub-module); see **Scope Detection** below.
 
+### Output Mode (`DRAFT_INIT_MODE`)
+
+Init has two output modes, gated by the `DRAFT_INIT_MODE` environment variable (default `monolith`):
+
+```bash
+DRAFT_INIT_MODE="${DRAFT_INIT_MODE:-monolith}"
+```
+
+- **`monolith`** (default) — the standard path documented in this skill: a single `architecture.md` (10-section graph-primary) + derived `.ai-context.md` / `.ai-profile.md`. **Unchanged behavior.** If `DRAFT_INIT_MODE` is unset or anything other than `okf`, follow this skill exactly as written.
+- **`okf`** — emit an OKF-conformant concept taxonomy bundle (`draft/wiki/`) with `ai-context.md` as the index root and `architecture.md` demoted to a rendered view. When this mode is active, follow `references/okf-emitter.md` for the decomposition + serialization + validation stage; all shared phases (5-phase analysis, graph snapshot, `.state/` hashing, scope detection, atomic staging) are reused unchanged.
+
+Both modes coexist behind this single flag so the two output shapes can be A/B compared on the same repo without forking the command (see `docs/audit/okf-benchmark.md`). `okf` is opt-in until the benchmark merge gate is met.
+
 ### Route Explicit Modes Before Initialization
 
 If the user explicitly invoked a specialist mode, route directly:

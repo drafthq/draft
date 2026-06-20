@@ -57,7 +57,8 @@ TEST_SCRIPTS = \
 	./tests/test-tools-verify-citations.sh \
 	./tests/test-tools-verify-doc-anchors.sh \
 	./tests/test-tools-verify-graph-binary.sh \
-	./tests/test-tools-resolve-tools.sh
+	./tests/test-tools-resolve-tools.sh \
+	./tests/test-tools-okf-validate.sh
 
 # Phase 0 Foundations hygiene/verification tool tests (per manifest §2.2) — see above
 
