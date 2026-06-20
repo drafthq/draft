@@ -142,15 +142,19 @@ The npm `version` lifecycle hook runs `scripts/sync-version.sh`, which propagate
 
 ## End-User Context
 
-When users run `/draft:init`, it creates a `draft/` directory in their project with:
-- **`index.md`** — Plain docs index listing the prose context files (architecture.md, product.md, tech-stack.md, workflow.md, guardrails.md, .ai-context.md, .ai-profile.md) and tracks.md; notes that the graph is engine-only.
-- **`architecture.md`** — Source of truth: 10-section graph-primary engineering reference with Mermaid diagrams
-- **`.ai-context.md`** — Token-optimized 200-400 line AI context (derived from architecture.md)
-- **`.ai-profile.md`** — Ultra-compact 20-50 line always-injected profile (derived from .ai-context.md)
+When users run `/draft:init`, it creates a `draft/` directory in their project. **Output mode is tier-gated** (`DRAFT_INIT_MODE` unset → tier 1–2 `monolith`, tier 3–5 `okf`; explicit `DRAFT_INIT_MODE=monolith|okf` overrides). Mode changes **only** the `architecture.md` / `.ai-context.md` packaging; **all other files below are produced in both modes.**
+
+Always produced (mode-independent):
+- **`index.md`** — Plain docs index listing the prose context files and tracks.md; notes the graph is engine-only.
 - **`product.md`**, **`tech-stack.md`**, **`workflow.md`**, **`guardrails.md`** — Project config files
-- **`tracks/`** — Individual feature/fix tracks with `spec.md`, `plan.md`, `metadata.json` (now includes `impact` block: files_touched, modules_touched, downstream_files, by_category)
+- **`.ai-profile.md`** — Ultra-compact 20-50 line always-injected profile (derived from .ai-context.md)
+- **`tracks/`** + **`tracks.md`** — Individual feature/fix tracks with `spec.md`, `plan.md`, `metadata.json` (includes `impact` block: files_touched, modules_touched, downstream_files, by_category)
 - **`.state/`** — Freshness hashes, signal classification, run memory for incremental refresh
 - **`graph/`** — Holds only `schema.yaml` (gate marker: engine + project metadata, point-of-index counts; `access: engine-live`). All structural graph data is queried live from the `codebase-memory-mcp` engine via the `scripts/tools/graph-*.sh` wrappers.
+
+Packaging differs by mode:
+- **`monolith`** (tier 1–2 default) — **`architecture.md`** is the source of truth (10-section graph-primary reference with Mermaid); **`.ai-context.md`** is the token-optimized 200-400 line AI context derived from it.
+- **`okf`** (tier 3+ default) — **`wiki/`** is the source of truth (OKF concept taxonomy, one concept per file); **`.ai-context.md`** is the index root (Synopsis + Concept Map); **`architecture.md`** is a generated rendered view of the bundle; **`wiki/web/index.html`** is an optional offline viewer. See `skills/init/references/okf-emitter.md`.
 
 Status markers in tracks: `[ ]` Pending, `[~]` In Progress, `[x]` Completed, `[!]` Blocked
 

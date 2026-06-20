@@ -201,16 +201,20 @@ Check for arguments:
 
 ### Output Mode (`DRAFT_INIT_MODE`)
 
-Init has two output modes, gated by the `DRAFT_INIT_MODE` environment variable (default `monolith`):
+Init has two output modes. The default is **tier-gated (`auto`)** — resolved from the codebase tier computed in Step 1.4.5 — and the `DRAFT_INIT_MODE` environment variable overrides it:
 
 ```bash
-DRAFT_INIT_MODE="${DRAFT_INIT_MODE:-monolith}"
+DRAFT_INIT_MODE="${DRAFT_INIT_MODE:-auto}"
+# auto  → resolved AFTER tier is known (Step 1.4.5):
+#           tier 1–2 (micro/small)     → monolith
+#           tier 3–5 (medium/large/XL) → okf
+# monolith / okf → explicit override; honored as-is.
 ```
 
-- **`monolith`** (default) — the standard path documented in this skill: a single `architecture.md` (10-section graph-primary) + derived `.ai-context.md` / `.ai-profile.md`. **Unchanged behavior.** If `DRAFT_INIT_MODE` is unset or anything other than `okf`, follow this skill exactly as written.
-- **`okf`** — emit an OKF-conformant concept taxonomy bundle (`draft/wiki/`) with `ai-context.md` as the index root and `architecture.md` demoted to a rendered view. When this mode is active, follow `references/okf-emitter.md` for the decomposition + serialization + validation stage; all shared phases (5-phase analysis, graph snapshot, `.state/` hashing, scope detection, atomic staging) are reused unchanged.
+- **`monolith`** — the standard path documented in this skill: a single `architecture.md` (10-section graph-primary) + derived `.ai-context.md` / `.ai-profile.md`. The default for **small repos (tier 1–2)**, where one linear document beats a taxonomy with little to navigate. Also the A/B baseline and the over-fetch fallback.
+- **`okf`** — emit an OKF-conformant concept taxonomy bundle (`draft/wiki/`) with `.ai-context.md` as the index root and `architecture.md` demoted to a generated rendered view. The default for **tier 3+ repos**, where navigation + maintainability pay off. When active, follow `references/okf-emitter.md` for the decomposition + serialization + validation stage; all shared phases (5-phase analysis, graph snapshot, `.state/` hashing, scope detection, atomic staging) are reused unchanged.
 
-Both modes coexist behind this single flag so the two output shapes can be A/B compared on the same repo without forking the command (see `docs/audit/okf-benchmark.md`). `okf` is opt-in until the benchmark merge gate is met.
+The tier-gated default rests on **maintainability/readability** (one navigable concept per file, cleaner PRs, a generated `architecture.md` preserved for linear onboarding) — not on the A/B benchmark, which was accuracy-parity (`docs/audit/okf-benchmark.md`). `monolith` is **retained, not retired**: it is the tier-1/2 default, the A/B baseline, and the fallback. If `DRAFT_INIT_MODE` is unset, do not commit to a mode until **Step 1.4.5** has computed the tier.
 
 ### Route Explicit Modes Before Initialization
 
@@ -574,6 +578,8 @@ Apply tier table:
 | 5    | XL     | M>100 OR F>5000 OR P>500              | 600–900 lines         |
 
 Hold tier in memory. This governs: architecture.md length minimum, .ai-context.md budget, and module deep-dive depth.
+
+**Resolve the output mode now (if `auto`).** If `DRAFT_INIT_MODE` is unset/`auto`, finalize it from the tier just computed: **tier 1–2 → `monolith`**, **tier 3–5 → `okf`** (see **Output Mode** in Pre-Check). An explicit `DRAFT_INIT_MODE=monolith|okf` always wins and skips this resolution. Announce the resolved mode, e.g. `Tier 4 (large) → okf mode (wiki taxonomy bundle).` If `okf`, switch to `references/okf-emitter.md` for the decomposition + serialization + render-views + validate stage from here on; all the shared analysis above is reused unchanged.
 
 **Step 1.4.6 — Build Module Priority List:**
 From `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .`: count hotspot symbols per module.
