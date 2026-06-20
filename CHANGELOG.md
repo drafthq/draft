@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`/draft:init` OKF taxonomy emitter (opt-in via `DRAFT_INIT_MODE=okf`).**
   An alternate init output mode that replaces the monolithic `architecture.md`
   with an OKF v0.1 concept bundle under `draft/wiki/` (one concept per file,
-  cross-links form the graph), repurposes `ai-context.md` as the index root
+  cross-links form the graph), repurposes `.ai-context.md` as the index root
   (Synopsis + Concept Map), and demotes `architecture.md` to a rendered view.
   Default mode (`monolith`) is unchanged — `okf` is gated behind the flag and
   becomes default only after the A/B benchmark merge gate
@@ -34,6 +34,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     self-contained offline HTML viewer (single file, all pages inlined, built-in
     markdown renderer, sidebar + search; double-click to open, no server/CDN).
     All views write into `draft/` — the OKF emitter never creates a separate dir.
+- **`.cursor-plugin/plugin.json`** — Cursor-native plugin manifest (source of
+  truth for Cursor discovery), version-synced alongside the Claude manifests.
+- **`cli/src/lib/cursor-registry.js`** — non-destructive merge/write helper for
+  Cursor's plugin registry, with a pure `registerCursorPlugin` and a
+  disk-writing `applyCursorRegistration`.
+- **`cli/src/lib/plugin-manifest.js`** — reads name/version from a plugin
+  manifest, failing loud on a missing required field.
+
+### Fixed
+- **Cursor install never surfaced `/draft:*` commands.** `draft install cursor`
+  copied the plugin tree to `~/.cursor/plugins/local/draft/` but never registered
+  or enabled it, so skills and slash commands never appeared in Cursor chat. The
+  installer now ships a Cursor-native `.cursor-plugin/plugin.json` manifest and
+  registers + enables `draft@draft-plugins` in the shared Claude plugin registry
+  (`known_marketplaces.json`, `installed_plugins.json`, and `settings.json`) that
+  current Cursor builds read. Registry writes are atomic and non-destructive —
+  other plugins, hooks, and unknown keys are preserved. Existing installs can
+  upgrade with `draft install cursor --force`.
 
 ## [3.2.1] - 2026-06-15
 

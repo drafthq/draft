@@ -26,7 +26,7 @@ Alternative (native marketplace): `/plugin marketplace add drafthq/draft` then `
 ```
 npx @drafthq/draft install cursor
 ```
-Installs the plugin tree to `~/.cursor/plugins/local/draft`.
+Installs the plugin tree to `~/.cursor/plugins/local/draft`, writes `.cursor-plugin/plugin.json`, and registers + enables `draft@draft-plugins` in Cursor's plugin registry. Restart Cursor (or Developer: Reload Window) to load the commands.
 
 ### Codex
 ```
