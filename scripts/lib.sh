@@ -73,6 +73,7 @@ CORE_FILES=(
     "shared/cross-skill-dispatch.md"
     "shared/jira-sync.md"
     "shared/graph-query.md"
+    "shared/okf-retrieval.md"
     "shared/parallel-analysis.md"
     # Foundations additions (Phase 0)
     "shared/context-verify.md"
