@@ -16,6 +16,15 @@
     </image>
 
     <item>
+      <title>Vibe-Coding Doesn't Scale. Context-Driven Development Does.</title>
+      <link>https://getdraft.dev/blog/vibe-coding-doesnt-scale/</link>
+      <description>An AI agent with no context writes plausible code that quietly breaks something three files away. It is a context problem, not a model-quality problem -- smarter models just guess more convincingly. Draft gives your assistant the four things a senior engineer brings: a persistent memory of the system, a spec, a plan, and a three-stage review -- backed by a 100% local code graph. A five-minute tour of the whole Context-Driven Development workflow. Free, local, open source.</description>
+      <pubDate>Sat, 20 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>https://getdraft.dev/blog/vibe-coding-doesnt-scale/</guid>
+      <category>Blog</category>
+    </item>
+
+    <item>
       <title>Similarity Isn't Relevance: How Draft Retrieves Context by Reasoning, Not Vectors</title>
       <link>https://getdraft.dev/blog/reasoning-retrieval/</link>
       <description>Vector search returns the chunks that look like your query. Draft's knowledge wiki returns the concepts that actually matter -- by reasoning over a navigable table of contents instead of running a similarity search over embeddings. No vector DB, no chunking, no cloud, and a retrieval path you can audit: every hop is a relevance judgment over a routing description, not a cosine score.</description>

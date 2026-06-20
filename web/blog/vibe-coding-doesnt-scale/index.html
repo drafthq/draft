@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibe-Coding Doesn't Scale. Context-Driven Development Does. — Draft Blog</title>
+    <meta name="description" content="An AI agent with no context writes plausible code that quietly breaks things three files away. Draft gives Claude Code a spec, a plan, a live code graph, and a three-stage review — turning a fast guesser into a disciplined engineer. Free, local, open source.">
+    <meta name="author" content="Mayur Pise">
+    <meta name="theme-color" content="#0a0d12">
+    <meta name="keywords" content="context-driven development, ai coding agent, claude code plugin, vibe coding, spec driven development, code knowledge graph, ai code review, draft plugin">
+    <meta name="robots" content="index, follow">
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+    <meta property="og:title" content="Vibe-Coding Doesn't Scale. Context-Driven Development Does.">
+    <meta property="og:description" content="Draft gives your AI agent a spec, a plan, a live code graph, and a three-stage review — turning a fast guesser into a disciplined engineer. Free, local, open source.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://getdraft.dev/blog/vibe-coding-doesnt-scale/">
+    <meta property="og:image" content="https://getdraft.dev/social-preview.png?v=331">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Vibe-Coding Doesn't Scale. Context-Driven Development Does.">
+    <meta name="twitter:description" content="Draft turns a fast guesser into a disciplined engineer: spec, plan, live code graph, three-stage review. Free, local, open source.">
+    <meta name="twitter:image" content="https://getdraft.dev/social-preview.png?v=331">
+    <link rel="canonical" href="https://getdraft.dev/blog/vibe-coding-doesnt-scale/">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": "Vibe-Coding Doesn't Scale. Context-Driven Development Does.",
+      "description": "An AI agent with no context writes plausible code that quietly breaks things three files away. Draft gives Claude Code a spec, a plan, a live code graph, and a three-stage review — turning a fast guesser into a disciplined engineer.",
+      "datePublished": "2026-06-20",
+      "dateModified": "2026-06-20",
+      "url": "https://getdraft.dev/blog/vibe-coding-doesnt-scale/",
+      "author": { "@type": "Person", "name": "Mayur Pise", "url": "https://github.com/mayurpise" },
+      "publisher": { "@type": "Organization", "name": "Draft", "url": "https://getdraft.dev" },
+      "image": "https://getdraft.dev/social-preview.png",
+      "inLanguage": "en"
+    }
+    </script>
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-F6X062B4B7"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-F6X062B4B7');
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style"
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap"
+        onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    </noscript>
+
+    <link rel="stylesheet" href="../../css/base.css">
+    <link rel="stylesheet" href="../../css/layout.css">
+    <link rel="stylesheet" href="../../css/components.css">
+    <link rel="stylesheet" href="../../css/animations.css">
+    <link rel="stylesheet" href="../../css/redesign-v24.css">
+    <link rel="stylesheet" href="../blog.css">
+    <script>
+    (function(){try{var t=localStorage.getItem('draft-theme');if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
+    </script>
+</head>
+<body>
+    <div id="cursor-glow" aria-hidden="true"></div>
+
+    <nav class="top-nav" id="top-nav">
+        <a href="../../" class="nav-logo">Draft</a>
+        <div class="nav-links">
+            <a href="../../#features">Features</a>
+            <a href="../../#commands">Commands</a>
+            <a href="../../#install">Install</a>
+            <a href="../../#audience">Who It's For</a>
+            <a href="../../book/">Book</a>
+            <a href="../" class="active">Blog</a>
+        </div>
+        <div class="nav-actions">
+            <a href="https://github.com/drafthq/draft" target="_blank" rel="noopener noreferrer" class="nav-github">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                Star on GitHub
+            </a>
+        </div>
+        <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+            <span></span><span></span><span></span>
+        </button>
+    </nav>
+
+    <main class="blog-page">
+        <article class="blog-container">
+
+            <a href="../" class="post-back">&larr; All posts</a>
+
+            <header class="post-header">
+                <p class="post-meta"><time datetime="2026-06-20">June 20, 2026</time> &middot; 8 min read</p>
+                <h1>Vibe-Coding Doesn't Scale. Context-Driven Development Does.</h1>
+                <p class="post-deck">An AI agent with no context writes plausible code that quietly breaks something three files away. Draft gives your assistant a spec, a plan, a live code graph, and a three-stage review &mdash; turning a fast guesser into a disciplined engineer. Free, local, open source.</p>
+            </header>
+
+            <div class="post-body">
+                <h2>The Bottom Line</h2>
+                <p>The current generation of AI coding agents are astonishing at writing code and terrible at knowing whether they <em>should</em>. Drop a task into a fresh chat and the model does what it always does: it pattern-matches to something plausible, writes it confidently, and has no idea that the helper it just "simplified" is called from 40 other places. The code compiles. The demo works. Two weeks later something unrelated is on fire.</p>
+                <p>This isn't a model-quality problem &mdash; smarter models guess more convincingly, which is worse. It's a <strong>context</strong> problem. A senior engineer doesn't write better code because they type faster; they write better code because they carry a mental model of the system, work from a spec, plan before they touch anything, and review against intent. <strong>Draft</strong> gives your AI agent all four. It's an open-source <a href="https://github.com/drafthq/draft">Claude Code plugin</a> that implements <em>Context-Driven Development</em>: a small, opinionated workflow that wraps every change in the structure a real engineer brings to the job.</p>
+
+                <h2>Why "Just Prompt Better" Stops Working</h2>
+                <p>Vibe-coding &mdash; describe it, accept the diff, move on &mdash; feels incredible for the first hundred lines. It falls apart on real codebases for three reasons that no prompt can fix:</p>
+                <ol>
+                    <li><strong>The agent can't see the blast radius.</strong> It reads the files you opened. It doesn't know what calls the function you're editing, what your change breaks downstream, or which test guards the invariant you're about to violate.</li>
+                    <li><strong>Intent evaporates between turns.</strong> The "why" lives in your head and a Slack thread. Next session &mdash; or next teammate &mdash; starts from zero and re-derives it, usually wrong.</li>
+                    <li><strong>Nothing checks the work against the goal.</strong> "It runs" is not "it's correct." Without a spec to grade against, review degrades to skimming a diff and hoping.</li>
+                </ol>
+                <p>You can paper over each of these with longer prompts and more pasted context. That doesn't scale &mdash; it just moves the unscalable part into your fingers.</p>
+
+                <h2>What Draft Actually Does</h2>
+                <p>Draft replaces ad-hoc prompting with a workflow your agent runs every time, backed by durable files in your repo and a local knowledge graph. Four primary commands carry the whole loop:</p>
+
+                <h3>1. <code>/draft:init</code> &mdash; give the agent a memory</h3>
+                <p>Run once. Draft analyzes the repository and writes a <code>draft/</code> directory: a product overview, tech stack, conventions, guardrails, and &mdash; in its richer mode &mdash; a navigable <strong>knowledge wiki</strong> of one concept per subsystem. It also stands up a <strong>live code graph</strong> via a 100% local engine (<code>codebase-memory-mcp</code>, 159 languages, no API key, nothing leaves your machine). From now on your agent loads the <em>relevant</em> context by reasoning over that map, instead of you pasting files.</p>
+
+                <h3>2. <code>/draft:plan</code> &mdash; decide before you build</h3>
+                <p>Turn a request into a <strong>spec</strong> (what and why, with acceptance criteria) and a <strong>plan</strong> (the ordered steps). For anything non-trivial, Draft can decompose the work into modules, draw the dependency graph, and catch a circular dependency <em>before</em> a line is written. The plan is a file in your repo &mdash; reviewable, editable, and still there next week.</p>
+
+                <h3>3. <code>/draft:implement</code> &mdash; build against the plan, not the vibe</h3>
+                <p>The agent executes the plan step by step, grounded in the spec and the graph. Before it edits a hotspot it can run an <strong>impact query</strong> &mdash; the real downstream files, tests, and configs a change touches &mdash; and adjust the approach accordingly. It writes tests, follows your conventions because they're written down, and leaves an impact record behind so the <em>next</em> change knows what this one touched.</p>
+
+                <h3>4. <code>/draft:review</code> &mdash; grade the work against intent</h3>
+                <p>A <strong>three-stage review</strong>: automated validation (build, tests, lint), spec compliance (did it do what the spec asked?), and code-quality analysis &mdash; including a multi-dimension bug hunt that looks for the failure modes humans skim past. The output is findings tied to the spec, not a vibe-check on a diff.</p>
+
+                <p>That's the public surface most people need. Underneath sit routers (<code>/draft:ops</code>, <code>/draft:docs</code>, <code>/draft:discover</code>, <code>/draft:jira</code>) dispatching specialist skills &mdash; but you can ship real work knowing only the four above.</p>
+
+                <h2>The Difference, Side by Side</h2>
+                <table>
+                    <thead>
+                        <tr><th>Vibe-coding a change</th><th>The same change with Draft</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Context is whatever you pasted this session</td><td>Context loaded from a persistent repo map + code graph</td></tr>
+                        <tr><td>"Why" lives in your head</td><td>"Why" lives in a spec, versioned with the code</td></tr>
+                        <tr><td>Agent edits blind to callers</td><td>Impact query shows the blast radius first</td></tr>
+                        <tr><td>Review = skim the diff</td><td>Review = build + spec compliance + bug hunt</td></tr>
+                        <tr><td>Next session starts from zero</td><td>Next session inherits specs, plans, impact memory</td></tr>
+                        <tr><td>Your code shipped to a SaaS for "context"</td><td>Everything local; nothing leaves your machine</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Local by Construction</h2>
+                <p>Most "AI understands your codebase" products improve context by shipping more of your code to a third party for indexing. Draft goes the other way. The context files are plain markdown in your repo. The knowledge graph is built and queried by a local engine installed alongside the plugin &mdash; no MCP server to host, no SaaS, no cloud, no API key, no leaked code. It works on an air-gapped machine. Your security team can read every byte of what Draft produces because it's all sitting in <code>draft/</code>, in git.</p>
+
+                <h2>What This Means for the Three People Reading This</h2>
+                <p><strong>If you're an engineer:</strong> you stop being the context bus. You describe the change once, the agent plans it, builds it against that plan, and reviews it against the spec &mdash; and the next change starts where this one left off instead of from a blank prompt.</p>
+                <p><strong>If you're an engineering leader:</strong> AI-assisted work becomes legible. Every change has a spec, a plan, and a review trail in the repo &mdash; the same artifacts you'd want from a human, now generated as a byproduct of the workflow rather than nagged into existence.</p>
+                <p><strong>If you're in a regulated or air-gapped shop:</strong> there's nothing to procure and nothing to send out. No vector database, no embedding API, no external indexer. The whole thing is markdown, shell helpers, and a local graph engine.</p>
+
+                <h2>The Larger Argument</h2>
+                <p>The leap from "AI can write code" to "AI can do engineering" isn't a bigger model. It's the scaffolding around the model: a memory of the system, intent captured as a spec, a plan to work against, and a review that grades the result. Humans figured this out decades ago and called it engineering discipline. Draft's bet is simple &mdash; give the same discipline to the agent, keep it local, keep it free, and let the model do what it's genuinely great at inside guardrails that catch what it's genuinely bad at.</p>
+
+                <h2>Try It</h2>
+<pre><code># Install Draft (Claude Code plugin)
+npx @drafthq/draft install claude-code
+
+cd your-repo
+/draft:init                 # build the repo map + local code graph (run once)
+
+# Then ship work, the disciplined way:
+/draft:plan      "add rate limiting to the public API"   # spec + plan
+/draft:implement                                          # build against the plan
+/draft:review                                             # validate, check the spec, hunt bugs</code></pre>
+                <p>It's free and open source. Point it at a repo you know well and watch the first <code>/draft:review</code> find something you'd have shipped.</p>
+            </div>
+
+            <aside class="post-share" aria-label="Share this post">
+                <span class="post-share-label">Share</span>
+                <div class="post-share-buttons">
+                    <button type="button" class="share-btn" data-net="linkedin" aria-label="Share on LinkedIn">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.13 1.45-2.13 2.94v5.67H9.35V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z"/></svg>
+                        <span class="share-btn-label">LinkedIn</span>
+                    </button>
+                    <button type="button" class="share-btn" data-net="x" aria-label="Share on X">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.66l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25h6.83l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                        <span class="share-btn-label">X</span>
+                    </button>
+                    <button type="button" class="share-btn" data-net="hn" aria-label="Share on Hacker News">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M0 0v24h24V0zm6.51 4h2.27l3.22 6.24L15.21 4h2.28l-4.36 8.21V20h-2.26v-7.79z"/></svg>
+                        <span class="share-btn-label">Hacker News</span>
+                    </button>
+                    <button type="button" class="share-btn" data-net="copy" aria-label="Copy link">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                        <span class="share-btn-label">Copy link</span>
+                    </button>
+                </div>
+            </aside>
+
+            <footer class="post-footer">
+                <p>Draft is open source: <a href="https://github.com/drafthq/draft">github.com/drafthq/draft</a>. New to the methodology? Start with the <a href="../../book/">Draft Book</a> or run <code>/draft</code> for the full intent map.</p>
+                <p><a href="../">&larr; Back to all posts</a></p>
+            </footer>
+        </article>
+    </main>
+
+    <script src="../../js/theme-toggle.js"></script>
+    <script src="../../js/main.js"></script>
+    <script src="../share.js"></script>
+</body>
+</html>
