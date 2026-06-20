@@ -26,9 +26,15 @@
     </url>
     <url>
         <loc>https://getdraft.dev/blog/</loc>
-        <lastmod>2026-06-16</lastmod>
+        <lastmod>2026-06-20</lastmod>
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
+    </url>
+    <url>
+        <loc>https://getdraft.dev/blog/reasoning-retrieval/</loc>
+        <lastmod>2026-06-20</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
     </url>
     <url>
         <loc>https://getdraft.dev/blog/graph-engine-vs-grep/</loc>
