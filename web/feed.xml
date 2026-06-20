@@ -7,13 +7,22 @@
     <description>A comprehensive guide to Draft's Context-Driven Development methodology. 24 chapters covering specs, plans, TDD enforcement, 3-stage code review, 14-dimension bug hunting, and ACID audits for AI coding agents.</description>
     <language>en-us</language>
     <managingEditor>mayur@getdraft.dev (Mayur Pise)</managingEditor>
-    <lastBuildDate>Tue, 16 Jun 2026 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Sat, 20 Jun 2026 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://getdraft.dev/feed.xml" rel="self" type="application/rss+xml"/>
     <image>
       <url>https://getdraft.dev/social-preview.png</url>
       <title>Draft -- Context-Driven Development</title>
       <link>https://getdraft.dev</link>
     </image>
+
+    <item>
+      <title>Similarity Isn't Relevance: How Draft Retrieves Context by Reasoning, Not Vectors</title>
+      <link>https://getdraft.dev/blog/reasoning-retrieval/</link>
+      <description>Vector search returns the chunks that look like your query. Draft's knowledge wiki returns the concepts that actually matter -- by reasoning over a navigable table of contents instead of running a similarity search over embeddings. No vector DB, no chunking, no cloud, and a retrieval path you can audit: every hop is a relevance judgment over a routing description, not a cosine score.</description>
+      <pubDate>Sat, 20 Jun 2026 00:00:00 +0000</pubDate>
+      <guid>https://getdraft.dev/blog/reasoning-retrieval/</guid>
+      <category>Blog</category>
+    </item>
 
     <item>
       <title>Speed Is the Wrong Axis: Benchmarking Draft's Graph Engine Against grep</title>

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Similarity Isn't Relevance: How Draft Retrieves Context by Reasoning, Not Vectors — Draft Blog</title>
+    <meta name="description" content="Vector search returns the chunks that look like your query. Draft's wiki returns the concepts that actually matter — by reasoning over a navigable table of contents instead of similarity over embeddings. No vector DB, no chunking, no cloud.">
+    <meta name="author" content="Mayur Pise">
+    <meta name="theme-color" content="#0a0d12">
+    <meta name="keywords" content="vectorless rag, reasoning retrieval, ai code context, no embeddings, knowledge wiki, context driven development, draft okf, similarity vs relevance">
+    <meta name="robots" content="index, follow">
+    <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
+    <meta property="og:title" content="Similarity Isn't Relevance: How Draft Retrieves Context by Reasoning, Not Vectors">
+    <meta property="og:description" content="Draft's wiki returns the concepts that actually matter — by reasoning over a navigable table of contents instead of similarity over embeddings. No vector DB, no chunking, no cloud.">
+    <meta property="og:type" content="article">
+    <meta property="og:url" content="https://getdraft.dev/blog/reasoning-retrieval/">
+    <meta property="og:image" content="https://getdraft.dev/social-preview.png?v=331">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Similarity Isn't Relevance: How Draft Retrieves Context by Reasoning, Not Vectors">
+    <meta name="twitter:description" content="Reasoning-based retrieval over Draft's knowledge wiki — no embeddings, no chunking, no vector DB.">
+    <meta name="twitter:image" content="https://getdraft.dev/social-preview.png?v=331">
+    <link rel="canonical" href="https://getdraft.dev/blog/reasoning-retrieval/">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": "Similarity Isn't Relevance: How Draft Retrieves Context by Reasoning, Not Vectors",
+      "description": "Vector search returns the chunks that look like your query. Draft's wiki returns the concepts that actually matter — by reasoning over a navigable table of contents instead of similarity over embeddings.",
+      "datePublished": "2026-06-20",
+      "dateModified": "2026-06-20",
+      "url": "https://getdraft.dev/blog/reasoning-retrieval/",
+      "author": { "@type": "Person", "name": "Mayur Pise", "url": "https://github.com/mayurpise" },
+      "publisher": { "@type": "Organization", "name": "Draft", "url": "https://getdraft.dev" },
+      "image": "https://getdraft.dev/social-preview.png",
+      "inLanguage": "en"
+    }
+    </script>
+
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-F6X062B4B7"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-F6X062B4B7');
+    </script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" as="style"
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap"
+        onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    </noscript>
+
+    <link rel="stylesheet" href="../../css/base.css">
+    <link rel="stylesheet" href="../../css/layout.css">
+    <link rel="stylesheet" href="../../css/components.css">
+    <link rel="stylesheet" href="../../css/animations.css">
+    <link rel="stylesheet" href="../../css/redesign-v24.css">
+    <link rel="stylesheet" href="../blog.css">
+    <script>
+    (function(){try{var t=localStorage.getItem('draft-theme');if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
+    </script>
+</head>
+<body>
+    <div id="cursor-glow" aria-hidden="true"></div>
+
+    <nav class="top-nav" id="top-nav">
+        <a href="../../" class="nav-logo">Draft</a>
+        <div class="nav-links">
+            <a href="../../#features">Features</a>
+            <a href="../../#commands">Commands</a>
+            <a href="../../#install">Install</a>
+            <a href="../../#audience">Who It's For</a>
+            <a href="../../book/">Book</a>
+            <a href="../" class="active">Blog</a>
+        </div>
+        <div class="nav-actions">
+            <a href="https://github.com/drafthq/draft" target="_blank" rel="noopener noreferrer" class="nav-github">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                Star on GitHub
+            </a>
+        </div>
+        <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+            <span></span><span></span><span></span>
+        </button>
+    </nav>
+
+    <main class="blog-page">
+        <article class="blog-container">
+
+            <a href="../" class="post-back">&larr; All posts</a>
+
+            <header class="post-header">
+                <p class="post-meta"><time datetime="2026-06-20">June 20, 2026</time> &middot; 7 min read</p>
+                <h1>Similarity Isn't Relevance: How Draft Retrieves Context by Reasoning, Not Vectors</h1>
+                <p class="post-deck">Vector search returns the chunks that <em>look like</em> your query. Draft's knowledge wiki returns the concepts that <em>actually matter</em> &mdash; by reasoning over a navigable table of contents instead of running a similarity search over embeddings. No vector DB, no chunking, no cloud.</p>
+            </header>
+
+            <div class="post-body">
+                <h2>The Bottom Line</h2>
+                <p>When an AI assistant needs context on a large codebase, the industry default is to <strong>embed everything and search by similarity</strong>: chunk the repo, vectorize the chunks, and at query time return the top-k nearest neighbors. The problem is baked into the method &mdash; <strong>similarity is not relevance</strong>. "Chunks whose vectors sit near your query" is a fuzzy proxy for "the sections that actually answer the task," and it fails in both directions: it surfaces lookalikes that don't help, and it misses the genuinely relevant section that happened to use different words.</p>
+                <p>Draft takes a different route. In its richer output mode, <code>/draft:init</code> emits a <strong>knowledge wiki</strong> &mdash; a tree of concept pages with a routing table at the root. When a skill needs context, it <strong>navigates that tree by reasoning</strong>, the way a human expert scans a table of contents: read the section descriptions, open only the branches that match the task, stop when the task is covered. No embeddings. No chunking. No similarity search. Retrieval is a reasoning step, and it's fully traceable.</p>
+
+                <h2>Why Top-K Similarity Quietly Misleads</h2>
+                <p>The standard retrieval pipeline looks reasonable until you watch it work on real engineering tasks:</p>
+                <ol>
+                    <li>Chunk the codebase &mdash; and hope the boundaries respect function and module scopes.</li>
+                    <li>Embed every chunk with a model that was trained on prose, not your domain.</li>
+                    <li>At query time, embed the prompt and pull the <code>k</code> nearest chunks.</li>
+                    <li>Feed those chunks to the model and hope the right one is in there.</li>
+                </ol>
+                <p>Each step trades precision for convenience. A query about "tightening the session-expiry check" pulls back every chunk that <em>mentions</em> sessions &mdash; the cache layer, three tests, a logging helper &mdash; because they're all semantically adjacent. The one module that actually <strong>owns</strong> the expiry invariant might rank fifth, or fall off the list entirely if it describes itself in terms of "token lifetimes" instead of "sessions."</p>
+                <p>The model then reasons over a bag of lookalikes. The retrieval step did no reasoning at all &mdash; it sorted by cosine distance. The thinking got deferred to the most expensive place possible: a context window full of near-misses.</p>
+
+                <h2>Draft Builds a Tree, Then Reasons Over It</h2>
+                <p>Draft's wiki mode decomposes a repo into <strong>one concept per file</strong> &mdash; subsystems, modules, features, entrypoints, APIs, data models &mdash; each grounded in the live code graph. The pages are organized into a shallow tree:</p>
+<pre><code>draft/
+├── .ai-context.md         # INDEX ROOT: a short synopsis + the Concept Map
+└── wiki/
+    ├── index.md           # bundle root + the routing table
+    ├── overview/          # system map, getting-started, glossary
+    ├── systems/           # subsystems &amp; modules (graph clusters)
+    ├── features/          # user-facing capabilities spanning modules
+    ├── reference/         # APIs, data models, dependencies, ADRs, runbooks
+    └── entrypoints/       # binaries / mains / CLIs / handler roots
+</code></pre>
+                <p>The load-bearing piece is the <strong>routing description</strong> on every concept. It isn't a summary &mdash; it's written to answer a single question: <em>"should the agent open this page for the task at hand?"</em> Those one-liners are collected into a Concept Map at the root, so the entire repo's structure is legible from one table before a single concept page is opened.</p>
+
+                <h2>The Retrieval Loop</h2>
+                <p>When a skill like <code>/draft:implement</code> or <code>/draft:review</code> loads context, it walks the tree instead of flattening it:</p>
+                <ol>
+                    <li><strong>Frame the query.</strong> Pull the routing terms from the active task &mdash; the domain nouns, file paths, and the primary concern (data flow, API, security, performance).</li>
+                    <li><strong>Enter at the root.</strong> Read the synopsis. For a <em>broad</em> task &mdash; onboarding, an architecture overview &mdash; that's enough; retrieval terminates here without opening a single concept page.</li>
+                    <li><strong>Reason over the Concept Map.</strong> For a <em>focused</em> task, judge each routing description as a decision, not a string match: does opening this concept help <em>this</em> task? Descend the strong matches first; hold the maybes as a frontier.</li>
+                    <li><strong>Descend to leaves.</strong> Open the matching section index, repeat against its concepts, open the right pages. A concept page lists the <strong>exact source files</strong> it grounds &mdash; the precise set to read or edit &mdash; and its callers, for the next hop if the task spans them.</li>
+                    <li><strong>Stop on coverage.</strong> Terminate when the opened pages cover the task's routing terms, or at a small budget (≈5 pages, ~2 hops). The tree is shallow by construction, so this converges fast.</li>
+                </ol>
+                <p>Every hop is a <strong>relevance</strong> judgment, not a similarity score. A concept whose description doesn't justify opening it is skipped even if a keyword happens to overlap &mdash; the exact failure mode that sinks top-k search.</p>
+
+                <h2>Similarity vs. Reasoning, Side by Side</h2>
+                <table>
+                    <thead>
+                        <tr><th>Vector / top-k retrieval</th><th>Draft's tree-search retrieval</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Ranks by embedding distance</td><td>Selects by reasoning over routing descriptions</td></tr>
+                        <tr><td>Chunks the repo (boundaries guessed)</td><td>One concept per file (boundaries from the graph)</td></tr>
+                        <tr><td>Needs a vector DB + embedding model</td><td>Plain markdown + a routing table</td></tr>
+                        <tr><td>Per-token indexing cost, re-embed on change</td><td>$0 &mdash; regenerated locally on refresh</td></tr>
+                        <tr><td>Opaque: "these scored highest"</td><td>Traceable: the navigation path is recorded</td></tr>
+                        <tr><td>Returns lookalikes; misses paraphrases</td><td>Returns what the task needs, by name</td></tr>
+                    </tbody>
+                </table>
+
+                <h2>Retrieval You Can Audit</h2>
+                <p>A cosine score is a dead end &mdash; you can't ask <em>why</em> a chunk ranked third. Tree-search retrieval is explainable by construction, because the path <em>is</em> the explanation:</p>
+                <ul>
+                    <li><strong>Opened concepts</strong> &mdash; the pages selected, each with the one-line reason it was opened.</li>
+                    <li><strong>Grounded paths</strong> &mdash; the union of source files those pages cover: exactly what the task will touch.</li>
+                    <li><strong>Skipped frontier</strong> &mdash; the maybes that were held but not expanded, so a follow-up task can resume from them.</li>
+                </ul>
+                <p>Instead of "loaded these five chunks," the agent can say "navigated to the <em>auth pipeline</em> and <em>session store</em> concepts because the task changes expiry handling." That trace is reviewable by a human and re-checkable on the next run.</p>
+
+                <h2>When the Synopsis Is the Whole Answer</h2>
+                <p>Not every task needs to descend. Broad questions &mdash; "how does this system fit together," "where do I start" &mdash; are answered by the synopsis at the index root, and retrieval stops there. Over-fetching concept pages for a broad task is treated as a mistake, not a default. Focused tasks pay only for the few pages they actually need. The cheap path stays cheap; the deep path stays precise.</p>
+                <p>And when a repo isn't emitted in wiki mode, Draft falls back to its compact single-file context with section-level relevance scoring &mdash; same principle, smaller surface. The retrieval strategy degrades gracefully; it never gates the work.</p>
+
+                <h2>What This Means for the Three People Reading This</h2>
+                <p><strong>If you're an engineer:</strong> the context your assistant loads for a change is now a short, named set of concepts and the exact files they ground &mdash; not a grab-bag of similar-looking chunks. Fewer wrong files in the window means fewer wrong edits out of it.</p>
+                <p><strong>If you're an engineering leader:</strong> retrieval becomes auditable. Every AI-assisted change can show <em>which concepts informed it</em> and why &mdash; a reviewable trail, with no embedding vendor in the loop.</p>
+                <p><strong>If you work in a regulated or air-gapped environment:</strong> there's no vector database to provision, no embedding API to send code to, and nothing to re-index in the cloud. The wiki is markdown in your repo; the navigation is reasoning the model already does.</p>
+
+                <h2>The Larger Argument</h2>
+                <p>Embeddings have a place, and similarity search has a place. But the question an AI assistant actually asks of a codebase &mdash; <em>"which parts of this system does my task touch?"</em> &mdash; is a question about <strong>relevance</strong>, and relevance requires reasoning. Draft's bet is to make that reasoning a first-class retrieval step over a structure built for it: a navigable wiki, grounded in the code graph, where the model finds the right context the way a senior engineer would &mdash; by reading the map, not by measuring distances.</p>
+
+                <h2>Try It</h2>
+<pre><code># Install Draft (Claude Code plugin)
+npx @drafthq/draft install claude-code
+
+cd your-repo
+/draft:init                 # emits the knowledge wiki + Concept Map
+
+# Then just work — context loading navigates the tree for you:
+/draft:implement            # opens only the concepts the task touches
+/draft:review               # routes to the affected subsystems by name</code></pre>
+                <p>No vector store to stand up, no embeddings to pay for. The map is in your repo, and your assistant just got a lot better at reading it.</p>
+            </div>
+
+            <aside class="post-share" aria-label="Share this post">
+                <span class="post-share-label">Share</span>
+                <div class="post-share-buttons">
+                    <button type="button" class="share-btn" data-net="linkedin" aria-label="Share on LinkedIn">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M20.45 20.45h-3.56v-5.57c0-1.33-.02-3.04-1.85-3.04-1.85 0-2.13 1.45-2.13 2.94v5.67H9.35V9h3.42v1.56h.05c.48-.9 1.64-1.85 3.37-1.85 3.6 0 4.27 2.37 4.27 5.45v6.29zM5.34 7.43a2.07 2.07 0 1 1 0-4.14 2.07 2.07 0 0 1 0 4.14zM7.12 20.45H3.55V9h3.57v11.45zM22.22 0H1.77C.79 0 0 .77 0 1.72v20.56C0 23.23.79 24 1.77 24h20.45c.98 0 1.78-.77 1.78-1.72V1.72C24 .77 23.2 0 22.22 0z"/></svg>
+                        <span class="share-btn-label">LinkedIn</span>
+                    </button>
+                    <button type="button" class="share-btn" data-net="x" aria-label="Share on X">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.66l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25h6.83l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                        <span class="share-btn-label">X</span>
+                    </button>
+                    <button type="button" class="share-btn" data-net="hn" aria-label="Share on Hacker News">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M0 0v24h24V0zm6.51 4h2.27l3.22 6.24L15.21 4h2.28l-4.36 8.21V20h-2.26v-7.79z"/></svg>
+                        <span class="share-btn-label">Hacker News</span>
+                    </button>
+                    <button type="button" class="share-btn" data-net="copy" aria-label="Copy link">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                        <span class="share-btn-label">Copy link</span>
+                    </button>
+                </div>
+            </aside>
+
+            <footer class="post-footer">
+                <p>Draft is open source: <a href="https://github.com/drafthq/draft">github.com/drafthq/draft</a>. The knowledge wiki is emitted by <code>/draft:init</code> in wiki mode; the retrieval procedure lives under <code>core/shared/</code> and the methodology under <code>core/</code>.</p>
+                <p><a href="../">&larr; Back to all posts</a></p>
+            </footer>
+        </article>
+    </main>
+
+    <script src="../../js/theme-toggle.js"></script>
+    <script src="../../js/main.js"></script>
+    <script src="../share.js"></script>
+</body>
+</html>
