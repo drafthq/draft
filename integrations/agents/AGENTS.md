@@ -3382,8 +3382,23 @@ the cached narration verbatim.
 
 ## Render views (M4)
 
-Both are cheap, deterministic concatenations from the bundle — regenerated on
-every run:
+Both are produced by the deterministic helper `okf-render-views.sh` (no LLM) —
+regenerated on every init/refresh so they never drift from the bundle:
+
+```bash
+okf-render-views.sh draft/wiki \
+  --arch-out draft/architecture.md \
+  --concept-map-into draft/wiki/index.md \
+  --concept-map-into draft/ai-context.md
+```
+
+- `--arch-out` renders the linear `architecture.md` (banner + TOC + every concept
+  page in canonical section order, frontmatter stripped, Mermaid preserved).
+- `--concept-map-into` rebuilds the routing table between the
+  `<!-- CONCEPT-MAP:START -->` / `:END` markers from each concept's `title` +
+  `type` + `description` (section `index.md` pages excluded).
+
+The two views:
 
 - **`ai-context.md`** (index root) — from `core/templates/okf/ai-context-index.md`:
   the Synopsis preserves the prior `.ai-context.md` content shape (so existing

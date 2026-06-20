@@ -25,6 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     frozen `type` vocabulary, frontmatter contract, and bundle layout.
   - `skills/init/references/okf-emitter.md` — generation pipeline, render views,
     concept-granularity rules, and incremental refresh at concept granularity.
+  - `scripts/tools/okf-render-views.sh` — deterministic renderer for the demoted
+    views: `architecture.md` becomes a generated linear concat of the bundle
+    (frontmatter stripped, canonical section order, banner + TOC), and the
+    Concept Map routing table is injected between markers in index roots. Keeps
+    the human "read one doc" onboarding view at zero extra maintenance —
+    architecture.md is **demoted, not deleted**.
 
 ## [3.2.1] - 2026-06-15
 

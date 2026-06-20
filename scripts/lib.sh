@@ -195,6 +195,7 @@ TOOLS=(
     "resolve-tools.sh"
     # OKF taxonomy emitter (DRAFT_INIT_MODE=okf)
     "okf-validate.sh"
+    "okf-render-views.sh"
 )
 
 # ─────────────────────────────────────────────────────────
