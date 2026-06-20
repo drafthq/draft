@@ -1090,7 +1090,7 @@
                         <pre><code><span class="c-comment"># Install Draft into Cursor</span>
 <span class="c-cmd">npx</span> <span class="c-str">@drafthq/draft</span> install <span class="c-flag">cursor</span></code></pre>
                     </div>
-                    <p class="install-note">Installs to <code>~/.cursor/plugins/local/draft</code>. Restart Cursor to detect it.</p>
+                    <p class="install-note">Installs to <code>~/.cursor/plugins/local/draft</code>, writes <code>.cursor-plugin/plugin.json</code>, and registers + enables <code>draft@draft-plugins</code> in Cursor's plugin registry. Restart Cursor (or Developer: Reload Window) to load <code>/draft:*</code> commands.</p>
                 </div>
                 <div class="install-panel" id="panel-codex">
                     <div class="code-block glass-card">

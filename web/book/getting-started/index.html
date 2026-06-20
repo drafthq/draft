@@ -252,7 +252,7 @@
     <p>You now have the 4 primary commands + 5 routers (recommended entry points) plus all specialists available as <code>/draft:*</code> slash commands. Prefer the native marketplace? <code>/plugin marketplace add drafthq/draft</code> then <code>/plugin install draft</code>.</p>
 
     <h3>Cursor</h3>
-    <p>Cursor natively supports the <code>.claude-plugin/</code> structure. Installs to <code>~/.cursor/plugins/local/draft</code>:</p>
+    <p>Cursor requires a <code>.cursor-plugin/plugin.json</code> manifest plus registration in the shared Claude plugin registry — both handled by the CLI. Installs to <code>~/.cursor/plugins/local/draft</code>:</p>
     <pre class="terminal"><code>$ npx @drafthq/draft install cursor</code></pre>
 
     <h3>Codex</h3>

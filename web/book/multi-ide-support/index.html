@@ -270,7 +270,7 @@
     <p>The 7 specialized agents (Architect, Debugger, Planner, RCA, Reviewer, Ops, Writer) are referenced as <code>@architect</code>, <code>@debugger</code>, etc., and resolved from <code>core/agents/</code>.</p>
 
     <h2>Cursor</h2>
-    <p>Cursor natively understands the <code>.claude-plugin/</code> structure. The CLI installs the full plugin tree to <code>~/.cursor/plugins/local/draft</code>:</p>
+    <p>Cursor requires a <code>.cursor-plugin/plugin.json</code> manifest plus registration in the shared Claude plugin registry. The CLI installs the full plugin tree to <code>~/.cursor/plugins/local/draft</code>, writes the manifest, and registers + enables <code>draft@draft-plugins</code>:</p>
     <pre><code>npx @drafthq/draft install cursor</code></pre>
 
     <h2>GitHub Copilot</h2>

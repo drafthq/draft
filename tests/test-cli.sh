@@ -105,6 +105,82 @@ fi
 assert "re-install with --force succeeds (exit 0)" "$FORCE_OK"
 rm -rf "$CDX_TMP"
 
+# --- cursor install copies the tree AND registers/enables the plugin ---
+echo ""
+echo "## cursor install (files + registry)"
+CUR_HOME="$(mktemp -d)"
+CUR_CWD="$(mktemp -d)"
+
+# Seed another plugin to verify non-destructive merge.
+mkdir -p "$CUR_HOME/.claude/plugins"
+cat > "$CUR_HOME/.claude/plugins/installed_plugins.json" <<'EOF'
+{
+  "version": 2,
+  "plugins": {
+    "other@other": [
+      {
+        "scope": "user",
+        "installPath": "/tmp/other",
+        "version": "1.0.0",
+        "installedAt": "2020-01-01T00:00:00.000Z",
+        "lastUpdated": "2020-01-01T00:00:00.000Z"
+      }
+    ]
+  }
+}
+EOF
+cat > "$CUR_HOME/.claude/settings.json" <<'EOF'
+{
+  "enabledPlugins": { "other@other": true },
+  "hooks": { "SessionStart": [] }
+}
+EOF
+
+( cd "$CUR_CWD" && HOME="$CUR_HOME" node "$CLI" install cursor --no-graph >/dev/null 2>&1 )
+
+INSTALL_ROOT="$CUR_HOME/.cursor/plugins/local/draft"
+
+assert "cursor install writes .cursor-plugin/plugin.json" \
+    "$([[ -f "$INSTALL_ROOT/.cursor-plugin/plugin.json" ]] && echo true || echo false)"
+assert "cursor install writes .claude-plugin/plugin.json" \
+    "$([[ -f "$INSTALL_ROOT/.claude-plugin/plugin.json" ]] && echo true || echo false)"
+assert "cursor install writes skills/draft" \
+    "$([[ -d "$INSTALL_ROOT/skills/draft" ]] && echo true || echo false)"
+assert "cursor install registers draft@draft-plugins" \
+    "$(grep -q '"draft@draft-plugins"' "$CUR_HOME/.claude/plugins/installed_plugins.json" && echo true || echo false)"
+assert "cursor install registers marketplace draft-plugins" \
+    "$(grep -q '"draft-plugins"' "$CUR_HOME/.claude/plugins/known_marketplaces.json" && echo true || echo false)"
+assert "cursor install preserves other plugins" \
+    "$(grep -q '"other@other"' "$CUR_HOME/.claude/plugins/installed_plugins.json" && echo true || echo false)"
+assert "cursor install enables draft@draft-plugins" \
+    "$(grep -q '"draft@draft-plugins": true' "$CUR_HOME/.claude/settings.json" && echo true || echo false)"
+assert "cursor install preserves settings hooks" \
+    "$(grep -q '"hooks"' "$CUR_HOME/.claude/settings.json" && echo true || echo false)"
+assert "cursor install preserves other enabledPlugins" \
+    "$(grep -q '"other@other": true' "$CUR_HOME/.claude/settings.json" && echo true || echo false)"
+
+# Re-install without --force is refused (guard on .cursor-plugin).
+if ( cd "$CUR_CWD" && HOME="$CUR_HOME" node "$CLI" install cursor --no-graph >/dev/null 2>&1 ); then
+    assert "cursor re-install without --force is refused" "false"
+else
+    assert "cursor re-install without --force is refused" "true"
+fi
+
+rm -rf "$CUR_HOME" "$CUR_CWD"
+
+# Dry-run names the registry files and writes zero files.
+echo ""
+echo "## cursor --dry-run is side-effect free"
+CUR_DRY_HOME="$(mktemp -d)"
+CUR_DRY_CWD="$(mktemp -d)"
+CUR_DRY_PLAN="$( cd "$CUR_DRY_CWD" && HOME="$CUR_DRY_HOME" node "$CLI" install cursor --dry-run --no-graph 2>&1 )"
+assert "cursor --dry-run mentions installed_plugins.json" \
+    "$(echo "$CUR_DRY_PLAN" | grep -q 'installed_plugins.json' && echo true || echo false)"
+CUR_DRY_FILES=$(find "$CUR_DRY_HOME" "$CUR_DRY_CWD" -type f | wc -l | tr -d ' ')
+assert "cursor --dry-run writes zero files" \
+    "$([[ "$CUR_DRY_FILES" -eq 0 ]] && echo true || echo false)"
+rm -rf "$CUR_DRY_HOME" "$CUR_DRY_CWD"
+
 # --- claude-code install drives the `claude plugin` CLI (no file copy) ---
 echo ""
 echo "## claude-code install (plugin registry)"
