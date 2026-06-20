@@ -4,7 +4,7 @@
 
 Draft is a plugin that adds three things to AI coding agents: a knowledge graph engine that maps your repo, spec-driven planning that produces git-tracked specs and phased plans, and a three-stage review pipeline that validates work against the plan. Together, they force AI to execute pre-approved work — grounded in real codebase understanding — instead of guessing.
 
-Draft works with Claude Code, Cursor, Codex, OpenCode, GitHub Copilot, and Google Gemini. 4 primary workflow commands + 5 routers + 24 specialist commands (still directly callable), 7 specialized agents, 14-dimension bug hunting, ACID-style module audits, knowledge graph with query tools, 32 deterministic shell helpers. MIT license, no telemetry, no paid tiers.
+Draft works with Claude Code, Cursor, Codex, OpenCode, GitHub Copilot, and Google Gemini. 4 primary workflow commands + 5 routers + 24 specialist commands (still directly callable), 7 specialized agents, 14-dimension bug hunting, ACID-style module audits, knowledge graph with query tools, 45 deterministic shell helpers. MIT license, no telemetry, no paid tiers.
 
 ## Installation
 
@@ -70,7 +70,7 @@ For better discoverability, use the consolidated router commands instead of the 
 
 All specialist commands remain directly callable for compatibility.
 
-## All Commands (34)
+## All Commands (33)
 
 ### Primary Workflow
 - `/draft` — Overview, intent mapping, and command reference
@@ -110,6 +110,7 @@ All specialist commands remain directly callable for compatibility.
 ### Project Management
 - `/draft:status` — Show progress overview
 - `/draft:revert` — Git-aware rollback
+- `/draft:upload` — Pre-upload handoff gate (review status, HLD approvals, deploy checklist, validator chain)
 - `/draft:jira [preview|create|review <ID>]` — Unified Jira integration (generate export, push issues, qualify existing tickets)
 
 ### Authoring & Onboarding
@@ -199,6 +200,23 @@ draft/
 
 Status markers in tracks: `[ ]` Pending, `[~]` In Progress, `[x]` Completed, `[!]` Blocked.
 
+### Init Output Modes (monolith vs OKF)
+
+`/draft:init` packages the architecture context in one of two modes, selected
+automatically by repo tier (`DRAFT_INIT_MODE` overrides):
+
+- **`monolith`** (tiers 1–2, small repos) — a single graph-primary
+  `architecture.md` is the source of truth; `.ai-context.md` is derived from it.
+- **`okf`** (tiers 3+, larger repos) — an OKF v0.1 concept taxonomy under
+  `draft/wiki/` is the source of truth (one concept per file: overview / systems
+  / features / reference / entrypoints; cross-links form the graph),
+  `.ai-context.md` becomes the index root (Synopsis + Concept Map), and
+  `architecture.md` is a generated rendered view of the bundle. An optional
+  self-contained offline HTML viewer is emitted under `draft/wiki/web/`.
+
+Only the architecture packaging differs — `product.md`, `tech-stack.md`,
+`workflow.md`, `guardrails.md`, tracks, and `.state/` are produced in both modes.
+
 ## Knowledge Graph Engine
 
 Draft installs codebase-memory-mcp, a single-binary local graph engine (tree-sitter + LSP across 159 languages), no daemon, no external service, no API key. The graph is served live by the engine; the only committed file is `draft/graph/schema.yaml` (a gate marker) — there is no committed machine-readable mirror.
@@ -218,7 +236,7 @@ Call edges carry confidence signals (resolved vs. inferred); skills weight findi
 
 ## Deterministic Helper Tools
 
-Skills delegate mechanical work to 32 shell helpers under `scripts/tools/`, including:
+Skills delegate mechanical work to 45 shell helpers under `scripts/tools/`, including:
 
 - `git-metadata.sh`, `parse-git-log.sh` — git introspection
 - `classify-files.sh` — language + category (code/test/doc/config) classification
@@ -245,7 +263,7 @@ All emit JSON, follow uniform exit-code contract (0 = success, 1 = invocation er
 - **Platform-agnostic:** Same methodology across Claude Code, Cursor, Codex, opencode, Copilot, and Gemini
 - **TDD enforcement:** RED → GREEN → REFACTOR cycle with verification
 - **14-dimension bug hunting:** Exhaustive defect discovery beyond simple linting
-- **Built-in code intelligence:** Knowledge graph engine + 32 deterministic helpers — no external services required
+- **Built-in code intelligence:** Knowledge graph engine + 45 deterministic helpers — no external services required
 - **Track impact memory:** Each completed track records its blast radius; new tracks get overlap warnings during context load
 - **ACID compliance audits:** Enterprise-grade module lifecycle reviews
 - **7 specialized agents:** Purpose-built behaviors for architecture, debugging, planning, review, RCA, operations, and documentation
