@@ -7,16 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.0] - 2026-06-19
+
 ### Added
-- **`/draft:init` OKF taxonomy emitter (opt-in via `DRAFT_INIT_MODE=okf`).**
-  An alternate init output mode that replaces the monolithic `architecture.md`
+- **`/draft:init` OKF taxonomy emitter (tier-gated default).**
+  An init output mode that replaces the monolithic `architecture.md`
   with an OKF v0.1 concept bundle under `draft/wiki/` (one concept per file,
   cross-links form the graph), repurposes `.ai-context.md` as the index root
-  (Synopsis + Concept Map), and demotes `architecture.md` to a rendered view.
-  Default mode (`monolith`) is unchanged — `okf` is gated behind the flag and
-  becomes default only after the A/B benchmark merge gate
-  (`docs/audit/okf-benchmark.md`). Implements HLD `hld-draft-init-okf-taxonomy.md`
-  milestones M1–M6.
+  (Synopsis + Concept Map), and demotes `architecture.md` to a generated rendered
+  view. `DRAFT_INIT_MODE` defaults to tier-gated `auto` (tier 1–2 → `monolith`,
+  tier 3–5 → `okf`); an explicit `monolith`/`okf` overrides. `monolith` is
+  retained as the small-repo default, the A/B baseline, and the over-fetch
+  fallback (`docs/audit/okf-benchmark.md`). Implements HLD
+  `hld-draft-init-okf-taxonomy.md` milestones M1–M6 plus the tier-gated default
+  and the render-views/offline-viewer layer.
   - `scripts/tools/okf-validate.sh` — the one new deterministic helper: fails the
     build on dangling cross-links, missing/invalid frontmatter, out-of-vocab
     concept `type`, or an incomplete `path-to-concept.json` index. Verified
