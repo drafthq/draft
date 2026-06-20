@@ -117,6 +117,15 @@ Apply relevance scoring when ALL of these conditions are true:
 
 Do NOT apply relevance scoring for commands that need full context (`/draft:init`, `/draft:deep-review`, `/draft:decompose`).
 
+### Retrieval Path Selection (okf vs monolith)
+
+Relevance scoring has two implementations; pick by output mode:
+
+- **okf mode** — if `draft/wiki/` exists, use **tree-search retrieval** (`core/shared/okf-retrieval.md`): navigate the OKF Concept Map by reasoning over each concept's routing `description`, descending only the matching subtrees. This is the vectorless, reasoning-based path (PageIndex-style) and supersedes the static section table below for okf bundles.
+- **monolith mode** — if `draft/wiki/` does not exist, use the static **Scoring Procedure** below against `.ai-context.md` sections.
+
+The minimum context floor (`META`, `INVARIANTS`, `TEST`, `FILES`) applies to both paths.
+
 ### Scoring Procedure
 
 1. **Extract key concepts** from the active task:

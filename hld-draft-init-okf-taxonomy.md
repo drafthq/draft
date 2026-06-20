@@ -138,6 +138,16 @@ Agent reads this one file first. Broad tasks terminate here. Focused tasks route
 
 ---
 
+## 6.5. Retrieval over the bundle (tree-search, vectorless)
+
+The emitter builds the tree; retrieval *navigates* it. The procedure is specified in `core/shared/okf-retrieval.md` and wired into `core/shared/draft-context-loading.md` as the okf-mode relevance path (monolith keeps the static section-scoring table).
+
+Loop: enter at `.ai-context.md` → Synopsis satisfies broad tasks (terminate); for focused tasks reason over the Concept Map's `description` routing keys, descend `strong` subtrees into section indexes and concept leaves, and stop when the opened leaves cover the task's routing terms (budget ≤5 concept pages, depth ≈2 hops). Leaves expose `x-grounded-paths` (exact source files) and `x-callers` (next hop). The navigation path is recorded for traceability.
+
+**Prior art.** This adapts [PageIndex](https://github.com/VectifyAI/PageIndex) (vectorless, reasoning-based RAG) — same thesis Draft already holds: *similarity ≠ relevance; retrieval needs reasoning over a navigable tree, not vector lookup over chunks.* Draft converged on this from the codebase-context direction; the OKF Concept Map **is** a PageIndex tree, and the `description` frontmatter **is** a node summary. Draft does not adopt PageIndex's tree-*generation* engine (it authors the tree itself in §7) and adds no vector/embedding layer — only the retrieval loop was missing, and §6.5 supplies it.
+
+---
+
 ## 7. Generation pipeline
 
 Reuses existing analysis; adds decomposition + serialization. No new LLM analysis engine.
