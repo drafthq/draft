@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.4.0] - 2026-06-20
+
+### Added
+- **Tree-search retrieval over the OKF bundle (PageIndex-style).** New
+  `core/shared/okf-retrieval.md` adds a vectorless, reasoning-based retrieval
+  loop for projects emitted in `okf` mode (`draft/wiki/` present). Agents now
+  locate context by navigating the Concept Map tree — reading each node's
+  `description` routing key and descending only matching subtrees to concept
+  leaves — instead of loading sections by a static heuristic. No embeddings, no
+  chunking: relevance is decided by reasoning over the tree (budget ≤5 pages,
+  ~2 hops; broad tasks terminate at the Synopsis). `draft-context-loading.md`
+  routes okf-mode to tree-search while monolith keeps static section-scoring,
+  and the module is registered in `CORE_FILES` (`scripts/lib.sh`). Regenerated
+  Copilot and Agents integrations.
+
+### Changed
+- Website, book, and blog refresh: new "Drafting Table" hero identity, refreshed
+  social/meta copy and social-preview card, professionalized footer, and two new
+  blog posts on relevance-based / reasoning-based vectorless retrieval.
+
 ## [3.3.1] - 2026-06-19
 
 ### Fixed
