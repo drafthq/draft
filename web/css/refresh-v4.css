@@ -175,6 +175,7 @@
     overflow: hidden;
     background: var(--bg-secondary);
     max-width: 760px;
+    margin-inline: auto;
 }
 
 .tb-cell {

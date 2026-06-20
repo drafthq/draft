@@ -847,6 +847,7 @@
 }
 .hero-content .tagline {
     margin-bottom: 1.75rem;
+    margin-inline: auto;
     max-width: 720px;
 }
 
