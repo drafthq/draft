@@ -67,7 +67,7 @@ Each host installs the way that host actually loads extensions — no manual ste
 | Host | `draft install …` | What it does |
 |------|-------------------|--------------|
 | **Claude Code** | `claude-code` | Registers the plugin via `claude plugin marketplace add` + `claude plugin install` (user scope). Restart Claude Code. |
-| **Cursor** | `cursor` | Copies the plugin into `~/.cursor/plugins/local/draft/`, writes `.cursor-plugin/plugin.json`, registers `draft@draft-plugins` in Cursor's plugin registry, and enables it. Restart Cursor (or Developer: Reload Window). |
+| **Cursor** | `cursor` | Copies the plugin into `~/.cursor/plugins/local/draft/`, writes `.cursor-plugin/plugin.json`, registers `draft@draft-plugins` in Cursor's plugin registry, and enables it. Restart Cursor (or Developer: Reload Window). Existing installs upgrade with `draft install cursor --force`. |
 | **Codex** | `codex` | Writes `./AGENTS.md`, which Codex reads automatically. |
 | **opencode** | `opencode` | Writes `./AGENTS.md` + `~/.agents/skills/draft/`, both auto-discovered. |
 
@@ -222,6 +222,24 @@ Skills also call into **shell helpers** under `scripts/tools/` for mechanical wo
          /draft:init refresh  ←── incremental: only re-analyze
                                    files with changed hashes
 ```
+
+### Context output modes (`/draft:init`)
+
+`/draft:init` packages your architecture context in one of two modes, selected
+automatically by repo size (override with `DRAFT_INIT_MODE`):
+
+- **`monolith`** (default for small repos, tiers 1–2) — a single
+  graph-primary `architecture.md` is the source of truth; `.ai-context.md` is
+  the token-optimized AI view derived from it.
+- **`okf`** (default for larger repos, tiers 3+) — an **OKF concept taxonomy**
+  under `draft/wiki/` is the source of truth (one concept per file, cross-links
+  form the graph), `.ai-context.md` becomes the navigable index root
+  (Synopsis + Concept Map), and `architecture.md` is demoted to a generated
+  rendered view. An optional self-contained offline HTML viewer ships under
+  `draft/wiki/web/`.
+
+Both modes produce the same `product.md`, `tech-stack.md`, `workflow.md`,
+`guardrails.md`, tracks, and `.state/` — only the architecture packaging differs.
 
 [Full workflow →](core/methodology.md#core-workflow)
 
