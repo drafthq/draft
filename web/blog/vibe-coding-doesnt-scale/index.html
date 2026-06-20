@@ -119,7 +119,7 @@
                 <p>Draft replaces ad-hoc prompting with a workflow your agent runs every time, backed by durable files in your repo and a local knowledge graph. Four primary commands carry the whole loop:</p>
 
                 <h3>1. <code>/draft:init</code> &mdash; give the agent a memory</h3>
-                <p>Run once. Draft analyzes the repository and writes a <code>draft/</code> directory: a product overview, tech stack, conventions, guardrails, and &mdash; in its richer mode &mdash; a navigable <strong>knowledge wiki</strong> of one concept per subsystem. It also stands up a <strong>live code graph</strong> via a 100% local engine (<code>codebase-memory-mcp</code>, 159 languages, no API key, nothing leaves your machine). From now on your agent loads the <em>relevant</em> context by reasoning over that map, instead of you pasting files.</p>
+                <p>Run once. Draft analyzes the repository and writes a <code>draft/</code> directory: a product overview, tech stack, conventions, guardrails, and &mdash; in its richer mode &mdash; a navigable <strong>knowledge wiki</strong> of one concept per subsystem. It also stands up a <strong>live code graph</strong> via a 100% local engine (<code>codebase-memory-mcp</code>, 159 languages, no API key, nothing leaves your machine). From now on your agent loads context by <strong>reasoning over that map for relevance</strong> &mdash; navigating a page-index table of contents the way a senior engineer scans one &mdash; instead of running a vector similarity search or making you paste files. (Why relevance beats similarity gets its own deep dive: <a href="../reasoning-retrieval/">Similarity Isn't Relevance</a>.)</p>
 
                 <h3>2. <code>/draft:plan</code> &mdash; decide before you build</h3>
                 <p>Turn a request into a <strong>spec</strong> (what and why, with acceptance criteria) and a <strong>plan</strong> (the ordered steps). For anything non-trivial, Draft can decompose the work into modules, draw the dependency graph, and catch a circular dependency <em>before</em> a line is written. The plan is a file in your repo &mdash; reviewable, editable, and still there next week.</p>
@@ -139,6 +139,7 @@
                     </thead>
                     <tbody>
                         <tr><td>Context is whatever you pasted this session</td><td>Context loaded from a persistent repo map + code graph</td></tr>
+                        <tr><td>Retrieval ranks chunks by vector similarity</td><td>Retrieval reasons over a page index for relevance</td></tr>
                         <tr><td>"Why" lives in your head</td><td>"Why" lives in a spec, versioned with the code</td></tr>
                         <tr><td>Agent edits blind to callers</td><td>Impact query shows the blast radius first</td></tr>
                         <tr><td>Review = skim the diff</td><td>Review = build + spec compliance + bug hunt</td></tr>
