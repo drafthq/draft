@@ -211,12 +211,34 @@
     <!-- Changelog entries -->
     <main class="changelog-content">
 
+        <!-- v3.3.0 -->
+        <article class="changelog-entry">
+            <div class="changelog-entry-header">
+                <span class="changelog-version">v3.3.0</span>
+                <span class="changelog-date">2026-06-19</span>
+                <span class="changelog-tag changelog-tag--latest">Latest</span>
+                <span class="changelog-tag">Init</span>
+                <span class="changelog-tag">OKF</span>
+                <span class="changelog-tag">Cursor</span>
+            </div>
+            <div class="changelog-category">Added</div>
+            <ul class="changelog-changes">
+                <li><strong><code>/draft:init</code> OKF taxonomy emitter (tier-gated default)</strong> &mdash; an init output mode that replaces the monolithic <code>architecture.md</code> with an OKF v0.1 concept bundle under <code>draft/wiki/</code> (one concept per file, cross-links form the graph), repurposes <code>.ai-context.md</code> as the index root (Synopsis + Concept Map), and demotes <code>architecture.md</code> to a generated rendered view. <code>DRAFT_INIT_MODE</code> defaults to tier-gated <code>auto</code> (tiers 1&ndash;2 &rarr; <code>monolith</code>, tiers 3&ndash;5 &rarr; <code>okf</code>); an explicit <code>monolith</code>/<code>okf</code> overrides. All other <code>draft/</code> files are produced in both modes &mdash; only the architecture packaging differs.</li>
+                <li><strong><code>scripts/tools/okf-validate.sh</code></strong> &mdash; the one new deterministic helper: fails the build on dangling cross-links, missing/invalid frontmatter, out-of-vocab concept <code>type</code>, or an incomplete <code>path-to-concept.json</code> index. Verified against the call graph (ground truth), not heuristics.</li>
+                <li><strong><code>scripts/tools/okf-render-views.sh</code></strong> &mdash; deterministic renderer for the demoted views: <code>architecture.md</code> becomes a generated linear concat of the bundle (canonical section order, banner + TOC), and the Concept Map routing table is injected into the index roots. <code>--web</code> additionally emits a self-contained offline HTML viewer (single file, inlined pages, built-in markdown renderer, sidebar + search; no server/CDN).</li>
+                <li><strong>Cursor-native plugin manifest</strong> &mdash; <code>.cursor-plugin/plugin.json</code> (source of truth for Cursor discovery, version-synced alongside the Claude manifests), plus <code>cli/src/lib/cursor-registry.js</code> and <code>cli/src/lib/plugin-manifest.js</code> helpers.</li>
+            </ul>
+            <div class="changelog-category">Fixed</div>
+            <ul class="changelog-changes">
+                <li><strong>Cursor install never surfaced <code>/draft:*</code> commands</strong> &mdash; <code>draft install cursor</code> copied the plugin tree to <code>~/.cursor/plugins/local/draft/</code> but never registered or enabled it, so skills and slash commands never appeared in Cursor chat. The installer now ships the Cursor-native manifest and registers + enables <code>draft@draft-plugins</code> in the shared Claude plugin registry that current Cursor builds read. Registry writes are atomic and non-destructive. Existing installs upgrade with <code>draft install cursor --force</code>.</li>
+            </ul>
+        </article>
+
         <!-- v3.2.1 -->
         <article class="changelog-entry">
             <div class="changelog-entry-header">
                 <span class="changelog-version">v3.2.1</span>
                 <span class="changelog-date">2026-06-15</span>
-                <span class="changelog-tag changelog-tag--latest">Latest</span>
                 <span class="changelog-tag">Tooling</span>
                 <span class="changelog-tag">Fix</span>
             </div>
