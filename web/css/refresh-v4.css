@@ -214,3 +214,11 @@
     .tb-cell:nth-child(2n) { border-right: none; }
     .tb-cell { border-bottom: 1px solid var(--border); }
 }
+
+/* ---- Footer credit: professional, with a quiet engine line - */
+.footer-credit-sub {
+    margin-top: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    opacity: 0.85;
+}
