@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.1] - 2026-06-19
+
+### Fixed
+- **`/draft:init refresh` never regenerated the OKF `wiki/` bundle.** The init
+  skill's Refresh Mode described only the `monolith` path (refresh
+  `architecture.md` → regenerate `.ai-context.md`/`.ai-profile.md`), with no
+  branch for `okf` mode — so an agent running `refresh` on an OKF-initialized
+  repo would treat the *generated* `architecture.md` as the source of truth and
+  never re-narrate the `draft/wiki/` concept taxonomy. `skills/init/SKILL.md`
+  now detects `okf` mode (presence of `draft/wiki/`) and dispatches to
+  `references/okf-emitter.md` §"Incremental refresh at concept granularity (M5)":
+  regenerate only the concepts grounded in changed files, carry the rest forward
+  from cache, always re-render `architecture.md`/`.ai-context.md` via
+  `okf-render-views.sh`, and re-run `okf-validate.sh`. Mirrors the
+  initial-generation branch. Cross-host integrations regenerated.
+
+### Changed
+- **Documentation, website, and book synced to v3.3.0.** OKF taxonomy mode is
+  now documented across README, `web/index.html`, `web/what-is-draft`,
+  `llms.txt`/`llms-full.txt`, and the book (getting-started, context-tiering);
+  the website changelog gains its v3.3.0 entry; Cursor's registration +
+  `--force` upgrade path is documented. Stale counts corrected
+  (`templates 30→29`, `helpers 32→45`, `All Commands 34→33`, added the missing
+  `/draft:upload`). No runtime behavior change in this item.
+
 ## [3.3.0] - 2026-06-19
 
 ### Added
