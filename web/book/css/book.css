@@ -1605,3 +1605,225 @@ a { color: inherit; text-decoration: none; }
 }
 .footer-bottom a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 .footer-bottom a:hover { color: var(--accent-cyan, #2563eb); }
+
+/* ============================================================
+   REFRESH — "The Drafting Table" (matches getdraft.dev)
+   The book is a reading surface, so the boldness lives in two
+   places only: the landing hero (a drafting sheet) and the
+   monospace drawing labels that thread the whole book together.
+   Everything else stays quiet. Token-driven, so light + dark
+   both keep working; a few explicit dark overrides where the
+   blueprint grid needs a cooler ink.
+   ============================================================ */
+
+/* ---- Drawing labels: every monospace eyebrow gets a leader
+   tick, like a callout on a blueprint ---------------------- */
+.sidebar-part-title,
+.book-toc-part-title,
+.page-toc-title {
+    position: relative;
+    padding-left: 1.5rem;
+    letter-spacing: 0.14em;
+}
+
+.sidebar-part-title::before,
+.book-toc-part-title::before,
+.page-toc-title::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 1rem;
+    height: 1px;
+    background: currentColor;
+    opacity: 0.6;
+}
+
+/* keep the sidebar's first-part top alignment tidy with the tick */
+.sidebar-part:first-child .sidebar-part-title { padding-top: 0.5rem; }
+
+/* Chapter meta reads like a drawing number on the sheet */
+.chapter-meta {
+    position: relative;
+    display: inline-block;
+    padding-left: 1.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+.chapter-meta::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 0.95rem;
+    height: 1px;
+    background: var(--accent-cyan);
+}
+
+/* ---- Reading progress: a redline drawn across the top ---- */
+.reading-progress {
+    background: linear-gradient(90deg, var(--accent-cyan), var(--accent-rose));
+}
+
+/* ---- Calmer, drafting-precise surfaces ------------------- */
+.callout,
+.related-chapters,
+.figure-content { border-radius: 10px; }
+
+/* ============================================================
+   LANDING HERO — the drafting sheet
+   ============================================================ */
+.book-landing--draft {
+    position: relative;
+    isolation: isolate;
+    text-align: left;
+    padding: 3.5rem 0 2.5rem;
+    overflow: hidden;
+}
+
+/* Hairline blueprint grid behind the hero only (never behind
+   running text, where it would hurt readability) */
+.book-grid-overlay {
+    position: absolute;
+    inset: -1px;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+        linear-gradient(to right, var(--border-subtle) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--border-subtle) 1px, transparent 1px);
+    background-size: 40px 40px;
+    -webkit-mask-image: radial-gradient(ellipse 75% 80% at 25% 35%, #000 25%, transparent 78%);
+    mask-image: radial-gradient(ellipse 75% 80% at 25% 35%, #000 25%, transparent 78%);
+}
+
+[data-theme="dark"] .book-grid-overlay {
+    background-image:
+        linear-gradient(to right, rgba(120, 160, 220, 0.10) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(120, 160, 220, 0.10) 1px, transparent 1px);
+}
+
+.book-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.book-eyebrow-label {
+    position: relative;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent-cyan);
+    padding-left: 1.5rem;
+}
+.book-eyebrow-label::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 1rem;
+    height: 1px;
+    background: var(--accent-cyan);
+}
+
+.book-rev {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.66rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    color: var(--accent-rose);
+    border: 1px solid var(--accent-rose);
+    border-radius: 4px;
+    padding: 0.15rem 0.5rem;
+}
+
+.book-landing--draft h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(2.3rem, 5.5vw, 3.6rem);
+    line-height: 1.04;
+    letter-spacing: -0.03em;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 1.25rem;
+}
+
+/* "draft" annotated like a redline edit — the signature word */
+.book-mark {
+    position: relative;
+    color: var(--accent-cyan);
+    white-space: nowrap;
+}
+.book-mark::after {
+    content: "";
+    position: absolute;
+    left: -0.04em;
+    right: -0.04em;
+    bottom: 0.08em;
+    height: 0.46em;
+    background: var(--accent-cyan);
+    opacity: 0.16;
+    z-index: -1;
+    transform: skewX(-9deg);
+}
+
+.book-landing--draft .book-landing-subtitle {
+    margin: 0 0 2.25rem;
+    max-width: 640px;
+    font-size: 1.1rem;
+    line-height: 1.7;
+}
+
+/* ---- Title block — the signature, carrying real spec ----- */
+.book-titleblock {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bg-secondary);
+    max-width: 580px;
+}
+
+.book-titleblock .tb-cell {
+    padding: 0.8rem 1rem;
+    border-right: 1px solid var(--border);
+    text-align: left;
+}
+.book-titleblock .tb-cell:last-child { border-right: none; }
+
+.book-titleblock .tb-key {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.58rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 0.3rem;
+}
+
+.book-titleblock .tb-val {
+    display: block;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text-primary);
+}
+
+.book-titleblock .tb-cell--accent .tb-val { color: var(--accent-cyan); }
+
+@media (max-width: 600px) {
+    .book-titleblock { grid-template-columns: repeat(2, 1fr); }
+    .book-titleblock .tb-cell:nth-child(2n) { border-right: none; }
+    .book-titleblock .tb-cell:nth-child(-n+2) { border-bottom: 1px solid var(--border); }
+    .book-landing--draft { text-align: left; padding: 2.5rem 0 1.5rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .reading-progress { transition: none; }
+}

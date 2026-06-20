@@ -889,6 +889,333 @@
 }
 
 /* ============================================================
+   PRIMARY COMMANDS — the five-command surface
+   ============================================================ */
+.cmd-primary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    margin-top: 2.5rem;
+}
+
+/* Four-command workflow: even 4-up on desktop, 2-up tablet, 1-up mobile */
+.cmd-primary-grid--four { grid-template-columns: repeat(4, 1fr); }
+
+@media (max-width: 880px) {
+    .cmd-primary-grid--four { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 520px) {
+    .cmd-primary-grid--four { grid-template-columns: 1fr; }
+}
+
+.cmd-primary {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 1.6rem 1.4rem 1.4rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+
+.cmd-primary:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent-emerald);
+    box-shadow: 0 12px 28px -16px var(--glow-emerald);
+}
+
+/* Sequence marker — a real workflow order: init → new-track → implement → review */
+.cmd-primary-step {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2.4rem;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--accent-emerald);
+    opacity: 0.22;
+}
+
+.cmd-primary-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--accent-emerald);
+    text-decoration: none;
+    width: fit-content;
+}
+
+a.cmd-primary-name:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+.cmd-primary-desc {
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* bughunt breaks the numbered line — an on-demand audit, not a step */
+.cmd-primary--audit:hover {
+    border-color: var(--accent-amber);
+    box-shadow: 0 12px 28px -16px var(--glow-amber);
+}
+
+.cmd-primary--audit .cmd-primary-name {
+    color: var(--accent-amber);
+}
+
+.cmd-primary-step--audit {
+    align-self: flex-start;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 1;
+    color: var(--accent-amber);
+    background: var(--glow-amber);
+    border: 1px solid var(--accent-amber);
+    border-radius: 999px;
+    padding: 0.2rem 0.7rem;
+}
+
+/* ============================================================
+   ROUTING DIAGRAM — signature: one prompt → the right specialist
+   ============================================================ */
+.routing-block {
+    margin-top: 3rem;
+    text-align: center;
+}
+
+.routing-lead {
+    font-size: clamp(1.05rem, 2.2vw, 1.35rem);
+    font-weight: 500;
+    color: var(--text-primary);
+    max-width: 640px;
+    margin: 0 auto 2rem;
+}
+
+.routing-lead span { color: var(--accent-emerald); }
+
+.routing-diagram {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.routing-prompt {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 0.7rem 1.1rem;
+}
+
+.routing-prompt-cmd { color: var(--accent-cyan); font-weight: 600; }
+
+.routing-conn {
+    width: 2px;
+    height: 26px;
+    background: linear-gradient(var(--border), var(--accent-emerald));
+}
+
+.routing-conn--fan {
+    height: 22px;
+    background: var(--accent-emerald);
+    opacity: 0.5;
+}
+
+.routing-hub {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+    padding: 0.7rem 1.3rem;
+    border: 1.5px solid var(--accent-emerald);
+    border-radius: 12px;
+    background: var(--glow-emerald);
+}
+
+.routing-hub-title {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--accent-emerald);
+}
+
+.routing-hub-sub {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+}
+
+/* Fan of candidate specialists, with a connector rail across the top */
+.routing-fan {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+    position: relative;
+    padding-top: 1.4rem;
+}
+
+.routing-fan::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 18%;
+    right: 18%;
+    height: 1.4rem;
+    border: 1.5px solid var(--accent-emerald);
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    opacity: 0.4;
+}
+
+.routing-leaf {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 0.3rem 0.7rem;
+}
+
+/* The one the router picked */
+.routing-leaf--lit {
+    color: var(--accent-emerald);
+    border-color: var(--accent-emerald);
+    background: var(--glow-emerald);
+    font-weight: 600;
+}
+
+@media (max-width: 480px) {
+    .routing-fan::before { left: 6%; right: 6%; }
+}
+
+/* ============================================================
+   ROUTED SPECIALISTS — quiet disclosure
+   ============================================================ */
+.cmd-routed {
+    margin-top: 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--bg-secondary);
+}
+
+.cmd-routed-summary {
+    list-style: none;
+    cursor: pointer;
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 1.1rem 1.4rem;
+    user-select: none;
+}
+
+.cmd-routed-summary::-webkit-details-marker { display: none; }
+
+.cmd-routed-toggle {
+    align-self: center;
+    width: 0;
+    height: 0;
+    border-left: 6px solid var(--text-muted);
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    transition: transform 0.2s;
+}
+
+.cmd-routed[open] .cmd-routed-toggle { transform: rotate(90deg); }
+
+.cmd-routed-count {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.cmd-routed-hint {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.cmd-routed-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    padding: 0.25rem 1.4rem 1.4rem;
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 1.25rem;
+}
+
+.router-group {
+    display: grid;
+    grid-template-columns: 9.5rem 1fr;
+    gap: 0.75rem 1rem;
+    align-items: start;
+}
+
+.router-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--accent-cyan);
+    padding-top: 0.15rem;
+    text-decoration: none;
+    width: fit-content;
+}
+
+a.router-name:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+.router-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.chip {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    background: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 0.22rem 0.55rem;
+    text-decoration: none;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+.chip:hover {
+    border-color: var(--accent-cyan);
+    color: var(--accent-cyan);
+}
+
+.cmd-routed-more {
+    align-self: flex-start;
+    margin-top: 0.4rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem;
+    color: var(--accent-cyan);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.15s;
+}
+
+.cmd-routed-more:hover { border-bottom-color: var(--accent-cyan); }
+
+@media (max-width: 560px) {
+    .router-group {
+        grid-template-columns: 1fr;
+        gap: 0.4rem;
+    }
+}
+
+/* ============================================================
    TEAM STEPS
    ============================================================ */
 .team-step {
@@ -1099,6 +1426,13 @@
     font-weight: 700;
     color: var(--accent-cyan);
     line-height: 1.1;
+}
+
+.hero-stat-sub {
+    font-size: 0.55em;
+    font-weight: 600;
+    color: var(--text-muted);
+    letter-spacing: -0.01em;
 }
 
 .hero-stat-label {

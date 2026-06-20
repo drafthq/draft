@@ -14,13 +14,15 @@
     <meta property="og:description" content="Powered by codebase-memory-mcp — 159-language local knowledge-graph engine. Spec-driven planning, three-stage review — in one plugin for Claude Code, Cursor, Codex, opencode, Copilot, and Gemini. 33 commands, free forever.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://getdraft.dev">
-    <meta property="og:image" content="https://getdraft.dev/social-preview.png">
-    <meta property="og:image:alt" content="Draft: Code intelligence built into your AI coding agent">
+    <meta property="og:image" content="https://getdraft.dev/social-preview.png?v=331">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="Draft — draft it before your agent builds it: 33 commands, a 159-language knowledge graph, and three-stage review">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Draft — Code Intelligence for Your AI Coding Agent">
     <meta name="twitter:description" content="Powered by codebase-memory-mcp — 159 languages, 100% local. Spec-driven planning + three-stage review. One plugin for Claude Code, Cursor, Codex, opencode, Copilot, Gemini. 33 commands. Free forever.">
-    <meta name="twitter:image" content="https://getdraft.dev/social-preview.png">
-    <meta name="twitter:image:alt" content="Draft: Code intelligence built into your AI coding agent">
+    <meta name="twitter:image" content="https://getdraft.dev/social-preview.png?v=331">
+    <meta name="twitter:image:alt" content="Draft — draft it before your agent builds it: 33 commands, a 159-language knowledge graph, and three-stage review">
     <link rel="canonical" href="https://getdraft.dev">
     <link rel="alternate" hreflang="en" href="https://getdraft.dev/">
     <link rel="alternate" hreflang="x-default" href="https://getdraft.dev/">
@@ -200,6 +202,7 @@
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/animations.css">
     <link rel="stylesheet" href="css/redesign-v24.css">
+    <link rel="stylesheet" href="css/refresh-v4.css">
 
     <!-- Theme: apply early to prevent flash of wrong theme -->
     <script>
@@ -215,7 +218,7 @@
         <a href="#hero" class="nav-logo">Draft</a>
         <div class="nav-links">
             <a href="#features">Features</a>
-            <a href="#commands">Commands</a>
+            <a href="#commands">Surface</a>
             <a href="#install">Install</a>
             <a href="#audience">Who It's For</a>
             <a href="book/">Book</a>
@@ -238,7 +241,7 @@
         <a href="#problem" class="side-dot" data-label="Problem"><span></span></a>
         <a href="#how-it-works" class="side-dot" data-label="Workflow"><span></span></a>
         <a href="#features" class="side-dot" data-label="Features"><span></span></a>
-        <a href="#commands" class="side-dot" data-label="Commands"><span></span></a>
+        <a href="#commands" class="side-dot" data-label="Surface"><span></span></a>
         <a href="#team" class="side-dot" data-label="Team"><span></span></a>
         <a href="#install" class="side-dot" data-label="Install"><span></span></a>
         <a href="#architecture" class="side-dot" data-label="Research"><span></span></a>
@@ -250,11 +253,17 @@
     <!-- ============================================================ -->
     <!-- SECTION 1: HERO                                              -->
     <!-- ============================================================ -->
-    <section id="hero" class="section hero-section">
+    <section id="hero" class="section hero-section hero-draft">
         <canvas id="hero-canvas" aria-hidden="true"></canvas>
+        <div class="hero-grid-overlay" aria-hidden="true"></div>
         <div class="hero-content">
-            <h1>Stop shipping<br><span class="gradient-text">AI-generated bugs</span>.</h1>
-            <p class="tagline">One command runs a three-stage review on your branch &mdash; validation, spec compliance, code quality &mdash; and writes the missing tests. Powered by a tree-sitter knowledge graph of your repo. <strong>Free forever.</strong> For Claude Code, Cursor, Codex, opencode, Copilot, and Gemini.</p>
+            <div class="hero-eyebrow">
+                <span class="hero-eyebrow-label">Context-Driven Development</span>
+                <span class="hero-rev">REV 3.3.1 &middot; MIT</span>
+            </div>
+            <h1 class="hero-h1"><span class="hero-mark">Draft</span> it before<br>your agent builds it.</h1>
+            <p class="tagline">Draft maps your repo into a local knowledge graph and turns your ideas into reviewable specs &mdash; so your AI agent ships from a <strong>plan, not a guess</strong>. Spec-first planning, a three-stage review, and a 14-dimension bug hunt, in one plugin. <strong>Free forever.</strong></p>
+            <p class="hero-platforms">Works in <strong>Claude Code &middot; Cursor &middot; Codex &middot; opencode &middot; Copilot &middot; Gemini</strong></p>
             <div class="hero-actions">
                 <a href="#install" class="btn btn-primary">Install in 30 seconds</a>
                 <a href="#playground" class="btn btn-secondary">See it in 60 seconds</a>
@@ -275,31 +284,27 @@
                     <span class="hero-extra-tag">~8h</span>
                 </a>
             </div>
-            <!-- Hero stats strip -->
-            <div class="hero-stats">
-                <div class="hero-stat">
-                    <span class="hero-stat-num">33</span>
-                    <span class="hero-stat-label">Commands</span>
+            <!-- Title block — drawing-sheet signature carrying the real spec -->
+            <div class="hero-titleblock">
+                <div class="tb-cell tb-cell--accent">
+                    <span class="tb-key">Commands</span>
+                    <span class="tb-val">4<span class="tb-sub">/33</span></span>
                 </div>
-                <div class="hero-stat-divider"></div>
-                <div class="hero-stat">
-                    <span class="hero-stat-num">159</span>
-                    <span class="hero-stat-label">Languages</span>
+                <div class="tb-cell">
+                    <span class="tb-key">Languages</span>
+                    <span class="tb-val">159</span>
                 </div>
-                <div class="hero-stat-divider"></div>
-                <div class="hero-stat">
-                    <span class="hero-stat-num">6</span>
-                    <span class="hero-stat-label">Graph Modes</span>
+                <div class="tb-cell">
+                    <span class="tb-key">Graph modes</span>
+                    <span class="tb-val">6</span>
                 </div>
-                <div class="hero-stat-divider"></div>
-                <div class="hero-stat">
-                    <span class="hero-stat-num">5</span>
-                    <span class="hero-stat-label">IDE Integrations</span>
+                <div class="tb-cell">
+                    <span class="tb-key">Platforms</span>
+                    <span class="tb-val">6</span>
                 </div>
-                <div class="hero-stat-divider"></div>
-                <div class="hero-stat">
-                    <span class="hero-stat-num">MIT</span>
-                    <span class="hero-stat-label">License</span>
+                <div class="tb-cell">
+                    <span class="tb-key">License</span>
+                    <span class="tb-val">MIT</span>
                 </div>
             </div>
             <p class="hero-powered-by">Graph engine: <a href="https://github.com/DeusData/codebase-memory-mcp" target="_blank" rel="noopener noreferrer">codebase-memory-mcp</a> by <a href="https://github.com/DeusData" target="_blank" rel="noopener noreferrer">DeusData</a> &mdash; tree-sitter + LSP, 159 languages, 100% local</p>
@@ -317,29 +322,29 @@
         <div class="section-glow section-glow--rose"></div>
         <div class="section-inner">
             <span class="section-label">The Problem</span>
-            <h2>AI tools ship fast<br>but create <span class="text-rose">chaos</span></h2>
-            <p class="section-subtitle">Without structure, AI makes assumptions, chooses arbitrary approaches, and produces code that doesn't fit your architecture.</p>
+            <h2>AI ships fast.<br>Without a plan, it ships <span class="text-rose">chaos</span>.</h2>
+            <p class="section-subtitle">Hand an agent a vague prompt and it guesses. It invents requirements, picks approaches that don't match your stack, and calls it done without proof. Here's what that looks like &mdash; flagged like defects on a draft.</p>
 
             <div class="problem-grid">
                 <div class="glass-card problem-card">
-                    <div class="card-icon card-icon--rose">01</div>
-                    <h3>Assumption-Driven</h3>
-                    <p>Guesses at requirements instead of asking clarifying questions</p>
+                    <div class="card-icon card-icon--defect">&#10007;</div>
+                    <h3>Guesses requirements</h3>
+                    <p>Assumes what you meant instead of asking the questions a teammate would.</p>
                 </div>
                 <div class="glass-card problem-card">
-                    <div class="card-icon card-icon--amber">02</div>
-                    <h3>Arbitrary Choices</h3>
-                    <p>Picks random technical approaches without considering your stack</p>
+                    <div class="card-icon card-icon--defect">&#10007;</div>
+                    <h3>Picks at random</h3>
+                    <p>Reaches for whatever it saw most, not what fits your architecture and conventions.</p>
                 </div>
                 <div class="glass-card problem-card">
-                    <div class="card-icon card-icon--violet">03</div>
-                    <h3>Poor Fit</h3>
-                    <p>Produces code that doesn't match existing patterns or conventions</p>
+                    <div class="card-icon card-icon--defect">&#10007;</div>
+                    <h3>Breaks the patterns</h3>
+                    <p>Writes code that ignores the structures your codebase already relies on.</p>
                 </div>
                 <div class="glass-card problem-card">
-                    <div class="card-icon card-icon--cyan">04</div>
-                    <h3>No Checkpoints</h3>
-                    <p>Skips verification and claims completion without proof</p>
+                    <div class="card-icon card-icon--defect">&#10007;</div>
+                    <h3>Claims it's done</h3>
+                    <p>Skips verification and reports success with no test, no diff, no evidence.</p>
                 </div>
             </div>
 
@@ -375,7 +380,7 @@
     <section id="playground" class="section section-playground">
         <div class="section-glow section-glow--violet"></div>
         <div class="section-inner">
-            <span class="section-label">v3.0 &middot; Built-in</span>
+            <span class="section-label">Local engine &middot; Built-in</span>
             <h2>Your repo, <span class="text-violet">queryable.</span></h2>
             <p class="section-subtitle">Draft installs a local knowledge-graph engine that maps every module, call, dependency, and hotspot in your codebase. No daemon. No external service. No code leaves your machine. Try the queries below &mdash; illustrative results from a typical codebase, in the engine's real output schema.</p>
 
@@ -506,7 +511,7 @@
                     </tbody>
                 </table>
             </div>
-            <p class="vs-foot-note">Comparison reflects Draft 3.0 vs. publicly-documented features of named alternatives as of June 2026. Draft is the open-source plugin you install once and own forever.</p>
+            <p class="vs-foot-note">Comparison reflects Draft 3.3 vs. publicly-documented features of named alternatives as of June 2026. Draft is the open-source plugin you install once and own forever.</p>
         </div>
     </section>
 
@@ -634,7 +639,7 @@
                     </div>
                     <div class="pipeline-connector"></div>
                     <h3>Spec &amp; Plan</h3>
-                    <p class="pipeline-cmd">/draft:plan</p>
+                    <p class="pipeline-cmd">/draft:new-track</p>
                     <p>Collaborative intake — AI asks one question at a time, contributes expertise, surfaces risks. Builds spec progressively with citations from DDD, Clean Architecture, OWASP.</p>
                 </div>
                 <div class="pipeline-step" data-step="3">
@@ -655,13 +660,13 @@
                     <p class="pipeline-cmd">/draft:review</p>
                     <p>3-stage review with STRIDE threat modeling, SAST tool integration, breaking change detection, context-specific checks (crypto, DB, API, config, UI).</p>
                 </div>
-                <div class="pipeline-step" data-step="5">
+                <div class="pipeline-step pipeline-step--anytime" data-step="5">
                     <div class="pipeline-icon pipeline-icon--violet">
-                        <span>05</span>
+                        <span>&#8635;</span>
                     </div>
-                    <h3>Bug Hunt</h3>
+                    <h3>Bug Hunt <span class="pipeline-tag">anytime</span></h3>
                     <p class="pipeline-cmd">/draft:bughunt</p>
-                    <p>14-dimension sweep with taint tracking, dependency/supply chain security, algorithmic complexity analysis, mutation testing awareness. Only HIGH/CONFIRMED confidence reported.</p>
+                    <p>Not a step in the line &mdash; an on-demand audit <code>/draft:review</code> escalates to. 14-dimension sweep with taint tracking, supply-chain checks, and complexity analysis. Only HIGH/CONFIRMED confidence reported.</p>
                 </div>
             </div>
 
@@ -778,7 +783,7 @@
                         <div class="bento-icon bento-icon--violet">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="9" y1="6" x2="15" y2="6"/><line x1="6" y1="9" x2="6" y2="15"/><line x1="18" y1="9" x2="18" y2="15"/><line x1="9" y1="18" x2="15" y2="18"/></svg>
                         </div>
-                        <span class="bento-tag">v3.0 &middot; Built-in</span>
+                        <span class="bento-tag">Built-in</span>
                     </div>
                     <h3>Knowledge Graph Engine</h3>
                     <p>Tree-sitter + LSP-grade resolution across 159 languages, 100% local. Query tools &mdash; <strong>callers</strong>, <strong>callees</strong>, <strong>impact</strong>, <strong>cycles</strong>, <strong>hotspots</strong>, <strong>mermaid</strong>. Incremental, git-aware indexing. Impact queries break results down by code/test/doc/config. Powers <code>/draft:impact</code>, enriches <code>/draft:bughunt</code> and <code>/draft:review</code>.</p>
@@ -794,7 +799,7 @@
                         <div class="bento-icon bento-icon--amber">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         </div>
-                        <span class="bento-tag">v3.0</span>
+                        <span class="bento-tag">Track memory</span>
                     </div>
                     <h3>Track Impact Memory</h3>
                     <p>Each completed track records its blast radius in <code>metadata.json</code> &mdash; files touched, modules affected, downstream count, by-category breakdown. <code>/draft:plan</code> reads recent tracks' impact during context load and surfaces overlap warnings before you even write a spec.</p>
@@ -826,9 +831,9 @@
                         <span class="bento-tag">Enterprise</span>
                     </div>
                     <h3>Enterprise Ready</h3>
-                    <p>Monorepo federation with service discovery and dependency graphs. Jira integration (Track &rarr; Epic, Phase &rarr; Story, Task &rarr; Sub-task). Architecture Decision Records with full lifecycle. Git-aware task/phase/track-level revert. Mid-track change management with impact analysis.</p>
+                    <p>Monorepo federation with service discovery and dependency graphs. Unified Jira router &mdash; <code>preview</code>, <code>create</code> (Track &rarr; Epic, Phase &rarr; Story, Task &rarr; Sub-task), and <code>review &lt;JIRA-ID&gt;</code> that qualifies a ticket with deep-review + bug hunt + coverage + test-gap analysis. Architecture Decision Records with full lifecycle. Git-aware task/phase/track-level revert. Mid-track change management with impact analysis.</p>
                     <div class="bento-stats">
-                        <span>Monorepo</span><span>Jira</span><span>ADRs</span><span>Revert</span><span>Change mgmt</span>
+                        <span>Monorepo</span><span>Jira preview / create / review</span><span>ADRs</span><span>Revert</span><span>Change mgmt</span>
                     </div>
                 </div>
             </div>
@@ -841,8 +846,9 @@
     <section id="commands" class="section">
         <div class="section-glow section-glow--emerald"></div>
         <div class="section-inner">
-            <span class="section-label">33 Commands &middot; 7 Specialized Agents</span>
-            <h2>Full development <span class="text-emerald">lifecycle</span></h2>
+            <span class="section-label">The commands you'll actually type</span>
+            <h2>Four you run. <span class="text-emerald">Twenty-nine</span> that route themselves.</h2>
+            <p class="section-subtitle">The whole workflow comes down to four commands. Everything else &mdash; bug hunts, coverage, debugging, ADRs, deploy checklists, Jira &mdash; is a specialist the routers reach for on their own. Each one is still there to call by name the moment you want it.</p>
 
             <!-- Interactive terminal -->
             <div class="terminal glass-card">
@@ -864,143 +870,118 @@
                 </div>
             </div>
 
-            <!-- Command grid -->
-            <div class="commands-grid">
-                <div class="cmd-card" data-category="setup">
-                    <span class="cmd-name">/draft</span>
-                    <span class="cmd-desc">Overview and intent mapping</span>
-                </div>
-                <div class="cmd-card" data-category="setup">
-                    <span class="cmd-name">/draft:init</span>
-                    <span class="cmd-desc">Initialize project context</span>
-                </div>
+            <!-- Primary commands — the four-command workflow -->
+            <div class="cmd-primary-grid cmd-primary-grid--four">
+                <article class="cmd-primary" data-term="init">
+                    <span class="cmd-primary-step">01</span>
+                    <a class="cmd-primary-name" href="book/command-reference/#cmd-init">/draft:init</a>
+                    <p class="cmd-primary-desc">Map the codebase once. Every command after this starts with full context.</p>
+                </article>
+                <article class="cmd-primary" data-term="plan">
+                    <span class="cmd-primary-step">02</span>
+                    <a class="cmd-primary-name" href="book/command-reference/#cmd-new-track">/draft:new-track</a>
+                    <p class="cmd-primary-desc">Turn an idea into a reviewable spec and a phased plan before any code.</p>
+                </article>
+                <article class="cmd-primary" data-term="implement">
+                    <span class="cmd-primary-step">03</span>
+                    <a class="cmd-primary-name" href="book/command-reference/#cmd-implement">/draft:implement</a>
+                    <p class="cmd-primary-desc">Build the plan task by task, test-first, with verification gates between steps.</p>
+                </article>
+                <article class="cmd-primary" data-term="review">
+                    <span class="cmd-primary-step">04</span>
+                    <a class="cmd-primary-name" href="book/command-reference/#cmd-review">/draft:review</a>
+                    <p class="cmd-primary-desc">Three stages on your branch &mdash; and escalates to bug hunt, deep-review, or quick-review when the change warrants it.</p>
+                </article>
+            </div>
 
-                <div class="cmd-card" data-category="setup">
-                    <span class="cmd-name">/draft:discover</span>
-                    <span class="cmd-desc">Discover features and patterns</span>
-                </div>
-                <div class="cmd-card" data-category="lifecycle">
-                    <span class="cmd-name">/draft:plan</span>
-                    <span class="cmd-desc">Canonical planning parent command</span>
-                </div>
-                <div class="cmd-card" data-category="lifecycle">
-                    <span class="cmd-name">/draft:new-track</span>
-                    <span class="cmd-desc">Collaborative spec + plan</span>
-                </div>
-                <div class="cmd-card" data-category="lifecycle">
-                    <span class="cmd-name">/draft:implement</span>
-                    <span class="cmd-desc">TDD workflow execution</span>
-                </div>
-                <div class="cmd-card" data-category="lifecycle">
-                    <span class="cmd-name">/draft:status</span>
-                    <span class="cmd-desc">Progress overview</span>
-                </div>
-                <div class="cmd-card" data-category="lifecycle">
-                    <span class="cmd-name">/draft:change</span>
-                    <span class="cmd-desc">Mid-track amendments</span>
-                </div>
-                <div class="cmd-card" data-category="lifecycle">
-                    <span class="cmd-name">/draft:revert</span>
-                    <span class="cmd-desc">Git-aware rollback</span>
-                </div>
-                <div class="cmd-card" data-category="quality">
-                    <span class="cmd-name">/draft:review</span>
-                    <span class="cmd-desc">3-stage code review</span>
-                </div>
-                <div class="cmd-card" data-category="quality">
-                    <span class="cmd-name">/draft:deep-review</span>
-                    <span class="cmd-desc">ACID module audit</span>
-                </div>
-                <div class="cmd-card" data-category="quality">
-                    <span class="cmd-name">/draft:bughunt</span>
-                    <span class="cmd-desc">14-dimension sweep</span>
-                </div>
-                <div class="cmd-card" data-category="quality">
-                    <span class="cmd-name">/draft:coverage</span>
-                    <span class="cmd-desc">Coverage report (95%+)</span>
-                </div>
-                <div class="cmd-card" data-category="quality">
-                    <span class="cmd-name">/draft:learn</span>
-                    <span class="cmd-desc">Pattern discovery</span>
-                </div>
-                <div class="cmd-card" data-category="lifecycle">
-                    <span class="cmd-name">/draft:decompose</span>
-                    <span class="cmd-desc">Module decomposition</span>
-                </div>
-                <div class="cmd-card" data-category="lifecycle">
-                    <span class="cmd-name">/draft:adr</span>
-                    <span class="cmd-desc">Architecture Decision Records</span>
-                </div>
-                <div class="cmd-card" data-category="enterprise">
-                    <span class="cmd-name">/draft:jira</span>
-                    <span class="cmd-desc">Unified Jira (preview / create / review)</span>
-                </div>
-
-                <div class="cmd-card" data-category="enterprise">
-                    <span class="cmd-name">/draft:integrations</span>
-                    <span class="cmd-desc">Canonical integrations parent command</span>
-                </div>
-                <div class="cmd-card" data-category="setup">
-                    <span class="cmd-name">/draft:graph</span>
-                    <span class="cmd-desc">Knowledge graph queries and analysis</span>
-                </div>
-                <div class="cmd-card" data-category="enterprise">
-                    <span class="cmd-name">/draft:upload</span>
-                    <span class="cmd-desc">Upload context and artifacts</span>
-                </div>
-                <div class="cmd-card" data-category="quality">
-                    <span class="cmd-name">/draft:debug</span>
-                    <span class="cmd-desc">Structured debugging sessions</span>
-                </div>
-                <div class="cmd-card" data-category="quality">
-                    <span class="cmd-name">/draft:quick-review</span>
-                    <span class="cmd-desc">Lightweight code review</span>
-                </div>
-                <div class="cmd-card" data-category="lifecycle">
-                    <span class="cmd-name">/draft:ops</span>
-                    <span class="cmd-desc">Canonical operations parent command</span>
-                </div>
-                <div class="cmd-card" data-category="lifecycle">
-                    <span class="cmd-name">/draft:deploy-checklist</span>
-                    <span class="cmd-desc">Pre-deployment verification</span>
-                </div>
-                <div class="cmd-card" data-category="quality">
-                    <span class="cmd-name">/draft:testing-strategy</span>
-                    <span class="cmd-desc">Test plan design</span>
-                </div>
-                <div class="cmd-card" data-category="architecture">
-                    <span class="cmd-name">/draft:tech-debt</span>
-                    <span class="cmd-desc">Technical debt analysis</span>
-                </div>
-                <div class="cmd-card" data-category="lifecycle">
-                    <span class="cmd-name">/draft:standup</span>
-                    <span class="cmd-desc">Git activity standup summaries</span>
-                </div>
-                <div class="cmd-card" data-category="lifecycle">
-                    <span class="cmd-name">/draft:incident-response</span>
-                    <span class="cmd-desc">Incident management lifecycle</span>
-                </div>
-                <div class="cmd-card" data-category="architecture">
-                    <span class="cmd-name">/draft:documentation</span>
-                    <span class="cmd-desc">Technical documentation generation</span>
-                </div>
-                <div class="cmd-card" data-category="architecture">
-                    <span class="cmd-name">/draft:docs</span>
-                    <span class="cmd-desc">Canonical docs parent command</span>
-                </div>
-                <div class="cmd-card" data-category="lifecycle">
-                    <span class="cmd-name">/draft:tour</span>
-                    <span class="cmd-desc">Interactive codebase walk-through</span>
-                </div>
-                <div class="cmd-card" data-category="quality">
-                    <span class="cmd-name">/draft:impact</span>
-                    <span class="cmd-desc">Project metrics and ROI analytics</span>
-                </div>
-                <div class="cmd-card" data-category="quality">
-                    <span class="cmd-name">/draft:assist-review</span>
-                    <span class="cmd-desc">Summarize intent for PR reviewers</span>
+            <!-- Routing diagram — the signature: one prompt, the right specialist -->
+            <div class="routing-block">
+                <p class="routing-lead">You don't pick the specialist. <span>Draft routes intent to it</span> &mdash; and you can still call it by name.</p>
+                <div class="routing-diagram">
+                    <div class="routing-prompt"><span class="routing-prompt-cmd">draft</span> "fix the flaky login test"</div>
+                    <span class="routing-conn" aria-hidden="true"></span>
+                    <div class="routing-hub">
+                        <span class="routing-hub-title">intent router</span>
+                        <span class="routing-hub-sub">reads what you mean</span>
+                    </div>
+                    <span class="routing-conn routing-conn--fan" aria-hidden="true"></span>
+                    <div class="routing-fan">
+                        <span class="routing-leaf">/draft:debug</span>
+                        <span class="routing-leaf routing-leaf--lit">/draft:testing-strategy</span>
+                        <span class="routing-leaf">/draft:bughunt</span>
+                        <span class="routing-leaf">/draft:coverage</span>
+                    </div>
                 </div>
             </div>
+
+            <!-- Routed specialists — quiet, on demand -->
+            <details class="cmd-routed">
+                <summary class="cmd-routed-summary">
+                    <span class="cmd-routed-toggle" aria-hidden="true"></span>
+                    <span class="cmd-routed-count">29 specialists</span>
+                    <span class="cmd-routed-hint">routed for you &mdash; or call any of them by name</span>
+                </summary>
+                <div class="cmd-routed-body">
+                    <div class="router-group">
+                        <a class="router-name" href="book/command-reference/#cmd-plan">/draft:plan</a>
+                        <div class="router-chips">
+                            <a class="chip" href="book/command-reference/#cmd-decompose">decompose</a>
+                            <a class="chip" href="book/command-reference/#cmd-adr">adr</a>
+                            <a class="chip" href="book/command-reference/#cmd-tech-debt">tech-debt</a>
+                            <a class="chip" href="book/command-reference/#cmd-change">change</a>
+                        </div>
+                    </div>
+                    <div class="router-group">
+                        <a class="router-name" href="book/command-reference/#cmd-discover">/draft:discover</a>
+                        <div class="router-chips">
+                            <a class="chip" href="book/command-reference/#cmd-bughunt">bughunt</a>
+                            <a class="chip" href="book/command-reference/#cmd-debug">debug</a>
+                            <a class="chip" href="book/command-reference/#cmd-quick-review">quick-review</a>
+                            <a class="chip" href="book/command-reference/#cmd-deep-review">deep-review</a>
+                            <a class="chip" href="book/command-reference/#cmd-coverage">coverage</a>
+                            <a class="chip" href="book/command-reference/#cmd-testing-strategy">testing-strategy</a>
+                            <a class="chip" href="book/command-reference/#cmd-learn">learn</a>
+                            <a class="chip" href="book/command-reference/#cmd-tour">tour</a>
+                            <a class="chip" href="book/command-reference/#cmd-impact">impact</a>
+                            <a class="chip" href="book/command-reference/#cmd-assist-review">assist-review</a>
+                        </div>
+                    </div>
+                    <div class="router-group">
+                        <a class="router-name" href="book/command-reference/#cmd-ops">/draft:ops</a>
+                        <div class="router-chips">
+                            <a class="chip" href="book/command-reference/#cmd-status">status</a>
+                            <a class="chip" href="book/command-reference/#cmd-revert">revert</a>
+                            <a class="chip" href="book/command-reference/#cmd-deploy-checklist">deploy-checklist</a>
+                            <a class="chip" href="book/command-reference/#cmd-incident-response">incident-response</a>
+                            <a class="chip" href="book/command-reference/#cmd-standup">standup</a>
+                        </div>
+                    </div>
+                    <div class="router-group">
+                        <a class="router-name" href="book/command-reference/#cmd-docs">/draft:docs</a>
+                        <div class="router-chips">
+                            <a class="chip" href="book/command-reference/#cmd-documentation">documentation</a>
+                        </div>
+                    </div>
+                    <div class="router-group">
+                        <a class="router-name" href="book/command-reference/#cmd-jira">/draft:jira</a>
+                        <div class="router-chips">
+                            <a class="chip" href="book/command-reference/#cmd-jira">preview</a>
+                            <a class="chip" href="book/command-reference/#cmd-jira">create</a>
+                            <a class="chip" href="book/command-reference/#cmd-jira">review</a>
+                            <a class="chip" href="book/command-reference/#cmd-integrations">integrations</a>
+                            <a class="chip" href="book/command-reference/#cmd-upload">upload</a>
+                        </div>
+                    </div>
+                    <div class="router-group">
+                        <span class="router-name">direct</span>
+                        <div class="router-chips">
+                            <a class="chip" href="book/command-reference/#cmd-draft">draft</a>
+                            <a class="chip" href="book/command-reference/#cmd-graph">graph</a>
+                        </div>
+                    </div>
+                    <a class="cmd-routed-more" href="book/command-reference/">Full command reference &mdash; every flag and mode &rarr;</a>
+                </div>
+            </details>
         </div>
     </section>
 
@@ -1474,6 +1455,10 @@
             </div>
             <div class="footer-links">
                 <a href="book/">Read the Book</a>
+                <a href="book/command-reference/">Command Reference</a>
+                <a href="blog/">Blog</a>
+                <a href="changelog/">Changelog</a>
+                <a href="https://github.com/drafthq/draft" target="_blank" rel="noopener noreferrer">GitHub</a>
             </div>
             <div class="footer-social">
                 <span class="footer-social-label">Share</span>

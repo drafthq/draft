@@ -14,12 +14,14 @@
     <meta property="og:description" content="Complete reference for all 33 Draft commands — usage, options, examples, and output for each slash command.">
     <meta property="og:type" content="article">
     <meta property="og:url" content="https://getdraft.dev/book/command-reference/">
-    <meta property="og:image" content="https://getdraft.dev/social-preview.png">
+    <meta property="og:image" content="https://getdraft.dev/social-preview.png?v=331">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="Command Reference — Draft Book">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Command Reference — Draft Book">
     <meta name="twitter:description" content="Complete reference for all 33 Draft commands — usage, options, examples, and output for each slash command.">
-    <meta name="twitter:image" content="https://getdraft.dev/social-preview.png">
+    <meta name="twitter:image" content="https://getdraft.dev/social-preview.png?v=331">
     <meta name="twitter:image:alt" content="Command Reference — Draft Book">
     <link rel="canonical" href="https://getdraft.dev/book/command-reference/">
 
@@ -56,6 +58,22 @@
     </noscript>
 
     <link rel="stylesheet" href="../css/book.css">
+    <style>
+        /* Deep-link target highlight for command rows (linked from the home page) */
+        table.command-reference tr[id] { scroll-margin-top: 90px; }
+        table.command-reference tr:target > td {
+            background: var(--glow-emerald, rgba(5, 150, 105, 0.12));
+            box-shadow: inset 3px 0 0 var(--accent-emerald, #059669);
+            animation: cmd-row-flash 1.4s ease-out 1;
+        }
+        @keyframes cmd-row-flash {
+            0% { background: var(--accent-emerald, #059669); }
+            100% { background: var(--glow-emerald, rgba(5, 150, 105, 0.12)); }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            table.command-reference tr:target > td { animation: none; }
+        }
+    </style>
 
     <!-- Theme: apply early to prevent flash of wrong theme -->
     <script>
@@ -289,203 +307,210 @@
             </tr>
         </thead>
         <tbody>
-            <tr>
+            <tr id="cmd-draft">
                 <td><code>/draft</code></td>
                 <td>Show overview, available commands, and intent mapping</td>
                 <td>&mdash;</td>
                 <td>None</td>
                 <td>0, 2</td>
             </tr>
-            <tr>
+            <tr id="cmd-init">
                 <td><code>/draft:init</code></td>
                 <td>Analyze codebase and generate context files, architecture docs, and state tracking. Scope-aware and root-first; supports <code>--module-only</code> and <code>--graph-only</code> flags</td>
                 <td><code>refresh</code> &mdash; re-analyze and update existing context; <code>--module-only</code> &mdash; build just the module; <code>--graph-only</code> &mdash; (re)build graph memory only</td>
                 <td>None (run once per project)</td>
                 <td>3, 4, 5, 18</td>
             </tr>
-            <tr>
+            <tr id="cmd-graph">
                 <td><code>/draft:graph</code></td>
                 <td>Query the live knowledge graph (codebase-memory-mcp) for hotspots, impact analysis, and architecture insights</td>
                 <td><code>--mode hotspots</code>, <code>--mode impact</code>, <code>--file &lt;path&gt;</code></td>
                 <td><code>/draft:init</code></td>
                 <td>&mdash;</td>
             </tr>
-            <tr>
+            <tr id="cmd-upload">
                 <td><code>/draft:upload</code></td>
                 <td>Upload Draft context artifacts or export data to configured destinations</td>
                 <td>&mdash;</td>
                 <td><code>/draft:init</code></td>
                 <td>&mdash;</td>
             </tr>
-            <tr>
+            <tr id="cmd-integrations">
                 <td><code>/draft:integrations</code></td>
                 <td>Manage and inspect Draft integrations (MCP servers, external tools, platform connections)</td>
                 <td>&mdash;</td>
                 <td>None</td>
                 <td>&mdash;</td>
             </tr>
-            <tr>
+            <tr id="cmd-jira">
+                <td><code>/draft:jira</code></td>
+                <td>Unified Jira entry point. Routes to <code>preview</code> (editable export), <code>create</code> (push issues via MCP), or <code>review &lt;JIRA-ID&gt;</code> (qualify a ticket with deep-review + bughunt + coverage + test-gap analysis)</td>
+                <td><code>preview</code>, <code>create</code>, <code>review &lt;JIRA-ID&gt;</code></td>
+                <td><code>/draft:init</code></td>
+                <td>&mdash;</td>
+            </tr>
+            <tr id="cmd-discover">
                 <td><code>/draft:discover</code></td>
                 <td>Discover features and patterns across the codebase</td>
                 <td><code>[path]</code> &mdash; specific directory to scan</td>
                 <td><code>/draft:init</code></td>
                 <td>12</td>
             </tr>
-            <tr>
+            <tr id="cmd-plan">
                 <td><code>/draft:plan</code></td>
                 <td>Canonical parent planning command. Routes planning intent to specialist commands based on context</td>
                 <td><code>new-track</code>, <code>decompose</code>, <code>change</code>, <code>adr</code> &mdash; route directly; <code>&lt;description&gt;</code> &mdash; initial feature description</td>
                 <td><code>/draft:init</code></td>
                 <td>4, 7, 8, 9</td>
             </tr>
-            <tr>
+            <tr id="cmd-new-track">
                 <td><code>/draft:new-track</code></td>
                 <td>Create a feature/fix track with spec and phased plan through collaborative dialogue</td>
                 <td><code>--quick</code> &mdash; streamlined mode with fewer questions; <code>&lt;description&gt;</code> &mdash; initial feature description</td>
                 <td><code>/draft:init</code> (or routed from <code>/draft:plan</code>)</td>
                 <td>4</td>
             </tr>
-            <tr>
+            <tr id="cmd-implement">
                 <td><code>/draft:implement</code></td>
                 <td>Execute tasks from plan with TDD workflow and architecture checkpoints</td>
                 <td>Resumes in-progress tasks automatically</td>
                 <td><code>/draft:plan</code> (requires plan.md)</td>
                 <td>5</td>
             </tr>
-            <tr>
+            <tr id="cmd-status">
                 <td><code>/draft:status</code></td>
                 <td>Show progress overview: active tracks, phase/task counts, blocked items</td>
                 <td>&mdash;</td>
                 <td><code>/draft:init</code></td>
                 <td>7</td>
             </tr>
-            <tr>
+            <tr id="cmd-review">
                 <td><code>/draft:review</code></td>
                 <td>Three-stage code review: automated validation, spec compliance, code quality</td>
                 <td><code>--track &lt;id&gt;</code> &mdash; specific track; <code>--full</code> &mdash; full review; <code>with-bughunt</code> &mdash; add bughunt pass</td>
                 <td><code>/draft:init</code></td>
                 <td>6</td>
             </tr>
-            <tr>
+            <tr id="cmd-deep-review">
                 <td><code>/draft:deep-review</code></td>
                 <td>Module lifecycle audit covering ACID properties and production robustness</td>
                 <td><code>[module]</code> &mdash; specific module to audit</td>
                 <td><code>/draft:init</code></td>
                 <td>14</td>
             </tr>
-            <tr>
+            <tr id="cmd-bughunt">
                 <td><code>/draft:bughunt</code></td>
                 <td>14-dimension exhaustive bug discovery with taint tracking and evidence</td>
                 <td><code>--track &lt;id&gt;</code> &mdash; scope to a specific track</td>
                 <td><code>/draft:init</code></td>
                 <td>15</td>
             </tr>
-            <tr>
+            <tr id="cmd-coverage">
                 <td><code>/draft:coverage</code></td>
                 <td>Code coverage analysis targeting 95%+ with gap identification</td>
                 <td>&mdash;</td>
                 <td><code>/draft:init</code>, tests exist</td>
                 <td>16</td>
             </tr>
-            <tr>
+            <tr id="cmd-learn">
                 <td><code>/draft:learn</code></td>
                 <td>Discover coding patterns in the codebase and update guardrails</td>
                 <td><code>promote</code> &mdash; promote pattern to guardrail; <code>migrate</code> &mdash; migrate patterns; <code>path</code> &mdash; specific path</td>
                 <td><code>/draft:init</code></td>
                 <td>17</td>
             </tr>
-            <tr>
+            <tr id="cmd-decompose">
                 <td><code>/draft:decompose</code></td>
                 <td>Module decomposition with dependency mapping and implementation ordering</td>
                 <td><code>project</code> &mdash; project-wide; <code>&lt;track-id&gt;</code> &mdash; track-scoped</td>
                 <td><code>/draft:init</code></td>
                 <td>8</td>
             </tr>
-            <tr>
+            <tr id="cmd-adr">
                 <td><code>/draft:adr</code></td>
                 <td>Create and manage Architecture Decision Records</td>
                 <td><code>"title"</code> &mdash; create with title; <code>list</code> &mdash; list all; <code>supersede &lt;n&gt;</code> &mdash; supersede existing ADR</td>
                 <td><code>/draft:init</code></td>
                 <td>9</td>
             </tr>
-            <tr>
+            <tr id="cmd-change">
                 <td><code>/draft:change</code></td>
                 <td>Handle mid-track requirement changes with impact analysis</td>
                 <td><code>&lt;description&gt;</code> &mdash; description of the change</td>
                 <td>Active track</td>
                 <td>7</td>
             </tr>
-            <tr>
+            <tr id="cmd-revert">
                 <td><code>/draft:revert</code></td>
                 <td>Git-aware rollback at task, phase, or track level</td>
                 <td>Interactive &mdash; prompts for revert level and target</td>
                 <td>Active track with commits</td>
                 <td>7</td>
             </tr>
-            <tr>
+            <tr id="cmd-ops">
                 <td><code>/draft:ops</code></td>
                 <td>Canonical parent operations command. Routes intent to specialist commands based on context</td>
                 <td><code>debug</code>, <code>deploy-checklist</code>, <code>incident-response</code>, <code>standup</code> &mdash; route directly</td>
                 <td><code>/draft:init</code></td>
                 <td>7, 15</td>
             </tr>
-            <tr>
+            <tr id="cmd-debug">
                 <td><code>/draft:debug</code></td>
                 <td>Structured debugging: reproduce, isolate, diagnose, fix</td>
                 <td><code>track &lt;id&gt;</code>, <code>&lt;JIRA-KEY&gt;</code></td>
                 <td>init (optional)</td>
                 <td>&mdash;</td>
             </tr>
-            <tr>
+            <tr id="cmd-quick-review">
                 <td><code>/draft:quick-review</code></td>
                 <td>Lightweight 4-dimension code review for a PR, diff, or file</td>
                 <td><code>&lt;file&gt;</code>, <code>&lt;PR-URL&gt;</code>, <code>&lt;commit-range&gt;</code></td>
                 <td>None</td>
                 <td>6</td>
             </tr>
-            <tr>
+            <tr id="cmd-deploy-checklist">
                 <td><code>/draft:deploy-checklist</code></td>
                 <td>Pre-deployment verification checklist with rollback triggers</td>
                 <td><code>&lt;service&gt;</code>, <code>track &lt;id&gt;</code></td>
                 <td>init (optional)</td>
                 <td>&mdash;</td>
             </tr>
-            <tr>
+            <tr id="cmd-testing-strategy">
                 <td><code>/draft:testing-strategy</code></td>
                 <td>Design test strategies with coverage targets</td>
                 <td><code>track &lt;id&gt;</code>, <code>module &lt;name&gt;</code></td>
                 <td>init (optional)</td>
                 <td>14</td>
             </tr>
-            <tr>
+            <tr id="cmd-tech-debt">
                 <td><code>/draft:tech-debt</code></td>
                 <td>Technical debt analysis across 6 dimensions with prioritization</td>
                 <td><code>module &lt;name&gt;</code>, <code>category &lt;type&gt;</code></td>
                 <td>init (optional)</td>
                 <td>&mdash;</td>
             </tr>
-            <tr>
+            <tr id="cmd-standup">
                 <td><code>/draft:standup</code></td>
                 <td>Generate standup summary from git history and track progress</td>
                 <td><code>&lt;days&gt;</code>, <code>weekly</code></td>
                 <td>None</td>
                 <td>&mdash;</td>
             </tr>
-            <tr>
+            <tr id="cmd-incident-response">
                 <td><code>/draft:incident-response</code></td>
                 <td>Incident management: triage, communicate, mitigate, postmortem</td>
                 <td><code>new</code>, <code>update</code>, <code>postmortem</code></td>
                 <td>None</td>
                 <td>&mdash;</td>
             </tr>
-            <tr>
+            <tr id="cmd-docs">
                 <td><code>/draft:docs</code></td>
                 <td>Canonical parent documentation command. Routes intent to specialist commands based on context</td>
                 <td><code>documentation</code>, <code>testing-strategy</code>, <code>tech-debt</code>, <code>tour</code> &mdash; route directly</td>
                 <td><code>/draft:init</code></td>
                 <td>0, 14, 17</td>
             </tr>
-            <tr>
+            <tr id="cmd-documentation">
                 <td><code>/draft:documentation</code></td>
                 <td>Technical documentation: readme, runbook, api, onboarding</td>
                 <td><code>readme</code>, <code>runbook &lt;service&gt;</code>, <code>api &lt;module&gt;</code>, <code>onboarding</code></td>
@@ -513,21 +538,21 @@
                 <td>MCP-Jira configured</td>
                 <td>19</td>
             </tr>
-            <tr>
+            <tr id="cmd-tour">
                 <td><code>/draft:tour</code></td>
                 <td>Interactive architecture mentorship and codebase walk-through</td>
                 <td>&mdash;</td>
                 <td><code>/draft:init</code></td>
                 <td>0</td>
             </tr>
-            <tr>
+            <tr id="cmd-impact">
                 <td><code>/draft:impact</code></td>
                 <td>Generate ROI analytics mapping track friction and timeline metrics</td>
                 <td>&mdash;</td>
                 <td><code>/draft:init</code></td>
                 <td>0</td>
             </tr>
-            <tr>
+            <tr id="cmd-assist-review">
                 <td><code>/draft:assist-review</code></td>
                 <td>Summarize intent and highlight structural PR risks for human reviewers</td>
                 <td><code>&lt;PR-URL&gt;</code>, <code>track &lt;id&gt;</code></td>

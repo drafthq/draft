@@ -1,0 +1,216 @@
+/* ============================================================
+   REFRESH v4 — "The Drafting Table"
+   Draft as an engineering draft of your codebase: hairline
+   blueprint grid, monospace drawing labels, a title-block
+   signature, the brand word annotated like a redline.
+   Layers on top of the existing token system so light + dark
+   both keep working.
+   ============================================================ */
+
+/* ---- Global: drawing labels (every section eyebrow) ------ */
+.section-label {
+    position: relative;
+    padding-left: 1.7rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+}
+
+.section-label::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.5em;
+    width: 1.2rem;
+    height: 1px;
+    background: currentColor;
+}
+
+/* Drafting-precise cards: tighter radius, calmer glass */
+.glass-card {
+    border-radius: 10px;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+/* Defect mark on problem cards — a redline annotation, not a step number */
+.card-icon--defect {
+    border-radius: 6px;
+    background: var(--glow-rose, rgba(225, 29, 72, 0.08));
+    color: var(--accent-rose);
+    border: 1px solid var(--accent-rose);
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+/* "anytime" marker on the pipeline bug-hunt step (not a numbered step) */
+.pipeline-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent-violet);
+    border: 1px solid var(--accent-violet);
+    border-radius: 999px;
+    padding: 0.1rem 0.5rem;
+    vertical-align: middle;
+    margin-left: 0.4rem;
+}
+
+/* ---- Hero: drafting sheet -------------------------------- */
+.hero-draft {
+    position: relative;
+    isolation: isolate;
+}
+
+/* Hairline blueprint grid — the drafting paper under everything */
+.hero-grid-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+        linear-gradient(to right, var(--border-subtle) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--border-subtle) 1px, transparent 1px);
+    background-size: 48px 48px;
+    -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 35%, #000 30%, transparent 75%);
+    mask-image: radial-gradient(ellipse 80% 70% at 50% 35%, #000 30%, transparent 75%);
+}
+
+[data-theme="dark"] .hero-grid-overlay {
+    background-image:
+        linear-gradient(to right, rgba(120, 160, 220, 0.10) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(120, 160, 220, 0.10) 1px, transparent 1px);
+}
+
+/* Tone the legacy particle canvas down so the grid reads as the surface */
+.hero-draft #hero-canvas { opacity: 0.35; }
+
+/* Drawing label (eyebrow) — reads like a callout on a blueprint */
+.hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 1.75rem;
+    flex-wrap: wrap;
+}
+
+.hero-eyebrow-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.74rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--accent-cyan);
+    position: relative;
+    padding-left: 1.6rem;
+}
+
+/* leader tick before the label, like a dimension line */
+.hero-eyebrow-label::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 1.1rem;
+    height: 1px;
+    background: var(--accent-cyan);
+}
+
+.hero-rev {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--accent-rose);
+    border: 1px solid var(--accent-rose);
+    border-radius: 4px;
+    padding: 0.15rem 0.5rem;
+}
+
+/* Headline — editorial, with the brand word annotated */
+.hero-h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: clamp(2.6rem, 6.5vw, 5rem);
+    line-height: 1.02;
+    letter-spacing: -0.03em;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+}
+
+/* "Draft" drawn as a redlined edit — the signature word */
+.hero-mark {
+    position: relative;
+    color: var(--accent-cyan);
+    white-space: nowrap;
+}
+
+.hero-mark::after {
+    content: "";
+    position: absolute;
+    left: -0.04em;
+    right: -0.04em;
+    bottom: 0.06em;
+    height: 0.5em;
+    background: var(--glow-cyan);
+    z-index: -1;
+    transform: skewX(-9deg);
+}
+
+.hero-platforms {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    margin: 1.25rem 0 0.5rem;
+}
+
+.hero-platforms strong { color: var(--text-secondary); font-weight: 600; }
+
+/* ---- Title block — the signature, carrying real spec ----- */
+.hero-titleblock {
+    margin-top: 2.5rem;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bg-secondary);
+    max-width: 760px;
+}
+
+.tb-cell {
+    padding: 0.85rem 1rem;
+    border-right: 1px solid var(--border);
+    text-align: left;
+}
+
+.tb-cell:last-child { border-right: none; }
+
+.tb-key {
+    display: block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 0.3rem;
+}
+
+.tb-val {
+    display: block;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.45rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--text-primary);
+}
+
+.tb-val .tb-sub { font-size: 0.6em; color: var(--text-muted); font-weight: 600; }
+
+.tb-cell--accent .tb-val { color: var(--accent-cyan); }
+
+@media (max-width: 680px) {
+    .hero-titleblock { grid-template-columns: repeat(2, 1fr); }
+    .tb-cell:nth-child(2n) { border-right: none; }
+    .tb-cell { border-bottom: 1px solid var(--border); }
+}

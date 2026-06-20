@@ -2,70 +2,70 @@
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%"  stop-color="#0a0d12"/>
-      <stop offset="100%" stop-color="#161b24"/>
-    </linearGradient>
-    <linearGradient id="violet" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%"   stop-color="#a371f7"/>
-      <stop offset="100%" stop-color="#58a6ff"/>
+      <stop offset="100%" stop-color="#11161d"/>
     </linearGradient>
     <radialGradient id="glow" cx="50%" cy="50%" r="60%">
-      <stop offset="0%"   stop-color="#a371f7" stop-opacity="0.25"/>
-      <stop offset="100%" stop-color="#a371f7" stop-opacity="0"/>
+      <stop offset="0%"   stop-color="#58a6ff" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#58a6ff" stop-opacity="0"/>
     </radialGradient>
-    <pattern id="grid" width="44" height="44" patternUnits="userSpaceOnUse">
-      <path d="M 44 0 L 0 0 0 44" fill="none" stroke="#21262d" stroke-width="0.5"/>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1b2531" stroke-width="1"/>
     </pattern>
   </defs>
 
-  <!-- Background -->
+  <!-- Drafting sheet -->
   <rect width="1200" height="630" fill="url(#bg)"/>
   <rect width="1200" height="630" fill="url(#grid)"/>
-  <ellipse cx="900" cy="360" rx="360" ry="260" fill="url(#glow)"/>
+  <ellipse cx="930" cy="300" rx="380" ry="280" fill="url(#glow)"/>
+  <!-- sheet border, like a title-block frame -->
+  <rect x="24" y="24" width="1152" height="582" fill="none" stroke="#21262d" stroke-width="1.5" rx="6"/>
 
-  <!-- Brand -->
-  <g transform="translate(80, 80)">
-    <text x="0" y="0" font-family="JetBrains Mono, monospace" font-size="22" font-weight="600" fill="#a371f7" letter-spacing="6">DRAFT</text>
-    <text x="0" y="32" font-family="JetBrains Mono, monospace" font-size="14" fill="#768390" letter-spacing="2">v3.2.1 · MIT · open source</text>
-  </g>
-
-  <!-- Headline -->
-  <g transform="translate(80, 220)">
-    <text font-family="Space Grotesk, sans-serif" font-size="76" font-weight="700" fill="#e6edf3" letter-spacing="-3">
-      <tspan x="0" y="0">Code intelligence,</tspan>
-      <tspan x="0" y="86" fill="url(#violet)">built into your AI agent.</tspan>
-    </text>
-    <text x="0" y="200" font-family="DM Sans, sans-serif" font-size="26" fill="#b1bac4" letter-spacing="-0.3">
-      A knowledge graph + spec-driven planning + three-stage review.
-    </text>
-    <text x="0" y="234" font-family="DM Sans, sans-serif" font-size="26" fill="#b1bac4" letter-spacing="-0.3">
-      One plugin, free forever.
-    </text>
-  </g>
-
-  <!-- Stats strip -->
-  <g transform="translate(80, 540)">
-    <g font-family="JetBrains Mono, monospace" fill="#e6edf3">
-      <text x="0"   y="0" font-size="36" font-weight="700">33</text>
-      <text x="0"   y="22" font-size="13" fill="#768390" letter-spacing="1">COMMANDS</text>
-
-      <text x="180" y="0" font-size="36" font-weight="700">9</text>
-      <text x="180" y="22" font-size="13" fill="#768390" letter-spacing="1">LANGUAGES</text>
-
-      <text x="320" y="0" font-size="36" font-weight="700">6</text>
-      <text x="320" y="22" font-size="13" fill="#768390" letter-spacing="1">QUERY MODES</text>
-
-      <text x="510" y="0" font-size="36" font-weight="700">6</text>
-      <text x="510" y="22" font-size="13" fill="#768390" letter-spacing="1">IDE INTEGRATIONS</text>
+  <!-- Eyebrow: drawing label + revision badge -->
+  <g transform="translate(80, 86)">
+    <rect x="0" y="-9" width="20" height="2" fill="#58a6ff"/>
+    <text x="34" y="0" font-family="JetBrains Mono, monospace" font-size="19" font-weight="600" fill="#58a6ff" letter-spacing="4">CONTEXT-DRIVEN DEVELOPMENT</text>
+    <g transform="translate(508, -22)">
+      <rect x="0" y="0" width="158" height="30" rx="5" fill="none" stroke="#f85149" stroke-width="1.5"/>
+      <text x="79" y="21" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" font-weight="600" fill="#f85149" letter-spacing="2">REV 3.3.1 · MIT</text>
     </g>
   </g>
 
-  <!-- IDE logos badge area (right) -->
-  <g transform="translate(880, 470)">
-    <text x="0" y="0" font-family="DM Sans, sans-serif" font-size="13" font-weight="500" fill="#768390" letter-spacing="2">WORKS WITH</text>
-    <text x="0" y="28" font-family="DM Sans, sans-serif" font-size="18" font-weight="600" fill="#e6edf3">Claude Code · Cursor · Codex</text>
-    <text x="0" y="54" font-family="DM Sans, sans-serif" font-size="18" font-weight="600" fill="#e6edf3">opencode · Copilot · Gemini</text>
+  <!-- Headline: the brand word annotated like a redline edit -->
+  <g transform="translate(80, 232)">
+    <rect x="-4" y="-58" width="200" height="74" rx="5" fill="#58a6ff" opacity="0.16" transform="skewX(-9)"/>
+    <text font-family="Space Grotesk, sans-serif" font-size="74" font-weight="700" letter-spacing="-2">
+      <tspan x="0" y="0"><tspan fill="#58a6ff">Draft</tspan><tspan fill="#e6edf3"> it before</tspan></tspan>
+      <tspan x="0" y="86" fill="#e6edf3">your agent builds it.</tspan>
+    </text>
   </g>
 
-  <!-- URL footer -->
-  <text x="80" y="610" font-family="JetBrains Mono, monospace" font-size="14" fill="#a371f7" letter-spacing="1">getdraft.dev</text>
+  <!-- Subtitle -->
+  <g transform="translate(80, 408)" font-family="DM Sans, sans-serif" font-size="25" fill="#b1bac4" letter-spacing="-0.3">
+    <text x="0" y="0">Context-Driven Development for AI coding agents —</text>
+    <text x="0" y="36">a local knowledge graph, spec-driven plans, three-stage review.</text>
+  </g>
+
+  <!-- Title block: the signature, carrying real spec -->
+  <g transform="translate(80, 478)">
+    <rect x="0" y="0" width="760" height="92" rx="8" fill="#11161d" stroke="#30363d" stroke-width="1.5"/>
+    <line x1="190" y1="0" x2="190" y2="92" stroke="#21262d" stroke-width="1"/>
+    <line x1="380" y1="0" x2="380" y2="92" stroke="#21262d" stroke-width="1"/>
+    <line x1="570" y1="0" x2="570" y2="92" stroke="#21262d" stroke-width="1"/>
+    <g font-family="JetBrains Mono, monospace" font-size="13" fill="#768390" letter-spacing="1.5">
+      <text x="24"  y="34">COMMANDS</text>
+      <text x="214" y="34">LANGUAGES</text>
+      <text x="404" y="34">GRAPH MODES</text>
+      <text x="594" y="34">PLATFORMS</text>
+    </g>
+    <g font-family="Space Grotesk, sans-serif" font-size="40" font-weight="700">
+      <text x="24"  y="74" fill="#e6edf3">33</text>
+      <text x="214" y="74" fill="#58a6ff">159</text>
+      <text x="404" y="74" fill="#e6edf3">6</text>
+      <text x="594" y="74" fill="#e6edf3">6</text>
+    </g>
+  </g>
+
+  <!-- Footer -->
+  <text x="80" y="600" font-family="JetBrains Mono, monospace" font-size="15" fill="#58a6ff" letter-spacing="1">getdraft.dev</text>
+  <text x="1120" y="600" text-anchor="end" font-family="DM Sans, sans-serif" font-size="16" font-weight="500" fill="#768390">Claude Code · Cursor · Codex · opencode · Copilot · Gemini</text>
 </svg>
