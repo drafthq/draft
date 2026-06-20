@@ -455,7 +455,11 @@ If the user runs `draft init refresh`:
 
 1. **Tech Stack Refresh**: Re-scan `package.json`, `go.mod`, etc. Compare with `draft/tech-stack.md`. Propose updates.
 
-2. **Architecture Refresh**: If `draft/architecture.md` exists, use metadata-based incremental analysis. If freshness state is available from step 0b, use file-level deltas to scope the refresh more precisely than git-diff alone:
+2. **Architecture Refresh**:
+
+   **Mode detection (do this first).** If `draft/wiki/` exists, the bundle was generated in **`okf` mode** and `architecture.md` is a *generated rendered view*, not the source of truth. In that case **follow `references/okf-emitter.md` §"Incremental refresh at concept granularity (M5)"** instead of the monolith steps below: diff `hashes.json` → map changed source paths to affected concepts → regenerate only those concepts (carry the rest forward from cache) → always re-render `.ai-context.md`, `architecture.md`, and `log.md` via `okf-render-views.sh` → re-run `okf-validate.sh` so cross-links still resolve. Do **not** hand-edit `architecture.md` in this mode — it is overwritten by the renderer. Then skip to step 3.
+
+   Otherwise (**`monolith` mode** — `draft/architecture.md` is the source of truth and no `draft/wiki/` exists), use metadata-based incremental analysis. If freshness state is available from step 0b, use file-level deltas to scope the refresh more precisely than git-diff alone:
 
    **a. Read synced commit from metadata:**
    ```bash
