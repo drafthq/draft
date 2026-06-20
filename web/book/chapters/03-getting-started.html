@@ -199,8 +199,8 @@ $ curl -o .gemini.md https://raw.githubusercontent.com/drafthq/draft/main/integr
     <h2>What Gets Created</h2>
     <p>After the five-phase analysis, Draft creates the <code>draft/</code> directory with these files:</p>
 
-    <h3>architecture.md (Source of Truth)</h3>
-    <p>A comprehensive 10-section graph-primary engineering reference. This is the primary artifact &mdash; designed for both human engineers and AI agents. It includes:</p>
+    <h3>architecture.md (Source of Truth &mdash; <code>monolith</code> mode)</h3>
+    <p>A comprehensive 10-section graph-primary engineering reference. This is the primary artifact for small-to-mid repos &mdash; designed for both human engineers and AI agents. It includes:</p>
     <ul>
         <li>Executive summary and system identity</li>
         <li>Component map and module documentation</li>
@@ -213,6 +213,11 @@ $ curl -o .gemini.md https://raw.githubusercontent.com/drafthq/draft/main/integr
         <li>Dependency graph</li>
     </ul>
     <p>Every section uses real data from your codebase &mdash; actual code snippets, real module names, genuine dependency relationships. Not templates.</p>
+
+    <div class="callout">
+        <div class="callout-title">Output modes: <code>monolith</code> vs <code>okf</code></div>
+        <p><code>/draft:init</code> chooses how to package architecture context by repo tier (override with <code>DRAFT_INIT_MODE</code>). Small repos (tiers 1&ndash;2) get the single <code>architecture.md</code> above. Larger repos (tiers 3+) get <strong>OKF mode</strong>: an OKF v0.1 concept taxonomy under <code>draft/wiki/</code> &mdash; one concept per file (overview / systems / features / reference / entrypoints), cross-links forming the graph &mdash; becomes the source of truth, <code>.ai-context.md</code> becomes the navigable index root (Synopsis + Concept Map), and <code>architecture.md</code> is demoted to a generated rendered view of the bundle (with an optional offline HTML viewer under <code>draft/wiki/web/</code>). Either way the rest of the <code>draft/</code> directory is identical &mdash; only the architecture packaging changes.</p>
+    </div>
 
     <h3>.ai-context.md (Token-Optimized AI Context)</h3>
     <p>A 200-400 line document derived from <code>architecture.md</code>. It contains 15+ mandatory sections condensed for AI consumption: architecture overview, invariants, interface contracts, data flows, concurrency rules, error handling patterns, implementation catalogs, extension cookbooks, testing strategy, and glossary. This is what Draft commands load when implementing features.</p>

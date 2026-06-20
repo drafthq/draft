@@ -272,6 +272,7 @@
     <h2>Cursor</h2>
     <p>Cursor requires a <code>.cursor-plugin/plugin.json</code> manifest plus registration in the shared Claude plugin registry. The CLI installs the full plugin tree to <code>~/.cursor/plugins/local/draft</code>, writes the manifest, and registers + enables <code>draft@draft-plugins</code>:</p>
     <pre><code>npx @drafthq/draft install cursor</code></pre>
+    <p>Registry writes are atomic and non-destructive &mdash; other plugins, hooks, and unknown keys are preserved. Existing installs that predate the registration fix upgrade with <code>draft install cursor --force</code>. Restart Cursor (or run <em>Developer: Reload Window</em>) to load the <code>/draft:*</code> commands.</p>
 
     <h2>GitHub Copilot</h2>
     <p>Copilot does not have a plugin system that can read skill files at runtime. Instead, Draft uses a <code>.github/copilot-instructions.md</code> file &mdash; a single, large generated file (~23,600 lines) that encodes the entire Draft methodology inline.</p>
