@@ -66,7 +66,7 @@ The build script (`scripts/build-integrations.sh`) reads `SKILL_ORDER`, `CORE_FI
 
 - **`core/shared/`** — Shared procedures loaded by skills (context loading, git metadata, pattern learning, cross-skill dispatch, Jira sync, **graph queries**, **parallel analysis**, VCS commands)
 - **`core/agents/`** — Behavioral protocols for specialized agents (architect, debugger, planner, rca, reviewer, ops, writer)
-- **`core/templates/`** — 30 templates for files that `/draft:init` generates in user projects (includes `okf/` bundle templates for `DRAFT_INIT_MODE=okf`)
+- **`core/templates/`** — 29 templates for files that `/draft:init` generates in user projects (25 top-level + 4 `okf/` bundle templates for `DRAFT_INIT_MODE=okf`)
 - **`bin/`** — Holds only `README.md`. The graph engine (`codebase-memory-mcp`) is **not vendored** — it is fetched on install (`scripts/fetch-memory-engine.sh`) to `~/.cache/draft/bin/` and resolved by `scripts/tools/_lib.sh:find_memory_bin()` (`DRAFT_MEMORY_BIN` → `$PATH` → cache). Output gate marker under `draft/graph/schema.yaml`; all structural data is queried live. CLI and schema documented in `bin/README.md`.
 - **`scripts/tools/`** — 45 deterministic shell helpers (git-metadata, classify-files, hotspot-rank, cycle-detect, graph-* capability wrappers, `resolve-tools.sh`, etc.). Skills call these for mechanical work. All knowledge-graph Cypher lives in the sourced `_graph_queries.sh` module (single source of query truth); the `graph-*.sh` wrappers are thin arg-parse → builder → fail-loud JSON.
 - **`scripts/lib.sh`** — Shared definitions sourced by build script: `SKILL_ORDER`, `CORE_FILES`, `TOOLS`.
