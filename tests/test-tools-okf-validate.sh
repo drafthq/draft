@@ -174,6 +174,44 @@ rm "$FIXTURE/wiki/index.md"
 run "$FIXTURE/wiki"
 assert "Missing root index.md → exit 1" "$([[ "$RC" == "1" ]] && echo true || echo false)"
 
+# --- Reverse index: a concept page absent from the path-index is an orphan ---
+build_valid_bundle "$FIXTURE/wiki"
+# auth.md exists as a concept but the index maps no source to it.
+cat > "$FIXTURE/path-to-concept.json" <<'EOF'
+{
+  "src/auth/login.go": ["systems/other.md"]
+}
+EOF
+# (forward would dangle on other.md, so use an index that only covers a non-auth page)
+cat > "$FIXTURE/path-to-concept.json" <<'EOF'
+{
+  "src/misc/x.go": []
+}
+EOF
+run "$FIXTURE/wiki" --path-index "$FIXTURE/path-to-concept.json" --reverse
+assert "Reverse: ungrounded concept page → exit 1" "$([[ "$RC" == "1" ]] && echo true || echo false)"
+assert "Reverse: error names the orphan page" \
+    "$(echo "$OUT" | grep -q 'systems/auth.md' && echo true || echo false)"
+
+# --- Reverse passes when every concept page is grounded ---
+cat > "$FIXTURE/path-to-concept.json" <<'EOF'
+{
+  "src/auth/login.go": ["systems/auth.md"]
+}
+EOF
+run "$FIXTURE/wiki" --path-index "$FIXTURE/path-to-concept.json" --reverse
+assert "Reverse: all pages grounded → exit 0" "$([[ "$RC" == "0" ]] && echo true || echo false)"
+
+# --- --structure-only disables the reverse check (back-compat) ---
+cat > "$FIXTURE/path-to-concept.json" <<'EOF'
+{
+  "src/misc/x.go": []
+}
+EOF
+run "$FIXTURE/wiki" --path-index "$FIXTURE/path-to-concept.json" --reverse --structure-only
+assert "--structure-only suppresses reverse orphan failure → exit 0" \
+    "$([[ "$RC" == "0" ]] && echo true || echo false)"
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 exit "$FAIL"

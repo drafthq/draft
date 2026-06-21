@@ -197,6 +197,11 @@ TOOLS=(
     # OKF taxonomy emitter (DRAFT_INIT_MODE=okf)
     "okf-validate.sh"
     "okf-render-views.sh"
+    # OKF completeness enforcement (deterministic plan + coverage/quality gates)
+    "okf-plan-concepts.sh"
+    "okf-validate-quality.sh"
+    "okf-coverage-check.sh"
+    "okf-validate-all.sh"
 )
 
 # ─────────────────────────────────────────────────────────

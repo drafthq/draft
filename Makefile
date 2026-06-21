@@ -59,7 +59,11 @@ TEST_SCRIPTS = \
 	./tests/test-tools-verify-graph-binary.sh \
 	./tests/test-tools-resolve-tools.sh \
 	./tests/test-tools-okf-validate.sh \
-	./tests/test-tools-okf-render-views.sh
+	./tests/test-tools-okf-render-views.sh \
+	./tests/test-tools-okf-plan-concepts.sh \
+	./tests/test-tools-okf-validate-quality.sh \
+	./tests/test-tools-okf-coverage-check.sh \
+	./tests/test-tools-okf-validate-all.sh
 
 # Phase 0 Foundations hygiene/verification tool tests (per manifest §2.2) — see above
 

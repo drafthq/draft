@@ -52,3 +52,12 @@ so a focused task knows exactly which source files to open.
 ## See also
 
 - [Related concept](../systems/other.md)
+
+<!-- okf:concept-template v1
+A stub or redirect-only page (e.g. "see architecture.md", an unreplaced
+{PLACEHOLDER} token, or a body below the per-type minimum) FAILS
+okf-validate-quality.sh and therefore does NOT satisfy okf-coverage-check.sh —
+the bundle will not be promoted. Diagram types (Subsystem/Module/Feature/
+Entrypoint) require ≥1 valid Mermaid block and ≥2 x-grounded-paths.
+-->
+

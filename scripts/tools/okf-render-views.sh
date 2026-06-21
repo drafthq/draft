@@ -25,6 +25,8 @@ BUNDLE=""
 ARCH_OUT=""
 WEB_OUT=""
 CMAP_INTO=()
+COVERAGE_REPORT=""
+VALIDATED_AT=""
 
 usage() {
     cat <<'EOF'
@@ -40,6 +42,10 @@ Flags:
   --web FILE               Write a self-contained, offline HTML viewer (single file:
                            all pages inlined, built-in markdown renderer, sidebar +
                            search). Double-click to open — no server, no internet.
+  --coverage-report FILE   okf-coverage-check.sh JSON; its mapped/required/pct and
+                           validity are rendered into the architecture.md banner.
+  --validated-at STR       Timestamp string shown in the banner (caller supplies it;
+                           this tool has no clock dependency).
   --help                   Show this help.
 
 Requires jq (already a Draft prereq) for --web. Exit 0 ok, 1 error, 2 bundle not found.
@@ -51,6 +57,8 @@ while [[ $# -gt 0 ]]; do
         --arch-out) ARCH_OUT="$2"; shift 2;;
         --concept-map-into) CMAP_INTO+=("$2"); shift 2;;
         --web) WEB_OUT="$2"; shift 2;;
+        --coverage-report) COVERAGE_REPORT="$2"; shift 2;;
+        --validated-at) VALIDATED_AT="$2"; shift 2;;
         --help|-h) usage; exit 0;;
         -*) echo "Unknown flag: $1" >&2; usage >&2; exit 1;;
         *)
@@ -92,6 +100,27 @@ strip_frontmatter() {
     ' "$1"
 }
 
+# Coverage-honesty banner, sourced from okf-coverage-check.sh's JSON report.
+# Silent when no report is supplied (keeps the view backward-compatible).
+emit_coverage_banner() {
+    [[ -n "$COVERAGE_REPORT" && -f "$COVERAGE_REPORT" ]] || return 0
+    command -v jq >/dev/null 2>&1 || return 0
+    local valid mapped required pct
+    valid="$(jq -r '.valid // empty' "$COVERAGE_REPORT" 2>/dev/null || true)"
+    mapped="$(jq -r '.mapped // empty' "$COVERAGE_REPORT" 2>/dev/null || true)"
+    required="$(jq -r '.required // empty' "$COVERAGE_REPORT" 2>/dev/null || true)"
+    pct="$(jq -r '.coverage_pct // empty' "$COVERAGE_REPORT" 2>/dev/null || true)"
+    [[ -n "$mapped" && -n "$required" ]] || return 0
+    if [[ "$valid" == "true" ]]; then
+        echo "> **Coverage:** ${mapped}/${required} required components (${pct}%)."
+    else
+        echo "> **⚠ INCOMPLETE — do not use for RCA:** only ${mapped}/${required} required"
+        echo "> components (${pct}%) are documented. Re-run \`/draft:init\` to fill the gaps."
+    fi
+    [[ -n "$VALIDATED_AT" ]] && echo "> Validated: ${VALIDATED_AT} — $([[ "$valid" == "true" ]] && echo PASS || echo FAIL)."
+    echo ""
+}
+
 # --- 1. Render architecture.md ---
 render_architecture() {
     local out="$1"
@@ -109,6 +138,7 @@ render_architecture() {
         echo "> The bundle is the source of truth; this is the single-document linear"
         echo "> view for onboarding. Regenerate with \`okf-render-views.sh\`."
         echo ""
+        emit_coverage_banner
         echo "## Contents"
         echo ""
         # TOC from page titles.

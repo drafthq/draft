@@ -34,6 +34,8 @@ OKF_TYPES="Subsystem Module Feature Entrypoint API DataModel Dependency ADR Runb
 BUNDLE=""
 PATH_INDEX=""
 JSON=0
+REVERSE=0
+STRUCTURE_ONLY=0
 
 usage() {
     cat <<'EOF'
@@ -44,7 +46,12 @@ Usage:
 
 Flags:
   --path-index FILE  Validate a path→concept index (JSON): every concept page it
-                     names must exist in the bundle.
+                     names must exist in the bundle (forward check).
+  --reverse          Also require every concept page (excluding section index.md)
+                     to appear in at least one value array of the path-index, so
+                     no page is orphaned from its source grounding. Needs --path-index.
+  --structure-only   Run only the original structural checks (disables --reverse);
+                     for backward-compatible Layer-1 callers.
   --json             Emit a JSON summary instead of human diagnostics.
   --help             Show this help.
 
@@ -55,6 +62,8 @@ EOF
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --path-index) PATH_INDEX="$2"; shift 2;;
+        --reverse) REVERSE=1; shift;;
+        --structure-only) STRUCTURE_ONLY=1; shift;;
         --json) JSON=1; shift;;
         --help|-h) usage; exit 0;;
         -*) echo "Unknown flag: $1" >&2; usage >&2; exit 1;;
@@ -174,6 +183,31 @@ if [[ -n "$PATH_INDEX" ]]; then
         done < <(grep -oE '\[[^]]*\]' "$PATH_INDEX" 2>/dev/null \
                    | grep -oE '"[^"]+\.md"' | tr -d '"' | sort -u)
     fi
+fi
+
+# --- 6. Reverse index: every concept page is grounded by the index (optional) ---
+# Forward proves the index doesn't name ghosts; reverse proves no page is an
+# orphan with no source mapping (a symptom of hand-written / off-plan pages).
+if [[ $REVERSE -eq 1 && $STRUCTURE_ONLY -eq 0 && -n "$PATH_INDEX" && -f "$PATH_INDEX" ]]; then
+    # All pages the index maps to (its array values).
+    INDEXED_FILE="$(mktemp)"
+    grep -oE '\[[^]]*\]' "$PATH_INDEX" 2>/dev/null \
+        | grep -oE '"[^"]+\.md"' | tr -d '"' | sort -u > "$INDEXED_FILE" || true
+    while IFS= read -r -d '' page; do
+        rel="${page#"$BUNDLE/"}"
+        base="$(basename "$rel")"
+        # Section/root indexes and generated meta pages are not concept pages.
+        [[ "$base" == "index.md" ]] && continue
+        [[ "$base" == "log.md" ]] && continue
+        [[ "$base" == "coverage.md" ]] && continue
+        grep -q '<!-- okf:coverage-generated -->' "$page" 2>/dev/null && continue
+        # Only pages that declare a type are concepts.
+        [[ -z "$(get_yaml_field "$page" "type")" ]] && continue
+        if ! grep -qxF "$rel" "$INDEXED_FILE"; then
+            add_error "concept page not grounded by path-index (orphan): $rel"
+        fi
+    done < <(find "$BUNDLE" -type f -name '*.md' -print0 | sort -z)
+    rm -f "$INDEXED_FILE"
 fi
 
 # --- Report ---
