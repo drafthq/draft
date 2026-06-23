@@ -13,7 +13,7 @@ Draft also ships a **knowledge graph engine** — `codebase-memory-mcp`, fetched
 ```bash
 make build              # Generate integration files from skills
 make build-integrations # Same as above (explicit target)
-make test               # Run all 58 test suites (skills, build, tools)
+make test               # Run all 63 test suites (skills, build, tools)
 make lint               # Run shellcheck + markdownlint
 make clean              # Remove generated integrations
 

@@ -31,6 +31,7 @@ TEST_SCRIPTS = \
 	./tests/test-tools-manage-symlinks.sh \
 	./tests/test-tools-mermaid-from-graph.sh \
 	./tests/test-tools-graph-snapshot.sh \
+	./tests/test-tools-mem-bound.sh \
 	./tests/test-tools-graph-init.sh \
 	./tests/test-tools-graph-preflight.sh \
 	./tests/test-tools-graph-impact.sh \

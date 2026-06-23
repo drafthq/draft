@@ -203,6 +203,73 @@ memory_project_for_repo() {
         | head -1
 }
 
+# Total physical RAM in MB (portable). Echoes a positive integer, or nothing.
+_total_ram_mb() {
+    if [[ -r /proc/meminfo ]]; then
+        awk '/^MemTotal:/{printf "%d", $2/1024; exit}' /proc/meminfo
+    elif command -v sysctl >/dev/null 2>&1; then   # macOS / BSD
+        local bytes; bytes="$(sysctl -n hw.memsize 2>/dev/null || true)"
+        [[ -n "$bytes" ]] && printf '%d' "$(( bytes / 1024 / 1024 ))"
+    fi
+}
+
+# Cgroup memory args for a transient scope. MemoryHigh throttles (reclaim/swap →
+# slower, never thrashes the host); MemoryMax is the hard ceiling a few % above.
+# Pure (no I/O) so it is unit-testable. Usage: _mem_bound_args <total_mb> <pct>
+_mem_bound_args() {
+    local total="$1" pct="$2"
+    printf 'MemoryHigh=%dM MemoryMax=%dM' \
+        "$(( total * pct / 100 ))" "$(( total * (pct + 5) / 100 ))"
+}
+
+# Whether this host can confine a process to a memory-bounded cgroup v2 scope.
+# Probes once (starts a throwaway scope) and caches the verdict for the process.
+_DRAFT_CGROUP_OK=""
+_can_cgroup_bound() {
+    if [[ -z "$_DRAFT_CGROUP_OK" ]]; then
+        if command -v systemd-run >/dev/null 2>&1 \
+            && [[ -e /sys/fs/cgroup/cgroup.controllers ]] \
+            && systemd-run --user --scope -q -p MemoryMax=64M -- true >/dev/null 2>&1; then
+            _DRAFT_CGROUP_OK=yes
+        else
+            _DRAFT_CGROUP_OK=no
+        fi
+    fi
+    [[ "$_DRAFT_CGROUP_OK" == yes ]]
+}
+
+# Index a repository under a memory bound. The codebase-memory-mcp engine
+# self-budgets ~50% of *physical* RAM and is not cgroup-aware, so a first index
+# of a huge repo can exhaust the host (the original 30 GB hang). On Linux we
+# confine it to a transient cgroup scope sized to DRAFT_INDEX_MEM_PCT (default
+# 25) of total RAM; CBM_WORKERS caps the engine's parallel working set so the
+# throttle has less transient pressure to absorb. Where cgroup v2 + systemd-run
+# are unavailable (e.g. macOS) the worker cap is the only bound. Never falls back
+# from a started scope to an unbounded run — a bounded OOM fails the index
+# cleanly (host stays alive) rather than re-triggering the hang.
+# Echoes the engine's JSON result on stdout (same contract as memory_cli).
+memory_index_bounded() {
+    local repo_abs="$1"
+    local json="{\"repo_path\":\"$repo_abs\"}"
+    export CBM_WORKERS="${CBM_WORKERS:-4}"
+    local total pct
+    total="$(_total_ram_mb)"
+    pct="${DRAFT_INDEX_MEM_PCT:-25}"
+    if [[ "${total:-0}" -gt 0 ]] && _can_cgroup_bound; then
+        local high_arg max_arg
+        read -r high_arg max_arg <<< "$(_mem_bound_args "$total" "$pct")"
+        if [[ -n "${DRAFT_MEMORY_DEBUG:-}" ]]; then
+            systemd-run --user --scope -q -p "$high_arg" -p "$max_arg" \
+                -- "$MEMORY_BIN" cli index_repository "$json"
+        else
+            systemd-run --user --scope -q -p "$high_arg" -p "$max_arg" \
+                -- "$MEMORY_BIN" cli index_repository "$json" 2>/dev/null
+        fi
+    else
+        memory_cli index_repository "$json"
+    fi
+}
+
 # Ensure a repository is indexed in the engine; echo its project name.
 # Indexes on demand when absent. Returns 1 if the engine is unavailable.
 memory_ensure_index() {
@@ -212,7 +279,7 @@ memory_ensure_index() {
     local proj
     proj="$(memory_project_for_repo "$repo_abs" 2>/dev/null || true)"
     if [[ -z "$proj" ]]; then
-        proj="$(memory_cli index_repository "{\"repo_path\":\"$repo_abs\"}" 2>/dev/null \
+        proj="$(memory_index_bounded "$repo_abs" \
             | jq -r '.project // empty' 2>/dev/null || true)"
     fi
     [[ -n "$proj" ]] || return 1
