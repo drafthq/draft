@@ -12,7 +12,7 @@ timestamp: "{ISO_TIMESTAMP}"
 
 # {SECTION_TITLE}
 
-> Section of the OKF bundle. Back to [bundle root](../index.md).
+> Section of the project wiki. Back to [wiki root](../index.md).
 
 ## Concepts
 

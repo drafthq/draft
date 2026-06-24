@@ -22654,9 +22654,9 @@ List down alerting thresholds on those metrics:
 
 ---
 type: Subsystem
-title: "{PROJECT_NAME} — Knowledge Bundle"
+title: "{PROJECT_NAME} — Wiki"
 description: >
-  Root index of the OKF taxonomy bundle. Start here, then route into
+  Root index of the project wiki. Start here, then route into
   overview/, systems/, features/, reference/, or entrypoints/ via the
   Concept Map. Open a concept only when its description matches the task.
 resource: .
@@ -22666,10 +22666,10 @@ okf_version: "0.1"
 okf_types_version: "0.1"
 ---
 
-# {PROJECT_NAME} — Knowledge Bundle
+# {PROJECT_NAME} — Wiki
 
-> OKF v0.1 bundle. One concept per file; cross-links form the graph. The
-> live call graph (`codebase-memory-mcp`) is the grounding source; this bundle
+> Project wiki. One concept per file; cross-links form the graph. The
+> live call graph (`codebase-memory-mcp`) is the grounding source; this wiki
 > is the navigable serialization. `../ai-context.md` is the consumption entry point.
 
 ## Sections
@@ -22787,7 +22787,7 @@ timestamp: "{ISO_TIMESTAMP}"
 
 # {SECTION_TITLE}
 
-> Section of the OKF bundle. Back to [bundle root](../index.md).
+> Section of the project wiki. Back to [wiki root](../index.md).
 
 ## Concepts
 
@@ -22817,7 +22817,7 @@ draft_init_mode: okf
 
 # {PROJECT_NAME} — AI Context Index
 
-> Index root for the OKF taxonomy bundle (`wiki/`). Read **Synopsis** for broad
+> Index root for the project wiki (`wiki/`). Read **Synopsis** for broad
 > tasks (they usually terminate here). For focused tasks, route through the
 > **Concept Map** to ≤N concept pages — each lists `x-grounded-paths`. This is
 > both the cheap broad-context path AND the progressive-disclosure entry point.

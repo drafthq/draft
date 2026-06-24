@@ -8,7 +8,7 @@ draft_init_mode: okf
 
 # {PROJECT_NAME} — AI Context Index
 
-> Index root for the OKF taxonomy bundle (`wiki/`). Read **Synopsis** for broad
+> Index root for the project wiki (`wiki/`). Read **Synopsis** for broad
 > tasks (they usually terminate here). For focused tasks, route through the
 > **Concept Map** to ≤N concept pages — each lists `x-grounded-paths`. This is
 > both the cheap broad-context path AND the progressive-disclosure entry point.

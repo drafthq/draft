@@ -143,7 +143,7 @@ render_architecture() {
         echo ""
         echo "# Architecture (Rendered View)"
         echo ""
-        echo "> **Generated** from the \`wiki/\` OKF bundle — do not edit by hand."
+        echo "> **Generated** from the \`wiki/\` bundle — do not edit by hand."
         echo "> The bundle is the source of truth; this is the single-document linear"
         echo "> view for onboarding. Regenerate with \`okf-render-views.sh\`."
         echo ""
