@@ -11,7 +11,8 @@
 # Pages in scope: any *.md whose frontmatter declares a frozen `type:`. Section
 # index.md pages, log.md, and the generated coverage page are excluded.
 #
-# Checks (per type): required H2 sections, min body lines, >=1 mermaid block
+# Checks (per type): required H2 sections AND real content beneath each (so a
+# present-but-empty heading fails as "shallow"), min body lines, >=1 mermaid block
 # (diagram types only), min x-grounded-paths, anti-stub patterns, unreplaced
 # template tokens, duplicate "What it is" paragraphs, and a syntax-only mermaid
 # lint (no Node, no headless browser).
@@ -88,6 +89,19 @@ grounded_count() {
 
 has_section() { grep -qE "^##[[:space:]]+$1([[:space:]]|$)" "$2"; }
 
+# Count non-blank content lines under a given H2 section (heading itself
+# excluded), stopping at the next H2. Used to fail a section that is present as a
+# heading but carries no real content — the classic "shallow" page.
+section_content_lines() {
+    local sec="$1" file="$2"
+    awk -v sec="$sec" '
+        $0 ~ "^##[[:space:]]+" sec "([[:space:]]|$)" { grab=1; next }
+        grab && /^##[[:space:]]/ { exit }
+        grab && /[^[:space:]]/ { n++ }
+        END { print n+0 }
+    ' "$file"
+}
+
 mermaid_block_count() { grep -cE '^[[:space:]]*```mermaid' "$1" || true; }
 
 # Syntax-only mermaid lint: catch the breakers that silently fail previewers
@@ -139,19 +153,22 @@ whatitis_hash() {
 ANTI_STUB='see architecture\.md|deferred to ref-docs|\bTBD\b|TODO:[[:space:]]*document|stub page|placeholder page'
 TOKEN_RE='\{[A-Z_]+\}'
 
-# Per-type policy. echoes: sections|min_lines|need_mermaid|min_grounded
+# Per-type policy. echoes: sections|min_lines|need_mermaid|min_grounded|min_section_lines
+# min_section_lines: minimum non-blank content lines required UNDER each named
+# section (0 disables the per-section depth check). This is what turns a
+# present-but-empty heading — the hallmark of a shallow page — into a failure.
 type_policy() {
     case "$1" in
         Subsystem|Module|Feature|Entrypoint)
-            echo "What it is;How it works;Used by;Blast radius;See also|25|1|2";;
+            echo "What it is;How it works;Used by;Blast radius;See also|35|1|2|2";;
         API|DataModel)
-            echo "What it is;How it works;See also|18|0|1";;
+            echo "What it is;How it works;See also|22|0|1|2";;
         Dependency)
-            echo "What it is;Used by|10|0|0";;
+            echo "What it is;Used by|12|0|0|1";;
         ADR|Runbook)
-            echo "|8|0|0";;
+            echo "|8|0|0|0";;
         *)
-            echo "|8|0|0";;
+            echo "|8|0|0|0";;
     esac
 }
 
@@ -172,13 +189,26 @@ while IFS= read -r -d '' page; do
     [[ -z "$type_val" ]] && continue   # not a concept page
     CHECKED=$((CHECKED + 1))
 
-    IFS='|' read -r sections min_lines need_mermaid min_grounded <<< "$(type_policy "$type_val")"
+    IFS='|' read -r sections min_lines need_mermaid min_grounded min_section_lines <<< "$(type_policy "$type_val")"
 
-    # Q-SEC: required sections.
+    # Q-SEC: required sections must be present. Q-SECLEN: the NARRATIVE sections
+    # ("What it is" / "How it works") must carry real prose beneath the heading —
+    # a heading with nothing under it is the classic shallow stub. List sections
+    # ("Used by", "See also", "Blast radius") are legitimately terse, so the
+    # depth bar only applies to the narrative ones.
     if [[ -n "$sections" ]]; then
         IFS=';' read -ra secs <<< "$sections"
         for s in "${secs[@]}"; do
-            has_section "$s" "$page" || fail "$rel" "Q-SEC" "missing required section '## $s'"
+            if ! has_section "$s" "$page"; then
+                fail "$rel" "Q-SEC" "missing required section '## $s'"
+            elif [[ "${min_section_lines:-0}" -gt 0 ]]; then
+                case "$s" in
+                    "What it is"|"How it works")
+                        scl="$(section_content_lines "$s" "$page")"
+                        [[ "$scl" -ge "$min_section_lines" ]] \
+                            || fail "$rel" "Q-SECLEN" "section '## $s' has $scl content lines < $min_section_lines (shallow)";;
+                esac
+            fi
         done
     fi
 

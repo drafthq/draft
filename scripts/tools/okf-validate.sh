@@ -11,6 +11,11 @@
 #   2. Every concept page (any *.md whose frontmatter declares `type:`) carries
 #      all required OKF frontmatter keys: type, title, description, resource.
 #   3. Every declared `type` is in the frozen code-repo vocabulary (§4 of HLD).
+#   3a. Every non-meta *.md is a real concept: an empty or frontmatter-less page
+#      (a blank placeholder) fails — it would otherwise be invisible to the
+#      quality + coverage layers, which both key on `type`.
+#   3b. No page carries an unreplaced {ALL_CAPS} template token (catches leftover
+#      placeholders in hand-seeded index pages, which the quality layer skips).
 #   4. Every relative markdown cross-link ( ](path.md) ) resolves to a file that
 #      exists inside the bundle. External (http/https/mailto) and pure-anchor
 #      (#frag) links are ignored.
@@ -105,14 +110,46 @@ if [[ ! -f "$BUNDLE/index.md" ]]; then
     add_error "missing bundle root: $BUNDLE/index.md"
 fi
 
+# A page is "meta" (not a concept) if it is a section/root index, the change log,
+# or the tool-generated coverage page. Everything else MUST be a real concept —
+# an empty or frontmatter-less .md placeholder is a completeness failure, not an
+# invisible non-concept.
+is_meta_page() {
+    local base="$1" page="$2"
+    case "$base" in
+        index.md|log.md|coverage.md) return 0;;
+    esac
+    grep -q '<!-- okf:coverage-generated -->' "$page" 2>/dev/null && return 0
+    return 1
+}
+
+# Non-blank body line count (everything after the frontmatter block).
+nonblank_body_lines() {
+    awk 'NR==1&&/^---$/{fm=1;next} fm&&/^---$/{fm=0;next} !fm{print}' "$1" \
+        | grep -cE '[^[:space:]]' || true
+}
+
 # --- 2/3. Per-page frontmatter + type vocabulary ---
 while IFS= read -r -d '' page; do
     PAGE_COUNT=$((PAGE_COUNT + 1))
     rel="${page#"$BUNDLE/"}"
+    base="$(basename "$rel")"
 
-    # A page is a "concept" only if its frontmatter declares a type.
     type_val="$(get_yaml_field "$page" "type")"
-    [[ -z "$type_val" ]] && continue
+
+    # Empty / placeholder pages: a non-meta page with no type (or no body) slips
+    # past every downstream check (quality + coverage both key on `type`). Catch
+    # it here so a blank or stub file can never ship.
+    if [[ -z "$type_val" ]]; then
+        if ! is_meta_page "$base" "$page"; then
+            if [[ "$(nonblank_body_lines "$page")" -eq 0 ]]; then
+                add_error "$rel: empty page (no frontmatter type, no body) — every wiki page must be a real concept"
+            else
+                add_error "$rel: untyped page (missing frontmatter 'type:') — not a valid concept page"
+            fi
+        fi
+        continue
+    fi
     CONCEPT_COUNT=$((CONCEPT_COUNT + 1))
 
     for key in title description resource; do
@@ -123,6 +160,24 @@ while IFS= read -r -d '' page; do
 
     if ! is_known_type "$type_val"; then
         add_error "$rel: unknown concept type '$type_val' (frozen vocab: $OKF_TYPES)"
+    fi
+
+    # A typed concept page with no body is still a stub — fail it even though the
+    # depth/anti-stub bars live in the quality layer (this layer must stand alone).
+    if [[ "$(nonblank_body_lines "$page")" -eq 0 ]]; then
+        add_error "$rel: concept page has empty body"
+    fi
+done < <(find "$BUNDLE" -type f -name '*.md' -print0 | sort -z)
+
+# --- 3b. Unreplaced template tokens (any page, including index pages) ---
+# Quality checks skip index.md pages, so a leftover {SECTION_TITLE}/{PROJECT_NAME}
+# placeholder in a hand-seeded index would otherwise survive. Match {ALL_CAPS}
+# tokens (safe: real prose almost never contains them).
+while IFS= read -r -d '' page; do
+    prel="${page#"$BUNDLE/"}"
+    if grep -qE '\{[A-Z][A-Z0-9_]+\}' "$page" 2>/dev/null; then
+        tok="$(grep -oE '\{[A-Z][A-Z0-9_]+\}' "$page" | head -1)"
+        add_error "$prel: unreplaced template token '$tok'"
     fi
 done < <(find "$BUNDLE" -type f -name '*.md' -print0 | sort -z)
 

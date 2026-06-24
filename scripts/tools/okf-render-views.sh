@@ -10,6 +10,9 @@
 #   2. Concept Map       — a routing table injected between the
 #      <!-- CONCEPT-MAP:START --> / <!-- CONCEPT-MAP:END --> markers in
 #      wiki/index.md (and optionally another index-root file).
+#   3. Section indexes   — (--section-indexes) each <section>/index.md concept
+#      table rebuilt from the pages that actually exist in that directory, so its
+#      links can never dangle (no more hand-authored, link-rotting indexes).
 #
 # Usage:
 #   okf-render-views.sh <BUNDLE_DIR> --arch-out <FILE> [--concept-map-into <FILE>]
@@ -25,6 +28,7 @@ BUNDLE=""
 ARCH_OUT=""
 WEB_OUT=""
 CMAP_INTO=()
+SECTION_INDEXES=0
 COVERAGE_REPORT=""
 VALIDATED_AT=""
 
@@ -39,6 +43,10 @@ Flags:
   --arch-out FILE          Write the rendered linear architecture.md here.
   --concept-map-into FILE  Inject the Concept Map between the CONCEPT-MAP markers
                            in FILE (repeatable: e.g. wiki/index.md and ai-context.md).
+  --section-indexes        Regenerate each section's <section>/index.md concept
+                           table (between its CONCEPT-MAP markers) from the pages
+                           that actually exist in that directory. Eliminates
+                           hand-authored, link-rotting section indexes.
   --web FILE               Write a self-contained, offline HTML viewer (single file:
                            all pages inlined, built-in markdown renderer, sidebar +
                            search). Double-click to open — no server, no internet.
@@ -56,6 +64,7 @@ while [[ $# -gt 0 ]]; do
     case "$1" in
         --arch-out) ARCH_OUT="$2"; shift 2;;
         --concept-map-into) CMAP_INTO+=("$2"); shift 2;;
+        --section-indexes) SECTION_INDEXES=1; shift;;
         --web) WEB_OUT="$2"; shift 2;;
         --coverage-report) COVERAGE_REPORT="$2"; shift 2;;
         --validated-at) VALIDATED_AT="$2"; shift 2;;
@@ -134,7 +143,7 @@ render_architecture() {
         echo ""
         echo "# Architecture (Rendered View)"
         echo ""
-        echo "> **Generated** from the \`wiki/\` OKF bundle — do not edit by hand."
+        echo "> **Generated** from the \`wiki/\` bundle — do not edit by hand."
         echo "> The bundle is the source of truth; this is the single-document linear"
         echo "> view for onboarding. Regenerate with \`okf-render-views.sh\`."
         echo ""
@@ -190,6 +199,50 @@ build_concept_map() {
         ' "$page")"
         echo "| [${title}](${rel}) | ${type} | ${desc} |"
     done < <(find "$BUNDLE" -type f -name '*.md' -print0 | sort -z)
+}
+
+# First non-empty line of a page's `description` frontmatter (handles folded `>`).
+page_desc() {
+    awk '
+        NR==1&&/^---$/{fm=1;next} fm&&/^---$/{exit}
+        fm && /^description:/ { collect=1; sub(/^description:[[:space:]]*>?[[:space:]]*/,""); if($0!=""){print; exit} next }
+        fm && collect { sub(/^[[:space:]]+/,""); if($0!=""){print; exit} }
+    ' "$1"
+}
+
+# Build the per-section concept table (stdout) for a single section directory.
+# Links are bundle-section-relative (just the filename) so they resolve from the
+# section's own index.md. Only pages that actually exist are listed — so the
+# table can never point at a missing file.
+build_section_map() {
+    local dir="$1" f rel base type title desc
+    echo "| Concept | Type | Routing description |"
+    echo "|---------|------|---------------------|"
+    while IFS= read -r f; do
+        base="$(basename "$f")"
+        [[ "$base" == "index.md" ]] && continue
+        [[ "$base" == "coverage.md" ]] && continue
+        grep -q '<!-- okf:coverage-generated -->' "$f" 2>/dev/null && continue
+        type="$(get_yaml_field "$f" type)"
+        [[ -n "$type" ]] || continue
+        title="$(get_yaml_field "$f" title)"; [[ -n "$title" ]] || title="$base"
+        desc="$(page_desc "$f")"
+        echo "| [${title}](${base}) | ${type} | ${desc} |"
+    done < <(find "$dir" -maxdepth 1 -type f -name '*.md' | sort)
+}
+
+# Regenerate every <section>/index.md concept table from real pages.
+render_section_indexes() {
+    local sec dir idx
+    for sec in "${SECTIONS[@]}"; do
+        dir="$BUNDLE/$sec"
+        idx="$dir/index.md"
+        [[ -d "$dir" && -f "$idx" ]] || continue
+        local map_tmp; map_tmp="$(mktemp)"
+        build_section_map "$dir" >"$map_tmp"
+        inject_concept_map "$idx" "$map_tmp"
+        rm -f "$map_tmp"
+    done
 }
 
 # Inject the Concept Map between markers in a target file (path may be relative
@@ -397,7 +450,10 @@ if [[ ${#CMAP_INTO[@]} -gt 0 ]]; then
     rm -f "$MAP_TMP"
 fi
 
+[[ $SECTION_INDEXES -eq 1 ]] && render_section_indexes
+
 [[ -n "$WEB_OUT" ]] && render_web "$WEB_OUT"
 
-[[ -n "$ARCH_OUT" || -n "$WEB_OUT" || ${#CMAP_INTO[@]} -gt 0 ]] || { echo "ERROR: nothing to do (pass --arch-out, --web, and/or --concept-map-into)" >&2; exit 1; }
+[[ -n "$ARCH_OUT" || -n "$WEB_OUT" || ${#CMAP_INTO[@]} -gt 0 || $SECTION_INDEXES -eq 1 ]] \
+    || { echo "ERROR: nothing to do (pass --arch-out, --web, --section-indexes, and/or --concept-map-into)" >&2; exit 1; }
 exit 0

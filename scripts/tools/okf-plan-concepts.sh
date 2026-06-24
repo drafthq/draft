@@ -38,6 +38,7 @@ MANIFEST=""
 MIN_FAN_IN=2
 OUT=""
 JSON=0
+DEFER_BELOW_FLOOR=0
 ALLOW_DEFER=()
 
 usage() {
@@ -54,8 +55,12 @@ Flags:
   --manifest FILE    Component list (one component per line; '#' comments; blanks
                      ignored). When present it is authoritative — every entry is
                      required and the graph is not consulted.
-  --min-fan-in N     Package fan-in floor for "required" (default: 2). Packages
-                     below the floor are deferred with a reason.
+  --min-fan-in N     Fan-in threshold that types a package as a Subsystem (>=N)
+                     vs a Module (<N) and orders it first (default: 2). By default
+                     EVERY graph package is required regardless of fan-in — the
+                     floor no longer exempts anything.
+  --defer-below-floor  Restore the old behavior: packages with fan_in < --min-fan-in
+                     are deferred (not required) instead of required-as-Module.
   --allow-defer GLOB Defer (don't require) components whose name matches GLOB.
                      Repeatable. Deferred entries still appear in the plan.
   --out FILE         Write the plan JSON here (default: stdout).
@@ -72,6 +77,7 @@ while [[ $# -gt 0 ]]; do
         --scope) SCOPE="$2"; shift 2;;
         --manifest) MANIFEST="$2"; shift 2;;
         --min-fan-in) MIN_FAN_IN="$2"; shift 2;;
+        --defer-below-floor) DEFER_BELOW_FLOOR=1; shift;;
         --allow-defer) ALLOW_DEFER+=("$2"); shift 2;;
         --out) OUT="$2"; shift 2;;
         --json) JSON=1; shift;;
@@ -150,8 +156,13 @@ plan_from_graph() {
             required=false; reason="allow-defer match"; type=Module
         elif (( fan_in >= MIN_FAN_IN )); then
             required=true; reason=""; type=Subsystem
-        else
+        elif [[ $DEFER_BELOW_FLOOR -eq 1 ]]; then
+            # Opt-in legacy behavior: low-fan-in packages are exempted.
             required=false; reason="fan_in $fan_in < floor $MIN_FAN_IN"; type=Module
+        else
+            # Default: every package the graph knows about is documented. Fan-in
+            # below the floor only demotes Subsystem→Module; it never exempts.
+            required=true; reason=""; type=Module
         fi
         add_concept "$name" systems "$type" "$name" "$fan_in" "$required" "$reason"
     done < <(echo "$arch" | jq -r '.packages[]? | [.name, (.fan_in // 0)] | @tsv')

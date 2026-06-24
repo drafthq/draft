@@ -45,12 +45,16 @@ x-grounded-paths: ["src/auth/login.go", "src/auth/session.go"]
 
 The authentication subsystem owns login, session lifecycle, and token issuance.
 Its boundary is everything under src/auth/. Downstream services depend on the
-session token contract it publishes.
+session token contract it publishes, so any change here ripples outward to every
+caller that verifies a session. It is the single source of truth for identity.
 
 ## How it works
 
-Requests enter through the login handler, which validates credentials, mints a
-session, and issues a signed token.
+Requests enter through the login handler, which validates credentials against the
+user store, mints a session row, and issues a signed token. Subsequent requests
+carry that token; the session middleware verifies the signature and loads the
+session on every call. Expiry and revocation are enforced at verification time,
+not issuance, so a revoked token stops working immediately.
 
 ```mermaid
 flowchart LR
@@ -60,10 +64,13 @@ flowchart LR
 ## Used by
 
 - [root](../index.md)
+- The API gateway, on every authenticated route.
 
 ## Blast radius
 
-Changing the token contract breaks consumers. Grounded in login.go, session.go.
+Changing the token contract breaks every consumer that verifies a session.
+Grounded in login.go and session.go; the signing key rotation path is the highest
+risk surface here.
 
 ## See also
 

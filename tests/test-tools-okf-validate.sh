@@ -212,6 +212,58 @@ run "$FIXTURE/wiki" --path-index "$FIXTURE/path-to-concept.json" --reverse --str
 assert "--structure-only suppresses reverse orphan failure → exit 0" \
     "$([[ "$RC" == "0" ]] && echo true || echo false)"
 
+# --- Empty placeholder page (no frontmatter, no body) → fail ---
+build_valid_bundle "$FIXTURE/wiki"
+: > "$FIXTURE/wiki/systems/empty.md"
+run "$FIXTURE/wiki"
+assert "Empty page → invalid (exit 1)" "$([[ "$RC" == "1" ]] && echo true || echo false)"
+assert "Empty page error names it" "$(echo "$OUT" | grep -q 'systems/empty.md: empty page' && echo true || echo false)"
+
+# --- Untyped non-meta page (body but no frontmatter type) → fail ---
+build_valid_bundle "$FIXTURE/wiki"
+cat > "$FIXTURE/wiki/systems/notes.md" <<'EOF'
+# Random notes
+
+Some prose that was dropped here without a concept frontmatter block.
+EOF
+run "$FIXTURE/wiki"
+assert "Untyped non-meta page → invalid (exit 1)" "$([[ "$RC" == "1" ]] && echo true || echo false)"
+assert "Untyped page flagged" "$(echo "$OUT" | grep -q 'systems/notes.md: untyped page' && echo true || echo false)"
+
+# --- Empty section index (meta) is allowed, not flagged as a concept ---
+build_valid_bundle "$FIXTURE/wiki"
+cat > "$FIXTURE/wiki/systems/index.md" <<'EOF'
+---
+type: Subsystem
+title: Systems
+description: Section index.
+resource: .
+---
+
+# Systems
+
+<!-- CONCEPT-MAP:START -->
+<!-- CONCEPT-MAP:END -->
+EOF
+run "$FIXTURE/wiki"
+assert "Meta index.md not treated as empty concept → exit 0" "$([[ "$RC" == "0" ]] && echo true || echo false)"
+
+# --- Unreplaced {ALL_CAPS} template token (even in an index page) → fail ---
+build_valid_bundle "$FIXTURE/wiki"
+cat > "$FIXTURE/wiki/systems/index.md" <<'EOF'
+---
+type: Subsystem
+title: "{SECTION_TITLE}"
+description: Section index.
+resource: .
+---
+
+# {SECTION_TITLE}
+EOF
+run "$FIXTURE/wiki"
+assert "Template token → invalid (exit 1)" "$([[ "$RC" == "1" ]] && echo true || echo false)"
+assert "Template token flagged" "$(echo "$OUT" | grep -q "unreplaced template token '{SECTION_TITLE}'" && echo true || echo false)"
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 exit "$FAIL"

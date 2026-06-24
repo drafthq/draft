@@ -1,8 +1,8 @@
 ---
 type: Subsystem
-title: "{PROJECT_NAME} — Knowledge Bundle"
+title: "{PROJECT_NAME} — Wiki"
 description: >
-  Root index of the OKF taxonomy bundle. Start here, then route into
+  Root index of the project wiki. Start here, then route into
   overview/, systems/, features/, reference/, or entrypoints/ via the
   Concept Map. Open a concept only when its description matches the task.
 resource: .
@@ -12,10 +12,10 @@ okf_version: "0.1"
 okf_types_version: "0.1"
 ---
 
-# {PROJECT_NAME} — Knowledge Bundle
+# {PROJECT_NAME} — Wiki
 
-> OKF v0.1 bundle. One concept per file; cross-links form the graph. The
-> live call graph (`codebase-memory-mcp`) is the grounding source; this bundle
+> Project wiki. One concept per file; cross-links form the graph. The
+> live call graph (`codebase-memory-mcp`) is the grounding source; this wiki
 > is the navigable serialization. `../ai-context.md` is the consumption entry point.
 
 ## Sections
