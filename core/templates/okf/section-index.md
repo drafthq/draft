@@ -16,10 +16,10 @@ timestamp: "{ISO_TIMESTAMP}"
 
 ## Concepts
 
-<!-- One row per concept page in this section. `description` is the routing key
-     copied from each page's frontmatter. Regenerated on every init/refresh. -->
-
-| Concept | Type | Routing description |
-|---------|------|---------------------|
-| [{concept-a}]({concept-a}.md) | Module | {one-line routing desc} |
-| [{concept-b}]({concept-b}.md) | Feature | {one-line routing desc} |
+<!-- TOOL-OWNED: regenerated deterministically by okf-render-views.sh
+     (--section-indexes) from the concept pages in this directory. One row per
+     page; `description` is the routing key copied from each page's frontmatter.
+     Do not hand-edit between the markers — links here are guaranteed to resolve
+     because they are built only from files that actually exist. -->
+<!-- CONCEPT-MAP:START -->
+<!-- CONCEPT-MAP:END -->

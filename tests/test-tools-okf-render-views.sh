@@ -119,6 +119,40 @@ assert "embedded </script> neutralized to <\\/script>" \
 assert "no raw unescaped </script> leaked into inlined data" \
     "$([[ "$(grep -Fc '</script>' "$FIXTURE/index.html")" -le 1 ]] && echo true || echo false)"
 
+# --- regenerate section indexes from real pages ---
+# Seed systems/index.md with a STALE, DANGLING hand-authored link; --section-indexes
+# must rewrite the table to list only pages that actually exist (auth.md).
+cat > "$B/systems/index.md" <<'EOF'
+---
+type: Subsystem
+title: Systems
+description: section index
+resource: .
+---
+
+# Systems
+
+## Concepts
+
+<!-- CONCEPT-MAP:START -->
+| [Ghost](ghost.md) | Module | a link to a page that was never written |
+<!-- CONCEPT-MAP:END -->
+EOF
+run "$B" --section-indexes
+assert "section-indexes → exit 0" "$([[ "$RC" == "0" ]] && echo true || echo false)"
+assert "stale dangling link removed from section index" \
+    "$(grep -q 'ghost.md' "$B/systems/index.md" && echo false || echo true)"
+assert "section index lists the real page" \
+    "$(grep -q '\[Auth Pipeline\](auth.md)' "$B/systems/index.md" && echo true || echo false)"
+assert "section index excludes its own index.md" \
+    "$(grep -Fq '(index.md)' "$B/systems/index.md" && echo false || echo true)"
+# The regenerated table must pass the structural link validator (no dangles).
+run() { set +e; OUT="$("$ROOT_DIR/scripts/tools/okf-validate.sh" "$@" 2>&1)"; RC=$?; set -e; }
+run "$B"
+assert "regenerated section index passes link validation" \
+    "$([[ "$RC" == "0" ]] && echo true || echo false)"
+run() { set +e; OUT="$("$TOOL" "$@" 2>&1)"; RC=$?; set -e; }
+
 # --- errors ---
 run "$FIXTURE/nope" --arch-out "$FIXTURE/x.md"
 assert "missing bundle → exit 2" "$([[ "$RC" == "2" ]] && echo true || echo false)"

@@ -37,6 +37,15 @@ assert "Heuristic excludes tests/ dir" \
 assert "Plan JSON is well-formed (.counts present)" \
     "$(echo "$OUT" | jq -e '.counts.expected_total>=2' >/dev/null && echo true || echo false)"
 
+# --- Required-by-default: nothing is silently deferred without an explicit rule ---
+run env DRAFT_MEMORY_DISABLE=1 "$TOOL" --repo "$REPO"
+assert "Every discovered module is required by default (0 deferred)" \
+    "$(echo "$OUT" | jq -e '.counts.deferred==0' >/dev/null && echo true || echo false)"
+
+# --- --defer-below-floor is an accepted flag (graph-path opt-in to legacy behavior) ---
+run env DRAFT_MEMORY_DISABLE=1 "$TOOL" --repo "$REPO" --defer-below-floor
+assert "--defer-below-floor accepted → exit 0" "$([[ "$RC" == "0" ]] && echo true || echo false)"
+
 # --- Manifest path is authoritative ---
 printf '# components\nauth\nbilling\nnotifications\n' > "$FIXTURE/manifest.txt"
 run "$TOOL" --repo "$REPO" --manifest "$FIXTURE/manifest.txt"
