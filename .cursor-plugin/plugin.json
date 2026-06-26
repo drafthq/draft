@@ -2,7 +2,7 @@
   "name": "draft",
   "displayName": "Draft",
   "description": "Context-Driven Development: draft specs and plans before implementation. Structured workflows for features and fixes.",
-  "version": "3.5.2",
+  "version": "3.5.3",
   "skills": "./skills/",
   "agents": "./core/agents/",
   "author": {
