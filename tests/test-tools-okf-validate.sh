@@ -19,13 +19,11 @@ build_valid_bundle() {
     local b="$1"
     rm -rf "$b"
     mkdir -p "$b/overview" "$b/systems"
+    # OKF §6/§11: index files carry no concept frontmatter; the root index.md may
+    # declare only okf_version.
     cat > "$b/index.md" <<'EOF'
 ---
-type: Subsystem
-title: Repo Wiki
-description: Root index of the knowledge bundle.
-resource: .
-okf_types_version: 0.1
+okf_version: "0.1"
 ---
 
 # Repo Wiki
@@ -34,13 +32,6 @@ okf_types_version: 0.1
 - [Auth](systems/auth.md)
 EOF
     cat > "$b/overview/index.md" <<'EOF'
----
-type: Subsystem
-title: Overview
-description: System map and getting started.
-resource: .
----
-
 # Overview
 
 Back to [root](../index.md).
@@ -77,8 +68,10 @@ assert "Valid bundle → exit 0" "$([[ "$RC" == "0" ]] && echo true || echo fals
 run "$FIXTURE/wiki" --json
 assert "--json on valid bundle reports valid:true" \
     "$(echo "$OUT" | grep -q '"valid":true' && echo true || echo false)"
-assert "--json reports 3 concepts" \
-    "$(echo "$OUT" | grep -q '"concepts":3' && echo true || echo false)"
+# Only systems/auth.md is a concept; the two index.md files are reserved meta
+# pages (OKF §6) and are not counted.
+assert "--json reports 1 concept (index files are meta, not concepts)" \
+    "$(echo "$OUT" | grep -q '"concepts":1' && echo true || echo false)"
 
 # --- Missing bundle dir → exit 2 ---
 run "$FIXTURE/nope"
@@ -263,6 +256,29 @@ EOF
 run "$FIXTURE/wiki"
 assert "Template token → invalid (exit 1)" "$([[ "$RC" == "1" ]] && echo true || echo false)"
 assert "Template token flagged" "$(echo "$OUT" | grep -q "unreplaced template token '{SECTION_TITLE}'" && echo true || echo false)"
+
+# --- Generated coverage.md (descriptive, non-frozen type) is a meta page → exit 0 ---
+# OKF §9.1/§9.2 require non-reserved files to carry a typed frontmatter block; the
+# tool-generated coverage page uses a non-frozen `type: Report` and must be exempt
+# from the frozen-vocab check via is_meta_page, not rejected as an unknown type.
+build_valid_bundle "$FIXTURE/wiki"
+cat > "$FIXTURE/wiki/systems/coverage.md" <<'EOF'
+---
+type: Report
+title: Component Coverage
+description: Coverage of required components by wiki pages.
+resource: .
+---
+
+<!-- okf:coverage-generated -->
+# Component Coverage
+
+| Component | Wiki page | Status | Fan-in |
+|-----------|-----------|--------|--------|
+| `systems/auth` | [page](auth.md) | Full | 3 |
+EOF
+run "$FIXTURE/wiki"
+assert "Generated coverage.md (type: Report) accepted as meta → exit 0" "$([[ "$RC" == "0" ]] && echo true || echo false)"
 
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="

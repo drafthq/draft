@@ -109,6 +109,17 @@ strip_frontmatter() {
     ' "$1"
 }
 
+# Human-facing title for a page: frontmatter `title`, else the first `# H1` in the
+# body, else the bundle-relative path. Index files are frontmatter-less under OKF
+# §6, so the H1 fallback keeps the rendered TOC / nav readable.
+page_title() {
+    local t; t="$(get_yaml_field "$1" title)"
+    if [[ -z "$t" ]]; then
+        t="$(strip_frontmatter "$1" | grep -m1 -E '^#[[:space:]]+' | sed -E 's/^#[[:space:]]+//')"
+    fi
+    printf '%s' "$t"
+}
+
 # Coverage-honesty banner, sourced from okf-coverage-check.sh's JSON report.
 # Silent when no report is supplied (keeps the view backward-compatible).
 emit_coverage_banner() {
@@ -159,7 +170,7 @@ render_architecture() {
                 echo "- **${sec}/**"
                 last_sec="$sec"
             fi
-            title="$(get_yaml_field "$BUNDLE/$rel" title)"
+            title="$(page_title "$BUNDLE/$rel")"
             [[ -n "$title" ]] || title="$rel"
             local anchor; anchor="$(printf '%s' "$title" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-')"
             anchor="${anchor#-}"; anchor="${anchor%-}"
@@ -183,10 +194,14 @@ render_architecture() {
 build_concept_map() {
     echo "| Concept | Type | Open it when… |"
     echo "|---------|------|---------------|"
-    local rel type title desc
+    local rel base type title desc
     while IFS= read -r -d '' page; do
         rel="${page#"$BUNDLE/"}"
-        [[ "$(basename "$rel")" == "index.md" ]] && continue
+        base="$(basename "$rel")"
+        # Meta pages are not routable concepts (reserved index/log + the typed,
+        # tool-generated coverage page).
+        [[ "$base" == "index.md" || "$base" == "log.md" || "$base" == "coverage.md" ]] && continue
+        grep -q '<!-- okf:coverage-generated -->' "$page" 2>/dev/null && continue
         type="$(get_yaml_field "$page" type)"
         [[ -n "$type" ]] || continue
         title="$(get_yaml_field "$page" title)"
@@ -330,7 +345,7 @@ HTML_HEAD
         while IFS= read -r -d '' page; do
             local rel title type
             rel="${page#"$BUNDLE/"}"
-            title="$(get_yaml_field "$page" title)"; [[ -n "$title" ]] || title="$rel"
+            title="$(page_title "$page")"; [[ -n "$title" ]] || title="$rel"
             type="$(get_yaml_field "$page" type)"
             printf '%s: {"title": %s, "type": %s, "md": %s},\n' \
                 "$(jq -Rn --arg v "$rel" '$v')" \

@@ -3353,7 +3353,8 @@ Templates for each bundle page live in `core/templates/okf/` (`index.md`,
 ## Frozen `type` vocabulary
 
 Every concept carries a `type` from this frozen set (changing it churns every
-file; versioned via `index.md` frontmatter `okf_types_version`):
+file; versioned via the `okf-types-version` comment in the wiki root `index.md`
+body — OKF §6/§11 permit only `okf_version` in an index file's frontmatter):
 
 | type | Maps to | Home |
 |------|---------|------|
@@ -3378,6 +3379,16 @@ routing key** — write it as a routing decision ("should the agent open this fo
 the task at hand?"), never a summary. Draft extensions are namespaced `x-` and
 ignored by generic OKF consumers: `x-grounded-paths`, `x-hotspot-score`,
 `x-callers`.
+
+**Meta pages are not concepts.** Index files (`wiki/index.md` and every
+`<section>/index.md`) carry **no concept frontmatter**: per OKF §6 an index file
+has no frontmatter, and per §11 the root `index.md` may declare **only**
+`okf_version`. The tool-generated `systems/coverage.md` is a non-reserved file, so
+OKF §9.1/§9.2 require it to carry a typed frontmatter block; it uses a descriptive
+`type: Report` and is exempt from the frozen vocabulary via `is_meta_page`
+(basename + the `<!-- okf:coverage-generated -->` marker). `okf-validate.sh`
+short-circuits all meta pages before the concept checks, so they are never
+vocab-checked or counted as concepts.
 
 ## Concept granularity (resolves open decision 1)
 
@@ -22653,18 +22664,14 @@ List down alerting thresholds on those metrics:
 <core-file path="core/templates/okf/index.md">
 
 ---
-type: Subsystem
-title: "{PROJECT_NAME} — Wiki"
-description: >
-  Root index of the project wiki. Start here, then route into
-  overview/, systems/, features/, reference/, or entrypoints/ via the
-  Concept Map. Open a concept only when its description matches the task.
-resource: .
-tags: [index]
-timestamp: "{ISO_TIMESTAMP}"
 okf_version: "0.1"
-okf_types_version: "0.1"
 ---
+
+<!-- OKF §6/§11: an index file carries NO concept frontmatter; the root index.md
+     may declare ONLY `okf_version`. The frozen concept-`type` vocabulary version
+     is tracked here in the body (not in frontmatter) so bumping it stays visible
+     without violating the index-frontmatter rule.
+     okf-types-version: 0.1 -->
 
 # {PROJECT_NAME} — Wiki
 
@@ -22773,17 +22780,8 @@ Entrypoint) require ≥1 valid Mermaid block and ≥2 x-grounded-paths.
 
 <core-file path="core/templates/okf/section-index.md">
 
----
-type: Subsystem
-title: "{SECTION_TITLE}"
-description: >
-  Section index. Lists every concept in this section with its one-line
-  routing description so an agent can pick the right page without opening
-  each one. {SECTION_PURPOSE}
-resource: .
-tags: [index]
-timestamp: "{ISO_TIMESTAMP}"
----
+<!-- OKF §6: an index file contains NO frontmatter. This page is a reserved
+     navigation index, not a concept — its Concepts table is tool-generated. -->
 
 # {SECTION_TITLE}
 

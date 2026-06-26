@@ -1,14 +1,5 @@
----
-type: Subsystem
-title: "{SECTION_TITLE}"
-description: >
-  Section index. Lists every concept in this section with its one-line
-  routing description so an agent can pick the right page without opening
-  each one. {SECTION_PURPOSE}
-resource: .
-tags: [index]
-timestamp: "{ISO_TIMESTAMP}"
----
+<!-- OKF §6: an index file contains NO frontmatter. This page is a reserved
+     navigation index, not a concept — its Concepts table is tool-generated. -->
 
 # {SECTION_TITLE}
 

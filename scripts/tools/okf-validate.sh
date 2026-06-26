@@ -135,18 +135,25 @@ while IFS= read -r -d '' page; do
     rel="${page#"$BUNDLE/"}"
     base="$(basename "$rel")"
 
+    # Meta pages are NOT concepts: reserved index.md/log.md (OKF §6/§7) carry no
+    # concept frontmatter, and the tool-generated coverage page uses a descriptive
+    # (non-frozen) type. Exempt them from the frozen-vocab + required-field + body
+    # checks, and don't count them as concepts. The template-token (§3b) and
+    # cross-link (§4) scans below still cover them.
+    if is_meta_page "$base" "$page"; then
+        continue
+    fi
+
     type_val="$(get_yaml_field "$page" "type")"
 
     # Empty / placeholder pages: a non-meta page with no type (or no body) slips
     # past every downstream check (quality + coverage both key on `type`). Catch
     # it here so a blank or stub file can never ship.
     if [[ -z "$type_val" ]]; then
-        if ! is_meta_page "$base" "$page"; then
-            if [[ "$(nonblank_body_lines "$page")" -eq 0 ]]; then
-                add_error "$rel: empty page (no frontmatter type, no body) — every wiki page must be a real concept"
-            else
-                add_error "$rel: untyped page (missing frontmatter 'type:') — not a valid concept page"
-            fi
+        if [[ "$(nonblank_body_lines "$page")" -eq 0 ]]; then
+            add_error "$rel: empty page (no frontmatter type, no body) — every wiki page must be a real concept"
+        else
+            add_error "$rel: untyped page (missing frontmatter 'type:') — not a valid concept page"
         fi
         continue
     fi

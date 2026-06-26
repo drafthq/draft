@@ -77,7 +77,8 @@ Templates for each bundle page live in `core/templates/okf/` (`index.md`,
 ## Frozen `type` vocabulary
 
 Every concept carries a `type` from this frozen set (changing it churns every
-file; versioned via `index.md` frontmatter `okf_types_version`):
+file; versioned via the `okf-types-version` comment in the wiki root `index.md`
+body — OKF §6/§11 permit only `okf_version` in an index file's frontmatter):
 
 | type | Maps to | Home |
 |------|---------|------|
@@ -102,6 +103,16 @@ routing key** — write it as a routing decision ("should the agent open this fo
 the task at hand?"), never a summary. Draft extensions are namespaced `x-` and
 ignored by generic OKF consumers: `x-grounded-paths`, `x-hotspot-score`,
 `x-callers`.
+
+**Meta pages are not concepts.** Index files (`wiki/index.md` and every
+`<section>/index.md`) carry **no concept frontmatter**: per OKF §6 an index file
+has no frontmatter, and per §11 the root `index.md` may declare **only**
+`okf_version`. The tool-generated `systems/coverage.md` is a non-reserved file, so
+OKF §9.1/§9.2 require it to carry a typed frontmatter block; it uses a descriptive
+`type: Report` and is exempt from the frozen vocabulary via `is_meta_page`
+(basename + the `<!-- okf:coverage-generated -->` marker). `okf-validate.sh`
+short-circuits all meta pages before the concept checks, so they are never
+vocab-checked or counted as concepts.
 
 ## Concept granularity (resolves open decision 1)
 

@@ -122,6 +122,17 @@ write_coverage_page() {
     mkdir -p "$BUNDLE/systems"
     local tmp; tmp="$(mktemp)"
     {
+        # OKF §9.1/§9.2: every non-reserved .md needs parseable frontmatter with a
+        # non-empty `type`. coverage.md is tool-generated and not a code concept, so
+        # it uses a descriptive (non-frozen) type; okf-validate.sh exempts it from the
+        # frozen-vocab check via is_meta_page (basename + the marker below).
+        echo "---"
+        echo "type: Report"
+        echo "title: Component Coverage"
+        echo "description: Coverage of required components by wiki pages — which are documented, stubbed, or missing."
+        echo "resource: ."
+        echo "---"
+        echo ""
         echo "<!-- okf:coverage-generated -->"
         echo "# Component Coverage"
         echo ""
@@ -130,14 +141,21 @@ write_coverage_page() {
         echo ""
         echo "| Component | Wiki page | Status | Fan-in |"
         echo "|-----------|-----------|--------|--------|"
-        local cid status fanin
+        local cid status fanin link
         while IFS=$'\t' read -r cid required reason ftype fanin; do
             [[ -z "$cid" ]] && continue
             if [[ "$required" == "true" ]]; then
                 if [[ -f "$BUNDLE/$cid" ]]; then
                     bl="$(body_lines "$BUNDLE/$cid")"
+                    # coverage.md lives in systems/; link relative to it. Concepts in
+                    # other sections (entrypoints/, reference/, …) need a ../ prefix,
+                    # otherwise the link dangles and fails structure validation.
+                    case "$cid" in
+                        systems/*) link="${cid#systems/}";;
+                        *)         link="../$cid";;
+                    esac
                     if [[ "$bl" -ge "$MIN_STUB_LINES" ]]; then
-                        echo "| \`${cid%.md}\` | [page](${cid#systems/}) | Full | ${fanin} |"
+                        echo "| \`${cid%.md}\` | [page](${link}) | Full | ${fanin} |"
                     else
                         echo "| \`${cid%.md}\` | ${cid} | **STUB (${bl} lines)** | ${fanin} |"
                     fi

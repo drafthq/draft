@@ -100,6 +100,37 @@ assert "coverage.md marks billing MISSING" \
 assert "coverage.md lists deferred reason for tools" \
     "$(grep -q 'Deferred' "$B/systems/coverage.md" && echo true || echo false)"
 
+# --- coverage.md links to non-systems concepts (entrypoints/) must not dangle ---
+# Regression: links were emitted as ${cid#systems/}, which resolves wrong from
+# systems/coverage.md for entrypoints/* concepts (needs ../). Generate a bundle
+# with an entrypoints concept, then run the structure validator over it.
+EPFIX="$FIXTURE/ep"
+mkdir -p "$EPFIX/systems" "$EPFIX/entrypoints"
+cat > "$EPFIX/index.md" <<'EOF'
+---
+okf_version: "0.1"
+---
+
+# Wiki
+
+- [main](entrypoints/main.md)
+EOF
+cat > "$EPFIX/plan.json" <<'EOF'
+{"version":1,"expected":[
+ {"concept_id":"entrypoints/main.md","type":"Entrypoint","resource":"main","fan_in":3,"required":true,"reason_if_deferred":null}
+]}
+EOF
+write_real_page "$EPFIX/entrypoints/main.md"
+run --plan "$EPFIX/plan.json" --bundle "$EPFIX"
+assert "coverage.md generated for entrypoints plan" "$([[ -f "$EPFIX/systems/coverage.md" ]] && echo true || echo false)"
+assert "entrypoints row links with ../ prefix" \
+    "$(grep -q '(\.\./entrypoints/main.md)' "$EPFIX/systems/coverage.md" && echo true || echo false)"
+set +e
+VOUT="$("$ROOT_DIR/scripts/tools/okf-validate.sh" "$EPFIX" 2>&1)"; VRC=$?
+set -e
+assert "generated coverage.md has no dangling cross-link → structure exit 0" \
+    "$([[ "$VRC" == "0" ]] && echo true || echo false)"
+
 # --- Missing plan / bundle → exit 2 ---
 run --plan "$FIXTURE/nope.json" --bundle "$B"
 assert "Missing plan → exit 2" "$([[ "$RC" == "2" ]] && echo true || echo false)"

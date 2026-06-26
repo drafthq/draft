@@ -1,16 +1,12 @@
 ---
-type: Subsystem
-title: "{PROJECT_NAME} — Wiki"
-description: >
-  Root index of the project wiki. Start here, then route into
-  overview/, systems/, features/, reference/, or entrypoints/ via the
-  Concept Map. Open a concept only when its description matches the task.
-resource: .
-tags: [index]
-timestamp: "{ISO_TIMESTAMP}"
 okf_version: "0.1"
-okf_types_version: "0.1"
 ---
+
+<!-- OKF §6/§11: an index file carries NO concept frontmatter; the root index.md
+     may declare ONLY `okf_version`. The frozen concept-`type` vocabulary version
+     is tracked here in the body (not in frontmatter) so bumping it stays visible
+     without violating the index-frontmatter rule.
+     okf-types-version: 0.1 -->
 
 # {PROJECT_NAME} — Wiki
 
