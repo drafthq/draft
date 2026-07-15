@@ -101,6 +101,38 @@ ordered_pages() {
 }
 
 # Strip YAML frontmatter from a page (leading --- ... --- block on line 1).
+
+# Rewrite markdown links so concatenated architecture.md (at draft/) resolves them.
+# stdin body; $1 = bundle-relative path e.g. systems/foo.md
+rewrite_body_links() {
+    local rel="${1:-}"
+    local sec="${rel%%/*}"
+    python3 -c '
+import sys, re
+sec = sys.argv[1]
+text = sys.stdin.read()
+sections = ("systems", "features", "overview", "entrypoints", "reference")
+def repl(m):
+    label, href = m.group(1), m.group(2).strip()
+    if href.startswith(("http://", "https://", "mailto:", "#", "wiki/")):
+        return m.group(0)
+    if "::" in href and not href.startswith("../"):
+        return "`" + label + "`"
+    path, _, frag = href.partition("#")
+    frag_s = "#" + frag if frag else ""
+    if path.startswith("../"):
+        rest = path[3:]
+        if rest.split("/")[0] in sections:
+            return "[%s](wiki/%s%s)" % (label, rest, frag_s)
+    if any(path.startswith(s + "/") for s in sections):
+        return "[%s](wiki/%s%s)" % (label, path, frag_s)
+    if path.endswith(".md") and "/" not in path and sec in sections:
+        return "[%s](wiki/%s/%s%s)" % (label, sec, path, frag_s)
+    return m.group(0)
+sys.stdout.write(re.sub(r"\[([^\]]*)\]\(([^)]+)\)", repl, text))
+' "$sec"
+}
+
 strip_frontmatter() {
     awk '
         NR==1 && /^---$/ { fm=1; next }
@@ -172,8 +204,7 @@ render_architecture() {
             fi
             title="$(page_title "$BUNDLE/$rel")"
             [[ -n "$title" ]] || title="$rel"
-            local anchor; anchor="$(printf '%s' "$title" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-')"
-            anchor="${anchor#-}"; anchor="${anchor%-}"
+            local anchor; anchor="$(gfm_slug "$title")"
             echo "  - [${title}](#${anchor})"
         done < <(ordered_pages)
         echo ""
@@ -183,10 +214,16 @@ render_architecture() {
             echo ""
             echo "---"
             echo ""
-            strip_frontmatter "$BUNDLE/$rel"
+            strip_frontmatter "$BUNDLE/$rel" | rewrite_body_links "$rel"
         done < <(ordered_pages)
     } >"$tmp"
     mv "$tmp" "$out"
+    if [[ -x "$SCRIPT_DIR/okf-fix-links.sh" ]]; then
+        draft_dir="$(cd "$(dirname "$out")" && pwd)"
+        if [[ -d "$draft_dir/wiki" || "$(basename "$BUNDLE")" == "wiki" ]]; then
+            "$SCRIPT_DIR/okf-fix-links.sh" --file "$out" --wiki "$BUNDLE" --fix >/dev/null 2>&1 || true
+        fi
+    fi
     echo "rendered architecture view → $out ($(ordered_pages | grep -c . ) pages)"
 }
 
@@ -387,7 +424,7 @@ function render(md, base){
   var blocks=[], src=md.replace(/```(\w*)\n([\s\S]*?)```/g,function(m,lang,body){
     var cls = lang==='mermaid' ? ' class="mermaid-src"' : '';
     blocks.push('<pre'+cls+'><code>'+esc(body.replace(/\n$/,''))+'</code></pre>');
-    return ' BLOCK'+(blocks.length-1)+' ';
+    return 'BLOCK'+(blocks.length-1)+'';
   });
   var lines=src.split('\n'), out='', i=0, list='', tbl=[];
   function closeList(){ if(list){ out+='</'+list+'>'; list=''; } }
@@ -410,7 +447,7 @@ function render(md, base){
     if(/^\s*>\s?/.test(ln)){ closeList(); out+='<blockquote>'+inline(esc(ln.replace(/^\s*>\s?/,'')),base)+'</blockquote>'; continue; }
     var li=ln.match(/^\s*([-*]|\d+\.)\s+(.*)$/);
     if(li){ var want=/^\d/.test(li[1])?'ol':'ul'; if(list!==want){ closeList(); list=want; out+='<'+want+'>'; } out+='<li>'+inline(esc(li[2]),base)+'</li>'; continue; }
-    var b=ln.match(/^ BLOCK(\d+) $/);
+    var b=ln.match(/^BLOCK(\d+)$/);
     if(b){ closeList(); out+=blocks[+b[1]]; continue; }
     if(/^\s*$/.test(ln)){ closeList(); continue; }
     closeList(); out+='<p>'+inline(esc(ln),base)+'</p>';

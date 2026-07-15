@@ -113,6 +113,47 @@ get_yaml_field() {
 # Sets MEMORY_BIN globally; returns 0 if found, 1 otherwise.
 # Preference: PATH > Draft-managed install (~/.cache/draft/bin) > vendored bin/<arch> under known roots.
 # No legacy fallbacks: the Aether `graph`/`graph-clang` binaries are retired.
+
+# GitHub-flavored-markdown-ish heading id (shared by TOC, anchors, link fixers).
+# Keeps underscores; strips other punctuation; collapses whitespace to '-'.
+gfm_slug() {
+    local s="${1:-}"
+    # shellcheck disable=SC2001
+    s="$(printf '%s' "$s" | tr '[:upper:]' '[:lower:]')"
+    s="$(printf '%s' "$s" | sed -E 's/[^[:alnum:]_[:space:]-]+//g; s/[[:space:]]+/-/g; s/-+/-/g; s/^-+//; s/-+$//')"
+    printf '%s' "$s"
+}
+
+# Count entries in an x-grounded-paths frontmatter field.
+# Supports both inline (`x-grounded-paths: ["a", "b"]`) and block lists:
+#   x-grounded-paths:
+#     - "a"
+#     - "b"
+grounded_paths_count() {
+    local file="$1"
+    [[ -f "$file" ]] || { echo 0; return; }
+    awk '
+        NR==1 && /^---$/ { fm=1; next }
+        fm && /^---$/ { exit }
+        fm && /^x-grounded-paths:[[:space:]]*\[/ {
+            line=$0
+            sub(/^x-grounded-paths:[[:space:]]*\[/, "", line)
+            sub(/\].*$/, "", line)
+            gsub(/[[:space:]]/, "", line)
+            if (line=="") { print 0; exit }
+            n=split(line, a, ",")
+            print n
+            exit
+        }
+        fm && /^x-grounded-paths:[[:space:]]*$/ { collect=1; next }
+        fm && collect {
+            if ($0 ~ /^[[:space:]]*-[[:space:]]*/) { n++; next }
+            if ($0 ~ /^[A-Za-z0-9_-]+:/) { print n+0; exit }
+        }
+        END { if (collect) print n+0 }
+    ' "$file"
+}
+
 find_memory_bin() {
     local repo_abs="$1"
     local self_repo="$2"

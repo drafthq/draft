@@ -202,6 +202,8 @@ TOOLS=(
     "okf-validate-quality.sh"
     "okf-coverage-check.sh"
     "okf-validate-all.sh"
+    "okf-emit-catalog.sh"
+    "okf-fix-links.sh"
 )
 
 # ─────────────────────────────────────────────────────────

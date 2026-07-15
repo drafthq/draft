@@ -64,7 +64,10 @@ TEST_SCRIPTS = \
 	./tests/test-tools-okf-plan-concepts.sh \
 	./tests/test-tools-okf-validate-quality.sh \
 	./tests/test-tools-okf-coverage-check.sh \
-	./tests/test-tools-okf-validate-all.sh
+	./tests/test-tools-okf-validate-all.sh \
+	./tests/test-tools-okf-plan-concepts-cargo.sh \
+	./tests/test-tools-okf-emit-catalog.sh \
+	./tests/test-tools-okf-fix-links.sh
 
 # Phase 0 Foundations hygiene/verification tool tests (per manifest §2.2) — see above
 

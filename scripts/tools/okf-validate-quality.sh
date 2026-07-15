@@ -76,15 +76,9 @@ body_of() {
 # Count body lines after the frontmatter close (Q-LEN = "lines after frontmatter").
 body_lines() { body_of "$1" | wc -l | tr -d ' '; }
 
-# x-grounded-paths array length (entries inside [ ... ]).
+# x-grounded-paths array length — inline `[a, b]` or YAML block list (via _lib.sh).
 grounded_count() {
-    local arr
-    arr="$(grep -m1 -E '^x-grounded-paths:' "$1" 2>/dev/null || true)"
-    [[ -z "$arr" ]] && { echo 0; return; }
-    arr="${arr#*[}"; arr="${arr%]*}"
-    arr="$(printf '%s' "$arr" | tr -d ' ')"
-    [[ -z "$arr" ]] && { echo 0; return; }
-    awk -F',' '{print NF}' <<< "$arr"
+    grounded_paths_count "$1"
 }
 
 has_section() { grep -qE "^##[[:space:]]+$1([[:space:]]|$)" "$2"; }

@@ -111,13 +111,38 @@ is_deferred_name() {
 E_ID=(); E_TYPE=(); E_RES=(); E_FANIN=(); E_REQ=(); E_REASON=()
 SOURCE="heuristic"
 DEGRADED="false"
+DISCOVERY_META=()   # e.g. cargo, npm, go, graph, heuristic
+
+# Graph package names that are almost always tokenizer/type noise, not modules.
+is_noise_package_name() {
+    local n="$1"
+    case "$n" in
+        str|list|dict|int|bool|float|string|type|mod|Cargo|cargo|profile|int64|uint|byte|char|void|null|None|true|false|i32|i64|u32|u64|f32|f64|Option|Result|Error|Self|self)
+            return 0;;
+    esac
+    return 1
+}
+
+# True if concept_id already recorded.
+has_concept_id() {
+    local want="$1" id
+    for id in "${E_ID[@]:-}"; do
+        [[ "$id" == "$want" ]] && return 0
+    done
+    return 1
+}
 
 add_concept() {
     # name section type resource fan_in required reason
     local name="$1" section="$2" type="$3" resource="$4" fan_in="$5" required="$6" reason="$7"
     local stem; stem="$(slug "$name")"
     [[ -n "$stem" ]] || stem="component"
-    E_ID+=("$section/$stem.md")
+    local cid="$section/$stem.md"
+    # Dedupe by concept_id (cargo + graph may both see the same crate).
+    if has_concept_id "$cid"; then
+        return 0
+    fi
+    E_ID+=("$cid")
     E_TYPE+=("$type")
     E_RES+=("$resource")
     E_FANIN+=("$fan_in")
@@ -141,28 +166,194 @@ plan_from_manifest() {
     SOURCE="manifest"
 }
 
-# --- 2. Graph path ---
+# --- 2a. Language-aware workspace inventories (Cargo / npm / Go) ---
+# These produce crate/package-level concepts that graph .packages often collapse
+# or mis-label (especially Rust monorepos). Prefer path-grounded resources.
+
+plan_from_cargo_workspace() {
+    local cargo="$REPO/Cargo.toml"
+    [[ -f "$cargo" ]] || return 1
+    # Only treat as workspace if [workspace] present with members.
+    grep -qE '^\[workspace\]' "$cargo" || return 1
+    grep -qE 'members\s*=' "$cargo" || return 1
+
+    local members=()
+    # Extract quoted paths inside the members = [ ... ] array (possibly multi-line).
+    local in_members=0 line m
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        if [[ "$line" =~ members[[:space:]]*=[[:space:]]*\[ ]]; then
+            in_members=1
+        fi
+        if [[ $in_members -eq 1 ]]; then
+            while [[ "$line" =~ \"([^\"]+)\" ]]; do
+                m="${BASH_REMATCH[1]}"
+                members+=("$m")
+                line="${line#*\"$m\"}"
+            done
+            [[ "$line" == *"]"* ]] && in_members=0
+        fi
+    done < "$cargo"
+
+    [[ ${#members[@]} -gt 0 ]] || return 1
+
+    local path name ct required reason type
+    local added=0
+    for path in "${members[@]}"; do
+        [[ -z "$path" ]] && continue
+        # Skip globs we can't expand cheaply without bash nullglob walk
+        if [[ "$path" == *"*"* ]]; then
+            local base="${path%%/\*}"
+            [[ -d "$REPO/$base" ]] || continue
+            while IFS= read -r ct; do
+                name="$(basename "$(dirname "$ct")")"
+                [[ -z "$name" ]] && continue
+                if is_deferred_name "$name"; then
+                    required=false; reason="allow-defer match"
+                else
+                    required=true; reason=""
+                fi
+                type=Module
+                # Entrypoint packaging root if only main.rs and no lib.rs (heuristic)
+                if [[ -f "$(dirname "$ct")/src/main.rs" && ! -f "$(dirname "$ct")/src/lib.rs" ]]; then
+                    type=Module
+                fi
+                add_concept "$name" systems "$type" "$(dirname "$ct" | sed "s|^$REPO/||")" 0 "$required" "$reason"
+                added=$((added+1))
+            done < <(find "$REPO/$base" -mindepth 1 -maxdepth 3 -type f -name 'Cargo.toml' 2>/dev/null | sort)
+            continue
+        fi
+        [[ -f "$REPO/$path/Cargo.toml" || -f "$REPO/$path" ]] || continue
+        local res="$path"
+        [[ -f "$REPO/$path" && "$path" == */Cargo.toml ]] && res="$(dirname "$path")"
+        name="$(basename "$res")"
+        if is_deferred_name "$name"; then
+            required=false; reason="allow-defer match"
+        else
+            required=true; reason=""
+        fi
+        add_concept "$name" systems Module "$res" 0 "$required" "$reason"
+        added=$((added+1))
+    done
+    [[ $added -gt 0 ]] || return 1
+    DISCOVERY_META+=("cargo")
+    return 0
+}
+
+plan_from_npm_workspaces() {
+    local pkg="$REPO/package.json"
+    [[ -f "$pkg" ]] || return 1
+    command -v jq >/dev/null 2>&1 || return 1
+    # workspaces may be array or { packages: [] }
+    local names
+    names="$(jq -r '
+        if .workspaces|type=="array" then .workspaces[]
+        elif .workspaces.packages|type=="array" then .workspaces.packages[]
+        else empty end
+    ' "$pkg" 2>/dev/null || true)"
+    [[ -n "$names" ]] || return 1
+    local path name required reason added=0
+    while IFS= read -r path; do
+        [[ -z "$path" || "$path" == *"*"* ]] && continue
+        name="$(basename "$path")"
+        if is_deferred_name "$name"; then
+            required=false; reason="allow-defer match"
+        else
+            required=true; reason=""
+        fi
+        add_concept "$name" systems Module "$path" 0 "$required" "$reason"
+        added=$((added+1))
+    done <<< "$names"
+    [[ $added -gt 0 ]] || return 1
+    DISCOVERY_META+=("npm")
+    return 0
+}
+
+plan_from_go_modules() {
+    # go.work use directives, else single go.mod at root, else first-level */go.mod
+    local added=0 name required reason path
+    if [[ -f "$REPO/go.work" ]]; then
+        while IFS= read -r path; do
+            path="$(printf '%s' "$path" | sed -E 's/^[[:space:]]*//')"
+            [[ -z "$path" || "$path" == //* ]] && continue
+            [[ -f "$REPO/$path/go.mod" ]] || continue
+            name="$(basename "$path")"
+            if is_deferred_name "$name"; then
+                required=false; reason="allow-defer match"
+            else
+                required=true; reason=""
+            fi
+            add_concept "$name" systems Module "$path" 0 "$required" "$reason"
+            added=$((added+1))
+        done < <(awk '/^use[[:space:]]*\(/,/^\)/ {if ($1!="use" && $1!="(" && $1!=")") print $1}
+                      /^use[[:space:]]+\./ {print $2}' "$REPO/go.work" | tr -d '"')
+    fi
+    if [[ $added -eq 0 && -f "$REPO/go.mod" ]]; then
+        name="$(basename "$REPO")"
+        add_concept "$name" systems Module "." 0 true ""
+        added=1
+    fi
+    if [[ $added -eq 0 ]]; then
+        while IFS= read -r path; do
+            name="$(basename "$(dirname "$path")")"
+            add_concept "$name" systems Module "$(dirname "$path" | sed "s|^$REPO/||")" 0 true ""
+            added=$((added+1))
+        done < <(find "$REPO" -mindepth 2 -maxdepth 3 -type f -name 'go.mod' 2>/dev/null | sort | head -50)
+    fi
+    [[ $added -gt 0 ]] || return 1
+    DISCOVERY_META+=("go")
+    return 0
+}
+
+# --- 2b. Graph path ---
 plan_from_graph() {
     local arch; arch="$(scripts_graph_arch)" || return 1
     [[ -n "$arch" ]] || return 1
     echo "$arch" | jq -e '.packages != null' >/dev/null 2>&1 || return 1
 
-    SOURCE="graph"
+    local have_lang_inventory=0
+    [[ ${#DISCOVERY_META[@]} -gt 0 ]] && have_lang_inventory=1
+
     local name fan_in type required reason
     # Packages → systems/<pkg>.md
     while IFS=$'\t' read -r name fan_in; do
         [[ -z "$name" ]] && continue
+        # Drop tokenizer noise when we already have a real inventory (cargo/npm/go).
+        if [[ $have_lang_inventory -eq 1 ]] && is_noise_package_name "$name"; then
+            continue
+        fi
+        # Even without inventory, skip pure noise names that do not map to a dir.
+        if is_noise_package_name "$name"; then
+            local mapped=0
+            for d in "$REPO/$name" "$REPO/crates/$name" "$REPO/src/$name" "$REPO/third_party/$name"; do
+                [[ -d "$d" ]] && mapped=1 && break
+            done
+            [[ $mapped -eq 0 ]] && continue
+        fi
         if is_deferred_name "$name"; then
             required=false; reason="allow-defer match"; type=Module
         elif (( fan_in >= MIN_FAN_IN )); then
             required=true; reason=""; type=Subsystem
         elif [[ $DEFER_BELOW_FLOOR -eq 1 ]]; then
-            # Opt-in legacy behavior: low-fan-in packages are exempted.
             required=false; reason="fan_in $fan_in < floor $MIN_FAN_IN"; type=Module
         else
-            # Default: every package the graph knows about is documented. Fan-in
-            # below the floor only demotes Subsystem→Module; it never exempts.
             required=true; reason=""; type=Module
+        fi
+        # When language inventory exists, graph packages that are coarse parents
+        # (e.g. codegen/) become Subsystems only if a matching directory exists.
+        if [[ $have_lang_inventory -eq 1 ]]; then
+            if [[ -d "$REPO/$name" || -d "$REPO/crates/$name" || -d "$REPO/third_party/$name" || -d "$REPO/prod/$name" ]]; then
+                type=Subsystem
+                # Prefer real path as resource when known
+                for d in "$name" "crates/$name" "third_party/$name" "prod/$name"; do
+                    if [[ -d "$REPO/$d" ]]; then
+                        add_concept "$name" systems "$type" "$d" "$fan_in" "$required" "$reason"
+                        continue 2
+                    fi
+                done
+            else
+                # Unmapped graph label with inventory present → skip (not a crate).
+                continue
+            fi
         fi
         add_concept "$name" systems "$type" "$name" "$fan_in" "$required" "$reason"
     done < <(echo "$arch" | jq -r '.packages[]? | [.name, (.fan_in // 0)] | @tsv')
@@ -178,6 +369,8 @@ plan_from_graph() {
     done < <(echo "$arch" | jq -r '
         (.entry_points // [])[]? | if type=="object" then (.name // .path // empty) else . end' \
         | sort -u)
+    DISCOVERY_META+=("graph")
+    return 0
 }
 
 # graph-arch.sh wrapper that tolerates the "unavailable" sentinel.
@@ -218,18 +411,48 @@ plan_from_heuristic() {
 }
 
 # --- Drive discovery in priority order ---
+# 1. --manifest (authoritative, exclusive)
+# 2. Language inventories (Cargo / npm / Go) — can combine with graph parents
+# 3. Graph packages (filtered when inventory present)
+# 4. Heuristic top-level dirs
 if [[ -n "$MANIFEST" ]]; then
     [[ -f "$MANIFEST" ]] || { echo "ERROR: --manifest not found: $MANIFEST" >&2; exit 1; }
     plan_from_manifest
-elif plan_from_graph; then
-    :
+    DISCOVERY_META+=("manifest")
 else
-    plan_from_heuristic
+    # Language inventories first so cargo crate names win concept_ids.
+    plan_from_cargo_workspace || true
+    plan_from_npm_workspaces || true
+    plan_from_go_modules || true
+    if plan_from_graph; then
+        :
+    elif [[ ${#E_ID[@]} -eq 0 ]]; then
+        plan_from_heuristic
+        DISCOVERY_META+=("heuristic")
+    fi
+    # If graph failed but we have cargo/npm/go, still success.
+    if [[ ${#E_ID[@]} -eq 0 ]]; then
+        plan_from_heuristic
+        DISCOVERY_META+=("heuristic")
+    fi
 fi
 
 if [[ ${#E_ID[@]} -eq 0 ]]; then
     echo "ERROR: no expected concepts derived (graph + manifest unavailable, heuristic empty)" >&2
     exit 2
+fi
+
+# Compose SOURCE label from discovery meta
+if [[ ${#DISCOVERY_META[@]} -gt 0 ]]; then
+    # de-dupe meta labels
+    SOURCE="$(printf '%s\n' "${DISCOVERY_META[@]}" | awk '!s[$0]++' | paste -sd+ -)"
+    [[ -z "$SOURCE" ]] && SOURCE="heuristic"
+    # degraded only when pure heuristic with no language/graph
+    if [[ "$SOURCE" == "heuristic" ]]; then
+        DEGRADED="true"
+    else
+        DEGRADED="false"
+    fi
 fi
 
 # Required-first, then deferred; stable within group (topological-ish: high fan-in
@@ -257,6 +480,14 @@ emit_plan() {
         printf '  "source": "%s",\n' "$SOURCE"
         printf '  "degraded": %s,\n' "$DEGRADED"
         printf '  "min_fan_in": %d,\n' "$MIN_FAN_IN"
+        printf '  "discovery": ['
+        local di first_d=1
+        for di in "${DISCOVERY_META[@]:-}"; do
+            [[ -z "$di" ]] && continue
+            [[ $first_d -eq 1 ]] && first_d=0 || printf ','
+            printf '"%s"' "$(json_escape "$di")"
+        done
+        printf '],\n'
         # generated_order
         printf '  "generated_order": ['
         local first=1

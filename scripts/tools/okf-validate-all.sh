@@ -6,9 +6,10 @@
 # code, so a bundle that is structurally broken, full of stubs, or missing
 # required components is never promoted.
 #
-#   Layer 1  okf-validate.sh          structure (frontmatter, types, links, index)
 #   Layer 2  okf-validate-quality.sh  per-type anti-stub / depth / mermaid lint
 #   Layer 3  okf-coverage-check.sh    every required plan entry has a real page
+#                                      (may rewrite systems/coverage.md)
+#   Layer 1  okf-validate.sh          structure LAST so coverage rewrite is checked
 #
 # Usage:
 #   okf-validate-all.sh <BUNDLE_DIR> [--plan FILE] [--path-index FILE]
@@ -79,16 +80,23 @@ run_layer() {
     return $rc
 }
 
-# Layer 1: structure.
+# Order matters:
+#   1) quality  — page content (does not rewrite files)
+#   2) coverage — may REGENERATE systems/coverage.md (tool-owned)
+#   3) structure — link/frontmatter check LAST so coverage rewrite cannot leave
+#                  dangling links that structure already approved.
+#
+# Historical bug: structure-before-coverage let init promote a bundle whose
+# coverage.md still had broken relative links (entrypoints/ from systems/).
+
 v1_args=("$BUNDLE")
 [[ -n "$PATH_INDEX" ]] && v1_args+=(--path-index "$PATH_INDEX")
-if run_layer structure "$SCRIPT_DIR/okf-validate.sh" "${v1_args[@]}"; then L1=pass; else L1=fail; OVERALL=1; fi
-
-# Layer 2: quality.
 q_args=("$BUNDLE"); [[ $STRICT -eq 1 ]] && q_args+=(--strict)
+
+# Layer 2: quality (run first for fast fail on stubs).
 if run_layer quality "$SCRIPT_DIR/okf-validate-quality.sh" "${q_args[@]}"; then L2=pass; else L2=fail; OVERALL=1; fi
 
-# Layer 3: coverage (only if a plan is supplied).
+# Layer 3: coverage (writes coverage.md when not --no-coverage-page).
 if [[ -n "$PLAN" ]]; then
     if run_layer coverage "$SCRIPT_DIR/okf-coverage-check.sh" --plan "$PLAN" --bundle "$BUNDLE"; then
         L3=pass
@@ -96,6 +104,9 @@ if [[ -n "$PLAN" ]]; then
         L3=fail; OVERALL=1
     fi
 fi
+
+# Layer 1: structure LAST (after coverage page is final).
+if run_layer structure "$SCRIPT_DIR/okf-validate.sh" "${v1_args[@]}"; then L1=pass; else L1=fail; OVERALL=1; fi
 
 REPORT_JSON="$(printf '{"valid":%s,"bundle":"%s","layers":{"structure":"%s","quality":"%s","coverage":"%s"}}\n' \
     "$([[ $OVERALL -eq 0 ]] && echo true || echo false)" "$(json_escape "$BUNDLE")" "$L1" "$L2" "$L3")"

@@ -239,6 +239,22 @@ run "$B" --strict
 assert "Duplicate paragraph fails under --strict" \
     "$([[ "$RC" == "1" ]] && echo true || echo false)"
 
+# --- Multi-line x-grounded-paths is accepted (not false Q-GROUND) ---
+rm -rf "$B"; write_good_subsystem
+python3 - "$B/systems/auth.md" <<'PY'
+from pathlib import Path
+import sys
+p = Path(sys.argv[1])
+t = p.read_text()
+t = t.replace(
+    'x-grounded-paths: ["src/auth/login.go", "src/auth/session.go"]',
+    'x-grounded-paths:\n  - "src/auth/login.go"\n  - "src/auth/session.go"',
+)
+p.write_text(t)
+PY
+run "$B"
+assert "Multi-line grounded paths → exit 0" "$([[ "$RC" == "0" ]] && echo true || echo false)"
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 exit "$FAIL"
