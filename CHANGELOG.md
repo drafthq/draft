@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.5.3] - 2026-06-25
+
+### Fixed
+- **OKF bundle now conforms to the OKF v0.1 spec.** The emitted `draft/wiki/`
+  bundle carries the spec-required index frontmatter and generates
+  `coverage.md`, so downstream OKF consumers can validate the bundle shape.
+
+## [3.5.2] - 2026-06-24
+
+### Fixed
+- **Wiki completeness is enforced.** `/draft:init` (okf mode) now requires a
+  concept page for every module, rejects empty/shallow pages, and fails on
+  broken index links (PR #47).
+
+### Changed
+- User-facing prose says "wiki" instead of "OKF" throughout the docs.
+
+## [3.5.1] - 2026-06-22
+
+### Fixed
+- **`/draft:init` engine indexing is memory-bounded.** The
+  `codebase-memory-mcp` index run is wrapped in a cgroup scope capped at 25%
+  of system RAM, so indexing a large repo can no longer exhaust the machine.
+
+## [3.5.0] - 2026-06-20
+
+### Added
+- **Deterministic wiki completeness gates.** New `okf-plan-concepts.sh` plan
+  and `okf-coverage-check.sh` coverage gates enforce that the okf-mode wiki
+  covers the full module surface before an init/refresh is accepted.
+
 ## [3.4.0] - 2026-06-20
 
 ### Added

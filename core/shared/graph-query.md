@@ -92,7 +92,7 @@ These fields are appended to `~/.draft/metrics.jsonl` along with the existing sk
 
 ## Tooling Wrappers
 
-For common query modes, prefer the deterministic wrappers that ship with the plugin. Resolve their location via the canonical tool resolver (see [tool-resolver.md](tool-resolver.md)) before invoking. Skills run with cwd = the user's project and `${CLAUDE_PLUGIN_ROOT}` is **not** exported into skill Bash, so a bare `scripts/tools/foo.sh` fails — establish `DRAFT_TOOLS` once before the first helper call, in the same Bash session as your tool calls (re-establish it if you split helper calls into a separate, later Bash block):
+For common query modes, prefer the deterministic wrappers that ship with the plugin. Resolve their location via the canonical tool resolver (see [tool-resolver.md](tool-resolver.md)) before invoking. Skills run with cwd = the user's project and `${CLAUDE_PLUGIN_ROOT}` is **not** exported into skill Bash, so a bare `scripts/tools/git-metadata.sh` fails — establish `DRAFT_TOOLS` once before the first helper call, in the same Bash session as your tool calls (re-establish it if you split helper calls into a separate, later Bash block):
 
 ```bash
 DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
