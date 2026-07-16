@@ -66,12 +66,12 @@ while [[ $# -gt 0 ]]; do
         --yaml) FORMAT="yaml"; shift;;
         --json) FORMAT="json"; shift;;
         --project-metadata) WRITE_PROJECT_METADATA=1; shift;;
-        --project) PROJECT="$2"; shift 2;;
-        --module) MODULE="$2"; shift 2;;
-        --track-id) TRACK_ID="$2"; shift 2;;
-        --generated-by) GENERATED_BY="$2"; shift 2;;
-        --base) BASE_BRANCH="$2"; shift 2;;
-        --output-dir) OUTPUT_DIR="$2"; shift 2;;
+        --project) PROJECT="${2:?--project requires a value}"; shift 2;;
+        --module) MODULE="${2:?--module requires a value}"; shift 2;;
+        --track-id) TRACK_ID="${2:?--track-id requires a value}"; shift 2;;
+        --generated-by) GENERATED_BY="${2:?--generated-by requires a value}"; shift 2;;
+        --base) BASE_BRANCH="${2:?--base requires a value}"; shift 2;;
+        --output-dir) OUTPUT_DIR="${2:?--output-dir requires a value}"; shift 2;;
         --help|-h) usage; exit 0;;
         *) echo "Unknown flag: $1" >&2; usage >&2; exit 1;;
     esac

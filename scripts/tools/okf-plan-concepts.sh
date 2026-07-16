@@ -73,13 +73,13 @@ EOF
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --repo) REPO="$2"; shift 2;;
-        --scope) SCOPE="$2"; shift 2;;
-        --manifest) MANIFEST="$2"; shift 2;;
-        --min-fan-in) MIN_FAN_IN="$2"; shift 2;;
+        --repo) REPO="${2:?--repo requires a value}"; shift 2;;
+        --scope) SCOPE="${2:?--scope requires a value}"; shift 2;;
+        --manifest) MANIFEST="${2:?--manifest requires a value}"; shift 2;;
+        --min-fan-in) MIN_FAN_IN="${2:?--min-fan-in requires a value}"; shift 2;;
         --defer-below-floor) DEFER_BELOW_FLOOR=1; shift;;
         --allow-defer) ALLOW_DEFER+=("$2"); shift 2;;
-        --out) OUT="$2"; shift 2;;
+        --out) OUT="${2:?--out requires a value}"; shift 2;;
         --json) JSON=1; shift;;
         --help|-h) usage; exit 0;;
         -*) echo "Unknown flag: $1" >&2; usage >&2; exit 1;;

@@ -51,8 +51,8 @@ EOF
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --repo) REPO="$2"; shift 2 ;;
-    --plugin-root) PLUGIN_ROOT="$2"; shift 2 ;;
+    --repo) REPO="${2:?--repo requires a value}"; shift 2 ;;
+    --plugin-root) PLUGIN_ROOT="${2:?--plugin-root requires a value}"; shift 2 ;;
     --json) EMIT_JSON=1; shift ;;
     --verbose) VERBOSE=1; shift ;;
     --strict) STRICT=1; shift ;;

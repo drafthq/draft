@@ -49,10 +49,10 @@ EOF
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --since) SINCE="$2"; shift 2;;
-        --limit) LIMIT="$2"; shift 2;;
-        --scope-pattern) SCOPE_PATTERN="$2"; shift 2;;
-        --branch) BRANCH="$2"; shift 2;;
+        --since) SINCE="${2:?--since requires a value}"; shift 2;;
+        --limit) LIMIT="${2:?--limit requires a value}"; shift 2;;
+        --scope-pattern) SCOPE_PATTERN="${2:?--scope-pattern requires a value}"; shift 2;;
+        --branch) BRANCH="${2:?--branch requires a value}"; shift 2;;
         --help|-h) usage; exit 0;;
         *) echo "Unknown flag: $1" >&2; usage >&2; exit 1;;
     esac

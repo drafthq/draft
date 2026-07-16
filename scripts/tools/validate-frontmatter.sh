@@ -43,8 +43,8 @@ REQUIRED="name,description"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --require) REQUIRED="$2"; shift 2;;
-        --mode) MODE="$2"; shift 2;;
+        --require) REQUIRED="${2:?--require requires a value}"; shift 2;;
+        --mode) MODE="${2:?--mode requires a value}"; shift 2;;
         --help|-h) usage; exit 0;;
         -*) echo "Unknown flag: $1" >&2; usage >&2; exit 1;;
         *)

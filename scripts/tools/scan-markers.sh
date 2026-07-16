@@ -38,9 +38,9 @@ EOF
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --root) ROOT="$2"; shift 2;;
-        --markers) MARKERS="$2"; shift 2;;
-        --min-age-days) MIN_AGE="$2"; shift 2;;
+        --root) ROOT="${2:?--root requires a value}"; shift 2;;
+        --markers) MARKERS="${2:?--markers requires a value}"; shift 2;;
+        --min-age-days) MIN_AGE="${2:?--min-age-days requires a value}"; shift 2;;
         --help|-h) usage; exit 0;;
         *) echo "Unknown flag: $1" >&2; usage >&2; exit 1;;
     esac

@@ -52,7 +52,7 @@ EOF
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --scope) SCOPE="$2"; shift 2;;
+        --scope) SCOPE="${2:?--scope requires a value}"; shift 2;;
         --module-only) MODULE_ONLY=1; shift;;
         --no-fetch) NO_FETCH=1; shift;;
         --json) EMIT_JSON=1; shift;;

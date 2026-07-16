@@ -41,7 +41,7 @@ EOF
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --root) ROOT="$2"; shift 2;;
+        --root) ROOT="${2:?--root requires a value}"; shift 2;;
         --json) FORMAT="json"; shift;;
         --jsonl) FORMAT="jsonl"; shift;;
         --help|-h) usage; exit 0;;

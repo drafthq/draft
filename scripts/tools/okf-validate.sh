@@ -66,7 +66,7 @@ EOF
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --path-index) PATH_INDEX="$2"; shift 2;;
+        --path-index) PATH_INDEX="${2:?--path-index requires a value}"; shift 2;;
         --reverse) REVERSE=1; shift;;
         --structure-only) STRUCTURE_ONLY=1; shift;;
         --json) JSON=1; shift;;

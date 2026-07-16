@@ -51,8 +51,8 @@ while (($#)); do
         -h|--help) USAGE_HELP_MODE=1 usage ;;
         --enforce) ENFORCE=1; shift ;;
         --json) EMIT_JSON=1; shift ;;
-        --caps) CAPS_CONF="$2"; shift 2 ;;
-        --skills-dir) SKILLS_DIR="$2"; shift 2 ;;
+        --caps) CAPS_CONF="${2:?--caps requires a value}"; shift 2 ;;
+        --skills-dir) SKILLS_DIR="${2:?--skills-dir requires a value}"; shift 2 ;;
         -*) printf 'Unknown flag: %s\n' "$1" >&2; usage ;;
         *) printf 'Unexpected arg: %s\n' "$1" >&2; usage ;;
     esac

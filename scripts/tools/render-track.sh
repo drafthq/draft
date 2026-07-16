@@ -48,7 +48,7 @@ TO_STDOUT=0
 while (($#)); do
     case "$1" in
         -h|--help) USAGE_HELP_MODE=1 usage ;;
-        --out) OUT_PATH="$2"; shift 2 ;;
+        --out) OUT_PATH="${2:?--out requires a value}"; shift 2 ;;
         --stdout) TO_STDOUT=1; shift ;;
         -*) printf 'Unknown flag: %s\n' "$1" >&2; usage ;;
         *) TRACK_DIR="$1"; shift ;;

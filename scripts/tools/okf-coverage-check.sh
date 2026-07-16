@@ -57,12 +57,12 @@ EOF
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --plan) PLAN="$2"; shift 2;;
-        --bundle) BUNDLE="$2"; shift 2;;
-        --min-stub-lines) MIN_STUB_LINES="$2"; shift 2;;
+        --plan) PLAN="${2:?--plan requires a value}"; shift 2;;
+        --bundle) BUNDLE="${2:?--bundle requires a value}"; shift 2;;
+        --min-stub-lines) MIN_STUB_LINES="${2:?--min-stub-lines requires a value}"; shift 2;;
         --no-coverage-page) WRITE_PAGE=0; shift;;
         --json) JSON=1; shift;;
-        --report) REPORT="$2"; shift 2;;
+        --report) REPORT="${2:?--report requires a value}"; shift 2;;
         --help|-h) usage; exit 0;;
         -*) echo "Unknown flag: $1" >&2; usage >&2; exit 1;;
         *) echo "Unexpected arg: $1" >&2; usage >&2; exit 1;;

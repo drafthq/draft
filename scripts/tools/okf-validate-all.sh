@@ -54,10 +54,10 @@ EOF
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --plan) PLAN="$2"; shift 2;;
-        --path-index) PATH_INDEX="$2"; shift 2;;
+        --plan) PLAN="${2:?--plan requires a value}"; shift 2;;
+        --path-index) PATH_INDEX="${2:?--path-index requires a value}"; shift 2;;
         --strict) STRICT=1; shift;;
-        --report) REPORT="$2"; shift 2;;
+        --report) REPORT="${2:?--report requires a value}"; shift 2;;
         --json) JSON=1; shift;;
         --help|-h) usage; exit 0;;
         -*) echo "Unknown flag: $1" >&2; usage >&2; exit 1;;

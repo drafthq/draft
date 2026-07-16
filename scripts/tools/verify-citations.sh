@@ -48,7 +48,7 @@ while (($#)); do
     case "$1" in
         -h|--help) USAGE_HELP_MODE=1 usage ;;
         --json) EMIT_JSON=1; shift ;;
-        --tolerance) TOLERANCE="$2"; shift 2 ;;
+        --tolerance) TOLERANCE="${2:?--tolerance requires a value}"; shift 2 ;;
         -*) printf 'Unknown flag: %s\n' "$1" >&2; usage ;;
         *) TRACK_PATHS+=("$1"); shift ;;
     esac

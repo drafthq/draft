@@ -44,9 +44,9 @@ EOF
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --draft) DRAFT="$2"; shift 2;;
-        --file) FILE="$2"; shift 2;;
-        --wiki) WIKI="$2"; shift 2;;
+        --draft) DRAFT="${2:?--draft requires a value}"; shift 2;;
+        --file) FILE="${2:?--file requires a value}"; shift 2;;
+        --wiki) WIKI="${2:?--wiki requires a value}"; shift 2;;
         --fix) DO_FIX=1; shift;;
         --check) DO_CHECK=1; shift;;
         --help|-h) usage; exit 0;;

@@ -62,12 +62,12 @@ EOF
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --arch-out) ARCH_OUT="$2"; shift 2;;
+        --arch-out) ARCH_OUT="${2:?--arch-out requires a value}"; shift 2;;
         --concept-map-into) CMAP_INTO+=("$2"); shift 2;;
         --section-indexes) SECTION_INDEXES=1; shift;;
-        --web) WEB_OUT="$2"; shift 2;;
-        --coverage-report) COVERAGE_REPORT="$2"; shift 2;;
-        --validated-at) VALIDATED_AT="$2"; shift 2;;
+        --web) WEB_OUT="${2:?--web requires a value}"; shift 2;;
+        --coverage-report) COVERAGE_REPORT="${2:?--coverage-report requires a value}"; shift 2;;
+        --validated-at) VALIDATED_AT="${2:?--validated-at requires a value}"; shift 2;;
         --help|-h) usage; exit 0;;
         -*) echo "Unknown flag: $1" >&2; usage >&2; exit 1;;
         *)
