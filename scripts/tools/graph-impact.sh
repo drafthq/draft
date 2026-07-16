@@ -76,16 +76,23 @@ PROJECT="$(memory_ensure_index "$REPO_ABS" || true)"
 
 if [[ -n "$SYMBOL" ]]; then
     # direction:"both" is the reliable form (the "callers" value returns empty in this engine);
-    # we read the .callers array from it.
-    RES="$(memory_cli trace_path "{\"project\":\"$PROJECT\",\"function_name\":\"$SYMBOL\",\"depth\":$DEPTH,\"direction\":\"both\"}" || echo '{}')"
-    echo "${RES:-{\}}" | jq --arg t "$TARGET" '
+    # we read the .callers array from it. Payload built with jq so a quote in
+    # --symbol can never corrupt the JSON; an engine failure is unavailable,
+    # never a fabricated empty-impact success.
+    PAYLOAD="$(jq -n --arg p "$PROJECT" --arg f "$SYMBOL" --argjson d "$DEPTH" \
+        '{project:$p, function_name:$f, depth:$d, direction:"both"}')"
+    RES="$(memory_cli trace_path "$PAYLOAD" 2>/dev/null || true)"
+    echo "$RES" | jq -e . >/dev/null 2>&1 || unavailable "$TARGET" "$KIND"
+    echo "$RES" | jq --arg t "$TARGET" '
         {target:$t, kind:"symbol",
          impacted: [ (.callers // [])[] | {name:.name, file:(.qualified_name // ""), hop:(.hop // 1)} ],
          source:"memory-graph"}'
 else
     # File impact: detect_changes maps the working-tree diff to impacted symbols.
-    RES="$(memory_cli detect_changes "{\"project\":\"$PROJECT\"}" || echo '{}')"
-    echo "${RES:-{\}}" | jq --arg t "$TARGET" '
+    PAYLOAD="$(jq -n --arg p "$PROJECT" '{project:$p}')"
+    RES="$(memory_cli detect_changes "$PAYLOAD" 2>/dev/null || true)"
+    echo "$RES" | jq -e . >/dev/null 2>&1 || unavailable "$TARGET" "$KIND"
+    echo "$RES" | jq --arg t "$TARGET" '
         {target:$t, kind:"file",
          impacted: [ (.impacted_symbols // [])[]
                      | select((.file // "") | endswith($t) or (. == $t))

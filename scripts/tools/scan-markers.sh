@@ -6,7 +6,7 @@
 #
 # Usage:
 # scripts/tools/scan-markers.sh [--root DIR] [--markers LIST]
-# [--min-age-days N] [--include-untracked]
+# [--min-age-days N]
 #
 # Exit codes: 0 OK (even with zero hits), 1 invocation error, 2 not a git repo
 # (emits [] on stdout so consumers can still parse).

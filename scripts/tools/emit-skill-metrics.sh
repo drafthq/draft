@@ -37,8 +37,13 @@ LOCK_FILE="${METRICS_DIR}/metrics.lock"
 
 payload="${1:-}"
 
-# Validate that a payload was provided
-if [[ -z "${payload}" ]]; then
+# Trim trailing whitespace/newlines so the closing-brace strip below matches
+# even when the caller passes a payload with a stray trailing newline.
+payload="${payload%"${payload##*[![:space:]]}"}"
+
+# Validate that a payload was provided and looks like a JSON object — a
+# payload not ending in '}' would corrupt the NDJSON file, so drop it.
+if [[ -z "${payload}" || "${payload}" != *\} ]]; then
   exit 0
 fi
 

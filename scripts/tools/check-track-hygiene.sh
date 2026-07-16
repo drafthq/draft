@@ -74,6 +74,29 @@ record() {
     violation_count=$((violation_count + 1))
 }
 
+# Numeric reader for metadata.json:hygiene_budget.* (read_json_str is string-only).
+read_json_num() {
+    local file="$1" key="$2"
+    [[ -f "$file" ]] || return 0
+    grep -oE "\"$key\"[[:space:]]*:[[:space:]]*-?[0-9]+" "$file" 2>/dev/null \
+        | head -1 | grep -oE '\-?[0-9]+$' || true
+}
+
+# TBD budget for every top-level doc of one track; cap < 0 means unlimited.
+check_tbd_budget() {
+    local track_dir="$1" rel_track="$2" cap="$3" kind="$4" detail_suffix="$5"
+    (( cap >= 0 )) || return 0
+    while IFS= read -r f; do
+        local rel_file="${f#"$track_dir/"}"
+        local count
+        count="$(grep -oE "$TBD_RE" "$f" 2>/dev/null | wc -l | tr -d ' ' || true)"
+        if (( count > cap )); then
+            record "$rel_track" "$kind" "$rel_file" "0" \
+                "$count TBD sentinel(s) $detail_suffix"
+        fi
+    done < <(find "$track_dir" -maxdepth 1 -type f -name '*.md')
+}
+
 scan_one_track() {
     local track_dir="$1"
     local rel_track="${track_dir#"$REPO_ROOT/"}"
@@ -138,31 +161,28 @@ scan_one_track() {
         done < "$f"
     done < <(find "$track_dir" -maxdepth 1 -type f -name '*.md')
 
-    # 4. TBD budget per-doc.
+    # 4. TBD budget per-doc. Caps come from metadata.json:hygiene_budget when
+    # present (draft_tbd_cap / ready_for_review_tbd_cap; -1 = unlimited),
+    # falling back to the historical defaults.
     case "$meta_status" in
-        draft|archived) ;;
+        archived) ;;
+        draft)
+            local draft_cap
+            draft_cap="$(read_json_num "$meta" "draft_tbd_cap")"
+            [[ "$draft_cap" =~ ^-?[0-9]+$ ]] || draft_cap=-1
+            check_tbd_budget "$track_dir" "$rel_track" "$draft_cap" "tbd-over-cap" \
+                "(cap $draft_cap at status=$meta_status)"
+            ;;
         ready-for-review|in_progress)
-            local tbd_cap=3
-            while IFS= read -r f; do
-                local rel_file="${f#"$track_dir/"}"
-                local count
-                count="$(grep -oE "$TBD_RE" "$f" 2>/dev/null | wc -l | tr -d ' ')"
-                if (( count > tbd_cap )); then
-                    record "$rel_track" "tbd-over-cap" "$rel_file" "0" \
-                        "$count TBD sentinel(s) (cap $tbd_cap at status=$meta_status)"
-                fi
-            done < <(find "$track_dir" -maxdepth 1 -type f -name '*.md')
+            local tbd_cap
+            tbd_cap="$(read_json_num "$meta" "ready_for_review_tbd_cap")"
+            [[ "$tbd_cap" =~ ^-?[0-9]+$ ]] || tbd_cap=3
+            check_tbd_budget "$track_dir" "$rel_track" "$tbd_cap" "tbd-over-cap" \
+                "(cap $tbd_cap at status=$meta_status)"
             ;;
         completed)
-            while IFS= read -r f; do
-                local rel_file="${f#"$track_dir/"}"
-                local count
-                count="$(grep -oE "$TBD_RE" "$f" 2>/dev/null | wc -l | tr -d ' ')"
-                if (( count > 0 )); then
-                    record "$rel_track" "tbd-in-completed" "$rel_file" "0" \
-                        "$count TBD sentinel(s) at status=completed"
-                fi
-            done < <(find "$track_dir" -maxdepth 1 -type f -name '*.md')
+            check_tbd_budget "$track_dir" "$rel_track" 0 "tbd-in-completed" \
+                "at status=completed"
             ;;
     esac
 

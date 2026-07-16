@@ -55,6 +55,36 @@ rc=$?
 set -e
 assert "Past-EOF citation → exit 1" "$([[ "$rc" == "1" ]] && echo true || echo false)"
 
+# --- Regression: RANGE citations are extracted whole, not truncated at lo ---
+# The extraction regex used to capture only "src/a.py:2" from "src/a.py:2-200",
+# so a drifted range end silently passed.
+mkdir -p "$FIXTURE/repo/tracks/range-ok" "$FIXTURE/repo/tracks/range-bad"
+cat > "$FIXTURE/repo/tracks/range-ok/metadata.json" <<EOF
+{ "id": "range-ok", "synced_to_commit": "$COMMIT" }
+EOF
+cat > "$FIXTURE/repo/tracks/range-ok/spec.md" <<'EOF'
+# Spec
+See src/a.py:2-4 for context.
+EOF
+set +e
+"$TOOL" "$FIXTURE/repo/tracks/range-ok" >/dev/null 2>&1
+rc=$?
+set -e
+assert "In-range range citation → exit 0" "$([[ "$rc" == "0" ]] && echo true || echo false)"
+
+cat > "$FIXTURE/repo/tracks/range-bad/metadata.json" <<EOF
+{ "id": "range-bad", "synced_to_commit": "$COMMIT" }
+EOF
+cat > "$FIXTURE/repo/tracks/range-bad/spec.md" <<'EOF'
+# Spec
+See src/a.py:2-200 for context.
+EOF
+set +e
+"$TOOL" "$FIXTURE/repo/tracks/range-bad" >/dev/null 2>&1
+rc=$?
+set -e
+assert "Past-EOF range end → exit 1" "$([[ "$rc" == "1" ]] && echo true || echo false)"
+
 # --- Missing file at commit ---
 mkdir -p "$FIXTURE/repo/tracks/missing"
 cat > "$FIXTURE/repo/tracks/missing/metadata.json" <<EOF

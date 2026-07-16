@@ -87,7 +87,7 @@ printf '%s' "$ARCH_JSON" > "$TMP_ARCH"
 printf '%s' "$PROPS_JSON" > "$TMP_PROPS"
 
 jq -n --slurpfile arch "$TMP_ARCH" --slurpfile props "$TMP_PROPS" --argjson top "$TOP" '
-    (($props[0].rows) // []) as $prows
+    ((($props[0].rows) // []) | map(select(.[0] != null))) as $prows
     | (reduce $prows[] as $r ({};
           .[$r[0]] = {c:((($r[1]) // "0") | tonumber? // 0),
                       cog:((($r[2]) // "0") | tonumber? // 0),

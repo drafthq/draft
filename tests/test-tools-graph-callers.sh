@@ -53,6 +53,16 @@ if command -v jq >/dev/null 2>&1; then
         "$(echo "$out4" | jq -e '.source == "memory-graph"' >/dev/null 2>&1 && echo true || echo false)"
 fi
 
+# --- gq_escape unit checks: quotes AND backslashes must be escaped ---
+# A trailing backslash left unescaped turns into `\'` inside the Cypher string
+# literal — an escaped quote that never closes the string.
+GQ_ESC_QUOTE="$(source "$ROOT_DIR/scripts/tools/_graph_queries.sh"; gq_escape "a'b")"
+assert "gq_escape escapes single quotes" \
+    "$([[ "$GQ_ESC_QUOTE" == "a\\'b" ]] && echo true || echo false)"
+GQ_ESC_BSLASH="$(source "$ROOT_DIR/scripts/tools/_graph_queries.sh"; gq_escape 'x\')"
+assert "gq_escape escapes backslashes" \
+    "$([[ "$GQ_ESC_BSLASH" == 'x\\' ]] && echo true || echo false)"
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 exit "$FAIL"

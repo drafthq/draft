@@ -150,7 +150,7 @@ scan_md() {
         # token the `(planned)` annotation owns.
         if echo "$line" | grep -qE '\(planned\)|\[New file'; then
             local paths
-            paths="$(echo "$line" | grep -oE '[A-Za-z][A-Za-z0-9_./-]*\.[A-Za-z]+' | sort -u)"
+            paths="$(echo "$line" | grep -oE '[A-Za-z][A-Za-z0-9_./-]*\.[A-Za-z]+' | sort -u || true)"
             local path_count
             path_count="$(printf '%s\n' "$paths" | grep -c . || true)"
             if (( path_count == 1 )); then

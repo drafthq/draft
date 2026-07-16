@@ -99,6 +99,11 @@ echo "$CHANGES_JSON" | jq -e . >/dev/null 2>&1 || CHANGES_JSON='{}'
 CHANGED_FILES="$(echo "$CHANGES_JSON" | jq -r '.changed_count // (.changed_files | length?) // 0' 2>/dev/null || echo 0)"
 IMPACTED="$(echo "$CHANGES_JSON" | jq -r '(.impacted_symbols | length?) // 0' 2>/dev/null || echo 0)"
 
+# YAML double-quoted scalars: escape backslashes then quotes so an unusual
+# project name or engine version string can never corrupt the marker.
+PROJECT_Y="${PROJECT//\\/\\\\}"; PROJECT_Y="${PROJECT_Y//\"/\\\"}"
+VER_Y="${VER//\\/\\\\}"; VER_Y="${VER_Y//\"/\\\"}"
+
 cat > "$OUT/schema.yaml" <<EOF
 # Draft graph gate marker — written by scripts/tools/graph-snapshot.sh
 # Draft is engine-only: this file carries NO graph data. Its presence signals that
@@ -106,8 +111,8 @@ cat > "$OUT/schema.yaml" <<EOF
 # live via the graph-*.sh wrappers (or \`codebase-memory-mcp cli <tool>\`).
 # Counts below are point-of-index provenance; the live engine is authoritative.
 engine: codebase-memory-mcp
-engine_version: "$VER"
-project: "$PROJECT"
+engine_version: "$VER_Y"
+project: "$PROJECT_Y"
 generated_at: "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 indexed_nodes: $NODES
 indexed_edges: $EDGES

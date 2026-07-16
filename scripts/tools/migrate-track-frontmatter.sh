@@ -223,7 +223,9 @@ EOF
                 printf 'migrate: would strip ephemeral frontmatter from %s\n' "$path"
             else
                 (( BACKUP )) && cp "$path" "$path.bak"
-                local _tmp; _tmp="$(mktemp "${path}.XXXXXX")"; printf '%s' "$after" > "$_tmp" && mv -f "$_tmp" "$path"
+                # %s\n restores the EOF newline stripped by command substitution
+                # (same pattern as fix-whitespace.sh).
+                local _tmp; _tmp="$(mktemp "${path}.XXXXXX")"; printf '%s\n' "$after" > "$_tmp" && mv -f "$_tmp" "$path"
                 printf 'migrate: stripped ephemeral frontmatter from %s\n' "$path"
             fi
         fi

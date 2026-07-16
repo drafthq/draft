@@ -98,6 +98,20 @@ rc=$?
 set -e
 assert "(planned) file exists locally → exit 1" "$([[ "$rc" == "1" ]] && echo true || echo false)"
 
+# --- Regression: (planned) line with NO path token is skipped, not a crash ---
+# (grep exits 1 when the line has zero path-looking tokens; the unguarded
+# pipeline assignment used to abort the whole script under set -euo pipefail.)
+mkdir -p "$FIXTURE/tracks/planned-no-path"
+cat > "$FIXTURE/tracks/planned-no-path/spec.md" <<'EOF'
+# Spec
+Feature flag rollout (planned).
+EOF
+set +e
+"$TOOL" "$FIXTURE/tracks/planned-no-path" >/dev/null 2>&1
+rc=$?
+set -e
+assert "(planned) line without a path → exit 0" "$([[ "$rc" == "0" ]] && echo true || echo false)"
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 exit "$FAIL"

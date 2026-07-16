@@ -170,7 +170,7 @@ if find_memory_bin "$REPO_ABS" "$SELF_REPO"; then
   ok "Engine: $ENGINE ($VER)"
   LIMIT="$("$ENGINE" config list 2>/dev/null | awk '/auto_index_limit/{print $3}' || true)"
   [[ -n "$LIMIT" ]] && info "auto_index_limit: $LIMIT (governs AUTO-index only; explicit index_repository should bypass)" || true
-  if [[ "$GIT_OK" -eq 1 && -n "${LIMIT:-}" && "$TRACKED" -gt "$LIMIT" ]]; then
+  if [[ "$GIT_OK" -eq 1 && "${LIMIT:-}" =~ ^[0-9]+$ && "$TRACKED" -gt "$LIMIT" ]]; then
     warn "Tracked files ($TRACKED) > auto_index_limit ($LIMIT) — confirm the explicit index isn't truncated near $LIMIT."
   fi
 else

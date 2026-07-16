@@ -147,6 +147,24 @@ assert "path-index naming missing page → exit 1" "$([[ "$RC" == "1" ]] && echo
 assert "Error names the missing page" \
     "$(echo "$OUT" | grep -q 'systems/billing.md' && echo true || echo false)"
 
+# --- Regression: pretty-printed (multi-line) arrays must still be validated ---
+# A line-oriented extraction used to skip arrays whose brackets span lines,
+# letting dangling references pass silently.
+cat > "$FIXTURE/path-to-concept.json" <<'EOF'
+{
+  "src/auth/login.go": [
+    "systems/auth.md"
+  ],
+  "src/billing/charge.go": [
+    "systems/billing.md"
+  ]
+}
+EOF
+run "$FIXTURE/wiki" --path-index "$FIXTURE/path-to-concept.json"
+assert "multi-line path-index naming missing page → exit 1" "$([[ "$RC" == "1" ]] && echo true || echo false)"
+assert "multi-line error names the missing page" \
+    "$(echo "$OUT" | grep -q 'systems/billing.md' && echo true || echo false)"
+
 # --- path-index with .md-keyed source paths (doc groundings) → keys ignored, exit 0 ---
 # Source paths may themselves end in .md (grounding a concept to a doc file). The
 # validator must check only array VALUES (pages), never keys.

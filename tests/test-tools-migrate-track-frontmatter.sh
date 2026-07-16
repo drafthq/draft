@@ -63,6 +63,11 @@ assert "track_id preserved" \
 assert "template_version field added to metadata.json" \
     "$(grep -q '"template_version"' "$FIXTURE/tracks/legacy/metadata.json" && echo true || echo false)"
 
+# --- Regression: migration preserves the EOF newline ---
+# (printf '%s' of a command substitution used to drop it on every migrated doc.)
+assert "migrated spec.md keeps trailing newline" \
+    "$([[ "$(tail -c 1 "$FIXTURE/tracks/legacy/spec.md" | od -An -c | tr -d ' ')" == '\n' ]] && echo true || echo false)"
+
 # --- Idempotency: re-run → no-op ---
 output="$("$TOOL" "$FIXTURE/tracks/legacy" 2>&1)"
 assert "Re-run idempotent (no-op announced)" \

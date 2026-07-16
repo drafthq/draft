@@ -28,9 +28,12 @@ if [[ "$(type -t memory_cli 2>/dev/null)" != function ]]; then
     source "$_GQ_DIR/_lib.sh"
 fi
 
-# Escape single quotes for embedding inside a Cypher single-quoted string literal.
+# Escape for embedding inside a Cypher single-quoted string literal.
+# Backslashes must be doubled BEFORE quotes are escaped, otherwise an input
+# ending in `\` yields `\'` — an escaped quote that never closes the literal.
 gq_escape() {
     local s="$1"
+    s="${s//\\/\\\\}"
     printf '%s' "${s//\'/\\\'}"
 }
 
@@ -82,19 +85,23 @@ gq_rows_len() {
     printf '%s' "$1" | jq -r '(.rows // []) | length' 2>/dev/null || printf '0'
 }
 
-# gq_symbol_status <project> <sym_esc> <result_json> -> ok | no-edges | no-match
+# gq_symbol_status <project> <sym_esc> <result_json>
+#   -> ok | no-edges | no-match | probe-failed
 # Fail-loud disambiguation (Guardrail 4): an empty result is only a true negative
 # ("no-edges") when the node actually exists; otherwise it is "no-match". An
 # existence probe runs only when the primary result is empty (hot path stays one
-# query).
+# query). If the probe itself errors, that is NOT a true negative — report
+# "probe-failed" so callers never mistake an engine failure for absence.
 gq_symbol_status() {
     local project="$1" sym="$2" result="$3"
     if [[ "$(gq_rows_len "$result")" -gt 0 ]]; then
         printf 'ok'; return
     fi
     local ex
-    ex="$(gq_run "$project" "$(gq_q_exists "$sym")" || true)"
-    if [[ -n "$ex" && "$(gq_rows_len "$ex")" -gt 0 ]]; then
+    if ! ex="$(gq_run "$project" "$(gq_q_exists "$sym")")"; then
+        printf 'probe-failed'; return
+    fi
+    if [[ "$(gq_rows_len "$ex")" -gt 0 ]]; then
         printf 'no-edges'
     else
         printf 'no-match'

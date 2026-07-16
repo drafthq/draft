@@ -95,8 +95,7 @@ if [[ "$TRANSITIVE" -eq 1 ]]; then
     echo "$RES" | jq -e . >/dev/null 2>&1 || unavailable
     N="$(echo "$RES" | jq -r '(.callers // []) | length' 2>/dev/null || echo 0)"
     if [[ "$N" -gt 0 ]]; then STATUS="ok"; else
-        EX="$(gq_run "$PROJECT" "$(gq_q_exists "$SYM_ESC")" || true)"
-        if [[ -n "$EX" && "$(gq_rows_len "$EX")" -gt 0 ]]; then STATUS="no-edges"; else STATUS="no-match"; fi
+        STATUS="$(gq_symbol_status "$PROJECT" "$SYM_ESC" '{"rows":[]}')"
     fi
     echo "$RES" | jq --arg s "$SYMBOL" --arg st "$STATUS" '
         {symbol:$s,

@@ -68,5 +68,6 @@ ARCH_JSON="$(memory_cli get_architecture "{\"project\":\"$PROJECT\",\"aspects\":
 [[ -n "$ARCH_JSON" ]] || unavailable
 
 # Validate it parses and looks like an architecture object before emitting.
+# Tag with source like every other graph-*.sh wrapper (universal contract).
 echo "$ARCH_JSON" | jq -e '.total_nodes != null' >/dev/null 2>&1 || unavailable
-echo "$ARCH_JSON" | jq '.'
+echo "$ARCH_JSON" | jq '. + {source:"memory-graph"}'

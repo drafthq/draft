@@ -237,12 +237,14 @@ if [[ -n "$PATH_INDEX" ]]; then
         # themselves end in .md (e.g. grounding to docs/INVARIANTS.md) — those are
         # not bundle pages, so we extract strings *inside* the [ ... ] value arrays
         # and ignore keys entirely. Each page must exist in the bundle.
+        # Flatten first: the index may be pretty-printed, so value arrays can
+        # span lines and a line-oriented match would silently skip them.
         while IFS= read -r ref; do
             [[ -z "$ref" ]] && continue
             if [[ ! -f "$BUNDLE/$ref" ]]; then
                 add_error "path-index references missing concept page: $ref"
             fi
-        done < <(grep -oE '\[[^]]*\]' "$PATH_INDEX" 2>/dev/null \
+        done < <(tr '\n' ' ' < "$PATH_INDEX" 2>/dev/null | grep -oE '\[[^]]*\]' \
                    | grep -oE '"[^"]+\.md"' | tr -d '"' | sort -u)
     fi
 fi
@@ -251,9 +253,10 @@ fi
 # Forward proves the index doesn't name ghosts; reverse proves no page is an
 # orphan with no source mapping (a symptom of hand-written / off-plan pages).
 if [[ $REVERSE -eq 1 && $STRUCTURE_ONLY -eq 0 && -n "$PATH_INDEX" && -f "$PATH_INDEX" ]]; then
-    # All pages the index maps to (its array values).
+    # All pages the index maps to (its array values). Flattened for the same
+    # pretty-printed-array reason as the forward check above.
     INDEXED_FILE="$(mktemp)"
-    grep -oE '\[[^]]*\]' "$PATH_INDEX" 2>/dev/null \
+    tr '\n' ' ' < "$PATH_INDEX" 2>/dev/null | grep -oE '\[[^]]*\]' \
         | grep -oE '"[^"]+\.md"' | tr -d '"' | sort -u > "$INDEXED_FILE" || true
     while IFS= read -r -d '' page; do
         rel="${page#"$BUNDLE/"}"

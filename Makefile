@@ -15,6 +15,7 @@ TEST_SCRIPTS = \
 	./tests/test-syntax-transforms.sh \
 	./tests/test-trigger-functions.sh \
 	./tests/test-error-handling.sh \
+	./tests/test-cross-references.sh \
 	./tests/test-tools-registered.sh \
 	./tests/test-tools-conventions.sh \
 	./tests/test-tools-git-metadata.sh \
@@ -67,9 +68,16 @@ TEST_SCRIPTS = \
 	./tests/test-tools-okf-validate-all.sh \
 	./tests/test-tools-okf-plan-concepts-cargo.sh \
 	./tests/test-tools-okf-emit-catalog.sh \
-	./tests/test-tools-okf-fix-links.sh
+	./tests/test-tools-okf-fix-links.sh \
+	./tests/test-tools-check-graph-usage-report.sh \
+	./tests/test-tools-check-template-noop.sh \
+	./tests/test-tools-emit-skill-metrics.sh
 
 # Phase 0 Foundations hygiene/verification tool tests (per manifest §2.2) — see above
+#
+# Intentionally NOT wired (currently failing; tracked in docs/WORK_TRACKER.md):
+#   tests/test-hld-lld-contract.sh       — approvers-key drift needs a template-contract decision (WT-028)
+#   tests/test-skill-script-invocation.sh — 22 files need the canonical DRAFT_TOOLS preamble migration (WT-029)
 
 help: ## Show this help message
 	@echo "Available targets:"
@@ -110,4 +118,6 @@ lint: ## Run shellcheck and markdownlint
 clean: ## Clean build artifacts
 	@rm -f integrations/copilot/.github/copilot-instructions.md
 	@rm -f integrations/copilot/.github/copilot-instructions.md.*
+	@rm -f integrations/agents/AGENTS.md
+	@rm -f integrations/agents/AGENTS.md.*
 	@echo "Cleaned integration build artifacts"

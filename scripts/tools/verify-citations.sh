@@ -83,7 +83,7 @@ extract_citations() {
             # bracket expression prematurely terminates a regex literal in
             # POSIX/BSD awk ("nonterminated character class"), though gawk is
             # lenient. The string form is portable across awk implementations.
-            while (match(s, "[A-Za-z0-9_][A-Za-z0-9_./-]*\\.[A-Za-z0-9]+:[0-9]+")) {
+            while (match(s, "[A-Za-z0-9_][A-Za-z0-9_./-]*\\.[A-Za-z0-9]+:[0-9]+(-[0-9]+)?")) {
                 cite = substr(s, RSTART, RLENGTH)
                 printf("%s\t%d\t%s\n", FILENAME, NR, cite)
                 s = substr(s, RSTART + RLENGTH)

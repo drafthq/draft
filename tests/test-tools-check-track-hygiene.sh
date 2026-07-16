@@ -78,6 +78,40 @@ rc=$?
 set -e
 assert "5 TBDs at ready-for-review (cap 3) → exit 1" "$([[ "$rc" == "1" ]] && echo true || echo false)"
 
+# --- Regression: ZERO TBDs at ready-for-review must be clean, not a crash ---
+# (grep exits 1 on no match; an unguarded pipeline assignment used to kill the
+# script under set -euo pipefail with no output at all.)
+mkdir -p "$FIXTURE/tracks/zero-tbd"
+cat > "$FIXTURE/tracks/zero-tbd/metadata.json" <<'EOF'
+{ "id": "zero-tbd", "status": "ready-for-review" }
+EOF
+cat > "$FIXTURE/tracks/zero-tbd/spec.md" <<'EOF'
+# Spec
+Fully resolved spec with no placeholders.
+EOF
+set +e
+zero_out="$("$TOOL" "$FIXTURE/tracks/zero-tbd" 2>&1)"
+rc=$?
+set -e
+assert "0 TBDs at ready-for-review → exit 0" "$([[ "$rc" == "0" ]] && echo true || echo false)"
+assert "0-TBD run still prints a verdict" "$([[ -n "$zero_out" ]] && echo true || echo false)"
+
+# --- hygiene_budget: configured cap overrides the default of 3 ---
+mkdir -p "$FIXTURE/tracks/custom-cap"
+cat > "$FIXTURE/tracks/custom-cap/metadata.json" <<'EOF'
+{ "id": "custom-cap", "status": "ready-for-review",
+  "hygiene_budget": { "draft_tbd_cap": -1, "ready_for_review_tbd_cap": 5 } }
+EOF
+cat > "$FIXTURE/tracks/custom-cap/spec.md" <<'EOF'
+# Spec
+- _TBD_a_ _TBD_b_ _TBD_c_ _TBD_d_ _TBD_e_
+EOF
+set +e
+"$TOOL" "$FIXTURE/tracks/custom-cap" >/dev/null 2>&1
+rc=$?
+set -e
+assert "5 TBDs under configured cap 5 → exit 0" "$([[ "$rc" == "0" ]] && echo true || echo false)"
+
 # --- JSON mode ---
 output="$("$TOOL" --json "$FIXTURE/tracks/clean" 2>&1)"
 assert "JSON mode emits violation_count key" \

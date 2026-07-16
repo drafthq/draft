@@ -198,14 +198,6 @@ find_memory_bin() {
     local roots=()
     [[ -n "$repo_abs" && -d "$repo_abs" ]] && roots+=("$repo_abs")
     [[ -n "$self_repo" && -d "$self_repo" ]] && roots+=("$self_repo")
-    for bc in \
-        "$HOME/.cursor/plugins/local/draft/.draft-install-path" \
-        "$HOME/.claude/plugins/draft/.draft-install-path"; do
-        if [[ -f "$bc" ]]; then
-            local pr; pr="$(cat "$bc" 2>/dev/null || true)"
-            [[ -n "$pr" && -d "$pr" ]] && roots+=("$pr")
-        fi
-    done
 
     for pr in "${roots[@]}"; do
         local cand="$pr/bin/$ARCH/$bin_name"
