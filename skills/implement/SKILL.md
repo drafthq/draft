@@ -139,7 +139,7 @@ If one of these applies, route directly to the specialist workflow and stop this
    ```bash
    # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
    # is not exported into skill Bash). See core/shared/tool-resolver.md.
-   DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+   DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
    [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
    [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
    [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -639,7 +639,7 @@ After a phase passes review, refresh `metadata.json.impact` so future tracks can
 
 2. **Compute downstream blast radius (graph-aware, optional):** If `draft/graph/schema.yaml` exists, for each file in `files_touched` query (this runs in its own Bash session — re-resolve the helpers):
    ```bash
-   DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+   DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
    [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
    [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
    [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"

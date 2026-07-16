@@ -54,7 +54,7 @@ Check for arguments:
 If argument is `list`:
 1. Prefer the deterministic `adr-index.sh` wrapper for the listing — it returns a structured JSON `{adrs:[{id,title,date,status,path,related_tracks}]}` derived from each ADR's frontmatter. Resolve via the canonical tool resolver (see [core/shared/tool-resolver.md](../../core/shared/tool-resolver.md)):
    ```bash
-   DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+   DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
    [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
    [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
    [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"

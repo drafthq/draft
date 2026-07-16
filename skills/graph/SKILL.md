@@ -37,7 +37,7 @@ echo "Target repo: $REPO_ABS"
 # Locate Draft's bundled helpers. Skills run with cwd = the user's project and
 # ${CLAUDE_PLUGIN_ROOT} is not exported into skill Bash, so resolve DRAFT_TOOLS here
 # and call helpers as "$DRAFT_TOOLS/<tool>.sh". See core/shared/tool-resolver.md.
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"

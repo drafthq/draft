@@ -95,7 +95,7 @@ These fields are appended to `~/.draft/metrics.jsonl` along with the existing sk
 For common query modes, prefer the deterministic wrappers that ship with the plugin. Resolve their location via the canonical tool resolver (see [tool-resolver.md](tool-resolver.md)) before invoking. Skills run with cwd = the user's project and `${CLAUDE_PLUGIN_ROOT}` is **not** exported into skill Bash, so a bare `scripts/tools/git-metadata.sh` fails — establish `DRAFT_TOOLS` once before the first helper call, in the same Bash session as your tool calls (re-establish it if you split helper calls into a separate, later Bash block):
 
 ```bash
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -211,7 +211,7 @@ Live queries go through the shell tools under `scripts/tools/`, which drive the 
 ### Callers — who calls this function?
 
 ```bash
-scripts/tools/graph-callers.sh --repo . --symbol <name>
+"$DRAFT_TOOLS/graph-callers.sh" --repo . --symbol <name>
 ```
 
 Output: `{symbol, callers[{name, file}], source}`. Use when enumerating call sites before claiming "no other usages" or judging breaking-change severity.
@@ -219,8 +219,8 @@ Output: `{symbol, callers[{name, file}], source}`. Use when enumerating call sit
 ### Impact — blast radius of a file or symbol
 
 ```bash
-scripts/tools/graph-impact.sh --repo . --file <path>      # changed-file impact (working-tree diff)
-scripts/tools/graph-impact.sh --repo . --symbol <name>    # transitive callers of a function
+"$DRAFT_TOOLS/graph-impact.sh" --repo . --file <path>      # changed-file impact (working-tree diff)
+"$DRAFT_TOOLS/graph-impact.sh" --repo . --symbol <name>    # transitive callers of a function
 ```
 
 Output: `{target, kind, impacted[{name, file, hop}], source}`. Use when sizing risk before modifying a file or symbol, especially high-fan-in hotspots.
@@ -228,7 +228,7 @@ Output: `{target, kind, impacted[{name, file, hop}], source}`. Use when sizing r
 ### Hotspots — fan-in ranking
 
 ```bash
-scripts/tools/hotspot-rank.sh --repo . [--top N]
+"$DRAFT_TOOLS/hotspot-rank.sh" --repo . [--top N]
 ```
 
 Output: `{hotspots[{id, name, fanIn}], source}` (server-computed by the engine).
@@ -236,7 +236,7 @@ Output: `{hotspots[{id, name, fanIn}], source}` (server-computed by the engine).
 ### Cycles — call-cycle detection
 
 ```bash
-scripts/tools/cycle-detect.sh --repo .
+"$DRAFT_TOOLS/cycle-detect.sh" --repo .
 ```
 
 Output: `{cycles[[a,b],[a,b,c]], source}` — fixed-length 2- and 3-node `CALLS` cycles (mutual recursion / tight coupling).
@@ -246,7 +246,7 @@ Output: `{cycles[[a,b],[a,b,c]], source}` — fixed-length 2- and 3-node `CALLS`
 Query the engine's architecture view live with the `graph-arch.sh` wrapper (it resolves the engine, indexes on demand, and auto-resolves the project):
 
 ```bash
-scripts/tools/graph-arch.sh --repo . \
+"$DRAFT_TOOLS/graph-arch.sh" --repo . \
   | jq '{packages, node_labels, edge_types, routes, layers, boundaries}'
 ```
 
@@ -255,8 +255,8 @@ scripts/tools/graph-arch.sh --repo . \
 ### Mermaid — diagram text
 
 ```bash
-scripts/tools/mermaid-from-graph.sh --repo . --diagram module-deps   # co-change coupling
-scripts/tools/mermaid-from-graph.sh --repo . --diagram proto-map     # detected routes
+"$DRAFT_TOOLS/mermaid-from-graph.sh" --repo . --diagram module-deps   # co-change coupling
+"$DRAFT_TOOLS/mermaid-from-graph.sh" --repo . --diagram proto-map     # detected routes
 ```
 
 Emits a ready-to-inject ` ```mermaid ``` ` block on the fly (computed live by the engine), or an empty stub (exit 2) when the engine is unavailable. Diagrams are generated at the moment of use — they are never committed.
@@ -264,7 +264,7 @@ Emits a ready-to-inject ` ```mermaid ``` ` block on the fly (computed live by th
 ### Snippet — verified source + caller/callee counts
 
 ```bash
-scripts/tools/graph-snippet.sh --repo . --qualified <pkg.Mod.Class.method>
+"$DRAFT_TOOLS/graph-snippet.sh" --repo . --qualified <pkg.Mod.Class.method>
 ```
 
 Output: `{qualified_name, file, start_line, end_line, callers, callees, transitive_loop_depth, complexity, code, status, source}`. Prefer this over grep+Read when you have a qualified name — it returns the engine's attributed source plus pre-computed counts.
@@ -272,7 +272,7 @@ Output: `{qualified_name, file, start_line, end_line, callers, callees, transiti
 ### Search — semantic / ranked symbol lookup
 
 ```bash
-scripts/tools/graph-search.sh --repo . --query "auth token refresh" [--limit N]
+"$DRAFT_TOOLS/graph-search.sh" --repo . --query "auth token refresh" [--limit N]
 ```
 
 Output: `{query, results[{name, qualified_name, label, file, rank}], total, source}`. Use when the user names an **intent/concept** rather than an exact symbol — this is the first move in the Concept-to-Files recipe.
@@ -280,8 +280,8 @@ Output: `{query, results[{name, qualified_name, label, file, rank}], total, sour
 ### Tests — coverage edges and untested surface
 
 ```bash
-scripts/tools/graph-tests.sh --repo . --symbol <name>     # tests covering a symbol
-scripts/tools/graph-tests.sh --repo . --untested          # exported symbols with no TESTS edge
+"$DRAFT_TOOLS/graph-tests.sh" --repo . --symbol <name>     # tests covering a symbol
+"$DRAFT_TOOLS/graph-tests.sh" --repo . --untested          # exported symbols with no TESTS edge
 ```
 
 Output: `{symbol, tests[{test,file}], status, source}` or `{untested[{symbol,file}], total, truncated, source}`. Feeds coverage gaps for `init`/`testing-strategy`/`coverage`.
@@ -289,7 +289,7 @@ Output: `{symbol, tests[{test,file}], status, source}` or `{untested[{symbol,fil
 ### Deps — real module/file import graph
 
 ```bash
-scripts/tools/graph-deps.sh --repo . [--file PATH]
+"$DRAFT_TOOLS/graph-deps.sh" --repo . [--file PATH]
 ```
 
 Output: `{imports[{src,dst}], total, truncated, source}` from actual `IMPORTS` edges (self-imports filtered). This is the auto-derived dependency graph behind `mermaid-from-graph.sh --diagram module-deps` and `architecture.md §9`.
@@ -297,7 +297,7 @@ Output: `{imports[{src,dst}], total, truncated, source}` from actual `IMPORTS` e
 ### Hierarchy — class inheritance
 
 ```bash
-scripts/tools/graph-hierarchy.sh --repo . [--symbol <Class> | --derived <Base>]
+"$DRAFT_TOOLS/graph-hierarchy.sh" --repo . [--symbol <Class> | --derived <Base>]
 ```
 
 Output: `{edges[{child,parent}], status, source}`. `--derived` gives the blast radius of changing a base class.
@@ -305,8 +305,8 @@ Output: `{edges[{child,parent}], status, source}`. `--derived` gives the blast r
 ### Errors — error-propagation paths
 
 ```bash
-scripts/tools/graph-errors.sh --repo . --symbol <name>   # what it raises/throws
-scripts/tools/graph-errors.sh --repo . --type <ErrType>  # who raises/throws that type
+"$DRAFT_TOOLS/graph-errors.sh" --repo . --symbol <name>   # what it raises/throws
+"$DRAFT_TOOLS/graph-errors.sh" --repo . --type <ErrType>  # who raises/throws that type
 ```
 
 Output: `{symbol, raises[...], status, source}` or `{type, raisers[...], status, source}`. `--type` drives fail-closed audits.
@@ -314,7 +314,7 @@ Output: `{symbol, raises[...], status, source}` or `{type, raisers[...], status,
 ### Risk — pre-computed risk hotspots
 
 ```bash
-scripts/tools/graph-risk.sh --repo . [--min-complexity N]
+"$DRAFT_TOOLS/graph-risk.sh" --repo . [--min-complexity N]
 ```
 
 Output: `{risky[{symbol, file, complexity, flags}], total, truncated, source}` from the engine's pre-computed flags (`unguarded_recursion`, `recursion_in_loop`, `alloc_in_loop`, `linear_scan_in_loop`). High-signal input for `bughunt`/`deep-review` — the engine already found these.
@@ -322,8 +322,8 @@ Output: `{risky[{symbol, file, complexity, flags}], total, truncated, source}` f
 ### Generic — read-only escape hatch (all 20 edges / ~30 properties)
 
 ```bash
-scripts/tools/graph-query.sh --repo . --cypher 'MATCH (f)-[:WRITES]->(v) RETURN f.name, v.name LIMIT 50'
-scripts/tools/graph-query.sh --repo . --tool get_graph_schema --json '{}'
+"$DRAFT_TOOLS/graph-query.sh" --repo . --cypher 'MATCH (f)-[:WRITES]->(v) RETURN f.name, v.name LIMIT 50'
+"$DRAFT_TOOLS/graph-query.sh" --repo . --tool get_graph_schema --json '{}'
 ```
 
 Unlocks any edge type or node property without a purpose-built wrapper. Write verbs are rejected; stay inside the SAFE dialect set (above). Emits raw engine JSON.
@@ -331,7 +331,7 @@ Unlocks any edge type or node property without a purpose-built wrapper. Write ve
 ### Indexing / refreshing the gate marker
 
 ```bash
-scripts/tools/graph-snapshot.sh --repo .
+"$DRAFT_TOOLS/graph-snapshot.sh" --repo .
 ```
 
 Indexes the repo into the engine and writes the `draft/graph/schema.yaml` gate marker (now including the `detect_changes` delta: `changed_files`/`impacted_symbols`). It writes **no** graph data. Run during `/draft:init` and `/draft:graph`, or whenever the index should be refreshed.
@@ -350,7 +350,7 @@ The engine is the `codebase-memory-mcp` binary. Resolution order (implemented by
 The canonical verifier is `scripts/tools/verify-graph-binary.sh` (`--json --verbose --strict`). It resolves and liveness-checks the engine and, in a `draft/` context, writes the usage-report side-effect:
 
 ```bash
-ENGINE_INFO="$(scripts/tools/verify-graph-binary.sh --repo . --json 2>/dev/null || true)"
+ENGINE_INFO="$("$DRAFT_TOOLS/verify-graph-binary.sh" --repo . --json 2>/dev/null || true)"
 # {"status":"ok","engine_bin":"...","source":"managed|path|bundled:<arch>|override","arch":"..."}
 ```
 
@@ -363,7 +363,7 @@ After successful detection, `draft/.graph-binary-report.json` contains: `detecte
 Run during `draft:init` / `draft:graph`, or manually:
 
 ```bash
-scripts/tools/graph-snapshot.sh --repo .
+"$DRAFT_TOOLS/graph-snapshot.sh" --repo .
 ```
 
 The engine indexes C/C++, Go, Python, TypeScript/JS, and more (tree-sitter, 159 languages) plus LSP-assisted resolution for the major ones, and detects HTTP/gRPC/GraphQL routes. Indexing is incremental in the engine (content-based, git-aware). This refreshes the engine index and rewrites the `schema.yaml` gate marker; it produces no committed graph data.
