@@ -7,6 +7,64 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.6.0] - 2026-07-15
+
+Full-codebase review release: 10-angle review with per-finding adversarial
+verification produced 37 confirmed findings — all fixed (see
+`docs/WORK_TRACKER.md` for the finding-by-finding record).
+
+### Fixed
+- **Validators no longer crash on clean input.** `check-track-hygiene.sh`
+  (zero TBD markers) and `verify-doc-anchors.sh` (`(planned)` line with no
+  path token) aborted under `set -euo pipefail` with no output; both now pass
+  clean tracks.
+- **Validators no longer silently pass bad input.** `okf-validate.sh` skipped
+  pretty-printed path-index arrays; `verify-citations.sh` truncated
+  `file:LO-HI` ranges to `LO`, so drifted range ends were never checked.
+- **Graph tooling hardening.** `gq_escape` escapes backslashes (Cypher
+  string-literal breakout); `graph-impact.sh` builds payloads with
+  `jq -n --arg` and reports engine failures as `source:"unavailable"` instead
+  of fabricating empty results; `graph-arch.sh` emits the universal `source`
+  field; `graph-preflight.sh` survives non-numeric `auto_index_limit`;
+  `hotspot-rank.sh` survives null `qualified_name`; `graph-snapshot.sh`
+  escapes YAML scalars; symbol-status probes distinguish engine failure
+  (`probe-failed`) from a true no-match.
+- **CLI installer.** Upgrades mirror bundled directories instead of
+  merge-copying (files deleted upstream no longer persist); the plugin-root
+  marker records the actual install root (`CURSOR_HOME`/`--project` aware);
+  `spawnSync` resolves npm `.cmd` shims on Windows.
+- **Site.** `build-book.sh` derives sitemap blog URLs from `web/blog/*/`
+  (three live posts were missing from the hardcoded list); the homepage
+  terminal releases its pin on `focusout` for keyboard users.
+- **Tool ergonomics.** Dangling flags exit with `--flag requires a value`
+  instead of a raw `unbound variable` error (89 sites); `--help` output and
+  usage headers corrected; `emit-skill-metrics.sh` can no longer corrupt the
+  metrics NDJSON on payloads with trailing whitespace;
+  `migrate-track-frontmatter.sh` preserves the EOF newline.
+
+### Changed
+- **DRAFT_TOOLS canonical preamble** now honors the `DRAFT_PLUGIN_ROOT`
+  override first (matching `resolve-tools.sh` precedence); all 24 files
+  carrying the inline resolver migrated, and `core/shared/graph-query.md`
+  examples invoke tools via `"$DRAFT_TOOLS/..."`. Enforced by
+  `tests/test-skill-script-invocation.sh` in `make test`.
+- `check-track-hygiene.sh` honors `metadata.json:hygiene_budget`
+  (`draft_tbd_cap`, `ready_for_review_tbd_cap`) instead of hardcoded caps.
+- Skill display headers and Copilot triggers live in one `SKILL_META` table
+  in `scripts/lib.sh`; the graph wrappers share one `graph_bootstrap()`
+  helper instead of 15 copies of the engine-bootstrap sequence.
+
+### Removed
+- Retired `core/templates/track-architecture.md` (replaced by
+  `hld.md`/`lld.md`; the decompose skill had already declared it retired).
+
+### Added
+- Six previously-missing test suites wired into `make test` (72 total):
+  cross-references, HLD/LLD contract, skill-script invocation discipline, and
+  tool suites for `check-graph-usage-report`, `check-template-noop`,
+  `emit-skill-metrics` — plus regression cases for every fixed defect.
+- `CHANGELOG.md` entries backfilled for 3.5.0–3.5.3.
+
 ## [3.5.3] - 2026-06-25
 
 ### Fixed
