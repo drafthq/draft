@@ -14,8 +14,13 @@ const os = require('os');
 const path = require('path');
 
 // Resolve the installed draft plugin root for a given host, or null if unknown.
-function resolvePluginRoot(hostId) {
+// hintRoot: the root the just-executed install plan actually wrote to — it
+// already accounts for scope (--project) and env overrides (CURSOR_HOME) that
+// the per-host defaults below cannot see.
+function resolvePluginRoot(hostId, hintRoot) {
   const home = os.homedir();
+
+  if (hintRoot && fs.existsSync(path.join(hintRoot, 'scripts', 'tools'))) return hintRoot;
 
   if (hostId === 'claude-code') {
     // 1. Claude Code's own registry holds the authoritative installPath.
@@ -77,9 +82,9 @@ function compareVersions(a, b) {
 }
 
 // Write ~/.cache/draft/plugin-root for the host. Returns the path written, or null.
-function writePluginRootMarker(hostId) {
+function writePluginRootMarker(hostId, hintRoot) {
   try {
-    const root = resolvePluginRoot(hostId);
+    const root = resolvePluginRoot(hostId, hintRoot);
     if (!root) return null;
     const dest = path.join(os.homedir(), '.cache', 'draft', 'plugin-root');
     fs.mkdirSync(path.dirname(dest), { recursive: true });

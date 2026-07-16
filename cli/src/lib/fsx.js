@@ -18,6 +18,9 @@ function ensureDir(dir) {
 
 function copyTree(src, dest) {
   ensureDir(path.dirname(dest));
+  // Mirror, don't merge: dests are fully draft-owned bundled dirs, and a
+  // merge-copy would keep files deleted by newer releases around forever.
+  fs.rmSync(dest, { recursive: true, force: true });
   fs.cpSync(src, dest, { recursive: true });
 }
 

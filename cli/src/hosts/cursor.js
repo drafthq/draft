@@ -48,6 +48,9 @@ module.exports = {
       targetSummary: `${base} (${ctx.scope})`,
       actions,
       graph: true,
+      // The actual install root (scope/CURSOR_HOME aware) — used for the
+      // plugin-root marker instead of re-deriving a default path.
+      pluginRoot: base,
       // Runs after the file copies: register + enable the plugin in the shared
       // Claude registry. On a dry run it computes the merges and writes nothing.
       postInstall(c) {

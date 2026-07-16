@@ -10,9 +10,13 @@ const { writePluginRootMarker } = require('./lib/marker');
 // before we even reach the real (separately-timed) install steps.
 const CHECK_TIMEOUT_MS = 10000;
 
+// On Windows, npm global CLIs are .cmd shims that CreateProcess can't resolve
+// without a shell; elsewhere a shell is unnecessary overhead.
+const USE_SHELL = process.platform === 'win32';
+
 function hasBinary(name) {
   // ENOENT on the error means the binary is not on PATH.
-  const r = spawnSync(name, ['--version'], { stdio: 'ignore', timeout: CHECK_TIMEOUT_MS });
+  const r = spawnSync(name, ['--version'], { stdio: 'ignore', timeout: CHECK_TIMEOUT_MS, shell: USE_SHELL });
   return !(r.error && r.error.code === 'ENOENT');
 }
 
@@ -25,7 +29,7 @@ function execAction(act, ctx) {
   const printable = `${act.cmd} ${act.args.join(' ')}`;
   log.plan(`${ctx.dryRun ? 'would run' : 'running'}: ${printable}`);
   if (ctx.dryRun) return 0;
-  const r = spawnSync(act.cmd, act.args, { stdio: 'inherit', timeout: STEP_TIMEOUT_MS });
+  const r = spawnSync(act.cmd, act.args, { stdio: 'inherit', timeout: STEP_TIMEOUT_MS, shell: USE_SHELL });
   if (r.error) {
     if (r.error.code === 'ETIMEDOUT') {
       log.error(`timed out after ${Math.round(STEP_TIMEOUT_MS / 1000)}s: ${printable}`);
@@ -123,7 +127,7 @@ function install(host, ctx) {
   // Record the install path so skills can locate scripts/tools/ from the user's
   // project cwd (best-effort; graph skills glob-fallback if the marker is absent).
   if (!ctx.dryRun) {
-    const root = writePluginRootMarker(host.id);
+    const root = writePluginRootMarker(host.id, plan.pluginRoot);
     if (root) log.note(`Recorded plugin path for graph tooling: ${root}`);
   }
 
