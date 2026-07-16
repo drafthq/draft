@@ -10,7 +10,7 @@
 # Adding a new skill:
 #   1. Create skills/<name>/SKILL.md
 #   2. Add the skill name to SKILL_ORDER array in lib.sh
-#   3. Add display name and trigger to the case statements below
+#   3. Add a "<name>|<header>|<trigger>" row to SKILL_META in lib.sh
 #   4. Run this script
 #
 
@@ -25,94 +25,6 @@ AGENTS_OUTPUT="$ROOT_DIR/integrations/agents/AGENTS.md"
 
 # Source shared library for SKILL_ORDER, CORE_FILES, extract_body
 source "$SCRIPT_DIR/lib.sh"
-
-# ─────────────────────────────────────────────────────────
-# Skill metadata: display headers
-# ─────────────────────────────────────────────────────────
-
-get_skill_header() {
-    local skill="$1"
-    case "$skill" in
-        draft)             echo "Draft Overview" ;;
-        init)              echo "Init Command" ;;
-        graph)             echo "Graph Command" ;;
-        new-track)         echo "New Track Command" ;;
-        decompose)         echo "Decompose Command" ;;
-        implement)         echo "Implement Command" ;;
-        coverage)          echo "Coverage Command" ;;
-        deploy-checklist)  echo "Deploy Checklist Command" ;;
-        bughunt)           echo "Bug Hunt Command" ;;
-        review)            echo "Review Command" ;;
-        upload)            echo "Upload Command" ;;
-        quick-review)      echo "Quick Review Command" ;;
-        deep-review)       echo "Deep Review Command" ;;
-        testing-strategy)  echo "Testing Strategy Command" ;;
-        learn)             echo "Learn Command" ;;
-        adr)               echo "ADR Command" ;;
-        debug)             echo "Debug Command" ;;
-        standup)           echo "Standup Command" ;;
-        tech-debt)         echo "Tech Debt Command" ;;
-        incident-response) echo "Incident Response Command" ;;
-        documentation)     echo "Documentation Command" ;;
-        status)            echo "Status Command" ;;
-        revert)            echo "Revert Command" ;;
-        change)            echo "Change Command" ;;
-        plan)              echo "Plan Router" ;;
-        ops)               echo "Ops Router" ;;
-        docs)              echo "Docs Router" ;;
-        discover)          echo "Discover Router" ;;
-        jira)              echo "Jira Router" ;;
-        integrations)      echo "Integrations Router" ;;
-        tour)              echo "Tour Command" ;;
-        impact)            echo "Impact Command" ;;
-        assist-review)     echo "Assist Review Command" ;;
-        *)                 echo "$(echo "${skill:0:1}" | tr '[:lower:]' '[:upper:]')${skill:1} Command" ;;
-    esac
-}
-
-# ─────────────────────────────────────────────────────────
-# Skill metadata: triggers (natural language → command)
-# ─────────────────────────────────────────────────────────
-
-get_copilot_trigger() {
-    local skill="$1"
-    case "$skill" in
-        draft)             echo "\"help\" or \"draft\"" ;;
-        init)              echo "\"init draft\", \"build the code graph\", or \"draft init [refresh] [--graph-only] [--module-only]\"" ;;
-        graph)             echo "\"build graph\", \"refresh graph\", or \"draft graph [path]\"" ;;
-        new-track)         echo "\"new feature\" or \"draft new-track <description>\"" ;;
-        decompose)         echo "\"break into modules\" or \"draft decompose\"" ;;
-        implement)         echo "\"implement\" or \"draft implement\"" ;;
-        coverage)          echo "\"check coverage\" or \"draft coverage\"" ;;
-        deploy-checklist)  echo "\"deploy checklist\" or \"draft deploy-checklist [track <id>]\"" ;;
-        bughunt)           echo "\"hunt bugs\" or \"draft bughunt [--track <id>]\"" ;;
-        review)            echo "\"review code\" or \"draft review [--track <id>] [--full]\"" ;;
-        upload)            echo "\"upload for review\" or \"draft upload [track <id>]\"" ;;
-        quick-review)      echo "\"quick review\" or \"draft quick-review [file|pr <number>]\"" ;;
-        deep-review)       echo "\"deep review\" or \"draft deep-review [module]\"" ;;
-        testing-strategy)  echo "\"test strategy\" or \"draft testing-strategy [track <id>|path]\"" ;;
-        learn)             echo "\"learn patterns\" or \"draft learn [promote|migrate|path]\"" ;;
-        adr)               echo "\"document decision\" or \"draft adr [title]\"" ;;
-        debug)             echo "\"debug bug\" or \"draft debug [description|track <id>]\"" ;;
-        standup)           echo "\"standup\" or \"draft standup [date|week|save]\"" ;;
-        tech-debt)         echo "\"tech debt\" or \"draft tech-debt [path|track <id>]\"" ;;
-        incident-response) echo "\"incident\" or \"draft incident-response [new|update|postmortem]\"" ;;
-        documentation)     echo "\"write docs\" or \"draft documentation [readme|runbook|api|onboarding]\"" ;;
-        status)            echo "\"status\" or \"draft status\"" ;;
-        revert)            echo "\"revert\" or \"draft revert\"" ;;
-        change)            echo "\"handle change\" or \"draft change <description>\"" ;;
-        plan)              echo "\"plan feature\" or \"draft plan <intent>\" (new-track, decompose, adr, tech-debt, change)" ;;
-        ops)               echo "\"ops deploy\" or \"draft ops <intent>\" (deploy-checklist, incident, standup, status, revert)" ;;
-        docs)              echo "\"write docs\" or \"draft docs <intent>\" (documentation)" ;;
-        discover)          echo "\"discover debug\" or \"draft discover <intent>\" (debug, bughunt, reviews, coverage, learn, index, etc.)" ;;
-        jira)              echo "\"jira preview\", \"jira create\", or \"jira review <ID>\"" ;;
-        integrations)      echo "\"integrations\", \"integrations jira-preview\", or \"integrations jira-create\"" ;;
-        tour)              echo "\"tour\" or \"draft tour\"" ;;
-        impact)            echo "\"impact\" or \"draft impact\"" ;;
-        assist-review)     echo "\"assist review\" or \"draft assist-review\"" ;;
-        *)                 echo "\"draft $skill\"" ;;
-    esac
-}
 
 # ─────────────────────────────────────────────────────────
 # Syntax transforms for Copilot (no slash commands or @mentions)

@@ -4,7 +4,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
-BUILD_SCRIPT="$ROOT_DIR/scripts/build-integrations.sh"
+LIB_SCRIPT="$ROOT_DIR/scripts/lib.sh"
 
 PASS=0
 FAIL=0
@@ -22,10 +22,8 @@ assert_eq() {
     fi
 }
 
-# Extract get_skill_header function from build script
-FUNC_FILE="$(mktemp)"
-sed -n '/^get_skill_header()/,/^}/p' "$BUILD_SCRIPT" > "$FUNC_FILE"
-source "$FUNC_FILE"
+# get_skill_header + SKILL_META live in lib.sh (single skill-metadata table).
+source "$LIB_SCRIPT"
 
 echo "=== Skill header tests ==="
 echo ""
@@ -50,8 +48,6 @@ assert_eq "change" "Change Command" "$(get_skill_header "change")"
 # Test fallback case
 assert_eq "unknown" "Unknown Command" "$(get_skill_header "unknown")"
 assert_eq "custom-skill" "Custom-skill Command" "$(get_skill_header "custom-skill")"
-
-rm -f "$FUNC_FILE"
 
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="

@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Test suite for trigger function coverage
+# Test suite for skill metadata (SKILL_META) coverage
 #
 # What this tests:
-# - Every skill in SKILL_ORDER has an explicit case entry in get_skill_header
-# - Every skill in SKILL_ORDER has an explicit case entry in get_trigger
-# - Gemini triggers contain @draft prefix
+# - Every skill in SKILL_ORDER has an explicit SKILL_META row (no skill
+#   silently falls through to the wildcard header/trigger fallbacks)
+# - Every SKILL_META row is well-formed: known skill, non-empty header,
+#   non-empty trigger
 # - Copilot triggers do NOT contain @draft prefix
-# - No skill falls through to the wildcard (*) case
 #
 # Usage:
 # ./tests/test-trigger-functions.sh
@@ -14,73 +14,71 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
-BUILD_SCRIPT="$ROOT_DIR/scripts/build-integrations.sh"
 LIB_SCRIPT="$ROOT_DIR/scripts/lib.sh"
 
 source "$SCRIPT_DIR/test-helpers.sh"
+# SKILL_ORDER, SKILL_META, get_skill_header, get_copilot_trigger
+source "$LIB_SCRIPT"
 
-echo "=== Trigger function coverage tests ==="
+echo "=== Skill metadata (SKILL_META) coverage tests ==="
 echo ""
 
-# SKILL_ORDER is defined in lib.sh (shared by build-integrations.sh)
-SKILL_ORDER_RAW=$(sed -n '/^SKILL_ORDER=(/,/^)/p' "$LIB_SCRIPT" | grep -v '^SKILL_ORDER=(' | grep -v '^)' | tr -d ' ' | grep -v '^\s*$')
-SKILL_ORDER=()
-while IFS= read -r line; do
-    [[ -n "$line" ]] && SKILL_ORDER+=("$line")
-done <<< "$SKILL_ORDER_RAW"
+META_KEYS=()
+for row in "${SKILL_META[@]}"; do
+    META_KEYS+=("${row%%|*}")
+done
 
-# Extract case entries from each function
-extract_case_entries() {
-    local func_name="$1"
-    sed -n "/^${func_name}()/,/^}/p" "$BUILD_SCRIPT" | sed -n 's/^[[:space:]]*\([a-z0-9][a-z0-9-]*\)).*$/\1/p' || true
-}
-
-# --- get_skill_header coverage ---
-HEADER_CASES=$(extract_case_entries "get_skill_header")
-echo "## get_skill_header coverage"
-ALL_HEADER=true
+# --- Every SKILL_ORDER entry has an explicit SKILL_META row ---
+echo "## SKILL_META coverage"
+ALL_COVERED=true
 for skill in "${SKILL_ORDER[@]}"; do
-    [[ -z "$skill" ]] && continue
-    if ! echo "$HEADER_CASES" | grep -qx "$skill"; then
-        echo " MISSING in get_skill_header: $skill"
-        ALL_HEADER=false
+    found=false
+    for key in "${META_KEYS[@]}"; do
+        [[ "$key" == "$skill" ]] && { found=true; break; }
+    done
+    if ! $found; then
+        echo " MISSING SKILL_META row for: $skill"
+        ALL_COVERED=false
     fi
 done
-assert "Every SKILL_ORDER entry has explicit get_skill_header case" "$ALL_HEADER"
+assert "Every SKILL_ORDER entry has an explicit SKILL_META row" "$ALL_COVERED"
 
-# --- get_copilot_trigger coverage ---
-TRIGGER_CASES=$(extract_case_entries "get_copilot_trigger")
+# --- Every SKILL_META row is well-formed ---
 echo ""
-echo "## get_copilot_trigger coverage"
-ALL_TRIGGER=true
-for skill in "${SKILL_ORDER[@]}"; do
-    [[ -z "$skill" ]] && continue
-    if ! echo "$TRIGGER_CASES" | grep -qx "$skill"; then
-        echo " MISSING in get_copilot_trigger: $skill"
-        ALL_TRIGGER=false
+echo "## SKILL_META row shape"
+ALL_WELLFORMED=true
+for row in "${SKILL_META[@]}"; do
+    key="${row%%|*}"
+    rest="${row#*|}"
+    header="${rest%%|*}"
+    trigger="${rest#*|}"
+    known=false
+    for skill in "${SKILL_ORDER[@]}"; do
+        [[ "$skill" == "$key" ]] && { known=true; break; }
+    done
+    if ! $known; then
+        echo " SKILL_META row for unknown skill: $key"
+        ALL_WELLFORMED=false
+    fi
+    if [[ "$rest" == "$row" || -z "$header" || -z "$trigger" || "$trigger" == "$rest" ]]; then
+        echo " Malformed SKILL_META row (need name|header|trigger): $row"
+        ALL_WELLFORMED=false
     fi
 done
-assert "Every SKILL_ORDER entry has explicit get_copilot_trigger case" "$ALL_TRIGGER"
+assert "Every SKILL_META row is name|header|trigger with no empty field" "$ALL_WELLFORMED"
 
 # --- Copilot triggers do NOT contain @draft ---
 echo ""
 echo "## Copilot trigger syntax"
-
-COPILOT_FUNC_FILE="$(mktemp)"
-sed -n '/^get_copilot_trigger()/,/^}/p' "$BUILD_SCRIPT" > "$COPILOT_FUNC_FILE"
-
 ALL_COPILOT_SYNTAX=true
 for skill in "${SKILL_ORDER[@]}"; do
-    [[ -z "$skill" ]] && continue
-    TRIGGER=$(bash -c "$(cat "$COPILOT_FUNC_FILE"); get_copilot_trigger '$skill'" 2>/dev/null)
-    if [[ -n "$TRIGGER" ]] && echo "$TRIGGER" | grep -q '@draft'; then
+    TRIGGER="$(get_copilot_trigger "$skill")"
+    if echo "$TRIGGER" | grep -q '@draft'; then
         echo " HAS @draft in trigger for: $skill → $TRIGGER"
         ALL_COPILOT_SYNTAX=false
     fi
 done
 assert "No Copilot triggers contain @draft" "$ALL_COPILOT_SYNTAX"
-
-rm -f "$COPILOT_FUNC_FILE"
 
 # --- Summary ---
 echo ""
