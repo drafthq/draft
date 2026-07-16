@@ -16,6 +16,8 @@ TEST_SCRIPTS = \
 	./tests/test-trigger-functions.sh \
 	./tests/test-error-handling.sh \
 	./tests/test-cross-references.sh \
+	./tests/test-hld-lld-contract.sh \
+	./tests/test-skill-script-invocation.sh \
 	./tests/test-tools-registered.sh \
 	./tests/test-tools-conventions.sh \
 	./tests/test-tools-git-metadata.sh \
@@ -74,10 +76,6 @@ TEST_SCRIPTS = \
 	./tests/test-tools-emit-skill-metrics.sh
 
 # Phase 0 Foundations hygiene/verification tool tests (per manifest §2.2) — see above
-#
-# Intentionally NOT wired (currently failing; tracked in docs/WORK_TRACKER.md):
-#   tests/test-hld-lld-contract.sh       — approvers-key drift needs a template-contract decision (WT-028)
-#   tests/test-skill-script-invocation.sh — 22 files need the canonical DRAFT_TOOLS preamble migration (WT-029)
 
 help: ## Show this help message
 	@echo "Available targets:"

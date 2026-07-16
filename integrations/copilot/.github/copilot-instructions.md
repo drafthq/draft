@@ -647,7 +647,7 @@ One command resolves ROOT, ensures the engine, builds the whole-repo spine, and 
 ```bash
 # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
 # is not exported into skill Bash). See core/shared/tool-resolver.md.
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -2287,7 +2287,7 @@ First resolve the bundled helpers:
 ```bash
 # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
 # is not exported into skill Bash). See core/shared/tool-resolver.md.
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -3573,7 +3573,7 @@ echo "Target repo: $REPO_ABS"
 # Locate Draft's bundled helpers. Skills run with cwd = the user's project and
 # ${CLAUDE_PLUGIN_ROOT} is not exported into skill Bash, so resolve DRAFT_TOOLS here
 # and call helpers as "$DRAFT_TOOLS/<tool>.sh". See core/shared/tool-resolver.md.
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -4507,7 +4507,7 @@ First resolve the bundled helpers:
 ```bash
 # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
 # is not exported into skill Bash). See core/shared/tool-resolver.md.
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -4910,7 +4910,7 @@ Resolve the script via the canonical tool resolver (see [core/shared/tool-resolv
 ```bash
 # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
 # is not exported into skill Bash). See core/shared/tool-resolver.md.
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -5157,7 +5157,7 @@ As the last step after the completion announcement, emit a metrics record. Best-
 ```bash
 # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
 # is not exported into skill Bash). See core/shared/tool-resolver.md.
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -5305,7 +5305,7 @@ If one of these applies, route directly to the specialist workflow and stop this
    ```bash
    # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
    # is not exported into skill Bash). See core/shared/tool-resolver.md.
-   DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+   DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
    [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
    [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
    [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -5805,7 +5805,7 @@ After a phase passes review, refresh `metadata.json.impact` so future tracks can
 
 2. **Compute downstream blast radius (graph-aware, optional):** If `draft/graph/schema.yaml` exists, for each file in `files_touched` query (this runs in its own Bash session — re-resolve the helpers):
    ```bash
-   DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+   DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
    [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
    [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
    [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -6009,7 +6009,7 @@ If no active track and no argument provided:
 **Preferred:** use the deterministic `detect-test-framework.sh` wrapper — it emits JSON `{languages:[{language,framework,runner_command,test_globs,config_file}]}`. Resolve via the canonical tool resolver (see [core/shared/tool-resolver.md](../../core/shared/tool-resolver.md)):
 
 ```bash
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -6051,7 +6051,7 @@ Build the coverage command with the appropriate scope/filter flags.
 
 ```bash
 # Re-resolve helpers (this is a separate Bash session from Step 2).
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -6384,7 +6384,7 @@ by validator.
 ```bash
 TRACK_DIR="$1" # absolute path to track-under-deploy, or .
 
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -6644,7 +6644,7 @@ Read and follow the base procedure in `core/shared/draft-context-loading.md`.
   ```bash
   # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
   # is not exported into skill Bash). See core/shared/tool-resolver.md.
-  DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+  DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
   [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
   [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
   [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -7677,7 +7677,7 @@ First resolve the bundled helpers:
 ```bash
 # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
 # is not exported into skill Bash). See core/shared/tool-resolver.md.
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -8046,7 +8046,7 @@ For the files changed in the diff, perform static checks using `grep` or similar
    ```bash
    # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
    # is not exported into skill Bash). See core/shared/tool-resolver.md.
-   DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+   DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
    [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
    [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
    [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -8791,7 +8791,7 @@ As the last step after saving the review report, emit a metrics record. Best-eff
 ```bash
 # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
 # is not exported into skill Bash). See core/shared/tool-resolver.md.
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -8852,7 +8852,7 @@ Run the WS-9 chain from [verification-gates.md](../../core/shared/verification-g
 
 ```bash
 TRACK_DIR="draft/tracks/<id>"
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -11109,7 +11109,7 @@ First resolve the bundled helpers:
 ```bash
 # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
 # is not exported into skill Bash). See core/shared/tool-resolver.md.
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -11335,7 +11335,7 @@ First resolve the bundled helpers:
 ```bash
 # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
 # is not exported into skill Bash). See core/shared/tool-resolver.md.
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -11650,7 +11650,7 @@ As the last step after saving the deep-review report, emit a metrics record. Bes
 ```bash
 # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
 # is not exported into skill Bash). See core/shared/tool-resolver.md.
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -11868,7 +11868,7 @@ First resolve the bundled helpers:
 ```bash
 # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
 # is not exported into skill Bash). See core/shared/tool-resolver.md.
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -12397,7 +12397,7 @@ Check for arguments:
 If argument is `list`:
 1. Prefer the deterministic `adr-index.sh` wrapper for the listing — it returns a structured JSON `{adrs:[{id,title,date,status,path,related_tracks}]}` derived from each ADR's frontmatter. Resolve via the canonical tool resolver (see [core/shared/tool-resolver.md](../../core/shared/tool-resolver.md)):
    ```bash
-   DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+   DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
    [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
    [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
    [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -12732,7 +12732,7 @@ First resolve the bundled helpers:
 ```bash
 # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
 # is not exported into skill Bash). See core/shared/tool-resolver.md.
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -12984,7 +12984,7 @@ Check for arguments:
 **Preferred:** invoke `parse-git-log.sh` — it parses conventional commits into structured JSONL `{sha,type,scope,track_id,subject,author,timestamp,files_changed}`, eliminating ambiguity in `type(track-id): subject` parsing. Resolve via the canonical tool resolver (see [core/shared/tool-resolver.md](../../core/shared/tool-resolver.md)):
 
 ```bash
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -13128,7 +13128,7 @@ First resolve the bundled helpers:
 ```bash
 # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
 # is not exported into skill Bash). See core/shared/tool-resolver.md.
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -13209,7 +13209,7 @@ For TODO/FIXME/HACK/XXX/DEPRECATED markers, prefer the deterministic `scan-marke
 ```bash
 # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
 # is not exported into skill Bash). See core/shared/tool-resolver.md.
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -13932,7 +13932,7 @@ Display a comprehensive overview of project progress.
 If `parse-reports.sh` and `freshness-check.sh` are available, gather structured signals to enrich the status output (severity counts per track, stale `draft/` docs). Resolve via the canonical tool resolver (see [core/shared/tool-resolver.md](../../core/shared/tool-resolver.md)):
 
 ```bash
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -14576,7 +14576,7 @@ First resolve the bundled helpers:
 ```bash
 # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
 # is not exported into skill Bash). See core/shared/tool-resolver.md.
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -16518,7 +16518,7 @@ Referenced by: All skills that generate Draft reports — including `draft bughu
 Use `git-metadata.sh` from the plugin install, resolved via the canonical tool resolver (see [tool-resolver.md](tool-resolver.md)):
 
 ```bash
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -16953,7 +16953,7 @@ Write the completed content to `draft/.ai-context.md`.
 After writing both output files, strip trailing whitespace and blank lines at EOF to prevent GitHub upload failures. Resolve the script via the canonical tool resolver (see [tool-resolver.md](tool-resolver.md)):
 
 ```bash
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -17417,7 +17417,7 @@ These fields are appended to `~/.draft/metrics.jsonl` along with the existing sk
 For common query modes, prefer the deterministic wrappers that ship with the plugin. Resolve their location via the canonical tool resolver (see [tool-resolver.md](tool-resolver.md)) before invoking. Skills run with cwd = the user's project and `${CLAUDE_PLUGIN_ROOT}` is **not** exported into skill Bash, so a bare `scripts/tools/git-metadata.sh` fails — establish `DRAFT_TOOLS` once before the first helper call, in the same Bash session as your tool calls (re-establish it if you split helper calls into a separate, later Bash block):
 
 ```bash
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -17533,7 +17533,7 @@ Live queries go through the shell tools under `scripts/tools/`, which drive the 
 ### Callers — who calls this function?
 
 ```bash
-scripts/tools/graph-callers.sh --repo . --symbol <name>
+"$DRAFT_TOOLS/graph-callers.sh" --repo . --symbol <name>
 ```
 
 Output: `{symbol, callers[{name, file}], source}`. Use when enumerating call sites before claiming "no other usages" or judging breaking-change severity.
@@ -17541,8 +17541,8 @@ Output: `{symbol, callers[{name, file}], source}`. Use when enumerating call sit
 ### Impact — blast radius of a file or symbol
 
 ```bash
-scripts/tools/graph-impact.sh --repo . --file <path>      # changed-file impact (working-tree diff)
-scripts/tools/graph-impact.sh --repo . --symbol <name>    # transitive callers of a function
+"$DRAFT_TOOLS/graph-impact.sh" --repo . --file <path>      # changed-file impact (working-tree diff)
+"$DRAFT_TOOLS/graph-impact.sh" --repo . --symbol <name>    # transitive callers of a function
 ```
 
 Output: `{target, kind, impacted[{name, file, hop}], source}`. Use when sizing risk before modifying a file or symbol, especially high-fan-in hotspots.
@@ -17550,7 +17550,7 @@ Output: `{target, kind, impacted[{name, file, hop}], source}`. Use when sizing r
 ### Hotspots — fan-in ranking
 
 ```bash
-scripts/tools/hotspot-rank.sh --repo . [--top N]
+"$DRAFT_TOOLS/hotspot-rank.sh" --repo . [--top N]
 ```
 
 Output: `{hotspots[{id, name, fanIn}], source}` (server-computed by the engine).
@@ -17558,7 +17558,7 @@ Output: `{hotspots[{id, name, fanIn}], source}` (server-computed by the engine).
 ### Cycles — call-cycle detection
 
 ```bash
-scripts/tools/cycle-detect.sh --repo .
+"$DRAFT_TOOLS/cycle-detect.sh" --repo .
 ```
 
 Output: `{cycles[[a,b],[a,b,c]], source}` — fixed-length 2- and 3-node `CALLS` cycles (mutual recursion / tight coupling).
@@ -17568,7 +17568,7 @@ Output: `{cycles[[a,b],[a,b,c]], source}` — fixed-length 2- and 3-node `CALLS`
 Query the engine's architecture view live with the `graph-arch.sh` wrapper (it resolves the engine, indexes on demand, and auto-resolves the project):
 
 ```bash
-scripts/tools/graph-arch.sh --repo . \
+"$DRAFT_TOOLS/graph-arch.sh" --repo . \
   | jq '{packages, node_labels, edge_types, routes, layers, boundaries}'
 ```
 
@@ -17577,8 +17577,8 @@ scripts/tools/graph-arch.sh --repo . \
 ### Mermaid — diagram text
 
 ```bash
-scripts/tools/mermaid-from-graph.sh --repo . --diagram module-deps   # co-change coupling
-scripts/tools/mermaid-from-graph.sh --repo . --diagram proto-map     # detected routes
+"$DRAFT_TOOLS/mermaid-from-graph.sh" --repo . --diagram module-deps   # co-change coupling
+"$DRAFT_TOOLS/mermaid-from-graph.sh" --repo . --diagram proto-map     # detected routes
 ```
 
 Emits a ready-to-inject ` ```mermaid ``` ` block on the fly (computed live by the engine), or an empty stub (exit 2) when the engine is unavailable. Diagrams are generated at the moment of use — they are never committed.
@@ -17586,7 +17586,7 @@ Emits a ready-to-inject ` ```mermaid ``` ` block on the fly (computed live by th
 ### Snippet — verified source + caller/callee counts
 
 ```bash
-scripts/tools/graph-snippet.sh --repo . --qualified <pkg.Mod.Class.method>
+"$DRAFT_TOOLS/graph-snippet.sh" --repo . --qualified <pkg.Mod.Class.method>
 ```
 
 Output: `{qualified_name, file, start_line, end_line, callers, callees, transitive_loop_depth, complexity, code, status, source}`. Prefer this over grep+Read when you have a qualified name — it returns the engine's attributed source plus pre-computed counts.
@@ -17594,7 +17594,7 @@ Output: `{qualified_name, file, start_line, end_line, callers, callees, transiti
 ### Search — semantic / ranked symbol lookup
 
 ```bash
-scripts/tools/graph-search.sh --repo . --query "auth token refresh" [--limit N]
+"$DRAFT_TOOLS/graph-search.sh" --repo . --query "auth token refresh" [--limit N]
 ```
 
 Output: `{query, results[{name, qualified_name, label, file, rank}], total, source}`. Use when the user names an **intent/concept** rather than an exact symbol — this is the first move in the Concept-to-Files recipe.
@@ -17602,8 +17602,8 @@ Output: `{query, results[{name, qualified_name, label, file, rank}], total, sour
 ### Tests — coverage edges and untested surface
 
 ```bash
-scripts/tools/graph-tests.sh --repo . --symbol <name>     # tests covering a symbol
-scripts/tools/graph-tests.sh --repo . --untested          # exported symbols with no TESTS edge
+"$DRAFT_TOOLS/graph-tests.sh" --repo . --symbol <name>     # tests covering a symbol
+"$DRAFT_TOOLS/graph-tests.sh" --repo . --untested          # exported symbols with no TESTS edge
 ```
 
 Output: `{symbol, tests[{test,file}], status, source}` or `{untested[{symbol,file}], total, truncated, source}`. Feeds coverage gaps for `init`/`testing-strategy`/`coverage`.
@@ -17611,7 +17611,7 @@ Output: `{symbol, tests[{test,file}], status, source}` or `{untested[{symbol,fil
 ### Deps — real module/file import graph
 
 ```bash
-scripts/tools/graph-deps.sh --repo . [--file PATH]
+"$DRAFT_TOOLS/graph-deps.sh" --repo . [--file PATH]
 ```
 
 Output: `{imports[{src,dst}], total, truncated, source}` from actual `IMPORTS` edges (self-imports filtered). This is the auto-derived dependency graph behind `mermaid-from-graph.sh --diagram module-deps` and `architecture.md §9`.
@@ -17619,7 +17619,7 @@ Output: `{imports[{src,dst}], total, truncated, source}` from actual `IMPORTS` e
 ### Hierarchy — class inheritance
 
 ```bash
-scripts/tools/graph-hierarchy.sh --repo . [--symbol <Class> | --derived <Base>]
+"$DRAFT_TOOLS/graph-hierarchy.sh" --repo . [--symbol <Class> | --derived <Base>]
 ```
 
 Output: `{edges[{child,parent}], status, source}`. `--derived` gives the blast radius of changing a base class.
@@ -17627,8 +17627,8 @@ Output: `{edges[{child,parent}], status, source}`. `--derived` gives the blast r
 ### Errors — error-propagation paths
 
 ```bash
-scripts/tools/graph-errors.sh --repo . --symbol <name>   # what it raises/throws
-scripts/tools/graph-errors.sh --repo . --type <ErrType>  # who raises/throws that type
+"$DRAFT_TOOLS/graph-errors.sh" --repo . --symbol <name>   # what it raises/throws
+"$DRAFT_TOOLS/graph-errors.sh" --repo . --type <ErrType>  # who raises/throws that type
 ```
 
 Output: `{symbol, raises[...], status, source}` or `{type, raisers[...], status, source}`. `--type` drives fail-closed audits.
@@ -17636,7 +17636,7 @@ Output: `{symbol, raises[...], status, source}` or `{type, raisers[...], status,
 ### Risk — pre-computed risk hotspots
 
 ```bash
-scripts/tools/graph-risk.sh --repo . [--min-complexity N]
+"$DRAFT_TOOLS/graph-risk.sh" --repo . [--min-complexity N]
 ```
 
 Output: `{risky[{symbol, file, complexity, flags}], total, truncated, source}` from the engine's pre-computed flags (`unguarded_recursion`, `recursion_in_loop`, `alloc_in_loop`, `linear_scan_in_loop`). High-signal input for `bughunt`/`deep-review` — the engine already found these.
@@ -17644,8 +17644,8 @@ Output: `{risky[{symbol, file, complexity, flags}], total, truncated, source}` f
 ### Generic — read-only escape hatch (all 20 edges / ~30 properties)
 
 ```bash
-scripts/tools/graph-query.sh --repo . --cypher 'MATCH (f)-[:WRITES]->(v) RETURN f.name, v.name LIMIT 50'
-scripts/tools/graph-query.sh --repo . --tool get_graph_schema --json '{}'
+"$DRAFT_TOOLS/graph-query.sh" --repo . --cypher 'MATCH (f)-[:WRITES]->(v) RETURN f.name, v.name LIMIT 50'
+"$DRAFT_TOOLS/graph-query.sh" --repo . --tool get_graph_schema --json '{}'
 ```
 
 Unlocks any edge type or node property without a purpose-built wrapper. Write verbs are rejected; stay inside the SAFE dialect set (above). Emits raw engine JSON.
@@ -17653,7 +17653,7 @@ Unlocks any edge type or node property without a purpose-built wrapper. Write ve
 ### Indexing / refreshing the gate marker
 
 ```bash
-scripts/tools/graph-snapshot.sh --repo .
+"$DRAFT_TOOLS/graph-snapshot.sh" --repo .
 ```
 
 Indexes the repo into the engine and writes the `draft/graph/schema.yaml` gate marker (now including the `detect_changes` delta: `changed_files`/`impacted_symbols`). It writes **no** graph data. Run during `draft init` and `draft graph`, or whenever the index should be refreshed.
@@ -17672,7 +17672,7 @@ The engine is the `codebase-memory-mcp` binary. Resolution order (implemented by
 The canonical verifier is `scripts/tools/verify-graph-binary.sh` (`--json --verbose --strict`). It resolves and liveness-checks the engine and, in a `draft/` context, writes the usage-report side-effect:
 
 ```bash
-ENGINE_INFO="$(scripts/tools/verify-graph-binary.sh --repo . --json 2>/dev/null || true)"
+ENGINE_INFO="$("$DRAFT_TOOLS/verify-graph-binary.sh" --repo . --json 2>/dev/null || true)"
 # {"status":"ok","engine_bin":"...","source":"managed|path|bundled:<arch>|override","arch":"..."}
 ```
 
@@ -17685,7 +17685,7 @@ After successful detection, `draft/.graph-binary-report.json` contains: `detecte
 Run during `draft:init` / `draft:graph`, or manually:
 
 ```bash
-scripts/tools/graph-snapshot.sh --repo .
+"$DRAFT_TOOLS/graph-snapshot.sh" --repo .
 ```
 
 The engine indexes C/C++, Go, Python, TypeScript/JS, and more (tree-sitter, 159 languages) plus LSP-assisted resolution for the major ones, and detects HTTP/gRPC/GraphQL routes. Indexing is incremental in the engine (content-based, git-aware). This refreshes the engine index and rewrites the `schema.yaml` gate marker; it produces no committed graph data.
@@ -18557,7 +18557,7 @@ invocations (only the cwd does), so if you split helper calls into a later, sepa
 Bash block, re-establish `DRAFT_TOOLS` there too:
 
 ```bash
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
@@ -19758,326 +19758,6 @@ This is the single forward-looking source of truth. Legacy 28-section volume-ori
 
 ---
 
-## core/templates/track-architecture.md
-
-<core-file path="core/templates/track-architecture.md">
-
----
-project: "{PROJECT_NAME}"
-module: "root"
-track_id: "{TRACK_ID}"
-generated_by: "draft:decompose"
-generated_at: "{ISO_TIMESTAMP}"
-git:
-  branch: "{LOCAL_BRANCH}"
-  remote: "{REMOTE/BRANCH}"
-  commit: "{FULL_SHA}"
-  commit_short: "{SHORT_SHA}"
-  commit_date: "{COMMIT_DATE}"
-  commit_message: "{COMMIT_MESSAGE}"
-  dirty: false
-synced_to_commit: "{FULL_SHA}"
----
-
-# Track Architecture: {TRACK_TITLE}
-
-> Track-scoped HLD/LLD for a single feature, bug fix, or refactor.
-> Source of truth for implementation — `draft implement` consumes this to guide build order, contracts, and story generation.
-> For project-wide architecture, see `draft/architecture.md`.
-
-| Field | Value |
-|-------|-------|
-| **Track ID** | `{TRACK_ID}` |
-| **Spec** | `./spec.md` |
-| **Plan** | `./plan.md` |
-| **Branch** | `{LOCAL_BRANCH}` → `{REMOTE/BRANCH}` |
-| **Commit** | `{SHORT_SHA}` — {COMMIT_MESSAGE} |
-| **Generated** | {ISO_TIMESTAMP} |
-| **LLD Included** | {true | false} |
-
----
-
-## Table of Contents
-
-1. [Overview](#1-overview)
-2. [Module Breakdown](#2-module-breakdown)
-3. [High-Level Design (HLD)](#3-high-level-design-hld)
-   - 3.1 Component Diagram
-   - 3.2 Data Flow
-   - 3.3 Sequence Diagrams (Critical Flows)
-   - 3.4 State Machine(s)
-4. [Dependency Analysis](#4-dependency-analysis)
-5. [Implementation Order](#5-implementation-order)
-6. [Low-Level Design (LLD)](#6-low-level-design-lld)
-   - 6.1 Per-Module API Contracts
-   - 6.2 Data Models & Schemas
-   - 6.3 Error Handling & Retry Semantics
-   - 6.4 Algorithm Pseudocode (where non-trivial)
-7. [Notes & Decisions](#7-notes--decisions)
-
----
-
-## 1. Overview
-
-**What this track delivers:** {one paragraph from spec.md — the feature, bug fix, or refactor being scoped}
-
-**Inputs:** {what triggers or feeds into this feature}
-**Outputs:** {what this feature produces — data, side effects, API responses}
-**Constraints:** {latency, throughput, compatibility, security — anything from spec.md Non-Functional Requirements}
-
-**Integration points:** {which existing modules from `draft/.ai-context.md` this track touches}
-
----
-
-## 2. Module Breakdown
-
-### Modules Introduced or Modified
-
-For each module in scope, fill out one block:
-
-#### Module: `{module-name}`
-
-- **Status:** `[ ] New` | `[ ] Modified` | `[x] Existing (unchanged)`
-- **Responsibility:** {one sentence — what this module owns}
-- **Files:** `{path/to/file1}`, `{path/to/file2}`
-- **API Surface:** {public functions, classes, or interfaces — names only, contracts in §6.1}
-- **Dependencies:** {other modules this imports from}
-- **Complexity:** `Low` | `Medium` | `High`
-- **Story placeholder:** _populated by `draft implement`_
-
-{Repeat for each module.}
-
----
-
-## 3. High-Level Design (HLD)
-
-### 3.1 Component Diagram
-
-Shows modules in scope + the external collaborators they talk to.
-
-```mermaid
-flowchart TD
-    subgraph Track["Track: {TRACK_ID}"]
-        M1["{module-1}"]
-        M2["{module-2}"]
-        M3["{module-3}"]
-    end
-    subgraph Existing["Existing System"]
-        E1["{existing-module-A}"]
-        E2["{existing-module-B}"]
-    end
-    subgraph External["External"]
-        X1["{DB / queue / API}"]
-    end
-
-    M1 --> M2
-    M2 --> M3
-    M1 --> E1
-    M3 --> X1
-```
-
-> Draw one node per module in scope. Include existing modules only when this track calls into them. Label edges with the transport (HTTP, RPC, queue, direct call) when non-obvious.
-
-### 3.2 Data Flow
-
-End-to-end flow of data through the track's modules.
-
-```mermaid
-flowchart LR
-    In["{input — request / event}"] --> V["{validation}"]
-    V --> L["{business logic}"]
-    L --> P["{persistence}"]
-    P --> Out["{output — response / emitted event}"]
-```
-
-> Replace with the actual transforms. If the track has distinct read and write paths, draw them separately.
-
-### 3.3 Sequence Diagrams — Critical Flows
-
-One sequence per acceptance criterion that involves more than a single module call. Skip for trivial single-module tracks.
-
-#### Flow: {name — e.g., "Happy path: user submits X"}
-
-```mermaid
-sequenceDiagram
-    participant U as {Caller}
-    participant A as {module-1}
-    participant B as {module-2}
-    participant D as {DB / external}
-
-    U->>A: {request payload}
-    A->>B: {internal call}
-    B->>D: {query / write}
-    D-->>B: {result}
-    B-->>A: {response}
-    A-->>U: {final response}
-
-    Note over A,B: {invariant / gate — e.g., "tx must be open here"}
-```
-
-#### Flow: {error path — e.g., "Dependency timeout"}
-
-```mermaid
-sequenceDiagram
-    participant U as {Caller}
-    participant A as {module-1}
-    participant D as {External}
-
-    U->>A: {request}
-    A->>D: {call with timeout={N}ms}
-    D--xA: {timeout}
-    A->>A: {fallback / circuit breaker}
-    A-->>U: {degraded response or error}
-```
-
-### 3.4 State Machine(s)
-
-Include only if the track introduces or modifies stateful entities. Omit otherwise.
-
-```mermaid
-stateDiagram-v2
-    [*] --> Pending
-    Pending --> Processing: start
-    Processing --> Complete: success
-    Processing --> Failed: error
-    Failed --> Pending: retry (max {N})
-    Failed --> DeadLetter: retries exhausted
-    Complete --> [*]
-```
-
----
-
-## 4. Dependency Analysis
-
-### ASCII Dependency Graph
-
-```
-[module-1] ──> [module-2]
-    │              │
-    └──> [module-3] <──┘
-```
-
-### Dependency Table
-
-| Module | Depends On | Depended By | Cycle? |
-|--------|------------|-------------|--------|
-| `{mod}` | `{list}` | `{list}` | no |
-
-### Cycle Mitigation
-
-_If any cycles detected, describe how they are broken (shared interface extraction, dependency inversion, etc.). Otherwise: "No cycles detected."_
-
----
-
-## 5. Implementation Order
-
-Topological sort — leaves first.
-
-1. `{module-A}` (no internal deps) — foundational
-2. `{module-B}` (depends on: A)
-3. `{module-C}` (depends on: A, B)
-
-**Parallel opportunities:** {which modules can be built concurrently}
-
----
-
-## 6. Low-Level Design (LLD)
-
-> Present when `--lld` flag was passed to `draft decompose` OR any module in §2 has `Complexity: High`. Otherwise this section reads: _"LLD not generated. Run `draft decompose --lld` to expand."_
-
-### 6.1 Per-Module API Contracts
-
-For each module in §2 marked `New` or `Modified`:
-
-#### `{module-name}` — Public API
-
-| Function / Method | Signature | Params | Returns | Errors / Exceptions |
-|-------------------|-----------|--------|---------|---------------------|
-| `{name}` | `{lang-appropriate signature}` | `{param: type — constraint}` | `{type — shape}` | `{error types / codes}` |
-
-**Preconditions:** {what must be true before call — caller responsibilities}
-**Postconditions:** {what is guaranteed after successful call}
-**Invariants:** {properties preserved across calls — thread safety, idempotency, ordering}
-
-{Repeat per module.}
-
-### 6.2 Data Models & Schemas
-
-Concrete shapes for every new or modified entity this track introduces.
-
-#### `{ModelName}`
-
-```{language}
-{actual type definition — struct, class, interface, proto message, TypedDict, etc.}
-```
-
-| Field | Type | Nullable | Default | Validation / Constraint |
-|-------|------|----------|---------|-------------------------|
-| `{field}` | `{type}` | yes/no | `{default or —}` | `{rule}` |
-
-**Storage:** {where persisted — table, collection, key prefix}
-**Indexes / Keys:** {primary key, unique constraints, indexed fields}
-**Migration:** {if this is a schema change — migration path and rollback}
-
-{Repeat per model.}
-
-### 6.3 Error Handling & Retry Semantics
-
-Per-operation policy. One row per operation that has non-trivial error handling.
-
-| Operation | Error Class | Classification | Retry? | Backoff | Max Attempts | Fallback |
-|-----------|-------------|----------------|--------|---------|--------------|----------|
-| `{op}` | `{ErrorType}` | transient / permanent / timeout | yes/no | `{policy}` | `{N}` | `{behavior}` |
-
-**Propagation model:** {how errors surface — Result type, exceptions, error codes}
-**Circuit breaker:** {thresholds, half-open policy, reset} — omit if N/A
-**Idempotency:** {which operations are idempotent and how — dedup key, tx id}
-
-### 6.4 Algorithm Pseudocode
-
-Include only for non-trivial logic. Skip for straightforward CRUD.
-
-#### {Algorithm name}
-
-**Inputs:** `{...}`
-**Outputs:** `{...}`
-**Complexity:** `O({...})` time, `O({...})` space
-
-```
-{numbered or indented pseudocode — language-agnostic}
-1. validate inputs
-2. ...
-3. return result
-```
-
-**Edge cases handled:**
-- {case 1 — what happens}
-- {case 2 — what happens}
-
----
-
-## 7. Notes & Decisions
-
-### Architecture Decisions
-
-- {decision 1 — rationale, alternatives considered}
-- {decision 2 — rationale, alternatives considered}
-
-### Open Questions
-
-- {question tracked during decomposition — to resolve before or during implementation}
-
-### Links
-
-- Spec: `./spec.md`
-- Plan: `./plan.md`
-- Related ADRs: `{paths if any, created via draft adr}`
-- Project architecture: `draft/.ai-context.md` → `draft/architecture.md`
-
-</core-file>
-
----
-
 ## core/templates/jira.md
 
 <core-file path="core/templates/jira.md">
@@ -20994,7 +20674,7 @@ validator chain via the canonical resolver pattern (see
 [core/shared/verification-gates.md](../../core/shared/verification-gates.md)):
 
 ```bash
-DRAFT_TOOLS="$(cat ~/.cache/draft/plugin-root 2>/dev/null)/scripts/tools"
+DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
 [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"

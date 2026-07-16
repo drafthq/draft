@@ -1,6 +1,6 @@
 # Work Tracker
 
-**Overall: [█████████░] 88% — 30 done · 0 in-progress / 34**
+**Overall: [██████████] 100% — 37 done · 0 in-progress / 37**
 
 > Canonical status lives here. Detail lives in the linked source docs.
 > **Verify-first (before coding any item):** 1) re-read state · 2) verify the gap
@@ -9,7 +9,8 @@
 
 Origin: full-codebase code review (2026-07-15), 10 finder angles + per-candidate
 adversarial verification + gap sweep. 33 findings CONFIRMED with repros, 1 PLAUSIBLE,
-1 REFUTED, 2 sweep additions. Fix pass completed same day; `make test` (70 suites) green.
+1 REFUTED, 2 sweep additions. Fix pass completed same day; follow-up pass closed every
+remaining row (gaps + deferred refactors). `make test` (72 suites) green.
 
 ## Status taxonomy
 DONE · IN-PROGRESS · BLOCKED · PLANNED · GAP · DESIGN-ONLY · WON'T-DO · SIGN-OFF
@@ -20,9 +21,9 @@ DONE · IN-PROGRESS · BLOCKED · PLANNED · GAP · DESIGN-ONLY · WON'T-DO · S
 | A. Shell-tool correctness | `[██████████] 100%` | 15 | 0 | 0 | 0 | set -e crashes, escaping, validator false-negatives |
 | B. Build pipeline & site | `[██████████] 100%` | 6 | 0 | 0 | 0 | Makefile, build scripts, sitemap |
 | C. CLI & website JS | `[██████████] 100%` | 4 | 0 | 0 | 0 | installer, marker, upgrade semantics, a11y |
-| D. Tests & registries | `[█████░░░░░] 50%` | 2 | 0 | 2 | 0 | 2 unwired failing suites need design decisions |
+| D. Tests & registries | `[██████████] 100%` | 4 | 0 | 0 | 0 | all suites wired and green |
 | E. Docs & metadata | `[██████████] 100%` | 5 | 0 | 0 | 0 | counts, changelog, integrations regenerated |
-| F. Deferred cleanups | `[░░░░░░░░░░] 0%` | 0 | 2 | 0 | 2 | refactors deferred by choice |
+| F. Deferred cleanups | `[██████████] 100%` | 3 | 0 | 0 | 1 | refactors + arg guards shipped |
 
 ## Backlog (risk/impact-first)
 | Done | ID | Item | WS | Status | Pri | Blocked by | Source |
@@ -54,30 +55,25 @@ DONE · IN-PROGRESS · BLOCKED · PLANNED · GAP · DESIGN-ONLY · WON'T-DO · S
 | [x] | WT-025 | web terminal.js — focusout release added | C | DONE | P2 | — | review C14 |
 | [x] | WT-026 | foo.sh placeholder → git-metadata.sh; test-cross-references.sh wired into Makefile | D | DONE | P1 | — | review C1a |
 | [x] | WT-027 | Tests added + wired for check-graph-usage-report, check-template-noop, emit-skill-metrics | D | DONE | P1 | — | review C7 |
-| [ ] | WT-028 | test-hld-lld-contract.sh unwired & failing — approvers-key drift + retired track-architecture.md template still in CORE_FILES; needs template-contract decision | D | GAP | P2 | — | review C1b |
-| [ ] | WT-029 | test-skill-script-invocation.sh unwired & failing — 22 bare tool invocations in graph-query.md; 22 non-canonical DRAFT_TOOLS preambles; wide content migration | D | GAP | P2 | — | review C1c |
+| [x] | WT-028 | test-hld-lld-contract.sh wired & green — test indent-regex fixed (spec.md already declared all approver keys); track-architecture.md template deleted + dropped from CORE_FILES | D | DONE | P2 | — | review C1b |
+| [x] | WT-029 | test-skill-script-invocation.sh wired & green — graph-query.md invocations use "$DRAFT_TOOLS/"; 24 files migrated to the override-first canonical preamble | D | DONE | P2 | — | review C1c |
 | [x] | WT-030 | CHANGELOG.md — 3.5.0–3.5.3 entries added | E | DONE | P2 | — | review C2 |
-| [x] | WT-031 | CLAUDE.md — counts corrected (51 tools, 70 test suites, 67 core files) | E | DONE | P2 | — | review C3/C4/C5 |
+| [x] | WT-031 | CLAUDE.md — counts corrected (now 51 tools / 72 test suites / 66 core files after the follow-up pass) | E | DONE | P2 | — | review C3/C4/C5 |
 | [x] | WT-032 | scan-markers.sh — unimplemented --include-untracked removed from usage | E | DONE | P3 | — | review C34 |
 | [x] | WT-033 | tool-resolver.md — resolution order matches resolve-tools.sh (dogfood = step 2) | E | DONE | P3 | — | review C37 |
 | [x] | WT-034 | Integrations regenerated (make build) after init/OKF + core doc changes | E | DONE | P0 | — | review C6 |
-| [ ] | WT-035 | Dedupe 6-line engine bootstrap across 12 graph wrappers into shared helper | F | PLANNED | P3 | — | review C8 (deferred refactor) |
-| [ ] | WT-036 | Collapse get_skill_header/get_copilot_trigger parallel case tables into one data table | F | PLANNED | P3 | — | review C9 (deferred refactor) |
-| [x] | ~~WT-037~~ | arg-parse `$2` guards across 18 tools (85 sites) — crash already exits 1; only message quality differs | F | WON'T-DO | — | — | review C19 |
+| [x] | WT-035 | graph_bootstrap() in _lib.sh; 15 wrappers deduped (incl. hotspot-rank, cycle-detect, mermaid-from-graph) | F | DONE | P3 | — | review C8 |
+| [x] | WT-036 | SKILL_META table in lib.sh replaces both case statements; tests source lib.sh directly | F | DONE | P3 | — | review C9 |
+| [x] | WT-037 | arg-parse value guards: 89 sites across 38 tools use ${2:?--flag requires a value} | F | DONE | P3 | — | review C19 |
 | [x] | ~~WT-038~~ | validate_skill_body_format `\|\| true` masking — REFUTED as active bug | F | WON'T-DO | — | — | review C23 |
 
 ## Per-workstream detail
-Open items only (done rows carry their fix description inline above):
-- **WT-028** — decide the approvers-key contract (spec.md `tech_leads/arb_leads/...` vs hld/lld expectations), remove or re-legitimize `core/templates/track-architecture.md` (test says retired, CORE_FILES still ships it), then wire the suite into Makefile TEST_SCRIPTS.
-- **WT-029** — migrate `core/shared/graph-query.md` (22 bare `scripts/tools/*.sh` mentions) and 22 skill/core files to the canonical 3–4-line DRAFT_TOOLS preamble, then wire the suite in.
-- **WT-035** — add `graph_bootstrap()` to `_lib.sh`/`_graph_queries.sh`; 11 uniform wrappers call it directly, graph-traces keeps its spliced validation line, graph-impact needs a target/kind-parameterized bail. All 12 have dedicated tests covering both paths.
-- **WT-036** — one table (skill → header/trigger) next to SKILL_ORDER in scripts/lib.sh; keep the wildcard fallback; tests/test-trigger-functions.sh guards the refactor.
+No open items — every row is DONE except WT-038 (WON'T-DO, refuted finding).
 
 ## Source-document map
 | Source doc | Covers IDs |
 |---|---|
 | Session review evidence (finder/verifier transcripts, 2026-07-15) | WT-001…WT-038 |
-| Makefile (comment block under TEST_SCRIPTS) | WT-028, WT-029 |
 | core/shared/tool-resolver.md | WT-026, WT-033 |
 | core/shared/graph-query.md | WT-010, WT-026, WT-029 |
 | core/templates/metadata.json + core/shared/discovery-schema.md | WT-014 |
@@ -89,4 +85,6 @@ Open items only (done rows carry their fix description inline above):
 | 2026-07-15 | WT-037 | WON'T-DO — low severity, wide surface, no behavioral gain | verifier C19: exit 1 either way |
 | 2026-07-15 | WT-038 | WON'T-DO — REFUTED; latent only | verifier C23: both call sites gate extract_body first |
 | 2026-07-15 | WT-001…027, 030…034 | DONE — fix pass applied in one change-set | `make test` all 70 suites green incl. new regression cases (zero-TBD, planned-no-path, multi-line path-index, range citation, EOF newline, gq_escape backslash, metrics trailing-newline) |
-| 2026-07-15 | WT-028/029 | GAP — left unwired deliberately | Makefile comment documents both, pointing here |
+| 2026-07-15 | WT-028/029 | GAP — left unwired deliberately | Makefile comment documented both |
+| 2026-07-15 | WT-028, WT-029, WT-035, WT-036 | DONE — follow-up pass | both suites wired into TEST_SCRIPTS; `make test` 72/72 green |
+| 2026-07-15 | WT-037 | WON'T-DO → DONE on request ("fix all the issues") | dangling flag now errors `--flag requires a value`, exit 1 |

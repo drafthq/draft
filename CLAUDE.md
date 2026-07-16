@@ -13,7 +13,7 @@ Draft also ships a **knowledge graph engine** — `codebase-memory-mcp`, fetched
 ```bash
 make build              # Generate integration files from skills
 make build-integrations # Same as above (explicit target)
-make test               # Run all 70 test suites (skills, build, tools)
+make test               # Run all 72 test suites (skills, build, tools)
 make lint               # Run shellcheck + markdownlint
 make clean              # Remove generated integrations
 
@@ -52,7 +52,7 @@ The build script (`scripts/build-integrations.sh`) reads `SKILL_ORDER`, `CORE_FI
 3. Validates body format: blank, `# Title`, blank, then content
 4. Extracts body via `extract_body()`, skipping frontmatter
 5. Applies syntax transforms (`/draft:command` → `draft command`; `@architect`, `@debugger`, etc. → `@workspace` for Copilot)
-6. Inlines 67 core reference files (methodology, shared procedures, templates, agents, guardrails)
+6. Inlines 66 core reference files (methodology, shared procedures, templates, agents, guardrails)
 7. Writes atomically to a temp file then renames into place
 8. Runs `verify_output()` — line count, completeness, syntax
 
@@ -66,7 +66,7 @@ The build script (`scripts/build-integrations.sh`) reads `SKILL_ORDER`, `CORE_FI
 
 - **`core/shared/`** — Shared procedures loaded by skills (context loading, git metadata, pattern learning, cross-skill dispatch, Jira sync, **graph queries**, **parallel analysis**, VCS commands)
 - **`core/agents/`** — Behavioral protocols for specialized agents (architect, debugger, planner, rca, reviewer, ops, writer)
-- **`core/templates/`** — 29 templates for files that `/draft:init` generates in user projects (25 top-level + 4 `okf/` bundle templates for `DRAFT_INIT_MODE=okf`)
+- **`core/templates/`** — 28 templates for files that `/draft:init` generates in user projects (24 top-level + 4 `okf/` bundle templates for `DRAFT_INIT_MODE=okf`)
 - **`bin/`** — Holds only `README.md`. The graph engine (`codebase-memory-mcp`) is **not vendored** — it is fetched on install (`scripts/fetch-memory-engine.sh`) to `~/.cache/draft/bin/` and resolved by `scripts/tools/_lib.sh:find_memory_bin()` (`DRAFT_MEMORY_BIN` → `$PATH` → cache). Output gate marker under `draft/graph/schema.yaml`; all structural data is queried live. CLI and schema documented in `bin/README.md`.
 - **`scripts/tools/`** — 51 deterministic shell helpers (git-metadata, classify-files, hotspot-rank, cycle-detect, graph-* capability wrappers, `resolve-tools.sh`, etc.). Skills call these for mechanical work. All knowledge-graph Cypher lives in the sourced `_graph_queries.sh` module (single source of query truth); the `graph-*.sh` wrappers are thin arg-parse → builder → fail-loud JSON.
 - **`scripts/lib.sh`** — Shared definitions sourced by build script: `SKILL_ORDER`, `CORE_FILES`, `TOOLS`.
@@ -113,7 +113,7 @@ The build script transforms skill content for platform compatibility:
 
 1. Create `skills/<skill-name>/SKILL.md` with frontmatter (kebab-case name, no path traversal chars)
 2. Add skill name to `SKILL_ORDER` in `scripts/lib.sh`
-3. Add a case entry in `get_skill_header()` AND `get_copilot_trigger()` in `scripts/build-integrations.sh` (both case statements are coverage-checked by `tests/test-trigger-functions.sh`)
+3. Add a `<name>|<header>|<trigger>` row to `SKILL_META` in `scripts/lib.sh` (coverage-checked by `tests/test-trigger-functions.sh`)
 4. Run `make build && make test` (plugin.json auto-discovers skills via directory convention)
 5. Document in README.md and CHANGELOG.md
 
