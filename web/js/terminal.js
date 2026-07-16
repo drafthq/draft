@@ -160,6 +160,11 @@
     var grid = document.querySelector('.cmd-primary-grid');
     if (grid) {
         grid.addEventListener('mouseleave', function() { window.draftTerminal.release(); });
+        // Keyboard counterpart of mouseleave: without it, tabbing past the
+        // cards leaves the terminal pinned and the auto-cycle frozen.
+        grid.addEventListener('focusout', function(e) {
+            if (!grid.contains(e.relatedTarget)) window.draftTerminal.release();
+        });
     }
 
     // Start auto-cycling when the section scrolls into view
