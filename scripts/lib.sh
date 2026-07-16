@@ -58,6 +58,76 @@ SKILL_ORDER=(
 )
 
 # ─────────────────────────────────────────────────────────
+# Skill metadata: one row per skill — "<name>|<display header>|<copilot trigger>"
+# The name and header never contain "|"; the trigger may (e.g. "[file|pr N]"),
+# so lookups split on the FIRST TWO pipes only. Coverage against SKILL_ORDER is
+# enforced by tests/test-trigger-functions.sh.
+# ─────────────────────────────────────────────────────────
+
+SKILL_META=(
+    'draft|Draft Overview|"help" or "draft"'
+    'init|Init Command|"init draft", "build the code graph", or "draft init [refresh] [--graph-only] [--module-only]"'
+    'graph|Graph Command|"build graph", "refresh graph", or "draft graph [path]"'
+    'new-track|New Track Command|"new feature" or "draft new-track <description>"'
+    'decompose|Decompose Command|"break into modules" or "draft decompose"'
+    'implement|Implement Command|"implement" or "draft implement"'
+    'coverage|Coverage Command|"check coverage" or "draft coverage"'
+    'deploy-checklist|Deploy Checklist Command|"deploy checklist" or "draft deploy-checklist [track <id>]"'
+    'bughunt|Bug Hunt Command|"hunt bugs" or "draft bughunt [--track <id>]"'
+    'review|Review Command|"review code" or "draft review [--track <id>] [--full]"'
+    'upload|Upload Command|"upload for review" or "draft upload [track <id>]"'
+    'plan|Plan Router|"plan feature" or "draft plan <intent>" (new-track, decompose, adr, tech-debt, change)'
+    'ops|Ops Router|"ops deploy" or "draft ops <intent>" (deploy-checklist, incident, standup, status, revert)'
+    'docs|Docs Router|"write docs" or "draft docs <intent>" (documentation)'
+    'discover|Discover Router|"discover debug" or "draft discover <intent>" (debug, bughunt, reviews, coverage, learn, index, etc.)'
+    'jira|Jira Router|"jira preview", "jira create", or "jira review <ID>"'
+    'integrations|Integrations Router|"integrations", "integrations jira-preview", or "integrations jira-create"'
+    'quick-review|Quick Review Command|"quick review" or "draft quick-review [file|pr <number>]"'
+    'deep-review|Deep Review Command|"deep review" or "draft deep-review [module]"'
+    'testing-strategy|Testing Strategy Command|"test strategy" or "draft testing-strategy [track <id>|path]"'
+    'learn|Learn Command|"learn patterns" or "draft learn [promote|migrate|path]"'
+    'adr|ADR Command|"document decision" or "draft adr [title]"'
+    'debug|Debug Command|"debug bug" or "draft debug [description|track <id>]"'
+    'standup|Standup Command|"standup" or "draft standup [date|week|save]"'
+    'tech-debt|Tech Debt Command|"tech debt" or "draft tech-debt [path|track <id>]"'
+    'incident-response|Incident Response Command|"incident" or "draft incident-response [new|update|postmortem]"'
+    'documentation|Documentation Command|"write docs" or "draft documentation [readme|runbook|api|onboarding]"'
+    'status|Status Command|"status" or "draft status"'
+    'revert|Revert Command|"revert" or "draft revert"'
+    'change|Change Command|"handle change" or "draft change <description>"'
+    'tour|Tour Command|"tour" or "draft tour"'
+    'impact|Impact Command|"impact" or "draft impact"'
+    'assist-review|Assist Review Command|"assist review" or "draft assist-review"'
+)
+
+# get_skill_header <skill> — display header for integration sections.
+get_skill_header() {
+    local skill="$1" row rest
+    for row in "${SKILL_META[@]}"; do
+        if [[ "${row%%|*}" == "$skill" ]]; then
+            rest="${row#*|}"
+            printf '%s\n' "${rest%%|*}"
+            return 0
+        fi
+    done
+    printf '%s\n' "$(echo "${skill:0:1}" | tr '[:lower:]' '[:upper:]')${skill:1} Command"
+}
+
+# get_copilot_trigger <skill> — natural-language trigger for the Copilot header.
+get_copilot_trigger() {
+    local skill="$1" row rest
+    for row in "${SKILL_META[@]}"; do
+        if [[ "${row%%|*}" == "$skill" ]]; then
+            rest="${row#*|}"
+            printf '%s\n' "${rest#*|}"
+            return 0
+        fi
+    done
+    printf '"draft %s"\n' "$skill"
+}
+
+
+# ─────────────────────────────────────────────────────────
 # Core reference files (inlined by Claude plugin at runtime)
 # ─────────────────────────────────────────────────────────
 
@@ -91,7 +161,6 @@ CORE_FILES=(
     "templates/ai-context.md"
     "templates/ai-profile.md"
     "templates/architecture.md"
-    "templates/track-architecture.md"
     "templates/jira.md"
     "templates/product.md"
     "templates/tech-stack.md"

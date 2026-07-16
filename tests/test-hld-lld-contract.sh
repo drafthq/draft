@@ -69,7 +69,7 @@ LLD_REQUIRED_KEYS=(team_leads tech_leads qa)
 ALL_REQUIRED_KEYS=(tech_leads arb_leads cloudops_leads qa_leads pm_leads team_leads qa)
 
 for key in "${ALL_REQUIRED_KEYS[@]}"; do
-    if grep -q "^ ${key}:" "$CORE_DIR/templates/spec.md"; then
+    if grep -qE "^[[:space:]]+${key}:" "$CORE_DIR/templates/spec.md"; then
         assert "spec.md frontmatter declares approvers.${key}" "true"
     else
         assert "spec.md frontmatter declares approvers.${key}" "false"
