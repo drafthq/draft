@@ -616,37 +616,22 @@ generate_sitemap() {
         <changefreq>weekly</changefreq>
         <priority>0.8</priority>
     </url>
-    <url>
-        <loc>https://getdraft.dev/blog/blast-radius-walkthrough/</loc>
-        <lastmod>${TODAY}</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.7</priority>
-    </url>
-    <url>
-        <loc>https://getdraft.dev/blog/decompose-payment-gateway/</loc>
-        <lastmod>${TODAY}</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.7</priority>
-    </url>
-    <url>
-        <loc>https://getdraft.dev/blog/local-graph-engine/</loc>
-        <lastmod>${TODAY}</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.7</priority>
-    </url>
-    <url>
-        <loc>https://getdraft.dev/blog/mcp-tool-discovery/</loc>
-        <lastmod>${TODAY}</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.7</priority>
-    </url>
-    <url>
-        <loc>https://getdraft.dev/blog/replaced-kiro-with-free-plugin/</loc>
-        <lastmod>${TODAY}</lastmod>
-        <changefreq>monthly</changefreq>
-        <priority>0.7</priority>
-    </url>
 SITEMAP_HEAD
+
+    # Blog posts: derived from web/blog/*/ so a new post can never be
+    # silently dropped from the sitemap.
+    local post_dir post
+    for post_dir in "$ROOT"/web/blog/*/; do
+        post="$(basename "$post_dir")"
+        cat >> "$_stmp" <<SITEMAP_BLOG
+    <url>
+        <loc>https://getdraft.dev/blog/${post}/</loc>
+        <lastmod>${TODAY}</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+SITEMAP_BLOG
+    done
 
     for ((i=0; i<NUM_CHAPTERS; i++)); do
         local id="${CHAPTER_IDS[$i]}"

@@ -127,6 +127,8 @@ transform_copilot_syntax() {
         -e 's#/draft:(<[a-z-]+>)#draft \1#g' \
         -e 's#/draft:([a-z][a-z0-9-]*)#draft \1#g' \
         -e 's#(^|[^[:alnum:]_.-])@draft([^[:alnum:]_.-])#\1draft\2#g' \
+        `# repeated: the separator consumed by \2 hides the 2nd of two adjacent @draft mentions from a single pass` \
+        -e 's#(^|[^[:alnum:]_.-])@draft([^[:alnum:]_.-])#\1draft\2#g' \
         -e 's#(^|[^[:alnum:]_.-])@draft$#\1draft#g' \
         -e 's#`@draft`#`draft`#g' \
         -e 's#`@draft #`draft #g' \
@@ -141,6 +143,8 @@ transform_agents_syntax() {
     sed -E \
         -e 's#/draft:(<[a-z-]+>)#draft \1#g' \
         -e 's#/draft:([a-z][a-z0-9-]*)#draft \1#g' \
+        -e 's#(^|[^[:alnum:]_.-])@draft([^[:alnum:]_.-])#\1draft\2#g' \
+        `# repeated: the separator consumed by \2 hides the 2nd of two adjacent @draft mentions from a single pass` \
         -e 's#(^|[^[:alnum:]_.-])@draft([^[:alnum:]_.-])#\1draft\2#g' \
         -e 's#(^|[^[:alnum:]_.-])@draft$#\1draft#g' \
         -e 's#`@draft`#`draft`#g' \
@@ -470,8 +474,9 @@ COMMON_HEADER2
             local skill_body
             skill_body=$(extract_body "$skill_file")
 
-            # Validate body format (blank, '# Title', blank) via shared helper.
-            validate_skill_body_format "$skill" "$skill_file" || exit 1
+            # Validate body format (blank, '# Title', blank) via shared helper,
+            # reusing the body extracted above.
+            validate_skill_body_format "$skill" "$skill_file" "$skill_body" || exit 1
 
             echo ""
             echo "---"

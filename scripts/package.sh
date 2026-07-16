@@ -85,7 +85,8 @@ fi
 # 4. Graph verification (exercises new tool)
 if [[ $RUN_VERIFY -eq 1 && -x "$DRAFT_ROOT/scripts/tools/verify-graph-binary.sh" ]]; then
   echo "Final graph binary verification..."
-  "$DRAFT_ROOT/scripts/tools/verify-graph-binary.sh" --repo "$DRAFT_ROOT" --verbose || true
+  "$DRAFT_ROOT/scripts/tools/verify-graph-binary.sh" --repo "$DRAFT_ROOT" --verbose \
+    || echo "  (graph binary verification failed — non-fatal for packaging)"
 fi
 
 # 5. Copy the tree (exclude heavy dev artifacts)

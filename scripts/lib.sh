@@ -266,12 +266,18 @@ extract_body() {
 }
 
 # Validate body format: line 1 blank, line 2 starts with #, line 3 blank.
+# $3 (optional): pre-extracted body — skips a second extract_body parse when
+# the caller already has it.
 validate_skill_body_format() {
     local skill="$1"
     local skill_file="$2"
 
     local body_head line1 line2 line3
-    body_head=$(extract_body "$skill_file" | sed -n '1,3p' || true)
+    if (( $# >= 3 )); then
+        body_head=$(printf '%s\n' "$3" | sed -n '1,3p')
+    else
+        body_head=$(extract_body "$skill_file" | sed -n '1,3p' || true)
+    fi
     line1=$(echo "$body_head" | sed -n '1p')
     line2=$(echo "$body_head" | sed -n '2p')
     line3=$(echo "$body_head" | sed -n '3p')

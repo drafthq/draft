@@ -26,7 +26,7 @@ VERSION="${CMM_VERSION:-$DEFAULT_VERSION}"
 DEST="$HOME/.cache/draft/bin"
 FORCE=0
 
-usage() { sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'; }
+usage() { sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
