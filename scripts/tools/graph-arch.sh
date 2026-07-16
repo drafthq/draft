@@ -42,7 +42,7 @@ EOF
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --repo) REPO="$2"; shift 2;;
+        --repo) REPO="${2:?--repo requires a value}"; shift 2;;
         --help|-h) usage; exit 0;;
         *) echo "Unknown flag: $1" >&2; usage >&2; exit 1;;
     esac
@@ -53,16 +53,9 @@ if [[ ! -d "$REPO" ]]; then
     exit 1
 fi
 
-REPO_ABS="$(cd "$REPO" && pwd)"
-SELF_REPO="$(cd "$(dirname "$0")/../.." && pwd)"
-
 unavailable() { echo '{"source":"unavailable"}'; exit 2; }
 
-find_memory_bin "$REPO_ABS" "$SELF_REPO" || unavailable
-command -v jq >/dev/null 2>&1 || unavailable
-
-PROJECT="$(memory_ensure_index "$REPO_ABS" || true)"
-[[ -n "$PROJECT" ]] || unavailable
+graph_bootstrap "$REPO" || unavailable
 
 ARCH_JSON="$(memory_cli get_architecture "{\"project\":\"$PROJECT\",\"aspects\":[\"all\"]}" || true)"
 [[ -n "$ARCH_JSON" ]] || unavailable

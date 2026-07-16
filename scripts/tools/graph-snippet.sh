@@ -44,8 +44,8 @@ EOF
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --repo) REPO="$2"; shift 2;;
-        --qualified|--symbol) QNAME="$2"; shift 2;;
+        --repo) REPO="${2:?--repo requires a value}"; shift 2;;
+        --qualified|--symbol) QNAME="${2:?--qualified|--symbol requires a value}"; shift 2;;
         --help|-h) usage; exit 0;;
         *) echo "Unknown flag: $1" >&2; usage >&2; exit 1;;
     esac
@@ -54,20 +54,13 @@ done
 [[ -d "$REPO" ]] || { echo "ERROR: --repo '$REPO' is not a directory" >&2; exit 1; }
 [[ -n "$QNAME" ]] || { echo "ERROR: --qualified is required" >&2; usage >&2; exit 1; }
 
-REPO_ABS="$(cd "$REPO" && pwd)"
-SELF_REPO="$(cd "$(dirname "$0")/../.." && pwd)"
-
 unavailable() {
     jq -n --arg q "$QNAME" '{qualified_name:$q, status:"unavailable", source:"unavailable"}' 2>/dev/null \
         || echo '{"status":"unavailable","source":"unavailable"}'
     exit 2
 }
 
-find_memory_bin "$REPO_ABS" "$SELF_REPO" || unavailable
-command -v jq >/dev/null 2>&1 || unavailable
-
-PROJECT="$(memory_ensure_index "$REPO_ABS" || true)"
-[[ -n "$PROJECT" ]] || unavailable
+graph_bootstrap "$REPO" || unavailable
 
 ARGS="$(jq -n --arg p "$PROJECT" --arg q "$QNAME" '{project:$p, qualified_name:$q}')"
 RES="$(memory_cli get_code_snippet "$ARGS" 2>/dev/null || true)"

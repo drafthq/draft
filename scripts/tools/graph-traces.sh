@@ -49,8 +49,8 @@ EOF
 while [[ $# -gt 0 ]]; do
     case "$1" in
         ingest) ACTION="ingest"; shift;;
-        --repo) REPO="$2"; shift 2;;
-        --file) FILE="$2"; shift 2;;
+        --repo) REPO="${2:?--repo requires a value}"; shift 2;;
+        --file) FILE="${2:?--file requires a value}"; shift 2;;
         --experimental) EXPERIMENTAL=1; shift;;
         --help|-h) usage; exit 0;;
         *) echo "Unknown argument: $1" >&2; usage >&2; exit 1;;
@@ -63,18 +63,11 @@ done
 [[ -n "$FILE" ]] || { echo "ERROR: --file is required" >&2; usage >&2; exit 1; }
 [[ -f "$FILE" ]] || { echo "ERROR: --file '$FILE' does not exist" >&2; exit 1; }
 
-REPO_ABS="$(cd "$REPO" && pwd)"
-SELF_REPO="$(cd "$(dirname "$0")/../.." && pwd)"
-
 unavailable() { echo '{"source":"unavailable"}'; exit 2; }
 
-find_memory_bin "$REPO_ABS" "$SELF_REPO" || unavailable
-command -v jq >/dev/null 2>&1 || unavailable
+graph_bootstrap "$REPO" || unavailable
 
 jq -e . "$FILE" >/dev/null 2>&1 || { echo "ERROR: --file is not valid JSON" >&2; exit 1; }
-
-PROJECT="$(memory_ensure_index "$REPO_ABS" || true)"
-[[ -n "$PROJECT" ]] || unavailable
 
 ARGS="$(jq -n --arg p "$PROJECT" --slurpfile t "$FILE" '{project:$p, traces:($t[0])}')"
 RES="$(memory_cli ingest_traces "$ARGS" 2>/dev/null || true)"

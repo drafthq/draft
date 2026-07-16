@@ -45,8 +45,8 @@ EOF
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --repo) REPO="$2"; shift 2;;
-        --diagram) DIAGRAM="$2"; shift 2;;
+        --repo) REPO="${2:?--repo requires a value}"; shift 2;;
+        --diagram) DIAGRAM="${2:?--diagram requires a value}"; shift 2;;
         --help|-h) usage; exit 0;;
         *) echo "Unknown flag: $1" >&2; usage >&2; exit 1;;
     esac
@@ -56,9 +56,6 @@ if [[ ! -d "$REPO" ]]; then
     echo "ERROR: --repo '$REPO' is not a directory" >&2
     exit 1
 fi
-
-REPO_ABS="$(cd "$REPO" && pwd)"
-SELF_REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 
 stub() {
     cat <<'EOF'
@@ -71,11 +68,7 @@ EOF
     exit 2
 }
 
-find_memory_bin "$REPO_ABS" "$SELF_REPO" || stub
-command -v jq >/dev/null 2>&1 || stub
-
-PROJECT="$(memory_ensure_index "$REPO_ABS" || true)"
-[[ -n "$PROJECT" ]] || stub
+graph_bootstrap "$REPO" || stub
 
 # module-deps: real IMPORTS edges (the auto-derived dependency graph). Self-imports
 # (src == dst) are dropped so the diagram is a true cross-file graph. Capped at 40

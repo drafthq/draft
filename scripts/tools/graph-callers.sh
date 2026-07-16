@@ -54,8 +54,8 @@ EOF
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --repo) REPO="$2"; shift 2;;
-        --symbol) SYMBOL="$2"; shift 2;;
+        --repo) REPO="${2:?--repo requires a value}"; shift 2;;
+        --symbol) SYMBOL="${2:?--symbol requires a value}"; shift 2;;
         --transitive) TRANSITIVE=1; shift;;
         --transitive=*) TRANSITIVE=1; DEPTH="${1#*=}"; shift;;
         --prod-only) PROD_ONLY=1; shift;;
@@ -69,20 +69,13 @@ done
 [[ -n "$SYMBOL" ]] || { echo "ERROR: --symbol is required" >&2; usage >&2; exit 1; }
 [[ "$DEPTH" =~ ^[0-9]+$ ]] || { echo "ERROR: --transitive depth must be a non-negative integer" >&2; exit 1; }
 
-REPO_ABS="$(cd "$REPO" && pwd)"
-SELF_REPO="$(cd "$(dirname "$0")/../.." && pwd)"
-
 unavailable() {
     jq -n --arg s "$SYMBOL" '{symbol:$s, callers:[], status:"unavailable", source:"unavailable"}' 2>/dev/null \
         || echo '{"callers":[],"status":"unavailable","source":"unavailable"}'
     exit 2
 }
 
-find_memory_bin "$REPO_ABS" "$SELF_REPO" || unavailable
-command -v jq >/dev/null 2>&1 || unavailable
-
-PROJECT="$(memory_ensure_index "$REPO_ABS" || true)"
-[[ -n "$PROJECT" ]] || unavailable
+graph_bootstrap "$REPO" || unavailable
 
 SYM_ESC="$(gq_escape "$SYMBOL")"
 

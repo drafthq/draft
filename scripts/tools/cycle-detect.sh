@@ -40,7 +40,7 @@ EOF
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --repo) REPO="$2"; shift 2;;
+        --repo) REPO="${2:?--repo requires a value}"; shift 2;;
         --help|-h) usage; exit 0;;
         *) echo "Unknown flag: $1" >&2; usage >&2; exit 1;;
     esac
@@ -51,16 +51,9 @@ if [[ ! -d "$REPO" ]]; then
     exit 1
 fi
 
-REPO_ABS="$(cd "$REPO" && pwd)"
-SELF_REPO="$(cd "$(dirname "$0")/../.." && pwd)"
-
 unavailable() { echo '{"cycles":[],"source":"unavailable"}'; exit 2; }
 
-find_memory_bin "$REPO_ABS" "$SELF_REPO" || unavailable
-command -v jq >/dev/null 2>&1 || unavailable
-
-PROJECT="$(memory_ensure_index "$REPO_ABS" || true)"
-[[ -n "$PROJECT" ]] || unavailable
+graph_bootstrap "$REPO" || unavailable
 
 # 2- and 3-node CALLS cycles. Cypher lives in _graph_queries.sh (label-agnostic;
 # the Phase 0 fix — code units are mostly :Method, and CALLS only connects

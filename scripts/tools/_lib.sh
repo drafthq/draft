@@ -210,6 +210,21 @@ find_memory_bin() {
     return 1
 }
 
+# graph_bootstrap <repo-dir>
+# Shared engine bootstrap for the graph-*.sh wrappers: resolves the repo path,
+# locates the engine binary, checks jq, and ensures the index. Sets the globals
+# REPO_ABS and PROJECT. Returns 1 on any failure so each wrapper routes it to
+# its own unavailable-JSON shape (the shapes differ per tool).
+graph_bootstrap() {
+    local repo="$1" self_repo
+    REPO_ABS="$(cd "$repo" 2>/dev/null && pwd)" || return 1
+    self_repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+    find_memory_bin "$REPO_ABS" "$self_repo" || return 1
+    command -v jq >/dev/null 2>&1 || return 1
+    PROJECT="$(memory_ensure_index "$REPO_ABS" || true)"
+    [[ -n "$PROJECT" ]] || return 1
+}
+
 # Run a codebase-memory-mcp CLI tool. Echoes the JSON result (stdout); the engine's
 # `level=...` log lines go to stderr and are discarded unless DRAFT_MEMORY_DEBUG is set.
 # Usage: memory_cli <tool> [json-args]

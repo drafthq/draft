@@ -43,10 +43,10 @@ EOF
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --repo) REPO="$2"; shift 2;;
-        --file) FILE="$2"; shift 2;;
-        --symbol) SYMBOL="$2"; shift 2;;
-        --depth) DEPTH="$2"; shift 2;;
+        --repo) REPO="${2:?--repo requires a value}"; shift 2;;
+        --file) FILE="${2:?--file requires a value}"; shift 2;;
+        --symbol) SYMBOL="${2:?--symbol requires a value}"; shift 2;;
+        --depth) DEPTH="${2:?--depth requires a value}"; shift 2;;
         --help|-h) usage; exit 0;;
         *) echo "Unknown flag: $1" >&2; usage >&2; exit 1;;
     esac
@@ -55,9 +55,6 @@ done
 [[ -d "$REPO" ]] || { echo "ERROR: --repo '$REPO' is not a directory" >&2; exit 1; }
 [[ -n "$FILE" || -n "$SYMBOL" ]] || { echo "ERROR: provide --file or --symbol" >&2; usage >&2; exit 1; }
 [[ "$DEPTH" =~ ^[0-9]+$ ]] || { echo "ERROR: --depth must be a non-negative integer" >&2; exit 1; }
-
-REPO_ABS="$(cd "$REPO" && pwd)"
-SELF_REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 
 unavailable() {
     local t="$1" k="$2"
@@ -68,11 +65,7 @@ unavailable() {
 
 if [[ -n "$SYMBOL" ]]; then TARGET="$SYMBOL"; KIND="symbol"; else TARGET="$FILE"; KIND="file"; fi
 
-find_memory_bin "$REPO_ABS" "$SELF_REPO" || unavailable "$TARGET" "$KIND"
-command -v jq >/dev/null 2>&1 || unavailable "$TARGET" "$KIND"
-
-PROJECT="$(memory_ensure_index "$REPO_ABS" || true)"
-[[ -n "$PROJECT" ]] || unavailable "$TARGET" "$KIND"
+graph_bootstrap "$REPO" || unavailable "$TARGET" "$KIND"
 
 if [[ -n "$SYMBOL" ]]; then
     # direction:"both" is the reliable form (the "callers" value returns empty in this engine);

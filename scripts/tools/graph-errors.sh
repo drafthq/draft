@@ -42,9 +42,9 @@ EOF
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
-        --repo) REPO="$2"; shift 2;;
-        --symbol) SYMBOL="$2"; shift 2;;
-        --type) TYPE="$2"; shift 2;;
+        --repo) REPO="${2:?--repo requires a value}"; shift 2;;
+        --symbol) SYMBOL="${2:?--symbol requires a value}"; shift 2;;
+        --type) TYPE="${2:?--type requires a value}"; shift 2;;
         --help|-h) usage; exit 0;;
         *) echo "Unknown flag: $1" >&2; usage >&2; exit 1;;
     esac
@@ -55,9 +55,6 @@ if [[ -n "$SYMBOL" && -n "$TYPE" ]]; then
     echo "ERROR: use either --symbol or --type, not both" >&2; exit 1
 fi
 [[ -n "$SYMBOL" || -n "$TYPE" ]] || { echo "ERROR: provide --symbol or --type" >&2; usage >&2; exit 1; }
-
-REPO_ABS="$(cd "$REPO" && pwd)"
-SELF_REPO="$(cd "$(dirname "$0")/../.." && pwd)"
 
 unavailable() {
     if [[ -n "$TYPE" ]]; then
@@ -70,11 +67,7 @@ unavailable() {
     exit 2
 }
 
-find_memory_bin "$REPO_ABS" "$SELF_REPO" || unavailable
-command -v jq >/dev/null 2>&1 || unavailable
-
-PROJECT="$(memory_ensure_index "$REPO_ABS" || true)"
-[[ -n "$PROJECT" ]] || unavailable
+graph_bootstrap "$REPO" || unavailable
 
 if [[ -n "$TYPE" ]]; then
     SYM_ESC="$(gq_escape "$TYPE")"
