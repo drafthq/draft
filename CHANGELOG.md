@@ -7,8 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-Adoption-audit remediation (`docs/internal/audit/draft-adoption-audit.md`).
-The audit's finding was that the funnel, not the product, was the constraint:
+Adoption-audit remediation. The audit's finding was that the funnel, not the product, was the constraint:
 the wedge command required the expensive command first, the install path had no
 regression test, releases were invisible, and the central efficacy claim was
 unfalsifiable.
@@ -35,7 +34,7 @@ unfalsifiable.
   instead of a warning. `bin/README.md` gains a Trust story section stating what
   is and is not guaranteed (checksum yes, signing and provenance no) and the
   contingency if the upstream engine stalls.
-- **Efficacy benchmark harness.** `docs/internal/benchmark/README.md` (protocol)
+- **Efficacy benchmark harness.** `docs/benchmark/README.md` (protocol)
   plus `scripts/benchmark/` — `bench-checkout.sh` prepares pre-merge worktrees
   and refuses any corpus row whose fix is reachable from the reviewed tree;
   `bench-grade.sh` records grades review-before-fix; `bench-report.sh` computes

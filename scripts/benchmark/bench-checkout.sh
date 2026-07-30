@@ -14,7 +14,7 @@
 # `repo` is a clone URL or owner/name (GitHub assumed for the short form).
 #
 # Usage:
-#   scripts/benchmark/bench-checkout.sh --corpus docs/internal/benchmark/corpus.tsv --out /tmp/bench
+#   scripts/benchmark/bench-checkout.sh --corpus docs/benchmark/corpus.tsv --out /tmp/bench
 #   scripts/benchmark/bench-checkout.sh --corpus <f> --out <d> --only owner/name#123
 #
 # Exit codes:

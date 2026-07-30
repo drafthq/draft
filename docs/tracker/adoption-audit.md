@@ -3,7 +3,8 @@
 > Verify-first: 1) re-read row + source doc · 2) `git log` + grep the symbol on main ·
 > 3) confirm still required · 4) flip shipped/obsolete rows with evidence. Then code.
 
-Source: `docs/internal/audit/draft-adoption-audit.md` (audit of v3.6.0).
+Source: `docs/internal/audit/draft-adoption-audit.md` (audit of v3.6.0). That path is
+gitignored, so the audit itself is local-only — the rows below carry the substance.
 
 - [x] AUD-1 · namespace consolidation · already shipped in 9080d6b; audit stale. Guard added: `tests/test-canonical-namespace.sh`
 - [x] AUD-2 · GitHub Releases per tag · `scripts/release-notes.sh` + `.github/workflows/release.yml`; backfill of v3.3.0…v3.6.0 pending owner action
@@ -11,7 +12,7 @@ Source: `docs/internal/audit/draft-adoption-audit.md` (audit of v3.6.0).
 - [x] AUD-4 · README cut to 5 commands · full table moved to `docs/COMMANDS.md`
 - [x] AUD-5 · maturity-level copy deleted · replaced by real findings + graph query in `web/index.html`
 - [x] AUD-6 · CI gates · `.github/workflows/ci.yml` + `check-repo-size.sh` + `install-smoke-test.sh`
-- [ ] AUD-7 · 20-PR efficacy benchmark · P2 · `docs/internal/benchmark/README.md`
+- [ ] AUD-7 · 20-PR efficacy benchmark · P2 · `docs/benchmark/README.md`
   - [x] protocol + harness (`scripts/benchmark/`)
   - [ ] collect and freeze the 20-PR corpus
   - [ ] run both configurations per entry, grade, publish

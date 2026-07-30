@@ -17,7 +17,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 BENCH="$ROOT_DIR/scripts/benchmark"
-PROTOCOL="$ROOT_DIR/docs/internal/benchmark/README.md"
+PROTOCOL="$ROOT_DIR/docs/benchmark/README.md"
 
 source "$SCRIPT_DIR/test-helpers.sh"
 cd "$ROOT_DIR"
@@ -36,6 +36,15 @@ done
 echo ""
 echo "## Protocol doc"
 assert "protocol doc exists" "$([[ -f "$PROTOCOL" ]] && echo true || echo false)"
+# It lived under the gitignored docs/internal/ at first, so it existed locally
+# and was absent from every clone — including CI's. A pre-registered protocol
+# that does not ship cannot make anything credible.
+assert "protocol doc is git-tracked (not gitignored)" \
+    "$(git ls-files --error-unmatch docs/benchmark/README.md >/dev/null 2>&1 && echo true || echo false)"
+for s in bench-checkout.sh bench-grade.sh bench-report.sh; do
+    assert "$s is git-tracked" \
+        "$(git ls-files --error-unmatch "scripts/benchmark/$s" >/dev/null 2>&1 && echo true || echo false)"
+done
 assert "states the 20-PR target" "$(grep -q '20 merged PRs' "$PROTOCOL" && echo true || echo false)"
 assert "requires the corpus frozen before runs" "$(grep -qi 'frozen before any review runs' "$PROTOCOL" && echo true || echo false)"
 assert "commits to counting false positives" "$(grep -qi 'False positives counted' "$PROTOCOL" && echo true || echo false)"
@@ -174,8 +183,8 @@ assert "bench-checkout without --corpus exits 2" "$([[ "$rc" -eq 2 ]] && echo tr
 echo ""
 echo "## Corpus is not pre-committed (protocol constraint 1)"
 assert "no committed corpus.tsv" \
-    "$(git ls-files --error-unmatch docs/internal/benchmark/corpus.tsv >/dev/null 2>&1 && echo false || echo true)"
+    "$(git ls-files --error-unmatch docs/benchmark/corpus.tsv >/dev/null 2>&1 && echo false || echo true)"
 assert "no committed results.tsv" \
-    "$(git ls-files --error-unmatch docs/internal/benchmark/results.tsv >/dev/null 2>&1 && echo false || echo true)"
+    "$(git ls-files --error-unmatch docs/benchmark/results.tsv >/dev/null 2>&1 && echo false || echo true)"
 
 finish_test "benchmark harness"

@@ -14,7 +14,7 @@
 # grade : caught | partial | missed
 #
 # Usage:
-#   scripts/benchmark/bench-report.sh --results docs/internal/benchmark/results.tsv
+#   scripts/benchmark/bench-report.sh --results docs/benchmark/results.tsv
 #   scripts/benchmark/bench-report.sh --results <f> --markdown > report.md
 #
 # Exit codes:
@@ -139,4 +139,4 @@ else
 fi
 
 echo ""
-echo "Partial grades are excluded from the catch rate by design (see docs/internal/benchmark/README.md)."
+echo "Partial grades are excluded from the catch rate by design (see docs/benchmark/README.md)."
