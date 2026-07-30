@@ -27,6 +27,8 @@ DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}
 
 Filesystem `grep` is reserved for source-text scans (string literals, log messages, regex matches in code) — not for discovering modules, files, or callers when the graph can answer.
 
+When `draft/graph/schema.yaml` does **not** exist, the graph checks do not run and must be reported as not run — never inferred from grep. See Step 0.
+
 ## Red Flags - STOP if you're:
 
 See [shared red flags](../../core/shared/red-flags.md) — applies to all code-touching skills.
@@ -67,6 +69,27 @@ Automated static validation (OWASP secrets, dead code, dependency cycles, N+1 pa
 
 ---
 
+## Step 0: Detect Setup Level (run first, always)
+
+`/draft:review` is **context-optional**. It runs on an un-indexed repo with no setup, so a first-time user gets findings before paying for `/draft:init`.
+
+```bash
+ls draft/ 2>/dev/null                    # absent -> zero-setup mode
+ls draft/graph/schema.yaml 2>/dev/null   # absent -> graph-less
+```
+
+| `draft/` | graph | Mode | Behavior |
+|---|---|---|---|
+| absent | absent | **zero-setup** | Follow [references/zero-setup-mode.md](references/zero-setup-mode.md) for scope resolution, stage behavior, output, and CTA. Skip Steps 2.1–2.2 and Stage 2. |
+| present | absent | **graph-less** | Full workflow minus graph queries. Report every graph check as not run. |
+| present | present | **full** | Everything below. |
+
+Do **not** print "Draft not initialized" and stop — that error belongs to skills that cannot function without context (`/draft:learn`, `/draft:deep-review`, `/draft:tech-debt`, `/draft:implement`). See [core/shared/context-verify.md](../../core/shared/context-verify.md).
+
+In any degraded mode: report what did not run, never simulate it, and end with the specific checks that indexing would add.
+
+---
+
 ## Step 1: Parse Arguments
 
 Extract and validate command arguments from user input.
@@ -104,6 +127,7 @@ If no arguments provided:
 - If no `[~]` track, find first `[ ]` Pending track
 - If track found: display `Auto-detected track: <id> - <name> [<status>]` and proceed
 - If no track is found but the repo has local changes: default to project-level review of current changes
+- If no `draft/tracks.md` exists (zero-setup mode): resolve scope from git per `references/zero-setup-mode.md` §Scope resolution without tracks — uncommitted changes, else branch-vs-default diff, else `HEAD`
 - If no track and no changes: error "No review scope found. Specify a track, files, commit range, or create changes to review."
 
 ---
@@ -250,8 +274,9 @@ For project-level reviews (no track context):
    Read and follow the base procedure in `core/shared/draft-context-loading.md`.
 
 2. **Note limitations:**
-   - No spec.md → Skip Stage 1 (spec compliance)
-   - Run Stage 2 (code quality) only
+   - No spec.md → skip Stage 2 (spec compliance); say it was skipped and why
+   - Run Stage 1 (automated validation) and Stage 3 (code quality)
+   - Zero-setup mode → also declare every unavailable graph check, per `references/zero-setup-mode.md` §What degrades, precisely
 
 ---
 
@@ -810,6 +835,10 @@ Similar format but:
 - Each run creates a new timestamped file; the `-latest.md` symlink always points to the most recent report
 - Include "Previous review: <timestamp>" if a prior `-latest.md` symlink exists (read its target to determine the previous timestamp)
 
+### Zero-Setup Report (no `draft/` directory)
+
+**Render inline; write no files.** An evaluating user has not asked for artifacts in their repo, and creating `draft/` is `/draft:init`'s job. On explicit request, save to `.draft-review/review-report-<timestamp>.md`. Full format and the mandatory closing CTA: `references/zero-setup-mode.md` §Output.
+
 ### Report History
 
 Previous timestamped reports are preserved. The `-latest.md` symlink always points to the most recent report.
@@ -904,11 +933,14 @@ Next: Fix gaps and run /draft:review again.
 
 ## Error Handling
 
-### Missing Draft Directory
+### Missing Draft Directory — not an error
+
+A missing `draft/` directory is a **supported mode**, not a failure. Enter zero-setup mode (Step 0) and review the diff. Never emit "Draft not initialized" from this skill.
+
+The only legitimate stop is a repository with nothing to review:
 
 ```
-Error: Draft not initialized.
-Run /draft:init to set up Context-Driven Development.
+No changes to review. Make a change, or run /draft:review commits <range>.
 ```
 
 ### No Tracks Found
@@ -974,6 +1006,8 @@ Options:
 | Ignore incomplete tasks | Warn user, suggest completing work first |
 | Auto-fix issues found | Report only, let developer decide |
 | Batch multiple tracks | Review one track at a time |
+| Refuse to run because `draft/` is missing | Enter zero-setup mode and review the diff |
+| Report blast radius / hotspots without the graph | Say the check did not run |
 
 ---
 

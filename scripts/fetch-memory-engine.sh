@@ -16,6 +16,12 @@
 # Env:
 #   CMM_VERSION        Release tag to fetch (default: pinned DEFAULT_VERSION).
 #   CMM_DOWNLOAD_URL   Override the release base URL (testing).
+#   DRAFT_STRICT_VERIFY  1 = refuse to install when the checksum cannot be
+#                      verified (missing checksums.txt or unlisted archive).
+#                      Default is warn-and-continue, which keeps installs working
+#                      on releases that ship no checksums file — acceptable for
+#                      individuals, not for anyone who must attest to what runs
+#                      on their machine.
 #
 # Exit codes: 0 installed/already-present, 1 invocation error, 2 fetch/verify failure.
 set -euo pipefail
@@ -79,7 +85,19 @@ if ! curl -fSL --max-time 300 -o "$TMP/$ARCHIVE" "$BASE/$ARCHIVE"; then
   exit 2
 fi
 
-# --- Verify checksum (best-effort: hard-fail only if the archive is listed) ---
+# --- Verify checksum ---
+# A mismatch is always fatal. An *absent* checksum is fatal only under
+# DRAFT_STRICT_VERIFY=1 — otherwise it warns, so that a release without a
+# checksums.txt does not brick the install for everyone.
+STRICT="${DRAFT_STRICT_VERIFY:-0}"
+unverified() {
+  if [[ "$STRICT" == "1" ]]; then
+    echo "error: $1 (DRAFT_STRICT_VERIFY=1 refuses unverified binaries)" >&2
+    exit 2
+  fi
+  echo "  warning: $1 — skipping verification (set DRAFT_STRICT_VERIFY=1 to make this fatal)" >&2
+}
+
 if curl -fsSL --max-time 60 -o "$TMP/checksums.txt" "$BASE/checksums.txt" 2>/dev/null; then
   expected="$(grep "  $ARCHIVE\$" "$TMP/checksums.txt" 2>/dev/null | awk '{print $1}' | head -1 || true)"
   if [[ -n "$expected" ]]; then
@@ -92,12 +110,12 @@ if curl -fsSL --max-time 60 -o "$TMP/checksums.txt" "$BASE/checksums.txt" 2>/dev
       echo "error: checksum mismatch for $ARCHIVE (expected $expected, got $actual)" >&2
       exit 2
     fi
-    echo "  checksum OK"
+    echo "  checksum OK ($expected)"
   else
-    echo "  warning: $ARCHIVE not found in checksums.txt — skipping verification" >&2
+    unverified "$ARCHIVE not listed in checksums.txt"
   fi
 else
-  echo "  warning: checksums.txt unavailable — skipping verification" >&2
+  unverified "checksums.txt unavailable at $BASE"
 fi
 
 # --- Extract and install ---

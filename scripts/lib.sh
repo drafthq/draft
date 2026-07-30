@@ -250,6 +250,7 @@ TOOLS=(
     "validate-frontmatter.sh"
     # Foundations hygiene/verification tools
     "check-graph-usage-report.sh"
+    "check-repo-size.sh"
     "check-scope-conflicts.sh"
     "check-skill-line-caps.sh"
     "check-template-noop.sh"
@@ -257,6 +258,7 @@ TOOLS=(
     "diff-templates-vs-tracks.sh"
     "emit-skill-metrics.sh"
     "fix-whitespace.sh"
+    "install-smoke-test.sh"
     "migrate-track-frontmatter.sh"
     "render-track.sh"
     "verify-citations.sh"

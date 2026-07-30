@@ -28,7 +28,8 @@ echo "--------------------------------------------------------"
 
 # O(N*M) Nested Loop
 benchmark_nested_loop() {
-    local start_time=$(date +%s%N)
+    local start_time
+    start_time=$(date +%s%N)
     local ALL_DISK_IN_ORDER=true
     for disk_skill in "${DISK_SKILLS[@]}"; do
         local FOUND=false
@@ -42,13 +43,15 @@ benchmark_nested_loop() {
             ALL_DISK_IN_ORDER=false
         fi
     done
-    local end_time=$(date +%s%N)
+    local end_time
+    end_time=$(date +%s%N)
     echo "Nested Loop: $(((end_time - start_time) / 1000000)) ms (ALL_DISK_IN_ORDER=$ALL_DISK_IN_ORDER)"
 }
 
 # O(N) Associative Array
 benchmark_assoc_array() {
-    local start_time=$(date +%s%N)
+    local start_time
+    start_time=$(date +%s%N)
 
     # Pre-populate associative array for O(1) lookups
     declare -A ORDER_MAP
@@ -62,7 +65,8 @@ benchmark_assoc_array() {
             ALL_DISK_IN_ORDER=false
         fi
     done
-    local end_time=$(date +%s%N)
+    local end_time
+    end_time=$(date +%s%N)
     echo "Assoc Array: $(((end_time - start_time) / 1000000)) ms (ALL_DISK_IN_ORDER=$ALL_DISK_IN_ORDER)"
 }
 

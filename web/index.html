@@ -1238,7 +1238,7 @@
                     </div>
                     <h3>CXOs &amp; VPs</h3>
                     <p class="audience-role">CTO / VP Eng / CISO</p>
-                    <p>FAANG-level engineering practices at zero cost. ACID compliance audits, Architecture Decision Records, monorepo federation. Maturity Level 4/5. MIT licensed, no vendor lock-in.</p>
+                    <p>Deterministic quality gates you can audit, at zero cost. ACID compliance audits, Architecture Decision Records, monorepo federation. Every review cites the file, the line, and the graph query behind it. MIT licensed, no vendor lock-in.</p>
                     <div class="audience-cta">Enterprise-grade methodology, free forever</div>
                 </div>
 
@@ -1262,8 +1262,8 @@
         <div class="section-glow section-glow--emerald"></div>
         <div class="section-inner">
             <span class="section-label">Enterprise Grade</span>
-            <h2>FAANG-level <span class="text-emerald">practices</span>, free</h2>
-            <p class="section-subtitle">Draft codifies the engineering culture of Google, Amazon, and Stripe into an AI-assisted workflow.</p>
+            <h2>The gates a <span class="text-emerald">senior reviewer</span> would ask for, automated</h2>
+            <p class="section-subtitle">Specs before code, TDD gates, blast-radius analysis, ADRs, ACID audits &mdash; enforced by the tool instead of remembered by the reviewer.</p>
 
             <div class="industry-table-wrap glass-card">
                 <table class="industry-table">
@@ -1355,8 +1355,52 @@
                 </div>
             </div>
 
-            <div class="callout callout--emerald">
-                <strong>Maturity Level 4/5 (High).</strong> Adopting Draft puts your workflow on par with Staff Engineer practices at FAANG companies: proposing implementations of specs, performing systematic bughunts, and maintaining architectural documents.
+            <!-- Evidence, not adjectives: real output from Draft's own repo. -->
+            <div class="proof">
+                <div class="proof-head">
+                    <h3>What that actually buys you</h3>
+                    <p>Three defects <code>/draft:review</code> found in Draft's own codebase, shipped as fixes in v3.6.0 &mdash; and the graph query that scopes each one.</p>
+                </div>
+
+                <div class="proof-findings">
+                    <div class="proof-finding">
+                        <span class="proof-sev proof-sev--critical">Critical</span>
+                        <p class="proof-file"><code>scripts/tools/_graph_queries.sh</code> &middot; <code>gq_escape</code></p>
+                        <p>Escaped quotes but not backslashes, so a symbol name ending in <code>\</code> broke out of the Cypher string literal and altered the query. Every graph tool routes user input through this function.</p>
+                    </div>
+                    <div class="proof-finding">
+                        <span class="proof-sev proof-sev--critical">Critical</span>
+                        <p class="proof-file"><code>scripts/tools/graph-impact.sh</code></p>
+                        <p>Built its JSON payload by hand. When the engine failed, it emitted a well-formed empty result with <code>source:"memory-graph"</code> &mdash; a blast-radius query that reported "nothing downstream" instead of "I could not answer".</p>
+                    </div>
+                    <div class="proof-finding">
+                        <span class="proof-sev proof-sev--important">Important</span>
+                        <p class="proof-file"><code>scripts/tools/check-track-hygiene.sh</code></p>
+                        <p>A <code>grep</code> in a pipeline returned 1 on clean input, and under <code>set -euo pipefail</code> that aborted the validator mid-run. A track with zero problems produced zero output &mdash; indistinguishable from a pass.</p>
+                    </div>
+                </div>
+
+                <div class="proof-query">
+                    <div class="playground-prompt">
+                        <span class="playground-prompt-cursor">$</span>
+                        <code class="playground-prompt-cmd">scripts/tools/graph-callers.sh --repo . --symbol json_escape</code>
+                    </div>
+<pre class="playground-output proof-output">{
+  <span class="pg-key">"symbol"</span>: <span class="pg-str">"json_escape"</span>,
+  <span class="pg-key">"callers"</span>: [
+    { <span class="pg-key">"name"</span>: <span class="pg-str">"emit"</span>,        <span class="pg-key">"file"</span>: <span class="pg-str">"scripts/tools/check-scope-conflicts.sh"</span> },
+    { <span class="pg-key">"name"</span>: <span class="pg-str">"emit"</span>,        <span class="pg-key">"file"</span>: <span class="pg-str">"scripts/tools/check-skill-line-caps.sh"</span> },
+    { <span class="pg-key">"name"</span>: <span class="pg-str">"emit"</span>,        <span class="pg-key">"file"</span>: <span class="pg-str">"scripts/tools/check-track-hygiene.sh"</span> },
+    { <span class="pg-key">"name"</span>: <span class="pg-str">"emit_array"</span>,  <span class="pg-key">"file"</span>: <span class="pg-str">"scripts/tools/scan-markers.sh"</span> },
+    { <span class="pg-key">"name"</span>: <span class="pg-str">"emit_lang"</span>,   <span class="pg-key">"file"</span>: <span class="pg-str">"scripts/tools/detect-test-framework.sh"</span> },
+    <span class="pg-comment">/* … 17 more */</span>
+  ]
+}
+<span class="pg-comment"># 22 callers across 20 files. Change this function's contract and the review
+# knows every file that has to be re-verified — before you open the PR.</span></pre>
+                </div>
+
+                <p class="proof-foot">Run it yourself: <code>/draft:review</code> needs no setup, and <code>/draft:init</code> then adds the structural queries above. Every finding here is reproducible from <a href="https://github.com/drafthq/draft/blob/main/CHANGELOG.md" class="link-cyan">the changelog</a> and <a href="https://github.com/drafthq/draft/blob/main/docs/WORK_TRACKER.md" class="link-cyan">the finding-by-finding record</a>.</p>
             </div>
         </div>
     </section>

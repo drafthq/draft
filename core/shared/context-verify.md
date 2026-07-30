@@ -23,7 +23,9 @@ Referenced by: every skill that starts with a `Verify Draft Context` step.
    |---|---|
    | Directory exists | Proceed to step 3. |
    | Directory missing AND skill requires context (`/draft:learn`, `/draft:deep-review`, `/draft:tech-debt`, `/draft:implement`) | **STOP** — print `No Draft context found. Run /draft:init first.` and exit. |
-   | Directory missing AND skill is context-optional (`/draft:debug`, `/draft:quick-review`, `/draft:bughunt`, `/draft:deploy-checklist`, `/draft:documentation`, `/draft:testing-strategy`) | Proceed with reduced-context mode; record `draft_context: absent` in the report header. |
+   | Directory missing AND skill is context-optional (`/draft:review`, `/draft:debug`, `/draft:quick-review`, `/draft:bughunt`, `/draft:deploy-checklist`, `/draft:documentation`, `/draft:testing-strategy`) | Proceed with reduced-context mode; record `draft_context: absent` in the report header. |
+
+   `/draft:review` is deliberately in the context-optional row: it is the command a new user runs first, so requiring `/draft:init` would put the expensive step ahead of the demonstration. Its degraded contract is `skills/review/references/zero-setup-mode.md`.
 
 3. **Load context** by following [draft-context-loading.md](draft-context-loading.md). Honor the **selective guardrail matrix** in that file's Layer 0.5 — do not load all guardrails just because they are available.
 

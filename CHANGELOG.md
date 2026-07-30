@@ -7,6 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+Adoption-audit remediation (`docs/internal/audit/draft-adoption-audit.md`).
+The audit's finding was that the funnel, not the product, was the constraint:
+the wedge command required the expensive command first, the install path had no
+regression test, releases were invisible, and the central efficacy claim was
+unfalsifiable.
+
+### Added
+- **`/draft:review` runs with zero setup.** A missing `draft/` directory is now
+  a supported mode, not an error. The review resolves scope from git, runs
+  Stage 1 and Stage 3 against plugin guardrails, renders the report inline
+  (writing nothing into your repo), and closes by naming the specific
+  structural checks `/draft:init` would have added. Contract:
+  `skills/review/references/zero-setup-mode.md`.
+- **CI.** `.github/workflows/ci.yml` runs the test suites, lint, an
+  integrations-freshness check, and — new — the install path itself.
+- **`scripts/tools/check-repo-size.sh`** fails the build when the tree at HEAD
+  exceeds a cap (default 10 MB). This is the test that would have caught the
+  v2.8.3 install hang.
+- **`scripts/tools/install-smoke-test.sh`** reproduces a new user's first
+  install on a throwaway shallow clone: manifest discovery, skill frontmatter,
+  and a `--dry-run` writer pass per host against an empty HOME.
+- **GitHub Releases per tag.** `.github/workflows/release.yml` publishes a
+  Release for every `vX.Y.Z` tag, with notes extracted from CHANGELOG.md by
+  `scripts/release-notes.sh`.
+- **`DRAFT_STRICT_VERIFY=1`** makes an unverifiable graph-engine download fatal
+  instead of a warning. `bin/README.md` gains a Trust story section stating what
+  is and is not guaranteed (checksum yes, signing and provenance no) and the
+  contingency if the upstream engine stalls.
+- **Efficacy benchmark harness.** `docs/internal/benchmark/README.md` (protocol)
+  plus `scripts/benchmark/` — `bench-checkout.sh` prepares pre-merge worktrees
+  and refuses any corpus row whose fix is reachable from the reviewed tree;
+  `bench-grade.sh` records grades review-before-fix; `bench-report.sh` computes
+  catch rate, precision, and the graph delta. Corpus not yet collected.
+- **`docs/COMMANDS.md`** — the full 33-skill reference, moved off the README.
+
+### Changed
+- **README leads with five commands**, not 33, and orders the funnel
+  `review → init → review` so the cheap step comes first.
+- **Marketing copy replaced with output.** The "Maturity Level 4/5 / on par with
+  Staff Engineer practices at FAANG" claim is gone from getdraft.dev, replaced
+  by three real defects `/draft:review` found in Draft's own codebase and the
+  graph query that scopes them.
+- `core/shared/context-verify.md` lists `/draft:review` as context-optional.
+
+### Fixed
+- `check-repo-size.sh`-class SIGPIPE bug: `sort | head` under `pipefail` failed
+  non-deterministically depending on pipe-buffer occupancy. Both new tools
+  materialize before slicing.
+- `bench-report.sh` computes the graph delta from raw counts; differencing two
+  independently-rounded percentages shifted it by up to 0.1pp.
+
 ## [3.6.0] - 2026-07-15
 
 Full-codebase review release: 10-angle review with per-finding adversarial

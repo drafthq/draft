@@ -1,5 +1,11 @@
 {
   "MD013": false,
   "MD033": false,
-  "MD041": false
+  "MD041": false,
+
+  "//MD010": "Hard tabs are legitimate inside code blocks — TSV schemas, Makefile snippets.",
+  "MD010": { "code_blocks": false },
+
+  "//MD060": "Table pipe alignment. The repo's tables are compact and consistent; the rule arrived in a later markdownlint and would flag ~7k pre-existing lines with no reader benefit.",
+  "MD060": false
 }

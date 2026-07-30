@@ -3,6 +3,12 @@
 
 TEST_SCRIPTS = \
 	./tests/test-skill-frontmatter.sh \
+	./tests/test-canonical-namespace.sh \
+	./tests/test-web-claims.sh \
+	./tests/test-zero-setup-review.sh \
+	./tests/test-release-notes.sh \
+	./tests/test-fetch-memory-engine.sh \
+	./tests/test-benchmark-harness.sh \
 	./tests/test-skill-name-security.sh \
 	./tests/test-skill-order.sh \
 	./tests/test-skill-headers.sh \
@@ -71,6 +77,8 @@ TEST_SCRIPTS = \
 	./tests/test-tools-okf-plan-concepts-cargo.sh \
 	./tests/test-tools-okf-emit-catalog.sh \
 	./tests/test-tools-okf-fix-links.sh \
+	./tests/test-tools-check-repo-size.sh \
+	./tests/test-tools-install-smoke-test.sh \
 	./tests/test-tools-check-graph-usage-report.sh \
 	./tests/test-tools-check-template-noop.sh \
 	./tests/test-tools-emit-skill-metrics.sh

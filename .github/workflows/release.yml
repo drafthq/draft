@@ -1,0 +1,76 @@
+# Publishes a GitHub Release for every pushed vX.Y.Z tag.
+#
+# Tags alone are invisible on the repo landing page — a visitor sees "no
+# releases" regardless of how many tags exist. This closes the gap so the
+# release history matches the changelog automatically, with no manual step to
+# forget.
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to publish a Release for (e.g. v3.6.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+
+      - name: Resolve tag and version
+        id: meta
+        run: |
+          tag="${{ inputs.tag || github.ref_name }}"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Verify the tag matches package.json
+        run: |
+          pkg="$(node -p "require('./package.json').version")"
+          want="${{ steps.meta.outputs.version }}"
+          if [ "$pkg" != "$want" ]; then
+            echo "::error::tag ${{ steps.meta.outputs.tag }} does not match package.json ($pkg)"
+            exit 1
+          fi
+
+      - name: Extract release notes from CHANGELOG.md
+        id: notes
+        run: |
+          if bash scripts/release-notes.sh "${{ steps.meta.outputs.version }}" > release-notes.md; then
+            echo "Extracted $(wc -l < release-notes.md) lines of notes."
+          else
+            # A missing changelog section should not block the Release — an
+            # empty release history is the problem this workflow exists to fix.
+            echo "::warning::no changelog section for ${{ steps.meta.outputs.version }}; falling back to a stub"
+            printf 'See [CHANGELOG.md](https://github.com/%s/blob/main/CHANGELOG.md) for details.\n' \
+              "${{ github.repository }}" > release-notes.md
+          fi
+
+      - name: Publish the Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tag="${{ steps.meta.outputs.tag }}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release edit "$tag" \
+              --title "Draft $tag" \
+              --notes-file release-notes.md
+          else
+            gh release create "$tag" \
+              --title "Draft $tag" \
+              --notes-file release-notes.md \
+              --verify-tag
+          fi

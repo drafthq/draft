@@ -40,6 +40,8 @@ Three stages, one command:
 2. **Spec compliance** — checks the diff against the agreed spec, not vibes
 3. **Code quality** — flags hotspots, blast radius, and missing test coverage using a tree-sitter knowledge graph of your repo
 
+No setup required for the first run: on an un-indexed repo it reviews the diff and names the structural checks it skipped, so you see findings before you spend anything.
+
 Free. No API keys. No paid tier. No vendor lock-in. Catches the 3 bugs you missed before they hit your reviewer.
 
 > *Demo coming soon — for now, [watch the 8-minute walkthrough](https://www.youtube.com/watch?v=gBSwFEFVd7Y).*
@@ -76,9 +78,12 @@ Flags: `--global` / `--project` to pick scope, `--dry-run` to preview, `--force`
 Then, in Claude Code (after restarting):
 
 ```bash
-/draft:init       # 5-phase codebase analysis (one-time)
-/draft:review     # ← run this on every branch before you push
+/draft:review     # ← start here. No setup, no indexing. Reviews your current diff.
+/draft:init       # once you've seen what it catches: index the repo (one-time)
+/draft:review     # same command, now with blast radius + hotspots + cycle detection
 ```
+
+`/draft:review` runs on an un-indexed repo and tells you exactly which structural checks it had to skip. Indexing is the upgrade, not the entry fee.
 
 Run `/draft` for the full command map.
 
@@ -113,53 +118,19 @@ curl -o .gemini.md https://raw.githubusercontent.com/drafthq/draft/main/integrat
 
 ---
 
-## Beyond `/draft:review` — 32 more commands
+## The five commands
 
-`/draft:review` is the wedge. Once Draft has indexed your repo, you also get spec-driven planning, TDD-enforced implementation, exhaustive bug hunting, deep architectural audits, and 32 more commands covering the full development lifecycle.
-
----
-
-## What You Get
-
-| Command | What It Does |
+| Command | What it does |
 |---------|--------------|
-| **`/draft`** | Overview, intent mapping, and command reference |
-| **`/draft:plan`** | Router for planning, architecture, and track management |
-| **`/draft:ops`** | Router for operations, deployment, incident, and lifecycle |
-| **`/draft:docs`** | Router for authoring and documentation workflows |
-| **`/draft:discover`** | Router for discovery, debugging, investigation, and quality |
-| **`/draft:init`** | Analyze codebase, create context files + state tracking |
-| **`/draft:graph`** | Build / refresh the knowledge-graph snapshot |
-| **`/draft:new-track`** | Collaborative spec + plan with AI |
-| **`/draft:decompose`** | Module decomposition with dependency mapping |
-| **`/draft:implement`** | TDD workflow with checkpoints |
-| **`/draft:coverage`** | Code coverage report (target 95%+) |
-| **`/draft:review`** | 3-stage review (validation + spec compliance + code quality) |
-| **`/draft:deep-review`** | Enterprise-grade module lifecycle and ACID audit |
-| **`/draft:bughunt`** | Exhaustive 14-dimension defect discovery with taint tracking |
-| **`/draft:learn`** | Discover coding patterns, update guardrails |
-| **`/draft:adr`** | Architecture Decision Records |
-| **`/draft:status`** | Show progress overview |
-| **`/draft:revert`** | Git-aware rollback |
-| **`/draft:change`** | Handle mid-track requirement changes |
-| **`/draft:debug`** | Structured debugging: reproduce, isolate, diagnose, fix |
-| **`/draft:quick-review`** | Lightweight 4-dimension code review |
-| **`/draft:deploy-checklist`** | Pre-deployment verification with rollback triggers |
-| **`/draft:upload`** | Pre-upload handoff gate (review, HLD, checklist, validators) |
-| **`/draft:testing-strategy`** | Test plan design with coverage targets |
-| **`/draft:tech-debt`** | Technical debt analysis across 6 dimensions |
-| **`/draft:standup`** | Git activity standup summary (read-only) |
-| **`/draft:incident-response`** | Incident lifecycle: triage, communicate, mitigate, postmortem |
-| **`/draft:documentation`** | Technical docs: readme, runbook, api, onboarding |
-| **`/draft:integrations`** | External system exports and syncs (jira preview / create) |
-| **`/draft:jira`** | Unified Jira workflows (preview / create / review) |
-| **`/draft:tour`** | Interactive architecture mentorship and codebase walk-through |
-| **`/draft:impact`** | ROI analytics tracking friction and timeline metrics |
-| **`/draft:assist-review`** | Summarize intent and highlight structural PR risks for reviewers |
+| **`/draft:review`** | 3-stage review of your diff. **Works with zero setup** — run it first. |
+| **`/draft:init`** | Index the repo once. Adds blast radius, caller lookup, hotspot ranking, and cycle detection to every later review. |
+| **`/draft:new-track`** | Turn an idea into a spec + plan before any code is written. |
+| **`/draft:implement`** | Execute the plan task-by-task under TDD with verification gates. |
+| **`/draft:graph`** | Build or refresh the knowledge-graph snapshot on its own. |
 
-[See full command reference →](core/methodology.md#command-workflows)
+That is the whole loop. 28 more specialist commands — bug hunting, ACID audits, ADRs, tech debt, incident response, Jira, coverage, standups — sit behind five intent routers (`/draft:plan`, `/draft:discover`, `/draft:ops`, `/draft:docs`, `/draft:jira`).
 
-> **Recommended next step after install:** run `/draft:init` to index your repo, then `/draft:review` on any branch with AI-generated changes. Once you've seen what it catches, explore the rest.
+[Full command reference →](docs/COMMANDS.md) · run `/draft` for the interactive intent map
 
 ---
 
