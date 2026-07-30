@@ -41,6 +41,9 @@ unfalsifiable.
   `bench-grade.sh` records grades review-before-fix; `bench-report.sh` computes
   catch rate, precision, and the graph delta. Corpus not yet collected.
 - **`docs/COMMANDS.md`** — the full 33-skill reference, moved off the README.
+- **Issue and pull-request templates.** `CONTRIBUTING.md` linked to a bug report
+  template, a feature request template, and a PR checklist that did not exist;
+  all three now do.
 
 ### Changed
 - **README leads with five commands**, not 33, and orders the funnel
@@ -50,6 +53,16 @@ unfalsifiable.
   by three real defects `/draft:review` found in Draft's own codebase and the
   graph query that scopes them.
 - `core/shared/context-verify.md` lists `/draft:review` as context-optional.
+- **Website and book follow the new funnel.** The install panel, primary command
+  grid, terminal demo, and FAQ on getdraft.dev lead with `/draft:review`; the
+  Getting Started and Review Pipeline chapters document zero-setup mode and what
+  it cannot check; `llms.txt` and `llms-full.txt` describe it for agents.
+- **The site changelog is current again.** It showed v3.3.0 as the latest release
+  while the repo was on v3.6.0; v3.3.1 through v3.6.0 are now published there.
+- **`CONTRIBUTING.md` corrected.** Skill registration pointed at case statements
+  that had moved to `SKILL_META` in `scripts/lib.sh`; Node and `jq` were missing
+  from the prerequisites. Adds what CI runs, how to reproduce the install-path
+  jobs locally, and the release procedure.
 
 ### Fixed
 - `check-repo-size.sh`-class SIGPIPE bug: `sort | head` under `pipefail` failed

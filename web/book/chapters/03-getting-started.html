@@ -65,6 +65,11 @@ $ curl -o .gemini.md https://raw.githubusercontent.com/drafthq/draft/main/integr
         <p>Draft's methodology is the same regardless of which AI tool you use. The commands and syntax differ slightly, but the workflow &mdash; init, spec, plan, implement, review &mdash; is identical.</p>
     </div>
 
+    <div class="callout callout-tip">
+        <div class="callout-title">Try It Before You Index It</div>
+        <p><code>/draft:review</code> does not require <code>/draft:init</code>. Run it now, on whatever branch you are on: it resolves scope from git, runs your tests and linters, applies the four code-quality dimensions, and prints the report in the conversation without writing anything into your repository. It closes by naming the checks it could not run &mdash; blast radius, downstream callers, dependency cycles, module boundaries &mdash; because those need the knowledge graph. Indexing is the upgrade; this is the demonstration.</p>
+    </div>
+
     <h2>Running /draft:init</h2>
     <p>Navigate to your project root and run:</p>
     <pre class="terminal"><code>$ /draft:init</code></pre>

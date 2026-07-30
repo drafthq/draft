@@ -10,7 +10,23 @@
     var cursorEl = document.querySelector('.terminal-cursor');
     if (!cmdEl || !outputEl) return;
 
+    // Order sets the auto-cycle sequence and mirrors the card order below the
+    // terminal: review first, because it is the one command that runs before
+    // any setup.
     var commands = [
+        {
+            key: 'review',
+            cmd: '/draft:review',
+            output: [
+                { text: 'Zero-setup mode — no draft/ directory found', cls: 'out-info' },
+                { text: 'Scope: 4 files changed vs main', cls: 'out-info' },
+                { text: 'Stage 1: Automated Validation  ✓ tests + lint pass', cls: 'out-success' },
+                { text: 'Stage 2: Spec Compliance        skipped (no spec)', cls: 'out-info' },
+                { text: 'Stage 3: Code Quality           3 issues (1 Critical)', cls: 'out-info' },
+                { text: 'Not checked: blast radius, callers, cycles, boundaries', cls: 'out-info' },
+                { text: '→ Run /draft:init to enable the structural checks above', cls: 'out-file' }
+            ]
+        },
         {
             key: 'init',
             cmd: '/draft:init',
@@ -44,16 +60,6 @@
                 { text: 'GREEN → Minimum implementation to pass...', cls: 'out-success' },
                 { text: 'REFACTOR → Cleaning with tests green...', cls: 'out-success' },
                 { text: '→ Task 1 complete. Committed: feat(auth): add jwt middleware', cls: 'out-file' }
-            ]
-        },
-        {
-            key: 'review',
-            cmd: '/draft:review --full',
-            output: [
-                { text: 'Stage 1: Automated Validation  ✓ PASS', cls: 'out-success' },
-                { text: 'Stage 2: Spec Compliance        ✓ PASS', cls: 'out-success' },
-                { text: 'Stage 3: Code Quality           2 minor issues', cls: 'out-info' },
-                { text: '→ Review complete. All critical checks passed.', cls: 'out-success' }
             ]
         },
         {

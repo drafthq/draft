@@ -18,7 +18,8 @@ draft list                            # show every host + where it installs
 ### Claude Code
 ```
 npx @drafthq/draft install claude-code
-/draft:init
+/draft:review                         # zero setup — reviews your current diff
+/draft:init                           # then index, to enable structural checks
 ```
 Alternative (native marketplace): `/plugin marketplace add drafthq/draft` then `/plugin install draft`.
 
@@ -48,6 +49,8 @@ curl -o .gemini.md https://raw.githubusercontent.com/drafthq/draft/main/integrat
 ```
 
 ## Core Workflow
+
+**Before the cycle:** `/draft:review` requires no setup. On a repo with no `draft/` directory it resolves scope from git, runs Stage 1 (automated validation) and Stage 3 (code quality) against the plugin guardrails, renders the report inline without writing into the repo, and reports which structural checks it could not run — blast radius, downstream callers, dependency cycles, module boundaries. Those need the knowledge graph, which is what `/draft:init` builds. Run it first to see findings before paying for the analysis pass.
 
 The primary development cycle follows four stages:
 
@@ -236,7 +239,7 @@ Call edges carry confidence signals (resolved vs. inferred); skills weight findi
 
 ## Deterministic Helper Tools
 
-Skills delegate mechanical work to 45 shell helpers under `scripts/tools/`, including:
+Skills delegate mechanical work to 53 shell helpers under `scripts/tools/`, including:
 
 - `git-metadata.sh`, `parse-git-log.sh` — git introspection
 - `classify-files.sh` — language + category (code/test/doc/config) classification

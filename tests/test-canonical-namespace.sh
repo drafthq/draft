@@ -25,8 +25,9 @@ cd "$ROOT_DIR"
 CANONICAL_ORG="drafthq"
 CANONICAL_REPO="drafthq/draft"
 
-# Audit and changelog prose quote the old namespace deliberately (as history).
-EXCLUDE_RE='^(docs/internal/audit/|docs/tracker/|node_modules/|\.git/)'
+# Excluded because each quotes the old namespace deliberately: the audit and
+# tracker as history, and this suite itself as the definition of what it bans.
+EXCLUDE_RE='^(docs/internal/audit/|docs/tracker/|node_modules/|\.git/|tests/test-canonical-namespace\.sh$)'
 
 echo "=== Canonical namespace tests ($CANONICAL_REPO) ==="
 echo ""

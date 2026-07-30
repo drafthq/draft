@@ -213,12 +213,115 @@
     <!-- Changelog entries -->
     <main class="changelog-content">
 
+        <!-- Unreleased -->
+        <article class="changelog-entry">
+            <div class="changelog-entry-header">
+                <span class="changelog-version">Unreleased</span>
+                <span class="changelog-date">2026-07-29</span>
+                <span class="changelog-tag changelog-tag--latest">In progress</span>
+                <span class="changelog-tag">Review</span>
+                <span class="changelog-tag">CI</span>
+                <span class="changelog-tag">Releases</span>
+            </div>
+            <div class="changelog-category">Added</div>
+            <ul class="changelog-changes">
+                <li><strong><code>/draft:review</code> runs with zero setup.</strong> A missing <code>draft/</code> directory is now a supported mode rather than an error. The review resolves scope from git, runs automated validation plus the four code-quality dimensions against the plugin guardrails, renders the report in the conversation without writing into your repo, and closes by naming the specific structural checks &mdash; blast radius, downstream callers, dependency cycles, module boundaries &mdash; that <code>/draft:init</code> would have added. Indexing is now the upgrade, not the entry fee.</li>
+                <li><strong>Continuous integration.</strong> Test suites, lint, an integrations-freshness check, and &mdash; new &mdash; the install path itself now run on every push and pull request.</li>
+                <li><strong><code>check-repo-size.sh</code></strong> fails the build when the tree at HEAD exceeds a size cap. This is the test that would have caught the v2.8.3 install hang, where ~670&nbsp;MB of audio in HEAD stalled the first install step with no error message.</li>
+                <li><strong><code>install-smoke-test.sh</code></strong> reproduces a new user's first install on a throwaway shallow clone: manifest discovery, skill frontmatter validation, and a <code>--dry-run</code> writer pass per host against an empty HOME.</li>
+                <li><strong>A GitHub Release per tag.</strong> Every <code>vX.Y.Z</code> tag now publishes a Release with notes extracted from the changelog, so the release history matches the changelog automatically.</li>
+                <li><strong><code>DRAFT_STRICT_VERIFY=1</code></strong> makes an unverifiable graph-engine download fatal instead of a warning. The engine's trust story &mdash; what is and is not guaranteed, and the contingency if the upstream project stalls &mdash; is now documented explicitly.</li>
+                <li><strong>Efficacy benchmark harness.</strong> A published protocol plus tooling to measure whether <code>/draft:review</code> catches defects that reached production: pre-merge worktree preparation that refuses any corpus entry whose fix is reachable from the reviewed tree, review-before-fix grading, and catch-rate / precision / graph-delta reporting. Corpus collection is next.</li>
+            </ul>
+            <div class="changelog-category">Changed</div>
+            <ul class="changelog-changes">
+                <li><strong>The funnel is inverted.</strong> Documentation now orders the flow <code>review &rarr; init &rarr; review</code>, and the README leads with five commands instead of thirty-three; the full reference moved to a dedicated page.</li>
+                <li><strong>Marketing copy replaced with output.</strong> The "Maturity Level 4/5 / on par with Staff Engineer practices at FAANG" framing is gone, replaced by three real defects <code>/draft:review</code> found in Draft's own codebase and the graph query that scopes them.</li>
+            </ul>
+        </article>
+
+        <!-- v3.6.0 -->
+        <article class="changelog-entry">
+            <div class="changelog-entry-header">
+                <span class="changelog-version">v3.6.0</span>
+                <span class="changelog-date">2026-07-15</span>
+                <span class="changelog-tag">Review</span>
+                <span class="changelog-tag">Hardening</span>
+            </div>
+            <div class="changelog-category">Fixed</div>
+            <ul class="changelog-changes">
+                <li><strong>Full-codebase review release.</strong> A ten-angle review with per-finding adversarial verification produced 37 confirmed findings, all fixed.</li>
+                <li><strong>Validators no longer crash on clean input.</strong> <code>check-track-hygiene.sh</code> (zero TBD markers) and <code>verify-doc-anchors.sh</code> aborted under <code>set -euo pipefail</code> with no output; both now pass clean tracks.</li>
+                <li><strong>Validators no longer silently pass bad input.</strong> <code>okf-validate.sh</code> skipped pretty-printed path-index arrays; <code>verify-citations.sh</code> truncated <code>file:LO-HI</code> ranges to <code>LO</code>, so drifted range ends were never checked.</li>
+                <li><strong>Graph tooling hardening.</strong> <code>gq_escape</code> now escapes backslashes (Cypher string-literal breakout); <code>graph-impact.sh</code> reports engine failures as <code>source:"unavailable"</code> instead of fabricating empty results.</li>
+            </ul>
+        </article>
+
+        <!-- v3.5.x -->
+        <article class="changelog-entry">
+            <div class="changelog-entry-header">
+                <span class="changelog-version">v3.5.0 &ndash; v3.5.3</span>
+                <span class="changelog-date">2026-06-20 &rarr; 2026-06-25</span>
+                <span class="changelog-tag">Wiki</span>
+                <span class="changelog-tag">Init</span>
+            </div>
+            <div class="changelog-category">Added</div>
+            <ul class="changelog-changes">
+                <li><strong>Deterministic wiki completeness gates (v3.5.0)</strong> &mdash; <code>okf-plan-concepts.sh</code> and <code>okf-coverage-check.sh</code> enforce that a wiki-mode bundle covers the full module surface before an init or refresh is accepted.</li>
+            </ul>
+            <div class="changelog-category">Fixed</div>
+            <ul class="changelog-changes">
+                <li><strong>Init indexing is memory-bounded (v3.5.1)</strong> &mdash; the engine index run is wrapped in a cgroup scope capped at 25% of system RAM, so indexing a large repo can no longer exhaust the machine.</li>
+                <li><strong>Wiki completeness is enforced (v3.5.2)</strong> &mdash; <code>/draft:init</code> now requires a concept page for every module, rejects empty or shallow pages, and fails on broken index links.</li>
+                <li><strong>Bundle conforms to the OKF v0.1 spec (v3.5.3)</strong> &mdash; the emitted <code>draft/wiki/</code> bundle carries the spec-required index frontmatter and generates <code>coverage.md</code>, so downstream consumers can validate its shape.</li>
+            </ul>
+            <div class="changelog-category">Changed</div>
+            <ul class="changelog-changes">
+                <li>User-facing prose says "wiki" instead of "OKF" throughout the docs.</li>
+            </ul>
+        </article>
+
+        <!-- v3.4.0 -->
+        <article class="changelog-entry">
+            <div class="changelog-entry-header">
+                <span class="changelog-version">v3.4.0</span>
+                <span class="changelog-date">2026-06-20</span>
+                <span class="changelog-tag">Retrieval</span>
+                <span class="changelog-tag">Wiki</span>
+            </div>
+            <div class="changelog-category">Added</div>
+            <ul class="changelog-changes">
+                <li><strong>Tree-search retrieval over the wiki bundle (PageIndex-style).</strong> Agents locate context by navigating the Concept Map tree &mdash; reading each node's routing description and descending only matching subtrees &mdash; instead of loading sections by a static heuristic. No embeddings, no chunking: relevance is decided by reasoning over the tree, with a budget of roughly five pages and two hops. Wiki-mode projects route to tree-search; monolith mode keeps static section-scoring.</li>
+            </ul>
+            <div class="changelog-category">Changed</div>
+            <ul class="changelog-changes">
+                <li>Website, book, and blog refresh: new "Drafting Table" hero identity, refreshed social and meta copy, professionalized footer, and two new blog posts on vectorless retrieval.</li>
+            </ul>
+        </article>
+
+        <!-- v3.3.1 -->
+        <article class="changelog-entry">
+            <div class="changelog-entry-header">
+                <span class="changelog-version">v3.3.1</span>
+                <span class="changelog-date">2026-06-19</span>
+                <span class="changelog-tag">Init</span>
+                <span class="changelog-tag">Docs</span>
+            </div>
+            <div class="changelog-category">Fixed</div>
+            <ul class="changelog-changes">
+                <li><strong><code>/draft:init refresh</code> never regenerated the wiki bundle.</strong> Refresh Mode described only the monolith path, so running <code>refresh</code> on a wiki-initialized repo treated the <em>generated</em> <code>architecture.md</code> as the source of truth and never re-narrated the concept taxonomy. Refresh now detects wiki mode and regenerates only the concepts grounded in changed files, carrying the rest forward from cache.</li>
+            </ul>
+            <div class="changelog-category">Changed</div>
+            <ul class="changelog-changes">
+                <li>Documentation, website, and book synced to v3.3.0; stale counts corrected across the docs.</li>
+            </ul>
+        </article>
+
         <!-- v3.3.0 -->
         <article class="changelog-entry">
             <div class="changelog-entry-header">
                 <span class="changelog-version">v3.3.0</span>
                 <span class="changelog-date">2026-06-19</span>
-                <span class="changelog-tag changelog-tag--latest">Latest</span>
                 <span class="changelog-tag">Init</span>
                 <span class="changelog-tag">OKF</span>
                 <span class="changelog-tag">Cursor</span>

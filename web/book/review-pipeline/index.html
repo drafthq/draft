@@ -259,6 +259,28 @@ Auto-detected track: add-oauth2 — Add OAuth2 Support [~]
 Commit range: a1b2c3d^..f4e5d6c (11 commits, 15 files)
 Running three-stage review...</code></pre>
 
+    <h2>Running It Without Setup</h2>
+    <p>The pipeline above assumes an indexed repository. It does not require one. On a project with no <code>draft/</code> directory, <code>/draft:review</code> enters <strong>zero-setup mode</strong>: it resolves scope from git &mdash; uncommitted changes, else the diff against the default branch, else the last commit &mdash; runs Stage 1 and Stage 3 against the plugin's own guardrails, and renders the report in the conversation rather than writing into your repository.</p>
+
+    <p>Stage 2 is skipped, because there is no specification to check against, and the report says so rather than substituting the commit message for one. The graph-backed checks are skipped too, and this is the part that matters: the report enumerates them explicitly.</p>
+
+    <table>
+        <thead><tr><th>Unavailable without indexing</th><th>What the review cannot tell you</th></tr></thead>
+        <tbody>
+            <tr><td>Blast radius</td><td>What else breaks. A signature change is judged from the diff alone, so a breaking change with distant callers can read as Minor.</td></tr>
+            <tr><td>Caller enumeration</td><td>Which downstream code calls the public symbol you modified.</td></tr>
+            <tr><td>Hotspot ranking</td><td>That you just edited the most-depended-on file in the repository.</td></tr>
+            <tr><td>Cycle detection</td><td>That the change introduced a new dependency cycle.</td></tr>
+            <tr><td>Module boundaries</td><td>Whether the change respects the intended architecture.</td></tr>
+            <tr><td>Project guardrails</td><td>Which findings your team already accepted as intentional &mdash; expect a higher false-positive rate.</td></tr>
+        </tbody>
+    </table>
+
+    <div class="callout callout-insight">
+        <div class="callout-title">Degraded Evidence, Not Degraded Rigor</div>
+        <p>Zero-setup mode reduces what the reviewer can establish, never the standard it holds findings to. Every finding still requires a file, a line, and a reason; the adversarial pass on a clean result stays mandatory, because thin input makes a false "no issues" more likely, not less. A check that did not run is reported as not run &mdash; never inferred from a text search.</p>
+    </div>
+
     <h2>Stage 1: Automated Validation</h2>
     <p>The first stage is fast, objective, and mechanical. It answers one question: <strong>is the code structurally sound and secure?</strong></p>
 

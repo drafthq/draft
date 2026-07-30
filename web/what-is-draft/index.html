@@ -543,7 +543,7 @@
                     <div class="workflow-phase-num">Phase 0</div>
                     <div class="workflow-phase-name">Graph</div>
                     <div class="workflow-phase-cmd">/draft:init</div>
-                    <div class="workflow-phase-desc">Builds a knowledge graph of your codebase — callers, exports, hotspots, blast radius — powered by <a href="https://github.com/DeusData/codebase-memory-mcp" target="_blank" rel="noopener noreferrer">codebase-memory-mcp</a> (159 languages, 100% local).</div>
+                    <div class="workflow-phase-desc">Builds a knowledge graph of your codebase — callers, exports, hotspots, blast radius — powered by <a href="https://github.com/DeusData/codebase-memory-mcp" target="_blank" rel="noopener noreferrer">codebase-memory-mcp</a> (159 languages, 100% local). Optional to start: <code>/draft:review</code> runs before this phase and names what it could not check without it.</div>
                 </div>
                 <div class="workflow-phase">
                     <div class="workflow-phase-num">Phase 1</div>
@@ -649,11 +649,14 @@
 <span class="cmd">/plugin marketplace add drafthq/draft</span>
 <span class="cmd">/plugin install draft</span>
 
-<span class="comment"># Initialize your project</span>
+<span class="comment"># Start here — no setup, reviews your current diff</span>
+<span class="cmd">/draft:review</span>
+
+<span class="comment"># Then index the project to unlock the structural checks</span>
 <span class="cmd">/draft:init</span></pre>
             </div>
 
-            <p>For other platforms, see the <a href="https://github.com/drafthq/draft#installation" class="link-cyan">installation guide on GitHub</a>.</p>
+            <p><code>/draft:review</code> runs on an un-indexed repository and reports which structural checks it had to skip, so you see findings before committing to the analysis pass. For other platforms, see the <a href="https://github.com/drafthq/draft#installation" class="link-cyan">installation guide on GitHub</a>.</p>
 
             <!-- FAQ -->
             <h2>Frequently Asked Questions</h2>

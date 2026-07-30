@@ -30,9 +30,10 @@ echo ""
 assert "landing page exists" "$([[ -f "$LANDING" ]] && echo true || echo false)"
 
 echo "## Banned framing"
-# Scoped to marketing surfaces. The Book legitimately discusses "context
-# maturity" and "operational maturity" as concepts, which is a different claim.
-mapfile -t SURFACES < <(git ls-files 'web/*.html' | grep -v '^web/book/' || true)
+# Scoped to live marketing surfaces. Excluded: the Book, which legitimately
+# discusses "context maturity" and "operational maturity" as concepts; and the
+# changelog, which quotes the retired copy as the record of its removal.
+mapfile -t SURFACES < <(git ls-files 'web/*.html' | grep -Ev '^web/(book|changelog)/' || true)
 assert "found marketing surfaces to scan (${#SURFACES[@]})" \
     "$([[ "${#SURFACES[@]}" -gt 0 ]] && echo true || echo false)"
 
@@ -56,6 +57,34 @@ assert "proof panel shows a real query" \
     "$(grep -q 'graph-callers.sh --repo . --symbol json_escape' "$LANDING" && echo true || echo false)"
 assert "proof panel styles are defined" \
     "$(grep -rq '^\.proof {' web/css/ && echo true || echo false)"
+
+echo ""
+echo "## Funnel order matches the product"
+# The site must not send new users to /draft:init first — review runs with no
+# setup, and putting the expensive step in front of the cheap one is the exact
+# funnel inversion the zero-setup mode was built to fix.
+assert "landing page states review needs no setup" \
+    "$(grep -qi 'no setup' "$LANDING" && echo true || echo false)"
+assert "install panel leads with /draft:review" \
+    "$(grep -q 'Start here — no setup' "$LANDING" && echo true || echo false)"
+assert "primary command grid puts review at step 01" \
+    "$(grep -A 2 'cmd-primary-step">01' "$LANDING" | grep -q 'cmd-review' && echo true || echo false)"
+assert "terminal demo opens on the zero-setup review" \
+    "$(grep -q "Zero-setup mode" web/js/terminal.js && echo true || echo false)"
+assert "FAQ answers the init-prerequisite question" \
+    "$(grep -q 'Do I have to run' "$LANDING" && echo true || echo false)"
+# JSON-LD mirrors the visible FAQ; a drifted copy is what search engines index.
+assert "JSON-LD FAQ carries the same answer" \
+    "$(grep -c 'Do I have to run /draft:init before I get anything?' "$LANDING" | grep -q '^1$' && echo true || echo false)"
+
+echo ""
+echo "## Changelog page is not stale"
+site_latest="$(grep -oE 'changelog-version">v[0-9]+\.[0-9]+\.[0-9]+' web/changelog/index.html | head -n 1 | sed 's/.*">v//')"
+pkg_version="$(node -p "require('./package.json').version")"
+assert "newest release on the changelog page is the shipped version ($site_latest vs $pkg_version)" \
+    "$([[ "$site_latest" == "$pkg_version" ]] && echo true || echo false)"
+assert "exactly one entry is tagged latest/in-progress" \
+    "$([[ "$(grep -c 'changelog-tag changelog-tag--latest' web/changelog/index.html)" -eq 1 ]] && echo true || echo false)"
 
 echo ""
 echo "## Cited artifacts still exist"

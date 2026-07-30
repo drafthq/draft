@@ -130,6 +130,14 @@
         },
         {
           "@type": "Question",
+          "name": "Do I have to run /draft:init before I get anything?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. /draft:review runs on an un-indexed repo with zero setup: it resolves scope from git, runs automated validation and the four code-quality dimensions, and prints the report in the conversation without writing anything into your repo. It then names the specific checks it could not run — blast radius, downstream callers, dependency cycles, module boundaries — because those need the knowledge graph. /draft:init is the upgrade that switches them on, not the entry fee."
+          }
+        },
+        {
+          "@type": "Question",
           "name": "What is Context-Driven Development?",
           "acceptedAnswer": {
             "@type": "Answer",
@@ -872,25 +880,25 @@
 
             <!-- Primary commands — the four-command workflow -->
             <div class="cmd-primary-grid cmd-primary-grid--four">
-                <article class="cmd-primary" data-term="init">
+                <article class="cmd-primary" data-term="review">
                     <span class="cmd-primary-step">01</span>
+                    <a class="cmd-primary-name" href="book/command-reference/#cmd-review">/draft:review</a>
+                    <p class="cmd-primary-desc">Three stages on your branch. <strong>Runs with zero setup</strong> &mdash; start here, before indexing anything.</p>
+                </article>
+                <article class="cmd-primary" data-term="init">
+                    <span class="cmd-primary-step">02</span>
                     <a class="cmd-primary-name" href="book/command-reference/#cmd-init">/draft:init</a>
-                    <p class="cmd-primary-desc">Map the codebase once. Every command after this starts with full context.</p>
+                    <p class="cmd-primary-desc">Map the codebase once. Adds blast radius, caller lookup, and cycle detection to every later review.</p>
                 </article>
                 <article class="cmd-primary" data-term="plan">
-                    <span class="cmd-primary-step">02</span>
+                    <span class="cmd-primary-step">03</span>
                     <a class="cmd-primary-name" href="book/command-reference/#cmd-new-track">/draft:new-track</a>
                     <p class="cmd-primary-desc">Turn an idea into a reviewable spec and a phased plan before any code.</p>
                 </article>
                 <article class="cmd-primary" data-term="implement">
-                    <span class="cmd-primary-step">03</span>
+                    <span class="cmd-primary-step">04</span>
                     <a class="cmd-primary-name" href="book/command-reference/#cmd-implement">/draft:implement</a>
                     <p class="cmd-primary-desc">Build the plan task by task, test-first, with verification gates between steps.</p>
-                </article>
-                <article class="cmd-primary" data-term="review">
-                    <span class="cmd-primary-step">04</span>
-                    <a class="cmd-primary-name" href="book/command-reference/#cmd-review">/draft:review</a>
-                    <p class="cmd-primary-desc">Three stages on your branch &mdash; and escalates to bug hunt, deep-review, or quick-review when the change warrants it.</p>
                 </article>
             </div>
 
@@ -1057,10 +1065,14 @@
                         <pre><code><span class="c-comment"># Install Draft with one command</span>
 <span class="c-cmd">npx</span> <span class="c-str">@drafthq/draft</span> install <span class="c-flag">claude-code</span>
 
-<span class="c-comment"># Then start using</span>
-<span class="c-cmd">/draft:init</span></code></pre>
+<span class="c-comment"># Start here — no setup, reviews your current diff</span>
+<span class="c-cmd">/draft:review</span>
+
+<span class="c-comment"># Once you've seen what it catches, index the repo</span>
+<span class="c-cmd">/draft:init</span>
+<span class="c-cmd">/draft:review</span>  <span class="c-comment"># same command, now with blast radius + hotspots</span></code></pre>
                     </div>
-                    <p class="install-note">Runs <code>claude plugin marketplace add</code> + <code>install</code> for you, then restart Claude Code and run <code>/draft:init</code>. <strong>Requires the <code>claude</code> CLI on your PATH.</strong> Using the Claude Code app without the CLI? Run <code>/plugin marketplace add drafthq/draft</code> then <code>/plugin install draft</code> inside a session instead.</p>
+                    <p class="install-note">Runs <code>claude plugin marketplace add</code> + <code>install</code> for you, then restart Claude Code. <code>/draft:review</code> works on an un-indexed repo and tells you which structural checks it had to skip &mdash; indexing is the upgrade, not the entry fee. <strong>Requires the <code>claude</code> CLI on your PATH.</strong> Using the Claude Code app without the CLI? Run <code>/plugin marketplace add drafthq/draft</code> then <code>/plugin install draft</code> inside a session instead.</p>
                 </div>
                 <div class="install-panel" id="panel-cursor">
                     <div class="code-block glass-card">
@@ -1440,6 +1452,13 @@
                     <summary class="faq-question">How do I install Draft?</summary>
                     <div class="faq-answer">
                         <p>Run <code>npx @drafthq/draft install claude-code</code> to install for Claude Code. Alternatively: <code>/plugin marketplace add drafthq/draft</code> then <code>/plugin install draft</code>. For Cursor, run <code>npx @drafthq/draft install cursor</code>. For Copilot, download copilot-instructions.md into your .github directory. Each platform takes under 30 seconds to set up.</p>
+                    </div>
+                </details>
+
+                <details class="faq-item glass-card">
+                    <summary class="faq-question">Do I have to run <code>/draft:init</code> before I get anything?</summary>
+                    <div class="faq-answer">
+                        <p>No. <code>/draft:review</code> runs on an un-indexed repo with zero setup: it resolves scope from git, runs automated validation and the four code-quality dimensions, and prints the report in the conversation without writing anything into your repo. It then names the specific checks it could not run &mdash; blast radius, downstream callers, dependency cycles, module boundaries &mdash; because those need the knowledge graph. <code>/draft:init</code> is the upgrade that switches them on, not the entry fee.</p>
                     </div>
                 </details>
 
