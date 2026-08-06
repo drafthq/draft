@@ -45,6 +45,15 @@ unfalsifiable.
   all three now do.
 
 ### Changed
+- **Graph engine pin bumped to `codebase-memory-mcp` v0.9.0** (from v0.8.1) in
+  `scripts/fetch-memory-engine.sh`. Upstream ships ~61% faster indexing with a
+  crash supervisor that quarantines a bad file instead of aborting the run,
+  memory-safety fixes on large repositories, and CALLS/IMPORTS extraction
+  correctness fixes across C/C++, Python, Go, PHP, Kotlin, Java, TS/JS, and
+  Rust. Also relevant to Draft's wrappers: label-filtered cypher traversal no
+  longer truncates at 10 results, and per-file indexing failures now surface in
+  `skipped[]` instead of failing silently. Verified against the published
+  checksum with `DRAFT_STRICT_VERIFY=1`.
 - **README leads with five commands**, not 33, and orders the funnel
   `review → init → review` so the cheap step comes first.
 - **Marketing copy replaced with output.** The "Maturity Level 4/5 / on par with
