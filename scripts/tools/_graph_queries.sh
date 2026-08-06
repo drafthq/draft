@@ -53,7 +53,6 @@ gq_q_co_change()         { printf "MATCH (a:File)-[r:FILE_CHANGES_WITH]->(b:File
 gq_q_inherits()          { printf "MATCH (c)-[:INHERITS]->(p) RETURN c.qualified_name AS child, p.qualified_name AS parent LIMIT 500"; }
 gq_q_inherits_sym()      { printf "MATCH (c)-[:INHERITS]->(p) WHERE c.name='%s' RETURN c.qualified_name AS child, p.qualified_name AS parent LIMIT 200" "$1"; }
 gq_q_derived_sym()       { printf "MATCH (c)-[:INHERITS]->(p) WHERE p.name='%s' RETURN c.qualified_name AS child, p.qualified_name AS parent LIMIT 200" "$1"; }
-gq_q_writes()            { printf "MATCH (f {name:'%s'})-[:WRITES]->(v) RETURN v.name AS target, v.file_path AS file LIMIT 200" "$1"; }
 gq_q_raises()            { printf "MATCH (f {name:'%s'})-[:RAISES|THROWS]->(e) RETURN e.name AS error, e.qualified_name AS qualified LIMIT 200" "$1"; }
 gq_q_raisers()           { printf "MATCH (f)-[:RAISES|THROWS]->(e {name:'%s'}) RETURN f.qualified_name AS raiser, f.file_path AS file LIMIT 200" "$1"; }
 gq_q_node_props()        { printf "MATCH (f) RETURN f.qualified_name AS q, f.complexity AS c, f.cognitive AS cog, f.is_entry_point AS ep LIMIT 10000"; }

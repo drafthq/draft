@@ -31,6 +31,71 @@ set +e
 set -e
 assert "Write verb (DELETE) → exit 1" "$([[ "$rc" == "1" ]] && echo true || echo false)"
 
+# --- Read query whose string literal merely contains a write-verb word is NOT rejected ---
+# The guard rejection happens before the engine is ever contacted, so these
+# only need to clear the write-verb check — they run against a fixture repo
+# with no graph engine present and are expected to hit "unavailable" (exit 2),
+# never the write-verb rejection (exit 1).
+# Cypher quotes strings with ' or " and identifiers with `; the engine accepts
+# all three, so all three must clear the guard.
+for word in set create delete merge remove drop detach; do
+    set +e
+    out="$("$TOOL" --repo "$FIXTURE" --cypher "MATCH (f {name:'$word'}) RETURN f.qualified_name AS q LIMIT 5" 2>&1)"
+    rc=$?
+    set -e
+    assert "Single-quoted literal containing '$word' → not a write-verb rejection" \
+        "$([[ "$rc" != "1" ]] && echo true || echo false)"
+
+    set +e
+    out="$("$TOOL" --repo "$FIXTURE" --cypher "MATCH (f {name:\"$word\"}) RETURN f.qualified_name AS q LIMIT 5" 2>&1)"
+    rc=$?
+    set -e
+    assert "Double-quoted literal containing '$word' → not a write-verb rejection" \
+        "$([[ "$rc" != "1" ]] && echo true || echo false)"
+
+    set +e
+    out="$("$TOOL" --repo "$FIXTURE" --cypher "MATCH (f {name:\`$word\`}) RETURN f.qualified_name AS q LIMIT 5" 2>&1)"
+    rc=$?
+    set -e
+    assert "Backtick-quoted identifier containing '$word' → not a write-verb rejection" \
+        "$([[ "$rc" != "1" ]] && echo true || echo false)"
+done
+
+# --- Escaped quote inside a string literal must not be read as closing it early ---
+set +e
+out="$("$TOOL" --repo "$FIXTURE" --cypher "MATCH (f {name:'o\\'brien CREATE'}) RETURN f.qualified_name AS q LIMIT 5" 2>&1)"
+rc=$?
+set -e
+assert "Escaped quote in literal containing 'CREATE' → not a write-verb rejection" \
+    "$([[ "$rc" != "1" ]] && echo true || echo false)"
+
+# --- An unterminated span of ANY quote kind fails closed, never falls open ---
+set +e
+"$TOOL" --repo "$FIXTURE" --cypher "MATCH (f {name:'unterminated) RETURN f LIMIT 5" >/dev/null 2>&1; rc=$?
+set -e
+assert "Unterminated single-quoted literal → exit 1 (fail closed)" "$([[ "$rc" == "1" ]] && echo true || echo false)"
+
+set +e
+"$TOOL" --repo "$FIXTURE" --cypher 'MATCH (f {name:"unterminated) RETURN f LIMIT 5' >/dev/null 2>&1; rc=$?
+set -e
+assert "Unterminated double-quoted literal → exit 1 (fail closed)" "$([[ "$rc" == "1" ]] && echo true || echo false)"
+
+set +e
+"$TOOL" --repo "$FIXTURE" --cypher 'MATCH (f {name:`unterminated) RETURN f LIMIT 5' >/dev/null 2>&1; rc=$?
+set -e
+assert "Unterminated backtick identifier → exit 1 (fail closed)" "$([[ "$rc" == "1" ]] && echo true || echo false)"
+
+# --- A write verb hiding after a closed span of any quote kind is still caught ---
+set +e
+"$TOOL" --repo "$FIXTURE" --cypher 'MATCH (f {name:"o\"brien"}) CREATE (x) RETURN f' >/dev/null 2>&1; rc=$?
+set -e
+assert "Write verb after a double-quoted span → exit 1" "$([[ "$rc" == "1" ]] && echo true || echo false)"
+
+set +e
+"$TOOL" --repo "$FIXTURE" --cypher 'MATCH (f:`Weird Label`) DETACH DELETE f' >/dev/null 2>&1; rc=$?
+set -e
+assert "Write verb after a backtick-quoted span → exit 1" "$([[ "$rc" == "1" ]] && echo true || echo false)"
+
 # --- Non-allowlisted tool rejected ---
 set +e
 "$TOOL" --repo "$FIXTURE" --tool delete_project --json '{}' >/dev/null 2>&1; rc=$?

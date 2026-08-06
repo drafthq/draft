@@ -57,7 +57,7 @@ unavailable() { echo '{"source":"unavailable"}'; exit 2; }
 
 graph_bootstrap "$REPO" || unavailable
 
-ARCH_JSON="$(memory_cli get_architecture "{\"project\":\"$PROJECT\",\"aspects\":[\"all\"]}" || true)"
+ARCH_JSON="$(memory_cli get_architecture "$(jq -n --arg p "$PROJECT" '{project:$p, aspects:["all"]}')" || true)"
 [[ -n "$ARCH_JSON" ]] || unavailable
 
 # Validate it parses and looks like an architecture object before emitting.

@@ -83,7 +83,7 @@ function install(host, ctx) {
   // failure writes nothing.
   for (const act of plan.actions) {
     if (act.kind === 'exec') continue;
-    if (!fsx.exists(act.src)) {
+    if (act.src && !fsx.exists(act.src)) {
       log.error(`Bundled asset missing: ${act.src}`);
       log.error('Reinstall @drafthq/draft — the package looks incomplete.');
       return 1;

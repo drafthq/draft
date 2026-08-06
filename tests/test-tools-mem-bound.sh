@@ -36,4 +36,35 @@ ram="$(_total_ram_mb)"
 [[ "${DRAFT_INDEX_MEM_PCT:-25}" == "25" ]] \
     && assert "DRAFT_INDEX_MEM_PCT default 25" "true" || assert "DRAFT_INDEX_MEM_PCT default 25" "false"
 
+# memory_index_bounded builds its JSON payload via jq (never string concatenation),
+# so a repo path containing a `"` or `\` can never corrupt the JSON sent to the
+# engine (regression: was previously built via unescaped string interpolation).
+if command -v jq >/dev/null 2>&1; then
+    _can_cgroup_bound() { return 1; }  # force the plain memory_cli path; no systemd-run dependency
+    CAPTURE_DIR="$(mktemp -d)"
+    trap 'rm -rf "$CAPTURE_DIR"' EXIT
+    CAPTURE_FILE="$CAPTURE_DIR/payload.json"
+    MOCK_BIN="$CAPTURE_DIR/codebase-memory-mcp"
+    cat > "$MOCK_BIN" <<'MOCK'
+#!/usr/bin/env bash
+# Captures the JSON payload memory_index_bounded passes to `cli index_repository`.
+if [[ "$1" == "cli" && "$2" == "index_repository" ]]; then
+    printf '%s' "$3" > "$CAPTURE_FILE"
+    echo '{"project":"mock"}'
+    exit 0
+fi
+echo '{}'
+MOCK
+    chmod +x "$MOCK_BIN"
+    export CAPTURE_FILE
+    MEMORY_BIN="$MOCK_BIN" memory_index_bounded 'weird"repo\path' >/dev/null 2>&1 || true
+    payload="$(cat "$CAPTURE_FILE" 2>/dev/null || echo '')"
+    [[ -n "$payload" ]] && echo "$payload" | jq -e . >/dev/null 2>&1 \
+        && assert "index payload is valid JSON for a path with a quote and backslash" "true" \
+        || assert "index payload is valid JSON for a path with a quote and backslash" "false"
+    [[ "$(echo "$payload" | jq -r '.repo_path' 2>/dev/null)" == 'weird"repo\path' ]] \
+        && assert "index payload preserves the raw repo_path value" "true" \
+        || assert "index payload preserves the raw repo_path value" "false"
+fi
+
 finish_test "mem-bound"

@@ -83,7 +83,7 @@ rm -rf "$OUT/okf" 2>/dev/null || true
 
 # schema.yaml — provenance + gate. Counts are point-of-index provenance only;
 # the live engine is authoritative.
-STATUS_JSON="$(memory_cli index_status "{\"project\":\"$PROJECT\"}" || echo '{}')"
+STATUS_JSON="$(memory_cli index_status "$(jq -n --arg p "$PROJECT" '{project:$p}')" || echo '{}')"
 # Tolerate field-name variation AND non-JSON output across engine versions;
 # counts are provenance only and must never abort the gate-marker write.
 NODES="$(echo "$STATUS_JSON" | jq -r '.nodes // .node_count // .total_nodes // 0' 2>/dev/null || echo 0)"
@@ -94,7 +94,7 @@ VER="$("$MEMORY_BIN" --version 2>/dev/null | awk '{print $NF}' || echo unknown)"
 # incrementally (content-based, git-aware), so re-indexing only touches changed
 # files. detect_changes reports that working-tree delta — recorded as provenance
 # and echoed so a refresh shows what moved. Best-effort: never aborts the write.
-CHANGES_JSON="$(memory_cli detect_changes "{\"project\":\"$PROJECT\"}" 2>/dev/null || echo '{}')"
+CHANGES_JSON="$(memory_cli detect_changes "$(jq -n --arg p "$PROJECT" '{project:$p}')" 2>/dev/null || echo '{}')"
 echo "$CHANGES_JSON" | jq -e . >/dev/null 2>&1 || CHANGES_JSON='{}'
 CHANGED_FILES="$(echo "$CHANGES_JSON" | jq -r '.changed_count // (.changed_files | length?) // 0' 2>/dev/null || echo 0)"
 IMPACTED="$(echo "$CHANGES_JSON" | jq -r '(.impacted_symbols | length?) // 0' 2>/dev/null || echo 0)"

@@ -298,7 +298,11 @@ _can_cgroup_bound() {
 # Echoes the engine's JSON result on stdout (same contract as memory_cli).
 memory_index_bounded() {
     local repo_abs="$1"
-    local json="{\"repo_path\":\"$repo_abs\"}"
+    # Payload built with jq (never string concatenation) so a repo path
+    # containing a `"` or `\` can never corrupt the JSON sent to the engine.
+    command -v jq >/dev/null 2>&1 || return 1
+    local json
+    json="$(jq -n --arg r "$repo_abs" '{repo_path:$r}')" || return 1
     export CBM_WORKERS="${CBM_WORKERS:-4}"
     local total pct
     total="$(_total_ram_mb)"

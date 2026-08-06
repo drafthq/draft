@@ -242,6 +242,34 @@ echo "## Legacy installer removed"
 assert "scripts/install.sh no longer exists" \
     "$([[ ! -f "$ROOT_DIR/scripts/install.sh" ]] && echo true || echo false)"
 
+# --- writeFile actions (no `src`) must not trip the copyFile/copyTree preflight ---
+# Regression for a latent bug: fsx.exists(act.src) with act.src undefined threw,
+# was swallowed, and reported "Bundled asset missing: undefined". No shipped host
+# emits a writeFile action today, so this exercises the installer core directly.
+echo ""
+echo "## writeFile action preflight (src-less actions)"
+WF_TMP="$(mktemp -d)"
+WF_HOME="$(mktemp -d)"
+WF_OUT="$( cd "$WF_TMP" && HOME="$WF_HOME" node -e "
+const { install } = require('$ROOT_DIR/cli/src/installer');
+const host = {
+  id: 'test-writefile',
+  label: 'Test writeFile host',
+  plan: () => ({
+    targetSummary: 'test',
+    actions: [{ kind: 'writeFile', dest: 'out.txt', content: 'hi' }],
+  }),
+};
+const ctx = { dryRun: true, force: false, home: process.env.HOME, cwd: process.cwd(), env: process.env, scope: 'project' };
+process.exit(install(host, ctx));
+" 2>&1 )"
+WF_STATUS=$?
+assert "writeFile action passes preflight (exit 0)" \
+    "$([[ "$WF_STATUS" -eq 0 ]] && echo true || echo false)"
+assert "writeFile action does not report a missing bundled asset" \
+    "$(echo "$WF_OUT" | grep -q 'Bundled asset missing' && echo false || echo true)"
+rm -rf "$WF_TMP" "$WF_HOME"
+
 # --- Summary ---
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="

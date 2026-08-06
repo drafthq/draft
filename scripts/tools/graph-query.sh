@@ -89,9 +89,53 @@ if [[ -n "$TOOL" ]]; then
     }
 fi
 
+# Drop the contents of every quoted span before scanning for write verbs below.
+# A raw substring grep can't tell a CREATE/SET/DELETE clause from a symbol
+# literally named 'create', 'set', 'delete', etc. — exactly the method names
+# real codebases are full of — so quoted spans must be blanked out first or
+# every query about one of them gets wrongly rejected. Cypher quotes strings
+# with either ' or " and identifiers with `, and the engine accepts all three,
+# so all three must be handled. Escaped quotes (`\'`, produced by gq_escape in
+# _graph_queries.sh) must not be read as closing a span early, and an
+# unterminated span fails closed (rejected) rather than letting the rest of the
+# query — write verbs included — go unscanned.
+strip_quoted_spans() {
+    local s="$1" out="" i=0 len ch quote
+    len="${#s}"
+    while (( i < len )); do
+        ch="${s:i:1}"
+        if [[ "$ch" != "'" && "$ch" != '"' && "$ch" != '`' ]]; then
+            out+="$ch"
+            i=$((i + 1))
+            continue
+        fi
+        quote="$ch"
+        out+="$quote"
+        i=$((i + 1))
+        while :; do
+            (( i < len )) || return 1
+            ch="${s:i:1}"
+            if [[ "$ch" == '\' ]]; then
+                i=$((i + 2))
+                continue
+            fi
+            i=$((i + 1))
+            if [[ "$ch" == "$quote" ]]; then
+                out+="$quote"
+                break
+            fi
+        done
+    done
+    printf '%s' "$out"
+}
+
 # Reject write verbs in --cypher BEFORE the engine sees the query.
 if [[ -n "$CYPHER" ]]; then
-    UPPER="$(printf '%s' "$CYPHER" | tr '[:lower:]' '[:upper:]')"
+    STRIPPED="$(strip_quoted_spans "$CYPHER")" || {
+        echo "ERROR: write verbs are not allowed (read-only passthrough)" >&2
+        exit 1
+    }
+    UPPER="$(printf '%s' "$STRIPPED" | tr '[:lower:]' '[:upper:]')"
     if printf '%s' "$UPPER" | grep -Eqw 'CREATE|MERGE|DELETE|SET|REMOVE|DROP|DETACH'; then
         echo "ERROR: write verbs are not allowed (read-only passthrough)" >&2
         exit 1

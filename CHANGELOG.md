@@ -44,6 +44,36 @@ unfalsifiable.
   template, a feature request template, and a PR checklist that did not exist;
   all three now do.
 
+### Fixed
+- **A repo path containing `"` or `\` silently disabled every graph tool.**
+  `memory_index_bounded` built the engine payload by string concatenation, so
+  such a path produced malformed JSON, the index call failed, and every graph
+  tool reported `{"source":"unavailable"}` — indistinguishable from a missing
+  engine, and a direct violation of Guardrail 4 (an engine failure must never
+  read as absence). Payloads are now built with `jq`, matching the idiom already
+  used in `graph-impact.sh`. Same fix applied to the two other hand-built
+  payloads in `graph-snapshot.sh` and `graph-arch.sh`.
+- **`graph-query.sh` rejected legitimate read-only queries** about symbols named
+  `set`, `create`, `delete`, `merge`, `remove`, `drop`, or `detach` — among the
+  most common method names in real codebases. The write-verb guard grepped the
+  raw query text and could not tell a Cypher clause from a quoted span. Quoted
+  spans are now blanked before the scan, for all three forms the engine accepts
+  (`'…'`, `"…"`, and backtick identifiers). The guard is unchanged for real
+  write verbs, and an unterminated span still fails closed.
+- **`cli/src/installer.js` pre-flight rejected `writeFile` actions.** Those
+  actions carry no `src`, so `fsx.exists(undefined)` threw and the install
+  aborted with `Bundled asset missing: undefined`. Latent — no shipped host plan
+  emits one — but `fsAction` supports the kind.
+
+### Security
+- **`release.yml` no longer interpolates `${{ }}` expressions into `run:`
+  blocks.** A `workflow_dispatch` input was expanded textually before bash
+  parsed the line, so a crafted tag could execute commands in a job holding
+  `contents: write`. Values now pass through `env:` and are referenced as shell
+  variables, and a tag containing a newline is rejected before it reaches
+  `GITHUB_OUTPUT`. Exploitation required repo write access, so this is
+  hardening rather than a remote hole.
+
 ### Changed
 - **Graph engine pin bumped to `codebase-memory-mcp` v0.9.0** (from v0.8.1) in
   `scripts/fetch-memory-engine.sh`. Upstream ships ~61% faster indexing with a

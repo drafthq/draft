@@ -32,38 +32,51 @@ jobs:
 
       - name: Resolve tag and version
         id: meta
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
         run: |
-          tag="${{ inputs.tag || github.ref_name }}"
+          tag="$TAG"
+          if [[ "$tag" == *$'\n'* ]]; then
+            echo "::error::tag must not contain a newline"
+            exit 1
+          fi
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
 
       - name: Verify the tag matches package.json
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+          TAG: ${{ steps.meta.outputs.tag }}
         run: |
           pkg="$(node -p "require('./package.json').version")"
-          want="${{ steps.meta.outputs.version }}"
+          want="$VERSION"
           if [ "$pkg" != "$want" ]; then
-            echo "::error::tag ${{ steps.meta.outputs.tag }} does not match package.json ($pkg)"
+            echo "::error::tag $TAG does not match package.json ($pkg)"
             exit 1
           fi
 
       - name: Extract release notes from CHANGELOG.md
         id: notes
+        env:
+          VERSION: ${{ steps.meta.outputs.version }}
+          REPO: ${{ github.repository }}
         run: |
-          if bash scripts/release-notes.sh "${{ steps.meta.outputs.version }}" > release-notes.md; then
+          if bash scripts/release-notes.sh "$VERSION" > release-notes.md; then
             echo "Extracted $(wc -l < release-notes.md) lines of notes."
           else
             # A missing changelog section should not block the Release — an
             # empty release history is the problem this workflow exists to fix.
-            echo "::warning::no changelog section for ${{ steps.meta.outputs.version }}; falling back to a stub"
+            echo "::warning::no changelog section for $VERSION; falling back to a stub"
             printf 'See [CHANGELOG.md](https://github.com/%s/blob/main/CHANGELOG.md) for details.\n' \
-              "${{ github.repository }}" > release-notes.md
+              "$REPO" > release-notes.md
           fi
 
       - name: Publish the Release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.meta.outputs.tag }}
         run: |
-          tag="${{ steps.meta.outputs.tag }}"
+          tag="$TAG"
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release edit "$tag" \
               --title "Draft $tag" \
