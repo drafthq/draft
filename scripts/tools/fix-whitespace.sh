@@ -68,8 +68,17 @@ fix_file() {
     fixed="$(
         printf '%s' "$original" \
         | sed 's/[[:space:]]*$//' \
-        | sed -e :a -e '/^\n*$/{$d;N;ba}'
+        | awk 'NF { last = NR } { line[NR] = $0 } END { for (i = 1; i <= last; i++) print line[i] }'
     )"$'\n'
+
+    # Data-loss guard (defence in depth): if the source has real content but
+    # the normalised result is whitespace-only, the pipeline above went wrong
+    # (e.g. a non-GNU sed erroring out). Refuse to overwrite rather than
+    # truncate the file to nothing.
+    if grep -q '[^[:space:]]' "$file" && ! printf '%s' "$fixed" | grep -q '[^[:space:]]'; then
+        echo "  ERROR (normalisation produced empty output; refusing to overwrite): $file" >&2
+        return 2
+    fi
 
     # Compare the bytes we would write against the file on disk — NOT the
     # command-substitution copies (which strip then re-add the trailing newline,
