@@ -59,6 +59,33 @@ run "$NONL"
 assert "missing final newline added" \
     "$([[ "$(cat "$NONL")" == "no newline" && "$(wc -c < "$NONL" | tr -d ' ')" == "11" ]] && echo true || echo false)"
 
+# --- Data-loss regression guard (macOS/BSD sed) ---
+# The old normalisation used a GNU-only construct
+# (`sed -e :a -e '/^\n*$/{$d;N;ba}'`) that errors on BSD sed (macOS) and emits
+# empty output, causing the file to be overwritten with a single newline byte.
+# On GNU sed these assertions were already green; on BSD sed they FAIL against
+# the old code and PASS against the portable-awk fix.
+RICH="$FIXTURE/rich.md"
+printf '# Title   \nbody\t\n\n\n\n' > "$RICH"   # trailing WS + trailing blank lines
+run "$RICH"
+assert "content file not truncated (>1 byte)" \
+    "$([[ "$(wc -c < "$RICH" | tr -d ' ')" -gt 1 ]] && echo true || echo false)"
+assert "title line preserved" \
+    "$(grep -qx '# Title' "$RICH" && echo true || echo false)"
+assert "body line preserved" \
+    "$(grep -qx 'body' "$RICH" && echo true || echo false)"
+assert "trailing blank lines dropped (no 0a0a tail)" \
+    "$([[ "$(tail -c 2 "$RICH" | od -An -tx1 | tr -d ' \n')" != "0a0a" ]] && echo true || echo false)"
+assert "ends with exactly one newline" \
+    "$([[ "$(tail -c 1 "$RICH" | od -An -tx1 | tr -d ' \n')" == "0a" ]] && echo true || echo false)"
+
+# --- Interior blank lines are preserved (only trailing blanks are dropped) ---
+INTERIOR="$FIXTURE/interior.md"
+printf 'a\n\nb\n' > "$INTERIOR"
+run "$INTERIOR"
+assert "interior blank line preserved (byte-identical, idempotent)" \
+    "$([[ "$(cat "$INTERIOR")" == "$(printf 'a\n\nb')" ]] && echo true || echo false)"
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 exit "$FAIL"
