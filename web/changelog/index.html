@@ -216,10 +216,11 @@
         <!-- Unreleased -->
         <article class="changelog-entry">
             <div class="changelog-entry-header">
-                <span class="changelog-version">Unreleased</span>
-                <span class="changelog-date">2026-07-29</span>
-                <span class="changelog-tag changelog-tag--latest">In progress</span>
+                <span class="changelog-version">v3.7.0</span>
+                <span class="changelog-date">2026-08-19</span>
+                <span class="changelog-tag changelog-tag--latest">Latest</span>
                 <span class="changelog-tag">Review</span>
+                <span class="changelog-tag">Security</span>
                 <span class="changelog-tag">CI</span>
                 <span class="changelog-tag">Releases</span>
             </div>
@@ -233,8 +234,15 @@
                 <li><strong><code>DRAFT_STRICT_VERIFY=1</code></strong> makes an unverifiable graph-engine download fatal instead of a warning. The engine's trust story &mdash; what is and is not guaranteed, and the contingency if the upstream project stalls &mdash; is now documented explicitly.</li>
                 <li><strong>Efficacy benchmark harness.</strong> A published protocol plus tooling to measure whether <code>/draft:review</code> catches defects that reached production: pre-merge worktree preparation that refuses any corpus entry whose fix is reachable from the reviewed tree, review-before-fix grading, and catch-rate / precision / graph-delta reporting. Corpus collection is next.</li>
             </ul>
+            <div class="changelog-category">Security</div>
+            <ul class="changelog-changes">
+                <li><strong>The graph query hatch enforced read-only on one path of two.</strong> <code>graph-query.sh</code> scanned <code>--cypher</code> for write verbs but not <code>--tool query_graph</code>, which takes raw Cypher in its payload &mdash; so a delete reached the engine unchecked and could wipe the index. One guard now covers both entry points, and any tool payload carrying a <code>query</code> field.</li>
+                <li><strong>Any repository could hijack which scripts Draft executes.</strong> <code>resolve-tools.sh</code> returned <code>$PWD/scripts/tools</code> ahead of the install marker and the plugin registry, so a repo shipping that path captured execution &mdash; and reviewing unfamiliar code is a primary use case. The installed plugin now wins; the working directory is a last resort gated on Draft's own manifest. Work on Draft itself with <code>DRAFT_PLUGIN_ROOT="$PWD"</code>.</li>
+                <li><strong>Atomic rewrites widened file permissions.</strong> Writing a temp file and renaming it over the target discards the target's mode, so a deliberately <code>0600</code> <code>~/.claude/settings.json</code> came back <code>0644</code>, and normalised documents came back owner-only. Every rewrite now carries the destination's mode across.</li>
+            </ul>
             <div class="changelog-category">Changed</div>
             <ul class="changelog-changes">
+                <li><strong>The lint gate blocks.</strong> markdownlint ran advisory against a backlog too large to enforce against; the backlog is cleared &mdash; 1,691 violations to zero &mdash; so anything it reports now came from the change under review. CI installs a pinned, checksum-verified shellcheck instead of apt-installing it, after the package step stalled twice and left both blocking checks skipped.</li>
                 <li><strong>The funnel is inverted.</strong> Documentation now orders the flow <code>review &rarr; init &rarr; review</code>, and the README leads with five commands instead of thirty-three; the full reference moved to a dedicated page.</li>
                 <li><strong>Marketing copy replaced with output.</strong> The "Maturity Level 4/5 / on par with Staff Engineer practices at FAANG" framing is gone, replaced by three real defects <code>/draft:review</code> found in Draft's own codebase and the graph query that scopes them.</li>
             </ul>
