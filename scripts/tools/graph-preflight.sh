@@ -168,7 +168,10 @@ if find_memory_bin "$REPO_ABS" "$SELF_REPO"; then
   ENGINE_FOUND=true
   VER="$("$ENGINE" --version 2>/dev/null | head -1 || echo '?')"
   ok "Engine: $ENGINE ($VER)"
+  # Numeric-only: the value is emitted bare into the --json report, so a
+  # non-numeric field (engine output format drift) would produce invalid JSON.
   LIMIT="$("$ENGINE" config list 2>/dev/null | awk '/auto_index_limit/{print $3}' || true)"
+  [[ "$LIMIT" =~ ^[0-9]+$ ]] || LIMIT=""
   [[ -n "$LIMIT" ]] && info "auto_index_limit: $LIMIT (governs AUTO-index only; explicit index_repository should bypass)" || true
   if [[ "$GIT_OK" -eq 1 && "${LIMIT:-}" =~ ^[0-9]+$ && "$TRACKED" -gt "$LIMIT" ]]; then
     warn "Tracked files ($TRACKED) > auto_index_limit ($LIMIT) — confirm the explicit index isn't truncated near $LIMIT."

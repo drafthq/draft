@@ -225,7 +225,11 @@ for m in re.finditer(r"\[([^\]]*)\]\(([^)]+)\)", text):
     path = href.split("#",1)[0]
     if not path:
         ok += 1; continue
-    cands = [src.parent/path, draft/path, Path(path)]
+    # Resolve only against the two bases a link inside this document can mean:
+    # the document's own directory and the draft/ root. Never against the
+    # process CWD — a same-named file in the caller's cwd used to make a
+    # genuinely dangling link report clean (exit flipped 1 -> 0).
+    cands = [src.parent/path, draft/path]
     if any(c.exists() for c in cands):
         ok += 1
     else:

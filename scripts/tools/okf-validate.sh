@@ -176,14 +176,25 @@ while IFS= read -r -d '' page; do
     fi
 done < <(find "$BUNDLE" -type f -name '*.md' -print0 | sort -z)
 
+# Page text the {ALL_CAPS} template-token scan is allowed to see. Fenced code
+# blocks and shell-style ${VAR} expansions are removed first: both legitimately
+# contain {ALL_CAPS} spans that are NOT unreplaced placeholders, and a wiki page
+# quoting `${HOME}` or a CI snippet would otherwise fail the whole bundle.
+template_scan_text() {
+    awk '
+        /^[[:space:]]*```/ { fence = !fence; next }
+        !fence { gsub(/\$\{[A-Za-z_][A-Za-z0-9_]*\}/, ""); print }
+    ' "$1"
+}
+
 # --- 3b. Unreplaced template tokens (any page, including index pages) ---
 # Quality checks skip index.md pages, so a leftover {SECTION_TITLE}/{PROJECT_NAME}
 # placeholder in a hand-seeded index would otherwise survive. Match {ALL_CAPS}
 # tokens (safe: real prose almost never contains them).
 while IFS= read -r -d '' page; do
     prel="${page#"$BUNDLE/"}"
-    if grep -qE '\{[A-Z][A-Z0-9_]+\}' "$page" 2>/dev/null; then
-        tok="$(grep -oE '\{[A-Z][A-Z0-9_]+\}' "$page" | head -1)"
+    tok="$(template_scan_text "$page" 2>/dev/null | grep -oE '\{[A-Z][A-Z0-9_]+\}' | head -1 || true)"
+    if [[ -n "$tok" ]]; then
         add_error "$prel: unreplaced template token '$tok'"
     fi
 done < <(find "$BUNDLE" -type f -name '*.md' -print0 | sort -z)

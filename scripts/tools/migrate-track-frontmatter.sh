@@ -69,15 +69,10 @@ EPHEMERAL_KEYS=(
     "scope_excludes"
 )
 
-# Stable keys that survive in markdown frontmatter.
-STABLE_KEYS=(
-    "project"
-    "module"
-    "track_id"
-    "generated_by"
-    "generated_at"
-    "links"
-)
+# Keys that survive in markdown frontmatter: project, module, track_id,
+# generated_by, generated_at, links. Recorded here for the reader only — the
+# rewrite is driven entirely by EPHEMERAL_KEYS above (a drop-list, not an
+# allow-list), so there is nothing to enumerate in code.
 
 # Strip ephemeral blocks from a markdown file's YAML frontmatter.
 # Approach: read the file; rewrite the frontmatter section so any line whose

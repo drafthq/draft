@@ -23,9 +23,9 @@ assert() {
 }
 
 finish_test() {
-    local suite_name="${1:-test suite}"
+    local suite_name="${1:-}"
     echo ""
-    echo "=== Results: $PASS passed, $FAIL failed ==="
+    echo "=== Results:${suite_name:+ $suite_name —} $PASS passed, $FAIL failed ==="
     exit "$FAIL"
 }
 

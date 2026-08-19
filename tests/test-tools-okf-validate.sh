@@ -298,6 +298,40 @@ EOF
 run "$FIXTURE/wiki"
 assert "Generated coverage.md (type: Report) accepted as meta → exit 0" "$([[ "$RC" == "0" ]] && echo true || echo false)"
 
+# --- template-token scan must not fire on documented shell/CI variables ---
+# `${HOME}` and fenced code blocks contain {ALL_CAPS} spans that are not
+# unreplaced placeholders. Failing them blocked promotion of any bundle whose
+# pages quote shell or CI snippets.
+cat > "$FIXTURE/wiki/systems/envdoc.md" <<'EOF'
+---
+type: Module
+title: Env Doc
+description: documents environment variables
+resource: src
+---
+
+# Env Doc
+
+Reads `${HOME}` and `${PATH_INDEX}` at startup.
+
+```bash
+export DRAFT_MEMORY_BIN="${HOME}/.cache/draft/bin/codebase-memory-mcp"
+echo "{PLACEHOLDER_IN_CODE_BLOCK}"
+```
+EOF
+run "$FIXTURE/wiki"
+assert "\${VAR} and fenced-block tokens do not trip the template scan → exit 0" \
+    "$([[ "$RC" == "0" ]] && echo true || echo false)"
+
+# ...but a real unreplaced placeholder in prose still fails.
+printf '\nSection for {SECTION_TITLE} goes here.\n' >> "$FIXTURE/wiki/systems/envdoc.md"
+run "$FIXTURE/wiki"
+assert "genuine {SECTION_TITLE} placeholder in prose still fails → exit 1" \
+    "$([[ "$RC" == "1" ]] && echo true || echo false)"
+assert "the failure names the unreplaced token" \
+    "$(echo "$OUT" | grep -q 'unreplaced template token .{SECTION_TITLE}.' && echo true || echo false)"
+rm -f "$FIXTURE/wiki/systems/envdoc.md"
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 exit "$FAIL"

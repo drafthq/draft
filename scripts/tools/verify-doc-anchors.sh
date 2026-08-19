@@ -3,11 +3,15 @@
 
 #
 # Verify cross-document references in a track:
-# - §X.Y or §X numbered-section references → target document must contain
-# a heading whose text starts with that number.
 # - <doc>.md#<anchor> markdown anchors → resolve <anchor> against the
 # target file's header slugs.
 # - (planned) / [New file ...] annotations → file MUST NOT exist locally.
+#
+# Plain-prose `§X.Y` references are deliberately NOT validated: authors use them
+# as shorthand for an external doc (`architecture.md §20.2`) without naming the
+# file on the same line, so attribution is guesswork. A track that wants a
+# machine-checkable §-reference writes it as a markdown link to the heading,
+# which the anchor check above already covers.
 #
 # Skips content inside <!-- VERIFIER:IGNORE START --> ... END --> blocks.
 #
@@ -35,7 +39,7 @@ TRACK_PATHS=()
 usage() {
     local stream=2 code=2
     if [[ "${USAGE_HELP_MODE:-0}" == 1 ]]; then stream=1; code=0; fi
-    sed -n '2,20p' "$0" >&$stream
+    sed -n '2,26p' "$0" >&$stream
     exit "$code"
 }
 
@@ -72,22 +76,13 @@ md_slugs() {
             s = tolower(s)
             # Replace spaces with dashes
             gsub(/ +/, "-", s)
-            # Strip punctuation except dashes
-            gsub(/[^a-z0-9-]/, "", s)
+            # Strip punctuation except dashes and underscores. GitHub keeps `_`
+            # in a heading slug (and so does _lib.sh:gfm_slug) — stripping it
+            # here reported every valid #foo_bar-style anchor as missing.
+            gsub(/[^a-z0-9_-]/, "", s)
             print s
         }
     ' "$1" | sort -u
-}
-
-# Extract numbered headers (e.g. "## 7 Parallel SST transfer" or "## 20.2 ...").
-md_numbered_headers() {
-    awk '
-        /^#{1,6} +[0-9]+(\.[0-9]+)*[ .]/ {
-            s = $0
-            sub(/^#+ +/, "", s)
-            print s
-        }
-    ' "$1"
 }
 
 scan_md() {
@@ -101,22 +96,7 @@ scan_md() {
         if [[ "$line" == *"<!-- VERIFIER:IGNORE END -->"* ]]; then ignore=0; continue; fi
         (( ignore )) && continue
 
-        # 1. §-references inside a markdown link.
-        # Plain-prose `§X.Y` is too ambiguous in practice — authors commonly
-        # use it as shorthand for an external doc (e.g. `architecture.md §20.2`)
-        # without naming the file on the same line. To keep this validator
-        # focused on machine-verifiable cross-references, we only check
-        # §X.Y when it appears INSIDE a markdown link target — i.e. the
-        # author has structurally committed to an in-track reference.
-        # Example that IS validated:
-        # [see §3.1](./hld.md#detailed-design) ← anchor check below
-        # Example that is NOT validated (prose only):
-        # The §20.2 layout matches architecture.md.
-        # If a track wants stricter intra-track §-checks, it can use
-        # markdown links pointing to numbered headers explicitly.
-        : # §-ref prose validation disabled — see comment above.
-
-        # 2. Markdown anchor references like ./hld.md#section-name
+        # 1. Markdown anchor references like ./hld.md#section-name
         if echo "$line" | grep -qE '\([^)]*\.md#[A-Za-z0-9_-]+\)'; then
             local m
             while IFS= read -r m; do
@@ -141,7 +121,7 @@ scan_md() {
             done < <(echo "$line" | grep -oE '\([^)]*\.md#[A-Za-z0-9_-]+\)')
         fi
 
-        # 3. (planned) / [New file ...] annotations: the path mentioned on the
+        # 2. (planned) / [New file ...] annotations: the path mentioned on the
         # same line must NOT yet exist relative to the track.
         #
         # Only fire when the line has EXACTLY one path-looking token. Lines

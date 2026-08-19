@@ -93,7 +93,7 @@ ensure_engine() {
 engine_unavailable() {
     if [[ "$EMIT_JSON" -eq 1 ]]; then
         printf '{"status":"unavailable","root":"%s","scope":"%s","is_root":%s}\n' \
-            "$ROOT_ABS" "$SCOPE_ABS" "$IS_ROOT"
+            "$(json_escape "$ROOT_ABS")" "$(json_escape "$SCOPE_ABS")" "$IS_ROOT"
     else
         echo "WARNING: knowledge-graph engine (codebase-memory-mcp) is unavailable — no graph built." >&2
         echo "  The engine is Draft's default capability tier. Install it with:" >&2
@@ -115,7 +115,7 @@ build_snapshot() {
 # Path from <module>/draft/graph back to <root>/draft/graph (module is under root).
 root_link_relpath() {
     local sub="${SCOPE_ABS#"$ROOT_ABS"/}"
-    local ups=2 seg
+    local ups seg
     IFS='/' read -ra seg <<< "$sub"
     ups=$(( ${#seg[@]} + 2 ))
     local i out=""
@@ -135,13 +135,16 @@ write_root_link() {
     fi
     root_commit="$(git -C "$ROOT_ABS" rev-parse --verify --quiet HEAD 2>/dev/null || echo none)"
     ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+    # Every interpolated value goes through json_escape: a repo path or engine
+    # project name carrying a quote or backslash would otherwise emit a
+    # root-link.json that no consumer can parse.
     cat > "$mod_graph/root-link.json" <<EOF
 {
-  "root_graph": "$rel",
-  "root_abs": "$ROOT_ABS/draft/graph",
-  "root_project": "${root_project:-unknown}",
-  "root_commit": "$root_commit",
-  "status": "$status",
+  "root_graph": "$(json_escape "$rel")",
+  "root_abs": "$(json_escape "$ROOT_ABS/draft/graph")",
+  "root_project": "$(json_escape "${root_project:-unknown}")",
+  "root_commit": "$(json_escape "$root_commit")",
+  "status": "$(json_escape "$status")",
   "linked_at": "$ts",
   "linked_by": "graph-init.sh",
   "note": "Root is the authoritative whole-repo graph. Follow root_graph for cross-module understanding."
@@ -173,7 +176,8 @@ fi
 
 if [[ "$EMIT_JSON" -eq 1 ]]; then
     printf '{"status":"ok","root":"%s","scope":"%s","is_root":%s,"root_built":%s,"module_built":%s,"link_status":"%s"}\n' \
-        "$ROOT_ABS" "$SCOPE_ABS" "$IS_ROOT" "$ROOT_BUILT" "$MODULE_BUILT" "$LINK_STATUS"
+        "$(json_escape "$ROOT_ABS")" "$(json_escape "$SCOPE_ABS")" \
+        "$IS_ROOT" "$ROOT_BUILT" "$MODULE_BUILT" "$(json_escape "$LINK_STATUS")"
 else
     echo "--- graph-init ---"
     echo "Root:  $ROOT_ABS$([[ $IS_ROOT -eq 1 ]] && echo '  (this scope is the root)')"

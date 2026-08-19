@@ -255,6 +255,21 @@ PY
 run "$B"
 assert "Multi-line grounded paths → exit 0" "$([[ "$RC" == "0" ]] && echo true || echo false)"
 
+# --- Q-TEMPLATE must not fire on documented shell variables / code blocks ---
+python3 - "$B/systems/auth.md" <<'PY'
+import sys, pathlib
+p = pathlib.Path(sys.argv[1])
+p.write_text(p.read_text() + '\nConfigured via `${HOME}` and `${DRAFT_MEMORY_BIN}`.\n')
+PY
+run "$B"
+assert "\${VAR} in prose does not trip Q-TEMPLATE → exit 0" \
+    "$([[ "$RC" == "0" ]] && echo true || echo false)"
+
+# --- grounded_paths_count always reports an integer, never "" ---
+gc_out="$(bash -c 'source '"$ROOT_DIR"'/scripts/tools/_lib.sh; grounded_paths_count "'"$B"'/index.md"')"
+assert "grounded_paths_count on a page with no x-grounded-paths prints 0" \
+    "$([[ "$gc_out" == "0" ]] && echo true || echo false)"
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 exit "$FAIL"

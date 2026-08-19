@@ -112,6 +112,39 @@ rc=$?
 set -e
 assert "(planned) line without a path → exit 0" "$([[ "$rc" == "0" ]] && echo true || echo false)"
 
+# --- underscores survive slugging (GitHub keeps them; so must we) ---
+# md_slugs used to strip `_`, so every valid #foo_bar anchor was reported missing.
+mkdir -p "$FIXTURE/tracks/underscore-anchor"
+cat > "$FIXTURE/tracks/underscore-anchor/hld.md" <<'EOF'
+# HLD
+
+## draft_init modes
+
+Body.
+EOF
+cat > "$FIXTURE/tracks/underscore-anchor/spec.md" <<'EOF'
+# Spec
+
+See [modes](./hld.md#draft_init-modes).
+EOF
+set +e
+out="$("$TOOL" "$FIXTURE/tracks/underscore-anchor" 2>&1)"
+rc=$?
+set -e
+assert "anchor to a heading containing '_' resolves → exit 0" \
+    "$([[ "$rc" == "0" ]] && echo true || echo false)"
+assert "no missing-anchor reported for the underscore heading" \
+    "$(echo "$out" | grep -q 'missing-anchor' && echo false || echo true)"
+
+# A genuinely absent anchor is still caught.
+printf '\nAlso [ghost](./hld.md#no-such-heading).\n' >> "$FIXTURE/tracks/underscore-anchor/spec.md"
+set +e
+"$TOOL" "$FIXTURE/tracks/underscore-anchor" >/dev/null 2>&1
+rc=$?
+set -e
+assert "genuinely missing anchor still fails → exit 1" \
+    "$([[ "$rc" == "1" ]] && echo true || echo false)"
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 exit "$FAIL"

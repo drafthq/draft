@@ -189,8 +189,7 @@ scan_one_track() {
 
     while IFS= read -r f; do
         local rel_md="${f#"$track_dir/"}"
-        while IFS=$'\t' read -r md_file lineno cite; do
-            local md_line="$md_file"
+        while IFS=$'\t' read -r _md_file lineno cite; do
             local result rc=0
             # set +e to capture rc; set -e would exit on a non-zero return.
             set +e

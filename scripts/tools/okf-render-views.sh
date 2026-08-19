@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # okf-render-views.sh — render the demoted views from an OKF taxonomy bundle.
 #
-# The wiki/ bundle is the source of truth. This produces the two derived,
+# The wiki/ bundle is the source of truth. This produces the derived,
 # human-facing views deterministically (so they never drift from the bundle and
 # carry zero extra maintenance):
 #   1. architecture.md  — a single linear concatenation of every concept page,
@@ -105,8 +105,6 @@ ordered_pages() {
     done
 }
 
-# Strip YAML frontmatter from a page (leading --- ... --- block on line 1).
-
 # Rewrite markdown links so concatenated architecture.md (at draft/) resolves them.
 # stdin body; $1 = bundle-relative path e.g. systems/foo.md
 rewrite_body_links() {
@@ -138,6 +136,7 @@ sys.stdout.write(re.sub(r"\[([^\]]*)\]\(([^)]+)\)", repl, text))
 ' "$sec"
 }
 
+# Strip YAML frontmatter from a page (leading --- ... --- block on line 1).
 strip_frontmatter() {
     awk '
         NR==1 && /^---$/ { fm=1; next }
@@ -249,12 +248,7 @@ build_concept_map() {
         [[ -n "$type" ]] || continue
         title="$(get_yaml_field "$page" title)"
         [[ -n "$title" ]] || title="$rel"
-        # description may be a folded (>) block — take the first non-empty body line.
-        desc="$(awk '
-            NR==1&&/^---$/{fm=1;next} fm&&/^---$/{exit}
-            fm && /^description:/ { collect=1; sub(/^description:[[:space:]]*>?[[:space:]]*/,""); if($0!=""){print; exit} next }
-            fm && collect { sub(/^[[:space:]]+/,""); if($0!=""){print; exit} }
-        ' "$page")"
+        desc="$(page_desc "$page")"
         echo "| [${title}](${rel}) | ${type} | ${desc} |"
     done < <(find "$BUNDLE" -type f -name '*.md' -print0 | sort -z)
 }
@@ -326,8 +320,11 @@ inject_concept_map() {
 
 # --- 3. Render a self-contained offline HTML viewer (single file) ---
 # All pages are inlined as JSON; a small built-in markdown renderer draws them in
-# the browser. No server, no internet, no CDN. jq encodes page content safely
-# (and we neutralize any literal </ so embedded "</script>" can't break parsing).
+# the browser. No server, no internet, no CDN. jq encodes page content safely,
+# and the whole emitted data block is passed through a `</` → `<\/` filter: JSON
+# escaping does NOT stop a literal "</script>" from closing the <script> element,
+# and page titles/types/paths come from repo-derived frontmatter, so every field
+# has to be neutralized, not just the markdown body.
 render_web() {
     local out="$1"
     command -v jq >/dev/null 2>&1 || { echo "ERROR: --web requires jq" >&2; return 1; }
@@ -395,14 +392,14 @@ HTML_HEAD
                 "$(jq -Rn --arg v "$rel" '$v')" \
                 "$(jq -Rn --arg v "$title" '$v')" \
                 "$(jq -Rn --arg v "$type" '$v')" \
-                "$(strip_frontmatter "$page" | jq -Rs . | sed 's#</#<\\/#g')"
+                "$(strip_frontmatter "$page" | jq -Rs .)"
         done < <(find "$BUNDLE" -type f -name '*.md' -print0 | sort -z)
         echo "};"
         # ORDER: bundle root index.md first, then everything else sorted.
         echo "const ORDER = Object.keys(PAGES).sort(function(a,b){"
         echo "  if(a==='index.md') return -1; if(b==='index.md') return 1;"
         echo "  return a<b?-1:a>b?1:0; });"
-    } >>"$tmp"
+    } | sed 's#</#<\\/#g' >>"$tmp"
 
     cat >>"$tmp" <<'HTML_TAIL'
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}

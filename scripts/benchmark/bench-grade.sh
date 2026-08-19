@@ -68,7 +68,7 @@ fi
 graded=0
 skipped=0
 
-while IFS=$'\t' read -r repo pr head_sha fix_sha issue severity desc; do
+while IFS=$'\t' read -r repo pr _head_sha fix_sha issue severity desc; do
     [[ -z "${repo:-}" || "$repo" == \#* ]] && continue
 
     slug="$(printf '%s' "$repo" | tr '/:@' '---' | tr -s '-')-pr$pr"

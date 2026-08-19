@@ -90,7 +90,7 @@ DEFERRED=()     # concept_id\treason
 EXPECTED_TOTAL=0; REQUIRED=0
 
 # Iterate expected entries.
-while IFS=$'\t' read -r cid required reason ftype fanin; do
+while IFS=$'\t' read -r cid required reason _ftype fanin; do
     [[ -z "$cid" ]] && continue
     EXPECTED_TOTAL=$((EXPECTED_TOTAL + 1))
     if [[ "$required" == "true" ]]; then
@@ -141,8 +141,8 @@ write_coverage_page() {
         echo ""
         echo "| Component | Wiki page | Status | Fan-in |"
         echo "|-----------|-----------|--------|--------|"
-        local cid status fanin link
-        while IFS=$'\t' read -r cid required reason ftype fanin; do
+        local cid fanin link
+        while IFS=$'\t' read -r cid required reason _ftype fanin; do
             [[ -z "$cid" ]] && continue
             if [[ "$required" == "true" ]]; then
                 if [[ -f "$BUNDLE/$cid" ]]; then

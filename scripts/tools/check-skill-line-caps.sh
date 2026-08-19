@@ -64,7 +64,6 @@ declare -a findings=()
 record() { findings+=("$1|$2|$3"); over_count=$((over_count + 1)); }
 
 while IFS= read -r path; do
-    rel="${path#"$REPO_ROOT/"}"
     name="$(basename "$(dirname "$path")")"
     lines="$(wc -l < "$path" | tr -d ' ')"
     cap="$(skill_line_cap "$name" "$CAPS_CONF" "$GLOBAL_CAP")"
@@ -90,7 +89,7 @@ emit() {
             printf 'OK: all skills within cap (default %d).\n' "$GLOBAL_CAP"
             return
         fi
-        local mode="warn-only" stream=stderr
+        local mode="warn-only"
         ((ENFORCE)) && mode="enforced"
         if ((ENFORCE)); then
             printf 'SKILL-CAPS: %d skill(s) over cap (%s):\n' \

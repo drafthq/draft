@@ -63,5 +63,28 @@ assert "rewrote sibling to wiki/systems" \
 assert "product getting-started prefers features" \
     "$(grep -q 'wiki/features/getting-started.md' "$D/architecture.md" && echo true || echo false)"
 
+# --- link resolution must not depend on the caller's cwd ---
+# `Path(path)` in the checker's candidate list resolved links against the process
+# CWD, so an unrelated same-named file there flipped a dangling link to "clean".
+CWD_D="$(mktemp -d)"
+mkdir -p "$CWD_D/wiki/systems" "$CWD_D/elsewhere"
+printf -- '---\ntype: Subsystem\ntitle: R\ndescription: d\nresource: .\n---\n\n# R\n' > "$CWD_D/wiki/index.md"
+printf -- '---\ntype: Module\ntitle: A\ndescription: d\nresource: .\n---\n\n# A\n' > "$CWD_D/wiki/systems/a.md"
+printf '# Arch\n\n[dangling](totally-not-here.md)\n' > "$CWD_D/architecture.md"
+
+set +e
+( cd "$CWD_D/elsewhere" && "$TOOL" --file "$CWD_D/architecture.md" --wiki "$CWD_D/wiki" ) >/dev/null 2>&1
+rc_clean_cwd=$?
+touch "$CWD_D/elsewhere/totally-not-here.md"
+( cd "$CWD_D/elsewhere" && "$TOOL" --file "$CWD_D/architecture.md" --wiki "$CWD_D/wiki" ) >/dev/null 2>&1
+rc_polluted_cwd=$?
+set -e
+rm -rf "$CWD_D"
+
+assert "dangling link fails from a clean cwd → exit 1" \
+    "$([[ "$rc_clean_cwd" == "1" ]] && echo true || echo false)"
+assert "same-named file in the caller's cwd does NOT make it pass" \
+    "$([[ "$rc_polluted_cwd" == "1" ]] && echo true || echo false)"
+
 echo "=== Results: $PASS passed, $FAIL failed ==="
 exit "$FAIL"

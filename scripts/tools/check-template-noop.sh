@@ -51,7 +51,6 @@ while IFS= read -r f; do
     [[ -z "$f" ]] && continue
     case "$f" in
         skills/*|scripts/tools/*)
-            # Skip changes to the templates themselves living under scripts.
             touches_skills_or_tools=1 ;;
         core/templates/*)
             touches_templates=1 ;;

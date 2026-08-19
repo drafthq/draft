@@ -160,6 +160,41 @@ assert "missing bundle → exit 2" "$([[ "$RC" == "2" ]] && echo true || echo fa
 run "$B"
 assert "no action flags → exit 1" "$([[ "$RC" == "1" ]] && echo true || echo false)"
 
+# --- offline viewer: no field may close the <script> element ---
+# JSON-escaping a string does not neutralize a literal "</script>", and title /
+# type / path all come from repo-derived frontmatter. A page titled
+# `X</script><script>alert(1)</script>` used to execute in the viewer.
+XSS_B="$FIXTURE/xsswiki"
+mkdir -p "$XSS_B/systems"
+cat > "$XSS_B/index.md" <<'EOF'
+---
+type: Subsystem
+title: Root
+description: bundle root
+resource: .
+---
+
+# Root
+EOF
+cat > "$XSS_B/systems/pwn.md" <<'EOF'
+---
+type: Module
+title: "Pwn</script><script>alert(1)</script>"
+description: hostile title
+resource: src
+---
+
+# Pwn
+
+body
+EOF
+run "$XSS_B" --web "$FIXTURE/viewer.html"
+assert "viewer render → exit 0" "$([[ "$RC" == "0" ]] && echo true || echo false)"
+assert "no raw </script> survives anywhere in the generated viewer data" \
+    "$(awk '/^const PAGES = \{/,/^\};/' "$FIXTURE/viewer.html" | grep -qF '</script>' && echo false || echo true)"
+assert "the hostile title is present but neutralized as <\\/script>" \
+    "$(grep -qF '<\/script><script>alert(1)<\/script>' "$FIXTURE/viewer.html" && echo true || echo false)"
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 exit "$FAIL"

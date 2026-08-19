@@ -73,6 +73,17 @@ body_of() {
     awk 'NR==1&&/^---$/{fm=1;next} fm&&/^---$/{fm=0;next} !fm{print}' "$1"
 }
 
+# Body text the Q-TEMPLATE scan is allowed to see: fenced code blocks and
+# shell-style ${VAR} expansions removed. Both legitimately carry {ALL_CAPS}
+# spans that are not unreplaced placeholders (a page quoting `${HOME}` or a CI
+# snippet would otherwise fail).
+template_scan_body() {
+    body_of "$1" | awk '
+        /^[[:space:]]*```/ { fence = !fence; next }
+        !fence { gsub(/\$\{[A-Za-z_][A-Za-z0-9_]*\}/, ""); print }
+    '
+}
+
 # Count body lines after the frontmatter close (Q-LEN = "lines after frontmatter").
 body_lines() { body_of "$1" | wc -l | tr -d ' '; }
 
@@ -114,7 +125,7 @@ mermaid_lint() {
         echo "unicode arrow in mermaid (use --> not →)"; return 1
     fi
     # '&' node chaining (common breaker).
-    if printf '%s' "$blocks" | grep -qE '[A-Za-z0-9_]\s*&\s*[A-Za-z0-9_]'; then
+    if printf '%s' "$blocks" | grep -qE '[A-Za-z0-9_][[:space:]]*&[[:space:]]*[A-Za-z0-9_]'; then
         echo "'&' node chaining in mermaid"; return 1
     fi
     # Reserved bareword node ids.
@@ -235,7 +246,7 @@ while IFS= read -r -d '' page; do
     fi
 
     # Q-TEMPLATE: unreplaced {TOKEN} placeholders.
-    if body_of "$page" | grep -qE "$TOKEN_RE"; then
+    if template_scan_body "$page" | grep -qE "$TOKEN_RE"; then
         fail "$rel" "Q-TEMPLATE" "unreplaced template token {PLACEHOLDER}"
     fi
 

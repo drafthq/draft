@@ -47,6 +47,40 @@ unfalsifiable.
 
 ### Fixed
 
+- **The offline wiki viewer executed content from the repository it documented.**
+  `okf-render-views.sh --web` inlines every page into a `<script>` block. Only the
+  markdown body was passed through the `</` → `<\/` filter; the page title, type,
+  and path were not. JSON escaping does not stop a literal `</script>` from closing
+  the script element, so a concept page titled
+  `Pwn</script><script>alert(1)</script>` ran that script when the viewer was
+  opened. The whole emitted data block is now filtered, so no field can escape.
+- **A wiki page that documented `${HOME}` could not be promoted.** The
+  unreplaced-template-token scan in `okf-validate.sh` (and the Q-TEMPLATE check in
+  `okf-validate-quality.sh`) matched the `{HOME}` inside `${HOME}`, so any page
+  quoting a shell or CI variable — in prose or in a fenced code block — failed
+  structure validation and blocked the atomic `draft.tmp/ → draft/` promotion.
+  Fenced blocks and `${VAR}` expansions are now excluded from the scan; a genuine
+  `{SECTION_TITLE}` placeholder in prose still fails.
+- **`verify-doc-anchors.sh` reported every anchor to an underscored heading as
+  missing.** Its slug builder stripped `_`, while GitHub — and this repo's own
+  `_lib.sh:gfm_slug` — keep it. A correct link to `## draft_init modes` failed the
+  validator.
+- **`okf-fix-links.sh` could be fooled into passing a dangling link.** The checker
+  resolved each link against the process CWD in addition to the document's own
+  directory, so an unrelated same-named file in the caller's cwd flipped the exit
+  code from 1 to 0. CWD is no longer a resolution base.
+- **`parse-git-log.sh` reported a failed `git log` as an empty history.** The
+  stream ran inside a process substitution, which discards the child's exit status,
+  so an unknown `--branch` produced zero records and exit 0. A non-numeric `--limit`
+  was worse: `git log -n abc` counts as 0 and exits 0, so it now fails validation up
+  front.
+- **`verify-doc-anchors.sh` advertised a check it did not run.** Its header
+  documented §X.Y numbered-section validation; the implementation was a no-op and
+  `md_numbered_headers()` had no call sites. Removed, and the header now states
+  what is actually validated.
+- **Two engine payloads were still built by string concatenation.**
+  `mermaid-from-graph.sh` and `hotspot-rank.sh` interpolated the project name into
+  a JSON literal while every other call site of the same tool used `jq -n --arg`.
 - **A repo path containing `"` or `\` silently disabled every graph tool.**
   `memory_index_bounded` built the engine payload by string concatenation, so
   such a path produced malformed JSON, the index call failed, and every graph

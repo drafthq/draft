@@ -93,6 +93,23 @@ else
     assert "Extracts [DRAFT-42] token as track_id" "false"
 fi
 
+# --- a failing git log must not look like "no commits" ---
+# The stream used to run inside a process substitution, which swallowed git's
+# exit status: a bad ref produced empty JSONL and exit 0.
+set +e
+bad_out="$("$TOOL" --branch definitely-not-a-ref-xyz 2>/dev/null)"
+bad_rc=$?
+set -e
+assert "unknown --branch → non-zero exit" "$([[ "$bad_rc" != "0" ]] && echo true || echo false)"
+assert "unknown --branch emits no records" "$([[ -z "$bad_out" ]] && echo true || echo false)"
+
+set +e
+"$TOOL" --limit not-a-number >/dev/null 2>&1
+bad_limit_rc=$?
+set -e
+assert "non-numeric --limit → non-zero exit" \
+    "$([[ "$bad_limit_rc" != "0" ]] && echo true || echo false)"
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 exit "$FAIL"

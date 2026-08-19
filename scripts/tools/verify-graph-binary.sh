@@ -2,6 +2,7 @@
 # verify-graph-binary.sh — validate and select the Draft knowledge-graph engine.
 #
 # The engine is the codebase-memory-mcp binary. Resolution order (see _lib.sh:find_memory_bin):
+#   0. DRAFT_MEMORY_DISABLE — hard off; resolution stops here and reports "none"
 #   1. DRAFT_MEMORY_BIN override
 #   2. codebase-memory-mcp on $PATH
 #   3. Draft-managed install (~/.cache/draft/bin/)
@@ -32,7 +33,8 @@ usage() {
 verify-graph-binary.sh — Draft knowledge-graph engine resolver + verifier
 
 Engine: codebase-memory-mcp
-Resolution: DRAFT_MEMORY_BIN > PATH > ~/.cache/draft/bin > bin/<arch>/
+Resolution: DRAFT_MEMORY_DISABLE (hard off) > DRAFT_MEMORY_BIN > PATH
+            > ~/.cache/draft/bin > bin/<arch>/
 
 Options:
   --repo DIR         Repo root for context (default .)
@@ -95,15 +97,23 @@ classify_source() {
 
 MEMORY_BIN=""
 if ! find_memory_bin "$REPO_ABS" "$SELF_REPO"; then
-  if [[ $EMIT_JSON -eq 1 ]]; then
+  # DRAFT_MEMORY_DISABLE short-circuits resolution, so say so — "install it or
+  # put it on PATH" is the wrong remedy when an env var turned the engine off.
+  if [[ -n "${DRAFT_MEMORY_DISABLE:-}" ]]; then
+    local_msg="Graph engine disabled by DRAFT_MEMORY_DISABLE (unset it to re-enable resolution)"
+  else
     local_msg="No codebase-memory-mcp engine found in DRAFT_MEMORY_BIN, PATH, ~/.cache/draft/bin, or bin/<arch>/"
+  fi
+  if [[ $EMIT_JSON -eq 1 ]]; then
     if [[ $STRICT -eq 1 ]]; then
       printf '{"status":"none","engine_bin":null,"source":null,"arch":"%s","message":"strict mode: %s"}\n' "$ARCH" "$local_msg"
     else
       printf '{"status":"unavailable","engine_bin":null,"source":null,"arch":"%s","message":"%s"}\n' "$ARCH" "$local_msg"
     fi
   elif [[ $STRICT -eq 1 ]]; then
-    echo "STRICT: No codebase-memory-mcp engine found." >&2
+    echo "STRICT: $local_msg" >&2
+  elif [[ -n "${DRAFT_MEMORY_DISABLE:-}" ]]; then
+    echo "ERROR: $local_msg" >&2
   else
     echo "ERROR: No Draft graph engine located (codebase-memory-mcp)." >&2
     echo "        Install it (scripts/fetch-memory-engine.sh) or put it on PATH." >&2

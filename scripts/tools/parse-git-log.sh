@@ -63,6 +63,13 @@ if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
     exit 1
 fi
 
+# `git log -n <non-numeric>` parses the count as 0 and exits 0, so a typo'd
+# --limit silently yields an empty stream. Reject it here instead.
+if [[ -n "$LIMIT" && ! "$LIMIT" =~ ^[0-9]+$ ]]; then
+    echo "ERROR: --limit must be a non-negative integer (got '$LIMIT')" >&2
+    exit 1
+fi
+
 # Format: delimiter-separated metadata line, then --name-only file list, blank line separator.
 GIT_ARGS=(log --pretty=tformat:'COMMIT%x1f%H%x1f%an%x1f%aI%x1f%s' --name-only --no-merges)
 [[ -n "$SINCE" ]] && GIT_ARGS+=(--since="$SINCE")
@@ -118,6 +125,17 @@ process_commit() {
 
 # Single git log stream: each commit is `COMMIT<US>sha<US>author<US>ts<US>subject`
 # followed by its file paths (one per line) and a blank separator.
+#
+# Staged through a temp file rather than `< <(git ...)`: a process substitution
+# swallows git's exit status, so a bad --branch/--since/--limit produced an empty
+# JSONL stream and exit 0 — indistinguishable from "this range has no commits".
+GIT_OUT="$(mktemp)"
+trap 'rm -f "$GIT_OUT"' EXIT
+if ! git "${GIT_ARGS[@]}" >"$GIT_OUT"; then
+    echo "ERROR: git log failed (check --branch / --since / --limit)" >&2
+    exit 1
+fi
+
 cur_sha=""; cur_author=""; cur_ts=""; cur_subject=""; cur_files=0
 while IFS= read -r line; do
     if [[ "$line" == COMMIT$'\x1f'* ]]; then
@@ -129,7 +147,7 @@ while IFS= read -r line; do
     elif [[ -n "$line" ]]; then
         cur_files=$((cur_files + 1))
     fi
-done < <(git "${GIT_ARGS[@]}")
+done < "$GIT_OUT"
 if [[ -n "$cur_sha" ]]; then
     process_commit "$cur_sha" "$cur_author" "$cur_ts" "$cur_subject" "$cur_files"
 fi

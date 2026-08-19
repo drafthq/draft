@@ -65,7 +65,8 @@ unavailable() { echo '{"hotspots":[],"source":"unavailable"}'; exit 2; }
 
 graph_bootstrap "$REPO" || unavailable
 
-ARCH_JSON="$(memory_cli get_architecture "{\"project\":\"$PROJECT\",\"aspects\":[\"hotspots\"]}" || true)"
+ARCH_JSON="$(memory_cli get_architecture \
+    "$(jq -n --arg p "$PROJECT" '{project:$p, aspects:["hotspots"]}')" || true)"
 [[ -n "$ARCH_JSON" ]] || unavailable
 echo "$ARCH_JSON" | jq -e . >/dev/null 2>&1 || unavailable
 

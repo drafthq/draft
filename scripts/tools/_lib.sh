@@ -134,7 +134,9 @@ gfm_slug() {
     printf '%s' "$s"
 }
 
-# Count entries in an x-grounded-paths frontmatter field.
+# Count entries in an x-grounded-paths frontmatter field. Always prints an
+# integer — a page with no such field counts 0, not "" (callers embed the value
+# in diagnostics, and an empty string rendered as "x-grounded-paths  < 2").
 # Supports both inline (`x-grounded-paths: ["a", "b"]`) and block lists:
 #   x-grounded-paths:
 #     - "a"
@@ -150,17 +152,18 @@ grounded_paths_count() {
             sub(/^x-grounded-paths:[[:space:]]*\[/, "", line)
             sub(/\].*$/, "", line)
             gsub(/[[:space:]]/, "", line)
-            if (line=="") { print 0; exit }
+            if (line=="") { print 0; printed=1; exit }
             n=split(line, a, ",")
             print n
+            printed=1
             exit
         }
         fm && /^x-grounded-paths:[[:space:]]*$/ { collect=1; next }
         fm && collect {
             if ($0 ~ /^[[:space:]]*-[[:space:]]*/) { n++; next }
-            if ($0 ~ /^[A-Za-z0-9_-]+:/) { print n+0; exit }
+            if ($0 ~ /^[A-Za-z0-9_-]+:/) { print n+0; printed=1; exit }
         }
-        END { if (collect) print n+0 }
+        END { if (!printed) print n+0 }
     ' "$file"
 }
 

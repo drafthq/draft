@@ -175,7 +175,7 @@ plan_from_cargo_workspace() {
     [[ -f "$cargo" ]] || return 1
     # Only treat as workspace if [workspace] present with members.
     grep -qE '^\[workspace\]' "$cargo" || return 1
-    grep -qE 'members\s*=' "$cargo" || return 1
+    grep -qE 'members[[:space:]]*=' "$cargo" || return 1
 
     local members=()
     # Extract quoted paths inside the members = [ ... ] array (possibly multi-line).
@@ -424,13 +424,10 @@ else
     plan_from_cargo_workspace || true
     plan_from_npm_workspaces || true
     plan_from_go_modules || true
-    if plan_from_graph; then
-        :
-    elif [[ ${#E_ID[@]} -eq 0 ]]; then
-        plan_from_heuristic
-        DISCOVERY_META+=("heuristic")
-    fi
-    # If graph failed but we have cargo/npm/go, still success.
+    plan_from_graph || true
+    # Last resort only: any of cargo/npm/go/graph succeeding leaves E_ID non-empty
+    # and skips this. Re-running the heuristic a second time can never add what
+    # the first pass didn't find, so there is one call site, not two.
     if [[ ${#E_ID[@]} -eq 0 ]]; then
         plan_from_heuristic
         DISCOVERY_META+=("heuristic")
