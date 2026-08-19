@@ -7,11 +7,12 @@ description: Pre-upload gate for track handoff. Verifies review status, HLD appr
 
 Gate track completion before `git upload`, `git push`, or opening a PR for human review.
 
-## Red Flags — STOP if you're:
+## Red Flags — STOP if you're
 
 See [shared red flags](../../core/shared/red-flags.md).
 
 Skill-specific:
+
 - Uploading without a passing `/draft:review` on the track
 - Skipping HLD §Approvals for `criticality ∈ {high, mission-critical}` tracks
 - Treating a deploy checklist with `status: BLOCKED` as passing

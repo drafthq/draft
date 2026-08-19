@@ -8,16 +8,19 @@
 ## Two-Tier Architecture
 
 ### Primary Workflow (4 commands)
-```
+
+```text
 init → new-track → implement → review
                        ↑           |
                        └───────────┘  (auto-invoked at phase boundaries)
 ```
 
 ### Routed Core Workflows (5 routers)
+
 The 5 routers (`/draft:plan`, `/draft:ops`, `/draft:docs`, `/draft:discover`, `/draft:jira`) provide intent analysis and dispatch to the leaf specialist skills. Primary commands and routers are the public surface; leaves remain for compatibility and direct scripting.
 
 ### Specialist Leaf Commands
+
 Grouped into subsystems dispatched by the routers (or primary commands).
 
 ---
@@ -215,7 +218,8 @@ graph TD
 ## Execution Chains
 
 ### Standard Development Flow
-```
+
+```text
 init → new-track → implement → review → (git push + PR)
                        ↑           |
                        └───────────┘
@@ -223,33 +227,38 @@ init → new-track → implement → review → (git push + PR)
 ```
 
 ### Bug Fix Flow
-```
+
+```text
 new-track (bug) → debug → implement → review
                     ↑                      |
                     └──────────────────────┘ (iterate if fix incomplete)
 ```
 
 ### Incident Response Flow
-```
+
+```text
 incident-response → debug → implement → review
         |
         └→ documentation (post-incident report)
 ```
 
 ### Operations Flow
-```
+
+```text
 standup ←── status (reads tracks + git log)
 deep-review ──→ tech-debt ──→ new-track (prioritized items)
 ```
 
 ### Monorepo Flow
-```
+
+```text
 init (root)       → whole-repo code-graph spine + sparse root map
 init (sub-module) → module snapshot + root-link.json → cross-module context via the root spine
 ```
 
 ### Quality Audit Flow
-```
+
+```text
 init → quick-review (fast sanity check)
 init → review (full three-stage)
 init → bughunt (14-dimension sweep)
@@ -259,14 +268,16 @@ init → decompose (optional pre-step for large modules)
 ```
 
 ### Jira Integration Flow
-```
+
+```text
 new-track → jira (preview / create / review subcommands)
                 ↑
          bughunt + review reports (optional enrichment)
 ```
 
 ### Learning Flow
-```
+
+```text
 init → learn → (updates guardrails.md)
                     ↓
          All quality skills read guardrails.md
@@ -290,7 +301,7 @@ init → learn → (updates guardrails.md)
 
 ## Artifact Flow
 
-```
+```text
                     ┌─────────────────────────────────────────────┐
                     │              draft/.state/                   │
                     │  freshness.json  signals.json  run-memory   │

@@ -10,6 +10,7 @@
 ## 1. Goals / Non-goals
 
 **Goals**
+
 - `G1` — Standardize `/draft:init` output as an OKF v0.1 bundle (markdown + YAML frontmatter, one concept per file, cross-links form the graph).
 - `G2` — Replace the single `architecture.md` with a navigable concept taxonomy better suited for agent drill-down.
 - `G3` — Make `.ai-context.md` the index root: condensed synopsis + routing entry into the taxonomy.
@@ -17,6 +18,7 @@
 - `G5` — Prove agent-task performance vs. the current monolith on a large repo before deprecating the old path.
 
 **Non-goals**
+
 - Not adopting AutoWiki's multi-agent generation pipeline (the local call graph grounds better than embedding retrieval).
 - Not adopting video walkthroughs or any cloud sync.
 - Not changing `/draft:review` or downstream commands' contracts in this track (compat shim covers them — §9).
@@ -26,6 +28,7 @@
 ## 2. Current state (baseline)
 
 `/draft:init` (5-phase analysis) emits:
+
 - `architecture.md` — 10-section, graph-primary, Mermaid as source of truth.
 - `.ai-context.md` — 200–400 lines, token-optimized, condensed standalone context.
 - `.state/` — freshness hashes, signal classification, run memory (drives `init refresh`).
@@ -36,7 +39,7 @@ Consumers today: brownfield Context Quality Audit reads `architecture.md`; downs
 
 ## 3. Target architecture
 
-```
+```text
 .draft/
 ├── ai-context.md          # INDEX ROOT: synopsis (150–250 lines) + routing into taxonomy
 ├── architecture.md        # RENDERED VIEW (generated from bundle; not source of truth)
@@ -118,7 +121,7 @@ x-callers: [api/handlers, middleware/authz]
 
 Resolves the pre-condensed vs progressive-disclosure tension by being both:
 
-```
+```text
 # <Repo> — AI Context Index
 
 ## Synopsis            ← 150–250 lines: the cheap broad-context path (current value preserved)
@@ -152,7 +155,7 @@ Loop: enter at `.ai-context.md` → Synopsis satisfies broad tasks (terminate); 
 
 Reuses existing analysis; adds decomposition + serialization. No new LLM analysis engine.
 
-```
+```text
 1. Survey        → existing /draft:init 5-phase + graph snapshot (codebase-memory-mcp)
 2. Plan          → derive concept list from graph clusters + entrypoints + features
                    topo-sort by dependency (overview/architecture first)
@@ -188,6 +191,7 @@ Existing deterministic helpers feed generation (JSON out, exit-code contract —
 ## 9. Backward compatibility (refinement 3)
 
 `architecture.md` is **demoted, not deleted**:
+
 - Generated as a concatenated view from the bundle (TOC + section concat + Mermaid). Deterministic, cheap.
 - Brownfield Context Quality Audit continues to read it.
 - Any command/skill grepping `architecture.md` keeps working.
@@ -201,7 +205,7 @@ Downstream consumers of `.ai-context.md` keep working: the synopsis section pres
 
 `init refresh` at concept granularity:
 
-```
+```text
 1. git diff hashes.json vs working tree → changed source paths
 2. path-to-concept.json → affected concept pages
 3. regenerate affected concepts only; carry rest verbatim
@@ -216,7 +220,7 @@ Unchanged concepts are byte-identical across runs (deterministic generation wher
 
 ## 11. Branch strategy
 
-```
+```text
 main
 └── feat/draft-init-okf-taxonomy        # the reimplementation, isolated
     - new generator under skills/init/ (OKF emitter)
@@ -238,16 +242,19 @@ Conventional commits; no push until green CI + benchmark captured.
 **Target repo:** `finbrainiac-platform`. Methodology is repo-agnostic; task suite below is tailored to a multi-microservice trading platform.
 
 **Setup**
+
 - Same repo, same commit, same model, same agent host.
 - Arm A: `DRAFT_INIT_MODE=monolith` → `.ai-context.md` (condensed standalone).
 - Arm B: `DRAFT_INIT_MODE=okf` → index root + taxonomy bundle.
 
 **Task suite** (representative of real `/draft:*` usage; 20–40 tasks, fixed; tailored to `finbrainiac-platform`):
+
 - Broad-context: "summarize the service topology", "which service owns order execution".
 - Focused: "what breaks if I change the broker adapter interface", "add a field to the position/fill data model".
 - Cross-cutting: "trace an equity trade from signal generation through broker submission to TimescaleDB persistence".
 
 **Metrics (per task, per arm)**
+
 | Metric | Why |
 |--------|-----|
 | Task accuracy (rubric-scored, blind) | Primary — does navigation help or hurt correctness |
@@ -257,6 +264,7 @@ Conventional commits; no push until green CI + benchmark captured.
 | Cross-link follow rate | Did the agent actually navigate vs. read-all |
 
 **Decision rule**
+
 - Adopt `okf` as default if accuracy ≥ baseline AND token cost not materially worse on focused tasks.
 - If agent over-fetches (read-all behavior), refinement 1's synopsis is the fallback; do not deprecate monolith.
 - Generation cost (one-time `/draft:init` runtime) tracked separately — informational, not a merge gate.
@@ -280,7 +288,7 @@ Conventional commits; no push until green CI + benchmark captured.
 
 ## 14. Sequencing / milestones
 
-```
+```text
 M1  Type vocabulary + frontmatter contract + taxonomy layout frozen   → verify: schema doc reviewed
 M2  okf-validate.sh (cross-link + type + index integrity)             → verify: catches injected dangle
 M3  Generator: graph → concept pages + path-to-concept.json           → verify: bundle validates on small repo

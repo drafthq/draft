@@ -80,4 +80,3 @@ These cross-referenced findings are prioritized above all other suggested tests.
 After analysis,/draft:coveragepresents the full report and stops for developer approval. The developer can accept current coverage, request additional tests for testable gaps, justify and document acceptable uncovered lines, or adjust the coverage target. Nothing is recorded until the developer explicitly approves.
 
 Approved results are recorded in three places: the track'splan.md(coverage note on the relevant phase),metadata.json(machine-readable coverage data with timestamp), and a timestamped report file indraft/tracks/<id>/with a-latest.mdsymlink for quick access. Re-running coverage on the same module shows the delta: "Coverage improved from 87.3% to 96.2% (+8.9%)."
-

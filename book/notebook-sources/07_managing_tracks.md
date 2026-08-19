@@ -62,4 +62,3 @@ When a task cannot proceed, it is marked[!]Blocked with a reason recorded inplan
 When all tasks in all phases are marked[x], the implementation command runs a final review (if auto-review is enabled inworkflow.md), updatesplan.mdstatus to Completed, setsmetadata.jsonstatus to"completed", and moves the track from the Active section to the Completed section intracks.mdwith a completion date. The AI verifies all three files are consistent before announcing completion — if any file shows inconsistent state, it halts and reports exactly what needs manual correction.
 
 The completed track remains in the project history. Its specification, plan, and review reports are preserved as a permanent record of what was built, why it was built, and how it was verified. This trail becomes valuable context for future tracks that touch the same areas of the codebase.
-

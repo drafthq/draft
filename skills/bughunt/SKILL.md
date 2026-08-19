@@ -24,7 +24,7 @@ Some AI tools (e.g., Claude Code) provide a built-in `bughunt` agent that auto-d
 
 **When to use which:** Use `/draft:bughunt` when you need context-aware analysis with structured evidence and false-positive elimination. Use the built-in agent when you want fast parallel sweeps with auto-fix capability. For maximum coverage, run both — `/draft:bughunt` catches context-specific bugs the built-in misses, and vice versa.
 
-## Red Flags - STOP if you're:
+## Red Flags - STOP if you're
 
 - Hunting for bugs without reading Draft context first (architecture.md, tech-stack.md, product.md)
 - Reporting a finding without reproducing or tracing the code path
@@ -57,6 +57,7 @@ Store this for the report header. All bugs found are relative to this specific b
 Read and follow the base procedure in `core/shared/draft-context-loading.md`.
 
 **Bug-hunt-specific context application:**
+
 - Flag violations of intended architecture as bugs (coupling, boundary violations)
 - Apply framework-specific checks from tech-stack (React anti-patterns, Node gotchas, etc.)
 - Catch bugs that violate product requirements or user flows
@@ -69,6 +70,7 @@ Read and follow the base procedure in `core/shared/draft-context-loading.md`.
 - **Leverage Consistency Boundaries** — Find bugs at eventual consistency seams (stale reads, lost events, missing reconciliation)
 - **Leverage Failure Recovery Matrix** — Verify idempotency claims, check for partial failure states without recovery paths
 - **Leverage Graph Data** (if `draft/graph/` exists) — First resolve the bundled helpers:
+
   ```bash
   # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
   # is not exported into skill Bash). See core/shared/tool-resolver.md.
@@ -77,6 +79,7 @@ Read and follow the base procedure in `core/shared/draft-context-loading.md`.
   [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/marketplaces/*draft*/scripts/tools 2>/dev/null | tail -1)"
   [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
   ```
+
   Query `"$DRAFT_TOOLS/graph-arch.sh" --repo .` for dependency awareness. Flag dependencies on unexpected modules. Flag code in modules involved in dependency cycles as higher risk. Run `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` to prioritize analysis of high-complexity, high-fanIn files. See `core/shared/graph-query.md`.
 - **Leverage Learned Anti-Patterns** — If `draft/guardrails.md` exists, read the `## Learned Anti-Patterns` section. During the bug sweep, when a bug matches a learned anti-pattern, prefix the report entry with `[KNOWN-ANTI-PATTERN: {pattern name}]`. This distinguishes recurring documented patterns from newly discovered bugs, and signals that a systemic fix may be needed rather than a one-off patch.
 
@@ -85,6 +88,7 @@ Read and follow the base procedure in `core/shared/draft-context-loading.md`.
 When invoked programmatically by `/draft:review` with `with-bughunt`, skip scope confirmation and inherit the scope from the calling command.
 
 Otherwise, ask user to confirm scope:
+
 - **Entire repo** - Full codebase analysis
 - **Specific paths** - Target directories or files
 - **Track-level** (specify `<track-id>`) - Focus on files relevant to a specific track
@@ -92,10 +96,12 @@ Otherwise, ask user to confirm scope:
 ### 3. Load Track Context (if track-level)
 
 If running for a specific track, also load:
+
 - [ ] `draft/tracks/<id>/spec.md` - Requirements, acceptance criteria, edge cases
 - [ ] `draft/tracks/<id>/plan.md` - Implementation tasks, phases, dependencies
 
 Use track context to:
+
 - Verify implemented features match spec requirements
 - Check edge cases listed in spec are handled
 - Identify bugs in areas touched by the track's plan
@@ -124,6 +130,7 @@ Before analyzing all 14 dimensions, determine which apply to this codebase:
 - **Mark skipped dimensions** with reason in report summary
 
 **Examples of skipping:**
+
 - "N/A - no backend code" (skip dimensions 2, 8, 10 for frontend-only repo)
 - "N/A - no UI components" (skip dimensions 5, 9, 14 for CLI tool)
 - "N/A - no database" (skip dimension 2 for in-memory app)
@@ -136,18 +143,21 @@ Before analyzing all 14 dimensions, determine which apply to this codebase:
 Analyze systematically across all applicable dimensions. Skip N/A dimensions explicitly (see Dimension Applicability Check above).
 
 ### 1. Correctness
+
 - Logical errors, invalid assumptions, edge cases
 - Incorrect state transitions, stale or inconsistent UI state
 - Error handling gaps, silent failures
 - Off-by-one errors, boundary conditions
 
 ### 2. Reliability & Resilience
+
 - Crash paths, unhandled exceptions
 - Reload/refresh behavior, retry logic
 - UI behavior on partial backend failure
 - Broken recovery after errors, navigation
 
 ### 3. Security
+
 - XSS, injection vectors, unsafe rendering
 - Client-side trust assumptions
 - Secrets, tokens, auth data exposure
@@ -161,12 +171,14 @@ Analyze systematically across all applicable dimensions. Skip N/A dimensions exp
   - Reference: OWASP Top 10, Meta Infer taint analysis methodology
 
 ### 4. Performance (Backend + UI)
+
 - Inefficient algorithms and data fetching
 - Blocking work on main/UI thread
 - Excessive re-renders, unnecessary state updates
 - Unbounded memory growth (listeners, caches, stores)
 
 ### 5. UI Responsiveness & Perceived Performance
+
 - Long tasks blocking input
 - Jank during scrolling, typing, resizing
 - Layout thrashing, forced reflows
@@ -174,6 +186,7 @@ Analyze systematically across all applicable dimensions. Skip N/A dimensions exp
 - Poor loading states, flicker, content shifts
 
 ### 6. Concurrency & Ordering
+
 - Race conditions between async calls
 - Stale responses overwriting newer state
 - Incorrect cancellation or debouncing
@@ -181,6 +194,7 @@ Analyze systematically across all applicable dimensions. Skip N/A dimensions exp
 - Deadlocks, livelocks
 
 ### 7. State Management
+
 - Source-of-truth violations
 - Derived state bugs (computed from stale data)
 - Global state misuse
@@ -188,12 +202,14 @@ Analyze systematically across all applicable dimensions. Skip N/A dimensions exp
 - Inconsistent state across components
 
 ### 8. API & Contracts
+
 - UI assumptions not guaranteed by backend
 - Schema drift, weak typing, missing validation
 - Backward compatibility risks
 - Undocumented API behavior dependencies
 
 ### 9. Accessibility & UX Correctness
+
 - Keyboard navigation gaps
 - Focus management bugs
 - ARIA misuse or absence
@@ -202,6 +218,7 @@ Analyze systematically across all applicable dimensions. Skip N/A dimensions exp
 - Color contrast, screen reader compatibility
 
 ### 10. Configuration & Build
+
 - Fragile environment assumptions
 - Build-time vs runtime config leaks
 - Dev-only code shipping to prod
@@ -209,6 +226,7 @@ Analyze systematically across all applicable dimensions. Skip N/A dimensions exp
 - CI gaps affecting builds or tests
 
 ### 11. Tests
+
 - Missing coverage for critical flows
 - Snapshot misuse (testing implementation, not behavior)
 - Tests that assert implementation instead of behavior
@@ -221,6 +239,7 @@ Analyze systematically across all applicable dimensions. Skip N/A dimensions exp
 - **Flaky test patterns:** time-dependent assertions (sleep, Date.now, timestamps), port/file system assumptions, test ordering dependencies, non-deterministic data (random seeds, UUIDs without control)
 
 ### 12. Dependency & Supply Chain Security
+
 - **Known CVEs:** Check dependencies against known vulnerability databases (reference tools: Snyk, Trivy, OWASP Dependency-Check, `npm audit`, `pip-audit`, `cargo audit`, `go vuln`)
 - **Unpinned dependency versions:** Lockfile freshness, use of version ranges (`^`, `~`, `*`, `>=`) without lockfile enforcement, missing lockfile entirely
 - **Deprecated packages:** Dependencies with known deprecation notices, archived repositories, or no maintenance activity
@@ -230,6 +249,7 @@ Analyze systematically across all applicable dimensions. Skip N/A dimensions exp
 - Reference: Google OSS-Fuzz, Microsoft SDL, OpenSSF Scorecard
 
 ### 13. Algorithmic Complexity
+
 - **Quadratic or worse loops:** O(n^2) or worse nested loops over collections (nested `.filter()` inside `.map()`, repeated linear scans, cartesian joins in application code)
 - **Regex catastrophic backtracking:** Nested quantifiers (`(a+)+`, `(a|a)*`), unbounded repetition with overlapping alternatives — flag any regex applied to user-controlled input
 - **Unbounded recursion:** Recursive functions without depth limits, missing base cases, or base cases that depend on external/mutable state
@@ -237,6 +257,7 @@ Analyze systematically across all applicable dimensions. Skip N/A dimensions exp
 - **Hot path inefficiency:** Sorting/searching in hot paths without appropriate data structures (linear scan where hash map suffices, repeated sorting of same collection, string concatenation in loops)
 
 ### 14. Internationalization & Localization
+
 - **Hardcoded user-facing strings:** Strings displayed to users embedded directly in source code rather than externalized to resource files/i18n frameworks
 - **Locale-sensitive operations without locale parameter:** String comparison (`<`, `>`, `localeCompare` without locale), date formatting (`toLocaleDateString` without explicit locale), number formatting, sorting (alphabetical sort that assumes ASCII ordering)
 - **RTL layout issues:** Hardcoded LTR assumptions in UI code (absolute `left`/`right` positioning, directional margin/padding, text alignment assumptions)
@@ -291,7 +312,8 @@ Analyze systematically across all applicable dimensions. Skip N/A dimensions exp
    - [ ] If all instances have the bug: Report with pattern count in "Impact"
 
 **Example Pattern Prevalence Check:**
-```
+
+```text
 1. Grep: `rg 'dangerouslySetInnerHTML' src/` → found 12 occurrences
 2. Sampled 3: src/Blog.tsx:45, src/About.tsx:12, src/FAQ.tsx:30
 3. All 3 sanitize input via `DOMPurify.sanitize()` before rendering
@@ -316,6 +338,7 @@ Only report bugs with HIGH or CONFIRMED confidence:
 ### Evidence Requirements
 
 Each reported bug MUST include:
+
 - **Code Evidence:** The actual problematic code snippet
 - **Trace:** How data reaches this point (caller chain or data flow)
 - **Verification Done:** Which checks from the checklist were completed
@@ -341,6 +364,7 @@ For suspected bugs that can be tested, write a minimal failing test to confirm:
 4. **Only report if**: Test fails OR CONFIRMED confidence from code trace
 
 **Example:**
+
 ```javascript
 // Suspected bug: off-by-one in pagination
 test('should handle last page boundary', () => {
@@ -359,11 +383,11 @@ For each verified bug, generate a regression test in the project's native test f
 If no test framework is detected, mark all bugs `Regression Test Status: N/A` and continue — the bug report is the primary deliverable.
 
 **Detailed procedure** — see `references/regression-tests.md` for:
+
 - Language and test-framework detection signals (C/C++, Go, Python, JS/TS, Rust, Java)
 - Existing-test discovery patterns and coverage classification
 - Test case requirements and language-specific templates
 - Build/syntax validation commands per toolchain
-
 
 ## Fix Suggestion Generation
 
@@ -404,6 +428,7 @@ For each verified bug:
 **Impact:** [User-visible effect or system failure mode]
 
 **Verification Done:**
+
 - [x] Traced code path from [entry point]
 - [x] Checked architecture.md — not intentional
 - [x] Verified framework doesn't handle this
@@ -415,6 +440,7 @@ For each verified bug:
 **Fix:** [Minimal code change or mitigation]
 
 **Suggested Fix (REVIEW REQUIRED):**
+
 ```[language]
 // BEFORE (current buggy code):
 [exact code snippet from the codebase]
@@ -422,16 +448,19 @@ For each verified bug:
 // AFTER (suggested fix):
 [minimal change that addresses root cause]
 ```
+
 _This fix is SUGGESTED only — human review required before applying. Reference: Meta SapFix methodology._
 
 **Regression Test:**
 **Status:** [COVERED | PARTIAL | WRONG_ASSERTION | NO_COVERAGE | N/A]
 **Existing Test:** [`path/to/test_file:line` — test name | None found]
 [Action: existing test reference, proposed modification, or new test case]
+
 ```[language]
 // New or modified test case (omit if COVERED or N/A)
 ```
-```
+
+```text
 
 **Example — COVERED (no new test needed):**
 ```markdown
@@ -442,6 +471,7 @@ No new test needed. Existing test fails when XSS sanitization is removed.
 ```
 
 **Example — PARTIAL (C++ / GTest):**
+
 ```markdown
 **Regression Test:**
 **Status:** PARTIAL — tests exist for processInput() but miss unsanitized HTML path
@@ -455,7 +485,8 @@ TEST(InputSanitization, RejectsMaliciousScript) {
       << "Input should be sanitized to remove script tags";
 }
 ```
-```
+
+```text
 
 **Example — NO_COVERAGE (Python / pytest):**
 ```markdown
@@ -473,7 +504,8 @@ def test_rejects_malicious_script():
     assert "<script>" not in result, "XSS script tag should be stripped"
 # Expected: FAILS against current code (passes XSS through), PASSES after fix
 ```
-```
+
+```text
 
 **Example — NO_COVERAGE (Go / testing):**
 ```markdown
@@ -497,7 +529,8 @@ func TestProcessInputRejectsMaliciousScript(t *testing.T) {
 }
 // Expected: FAILS against current code (passes XSS through), PASSES after fix
 ```
-```
+
+```text
 
 **Example — N/A (not testable, but still report the bug):**
 ```markdown
@@ -507,6 +540,7 @@ func TestProcessInputRejectsMaliciousScript(t *testing.T) {
 ```
 
 Severity levels:
+
 - **Critical** — Blocks release, breaks functionality, security issue
 - **Important** — Degrades quality, creates tech debt
 - **Minor** — Style, optimization, edge cases
@@ -514,10 +548,12 @@ Severity levels:
 ## Report Generation
 
 Generate report at:
+
 - **Project-level:** `draft/bughunt-report-<timestamp>.md` (where `<timestamp>` is generated via `date +%Y-%m-%dT%H%M`, e.g., `2026-03-15T1430`)
 - **Track-level:** `draft/tracks/<track-id>/bughunt-report-<timestamp>.md` (if analyzing specific track)
 
 After writing the timestamped report, create a symlink pointing to it:
+
 ```bash
 # Project-level
 ln -sf bughunt-report-<timestamp>.md draft/bughunt-report-latest.md
@@ -597,9 +633,11 @@ Report structure:
 | 5 | [Brief title] | — | SKIPPED (N/A) |
 
 ```
+
 Validation Summary: 3 BUILD_OK, 0 BUILD_FAILED, 1 SKIPPED
 Validation Command: python -m py_compile <file>
-```
+
+```text
 
 ### New Tests Written (NO_COVERAGE)
 
@@ -637,7 +675,8 @@ Bugs that cannot have automated regression tests (config issues, documentation, 
 | Bug # | Bug Title | Reason |
 |-------|-----------|--------|
 | 6 | [Brief title] | Config file — no executable code |
-```
+
+```text
 
 ## Final Instructions
 
@@ -670,17 +709,21 @@ After bughunt report generation:
 
 **If critical bugs found:**
 ```
+
 "Critical bugs found. Consider:
   → /draft:debug — Run structured debug session on critical finding #{n}
   → git bisect — Find the exact commit that introduced the bug"
-```
+
+```text
 
 ### Test Writing Guardrail
 
 When offering to write regression tests for found bugs:
 ```
+
 ASK: "Want me to write regression tests for the {n} bugs found? [Y/n]"
-```
+
+```text
 Never auto-write tests — always ask first.
 
 ### Jira Sync

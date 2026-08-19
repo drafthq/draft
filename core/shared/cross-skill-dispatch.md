@@ -22,11 +22,13 @@ Execute without user confirmation. Used for passive context enrichment and estab
 Present a choice with a recommended default. Used when the skill adds significant value but the user may want to skip.
 
 Format:
-```
+
+```text
 "Run /draft:<skill> to <benefit>? [Y/n]"
 ```
 
 Examples:
+
 - "Run `/draft:debug` to investigate before writing the spec? [Y/n]" — bug tracks in new-track
 - "Run full three-stage review or `/draft:quick-review` for lightweight check? [full]" — phase boundaries in implement
 - "Run `/draft:tech-debt` to scope this refactor? [Y/n]" — refactor tracks in new-track
@@ -38,11 +40,13 @@ Examples:
 Announce availability at completion without blocking. Used for optional follow-up actions.
 
 Format:
-```
+
+```text
 "Consider running `/draft:<skill>` to <benefit>."
 ```
 
 Examples:
+
 - "Consider running `/draft:tech-debt` to catalog debt found during review."
 - "Consider running `/draft:documentation api` to document new endpoints."
 - "Consider running `/draft:adr` to record this design decision."
@@ -119,7 +123,7 @@ At this point, check for dispatch opportunities:
 Applies to: `/draft:debug`, `/draft:implement` (bug tracks), auto-triage pipeline, `/draft:bughunt`
 Does NOT apply to: Feature tracks with TDD enabled, `/draft:coverage`
 
-```
+```text
 If track type is "bugfix" OR current context is debug/RCA:
   BEFORE writing any test file:
     ASK: "Want me to write [regression/unit] tests for [description]? [Y/n]"

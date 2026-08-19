@@ -50,12 +50,14 @@ Organize plans into phases:
 ## Task Granularity
 
 Good task:
+
 - Completable in a focused session
 - Has clear success criteria
 - Produces testable output
 - Fits in single commit
 
 Bad task:
+
 - "Implement the feature"
 - Multi-day scope
 - Vague completion criteria
@@ -63,11 +65,13 @@ Bad task:
 ## Dependency Mapping
 
 Identify:
+
 - Which tasks must complete before others
 - Parallel execution opportunities
 - External blockers
 
 Format in plan.md:
+
 ```markdown
 - [ ] Task 2.1: Add validation
   - Depends on: Task 1.1, Task 1.2
@@ -76,6 +80,7 @@ Format in plan.md:
 ## Risk Identification
 
 Flag in spec.md:
+
 - Technical unknowns
 - External dependencies
 - Performance concerns
@@ -128,6 +133,7 @@ Each criterion must be:
 | **Complete** | Covers both success and failure paths | Include error scenarios |
 
 **Anti-patterns:**
+
 - "System works correctly" (too vague)
 - "Code is clean" (subjective)
 - "Performance is good" (not measurable — use "Response time < 200ms at p95")
@@ -152,6 +158,7 @@ When recommending technical approaches, cite sources from `core/knowledge-base.m
 ## Escalation
 
 If requirements are ambiguous after analysis:
+
 1. Document what is clear
 2. List specific ambiguities with options
 3. Present to developer with trade-off analysis

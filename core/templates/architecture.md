@@ -79,6 +79,7 @@ The Graph Health & Fidelity Dashboard (above) is the first artifact any reader o
 The longest and most precise section.
 
 Every invariant must include:
+
 - Precise statement
 - Why violation is dangerous
 - Enforcement mechanism (test, runtime, type system, review, graph constraint, or none)
@@ -86,7 +87,7 @@ Every invariant must include:
 
 Example format:
 
-```
+```text
 ### INV-003: Sentinel Lock Ordering
 **Rule**: `_strategies_lock < _strategy_process_locks < _global_capacity_lock < entry_lock`
 **Fidelity**: High (enforced in code + tests)
@@ -106,6 +107,7 @@ Focus on the highest-value dynamic behavior:
 - Lifecycle sequences (bootstrap, shutdown, reconciliation, failover)
 
 Each backed by:
+
 - Graph-derived paths where available
 - High-quality Mermaid (stateDiagram-v2, sequenceDiagram, or detailed flowchart)
 - Explicit note when the flow is only partially visible in the graph
@@ -135,6 +137,7 @@ Include a short "graph coverage for this view" paragraph.
 ## 6. Error Handling & Failure Mode Catalog
 
 For every major component or flow:
+
 - What can go wrong
 - How it is detected
 - The defined safe response
@@ -145,6 +148,7 @@ For every major component or flow:
 ## 7. State & Data Truth Sources + Reconciliation
 
 For each major domain:
+
 - Authoritative source
 - Derived / cached views
 - Reconciliation mechanisms and lag tolerance

@@ -15,7 +15,7 @@ It owns the common execution loop and absorbs three adjacent commands when appro
 - `/draft:coverage`
 - `/draft:revert`
 
-## Red Flags - STOP if you're:
+## Red Flags - STOP if you're
 
 - Implementing without an approved spec and plan
 - Skipping TDD cycle when workflow.md has TDD enabled
@@ -152,9 +152,11 @@ If one of these applies, route directly to the specialist workflow and stop this
 10. Update the track's entry in `draft/tracks.md` from `[ ]` to `[~]` In Progress
 
 If no active track found:
+
 - Tell user: "No active track found. Run `/draft:plan` to create or resume planned work."
 
 **Architecture / Design Mode Activation:**
+
 - Automatically enabled when `.ai-context.md`, graph-primary `architecture.md`, or track `hld.md`/`lld.md` exists.
 - Project-level context from `/draft:init`.
 - Track-level design docs from `/draft:decompose`.
@@ -168,21 +170,25 @@ Run once, before the first task of a new track:
 ### AC Coverage Check
 
 For each acceptance criterion in `spec.md`:
+
 - Verify at least one task in `plan.md` references or addresses it
 - If an AC has no corresponding task, flag it: "⚠️ AC: '[criterion]' has no task in plan.md"
 
 ### Sync Check (if `.ai-context.md` exists)
 
 Compare the `synced_to_commit` values in the YAML frontmatter of `spec.md` and `plan.md`.
+
 - **Skip if** either file has no YAML frontmatter or no `synced_to_commit` field (quick-mode tracks omit it).
 - If they differ: "⚠️ Spec and plan were synced to different commits — verify they are still aligned."
 
 ### Result
 
 **Issues found:** List them, then ask:
-```
+
+```text
 Readiness issues found (see above). Proceed anyway or update first? [proceed/update]
 ```
+
 - `proceed` → add a `## Notes` entry in `plan.md` listing the issues, then continue to Step 2
 - `update` → stop here and let the user refine spec or plan before re-running
 
@@ -201,7 +207,8 @@ Before starting TDD cycle for the first task:
 ### Bug Track Test Guardrail
 
 If track type is `bugfix` (from metadata.json):
-```
+
+```text
 BEFORE writing any test file:
   ASK: "This is a bug fix track. Want me to write tests as part of the fix? [Y/n]"
   If declined: skip TDD cycle, note in plan.md: "Tests: developer-handled"
@@ -210,12 +217,14 @@ BEFORE writing any test file:
 ## Step 2: Find Next Task
 
 Scan `plan.md` for the first uncompleted task:
+
 - `[ ]` = Pending (pick this one)
 - `[~]` = In Progress (resume this one)
 - `[x]` = Completed (skip)
 - `[!]` = Blocked (skip - requires manual intervention)
 
 **IMPORTANT:** If blocked task found, notify user:
+
 - "Task [task description] is marked `[!]` Blocked"
 - Show the blocked task details and recovery message
 - "Resolve the blockage manually before continuing implementation"
@@ -274,7 +283,7 @@ When the next task involves creating or substantially modifying a code file:
 
 ### Story Format
 
-```
+```text
 // Story: [Module/File Name]
 //
 // Input:  [what this module/function receives]
@@ -320,7 +329,8 @@ Study the control flow for the task and propose intermediate state variables:
 5. Propose execution state: input state, intermediate state, output state, error state
 
 Present in this format:
-```
+
+```text
 EXECUTION STATE: [Task/Module Name]
 ─────────────────────────────────────────────────────────
 Input State:
@@ -435,12 +445,13 @@ For each task, follow this workflow based on `workflow.md`. If skeletons were ge
 
 When refactoring code that lacks tests, write characterization tests first to capture current behavior as a baseline. Identify seams (interfaces for test doubles, swappable imports), record actual outputs for representative inputs, then proceed with the TDD cycle for new behavior.
 
-### If TDD Enabled:
+### If TDD Enabled
 
 **Iron Law:** No production code without a failing test first.
 
 **3a. RED - Write Failing Test**
-```
+
+```text
 1. Create/update test file as specified in task
 2. Write test that captures the requirement
 3. RUN test - VERIFY it FAILS (not syntax error, actual assertion failure)
@@ -449,6 +460,7 @@ When refactoring code that lacks tests, write characterization tests first to ca
 ```
 
 **Test Quality Checklist (REQUIRED for every test):**
+
 - No shared mutable state between test cases — each test sets up its own state
 - Assertion density: every test must have at least one meaningful assertion (not just `assertTrue(true)`)
 - No logic in tests: no conditionals, loops, or try/catch in test code — tests should be trivially readable
@@ -461,7 +473,8 @@ When refactoring code that lacks tests, write characterization tests first to ca
 After writing example-based tests, consider property-based tests for pure functions (algebraic properties, round-trip serialization, sort invariants). Not mandatory — skip if properties are not obvious.
 
 **3b. GREEN - Implement Minimum Code**
-```
+
+```text
 1. Write MINIMUM code to make test pass (no extras)
 2. RUN test - VERIFY it PASSES
 3. Show test output with pass
@@ -475,7 +488,8 @@ Structured logging at decision points, metrics for latency-sensitive ops, tracin
 For new API endpoints or service-to-service interfaces, suggest consumer-driven contract tests. Skip for purely internal modules.
 
 **3c. REFACTOR - Clean with Tests Green**
-```
+
+```text
 1. Review code for improvements
 2. Refactor while keeping tests green
 3. RUN all related tests after each change
@@ -484,15 +498,17 @@ For new API endpoints or service-to-service interfaces, suggest consumer-driven 
 ```
 
 **Red Flags - STOP and restart the cycle if:**
+
 - About to write code before test exists
 - Test passes immediately (testing wrong thing)
 - Thinking "just this once" or "too simple to test"
 - Running tests mentally instead of actually executing
 
-### If TDD Not Enabled:
+### If TDD Not Enabled
 
 **3a. Implement**
-```
+
+```text
 1. Implement the task as specified
 2. Test manually or run existing tests
 3. Announce: "Implementation complete"
@@ -571,6 +587,7 @@ Before marking ANY task/phase/track complete:
    - If **YES**: Show evidence, then mark `[x]`
 
 **Red Flags - STOP if you're thinking:**
+
 - "Should pass", "probably works"
 - Satisfaction before running verification
 - About to mark `[x]` without fresh evidence from this session
@@ -588,16 +605,19 @@ When all tasks in a phase are `[x]`:
 ### Three-Stage Review (REQUIRED)
 
 **Stage 1: Automated Validation**
+
 - Fast static checks: architecture conformance, dead code, circular dependencies, performance anti-patterns. Review for common security anti-patterns (OWASP top 10). For automated checks, use language-specific tools (e.g., `npm audit` for JS, `bandit` for Python, `cargo audit` for Rust).
 - **If critical issues found:** List them, return to implementation
 
 **Stage 2: Spec Compliance** (only if Stage 1 passes)
+
 - Load track's `spec.md`
 - Verify all requirements for this phase are implemented
 - Check acceptance criteria coverage
 - **If gaps found:** List them, return to implementation
 
 **Stage 3: Code Quality** (only if Stage 2 passes)
+
 - Verify code follows project patterns (tech-stack.md)
 - Check error handling is appropriate
 - Verify tests cover real logic
@@ -608,12 +628,14 @@ See `core/agents/reviewer.md` for detailed review process.
 ### Quick Review Alternative
 
 At phase boundaries, offer the lightweight alternative:
-```
+
+```text
 "Phase {N} complete. Review options:
   1. Full three-stage review (recommended) — spec compliance + security + quality
   2. /draft:quick-review — lightweight 4-dimension check (faster)
   Choose [1/2, default: 1]:"
 ```
+
 If quick-review chosen, invoke `/draft:quick-review` with the phase's changed files.
 
 2. Run verification steps from plan (tests, builds)
@@ -632,12 +654,15 @@ If quick-review chosen, invoke `/draft:quick-review` with the phase's changed fi
 After a phase passes review, refresh `metadata.json.impact` so future tracks can detect overlap with this work.
 
 1. **Compute touched files:** From `plan.md`, find the first commit SHA recorded for this track (earliest `[x]` line with `(<sha>)`). Run:
+
    ```bash
    git diff --name-only <first_sha>^..HEAD
    ```
+
    That is the `files_touched` list. Derive `modules_touched` as the unique top-level path segments (e.g. `auth/login.go` → `auth`).
 
 2. **Compute downstream blast radius (graph-aware, optional):** If `draft/graph/schema.yaml` exists, for each file in `files_touched` query (this runs in its own Bash session — re-resolve the helpers):
+
    ```bash
    DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
    [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
@@ -645,6 +670,7 @@ After a phase passes review, refresh `metadata.json.impact` so future tracks can
    [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$PWD/scripts/tools"
    "$DRAFT_TOOLS/graph-impact.sh" --repo . --file <path>
    ```
+
    Aggregate across all files: `downstream_files` = total unique downstream files (deduped), `downstream_modules` = union of `affected_modules`, `max_depth` = max across queries, `by_category` = sum of each query's `by_category`. If the graph is absent, leave these fields as zeros / empty arrays — the snapshot still records the directly-touched files.
 
 3. **Write metadata.json** with the populated `impact` block and `computed_at` set to the current timestamp.
@@ -658,10 +684,12 @@ When all phases complete:
 1. **Run review (if enabled):**
    - Read `draft/workflow.md` review configuration
    - Check if auto-review enabled:
+
      ```markdown
      ## Review Settings
      - [x] Auto-review at track completion
      ```
+
    - If enabled, run `/draft:review track <track_id>`
    - Check review results:
      - If block-on-failure enabled AND critical issues found → HALT, require fixes
@@ -687,6 +715,7 @@ When all phases complete:
 "Track <track_id> completed!
 
 Summary:
+
 - Phases: N/N
 - Tasks: M/M
 - Duration: [if tracked]
@@ -702,6 +731,7 @@ Next: Run `/draft:status` to see project overview."
 ## Error Handling
 
 **If blocked:**
+
 - Mark task as `[!]` Blocked
 - Add reason in plan.md
 - **REQUIRED:** Follow systematic debugging process (see `core/agents/debugger.md`)
@@ -713,18 +743,22 @@ Next: Run `/draft:status` to see project overview."
 - Document root cause when found
 
 **Recommended:** Instead of inline debugging, invoke `/draft:debug` skill for a structured session:
-```
+
+```text
 "Task blocked: {description}. Run /draft:debug for structured investigation? [Y/n]"
 ```
+
 The debug skill provides: Reproduce → Isolate → Diagnose → Fix methodology with debug report output.
 
 **If test fails unexpectedly:**
+
 - Don't mark complete
 - Follow systematic debugging process above
 - Announce failure details with root cause analysis
 - Show evidence when resolved
 
 **If unsure about implementation:**
+
 - Ask clarifying questions
 - Reference spec.md for requirements
 - Don't proceed with assumptions
@@ -748,6 +782,7 @@ When you encounter a shortcut, workaround, or known-imperfect solution during im
 ```
 
 **Severity levels:**
+
 - **Low** — Cosmetic or minor maintainability issue
 - **Medium** — Will cause problems at scale or in specific scenarios
 - **High** — Actively impeding development or risking production issues
@@ -761,7 +796,8 @@ Only log genuine debt — intentional shortcuts with known consequences. Not eve
 ## Progress Reporting
 
 After each task, report:
-```
+
+```yaml
 Task: [description]
 Status: Complete
 Phase Progress: N/M tasks
@@ -777,34 +813,40 @@ Overall: X% complete
 After announcing track completion, suggest relevant follow-ups based on context:
 
 **If track modifies production code:**
-```
+
+```text
 "Track complete! Consider:
   → /draft:deploy-checklist — Pre-deployment verification"
 ```
 
 **If track added new APIs/services/components:**
-```
+
+```text
   → /draft:documentation — Update documentation for new components"
 ```
 
 **If implementation contains TODO/FIXME/HACK comments:**
-```
+
+```text
   → /draft:tech-debt — Catalog any new technical debt introduced"
 ```
 
 **If new patterns or dependencies not in tech-stack.md:**
-```
+
+```text
   → /draft:adr — Document this design decision"
 ```
 
 ### Jira Sync at Completion
 
 If Jira ticket linked, sync via `core/shared/jira-sync.md`:
+
 - Post comment: "[draft] implementation-complete: All {n} tasks done. Ready for review."
 
 ### Bug Track with rca.md
 
 If implementing a bug track and `draft/tracks/<id>/rca.md` exists:
+
 - Load rca.md as context for the implementation
 - Reference root cause, blast radius, and prevention items during fix
 - After fix: update rca.md "Proposed Fix" section with actual fix details

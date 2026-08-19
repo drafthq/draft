@@ -38,7 +38,7 @@ and adds `wiki/`. **Every other standard `/draft:init` file is still produced**
 `.ai-profile.md`, `tracks/` + `tracks.md`, `.state/`, `graph/` — exactly as in
 `monolith` mode. Do **not** skip them: emitting only the bundle is a regression.
 
-```
+```text
 draft/
 ├── .ai-context.md         # INDEX ROOT: synopsis (150–250 lines) + Concept Map
 ├── architecture.md        # RENDERED VIEW (generated from bundle; not source of truth)
@@ -130,7 +130,7 @@ Derive concepts from the graph, not by hand:
 
 ## Generation pipeline (M3)
 
-```
+```text
 1. Survey        → existing /draft:init 5-phase + graph snapshot (graph-snapshot.sh)
 2. Plan          → DETERMINISTIC. okf-plan-concepts.sh derives the expected-concept
                    set. Discovery order (exclusive of --manifest):
@@ -219,7 +219,7 @@ section `index.md` tables are the injection slots for the routing tables.
 
 `/draft:init refresh` under `okf` mode:
 
-```
+```text
 1. Re-derive the plan: okf-plan-concepts.sh (cargo/npm/go + graph). Modules added
    since last run become REQUIRED — a new crate cannot slip through a refresh.
 2. Diff plan vs previous concept-plan.json → NEW required concept_ids

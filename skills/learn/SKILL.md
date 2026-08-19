@@ -28,11 +28,12 @@ When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-firs
 
 Filesystem `find` for source discovery (Step 2.1) is permitted **as a complement** to the graph for languages not covered by indexes (e.g. Ruby, Java without ctags). Record the rationale in the Graph Usage Report.
 
-## Red Flags - STOP if you're:
+## Red Flags - STOP if you're
 
 See [shared red flags](../../core/shared/red-flags.md) — applies to all code-touching skills.
 
 Skill-specific:
+
 - Writing to guardrails.md without reading the codebase first
 - Learning a pattern from fewer than 3 occurrences
 - Auto-promoting patterns to Hard Guardrails (requires human approval)
@@ -72,6 +73,7 @@ ls draft/guardrails.md 2>/dev/null
 ```
 
 If it exists, read it and internalize:
+
 - Current Hard Guardrails (checked items)
 - Current Learned Conventions (existing entries)
 - Current Learned Anti-Patterns (existing entries)
@@ -93,6 +95,7 @@ If `draft/guardrails.md` does NOT exist:
 3. Create `draft/guardrails.md` using template from `core/templates/guardrails.md`
 4. Copy checked guardrail items from `workflow.md ## Guardrails` into the Hard Guardrails section
 5. Add a comment in `workflow.md` where `## Guardrails` was:
+
    ```markdown
    ## Guardrails
 
@@ -104,6 +107,7 @@ If `migrate` argument was given, stop here after migration. Otherwise, continue 
 ### 1.3: Load Supporting Context
 
 Read and follow `core/shared/draft-context-loading.md` for full Draft context. Key files:
+
 - `draft/.ai-context.md` — Module boundaries, invariants, concurrency model
 - `draft/tech-stack.md` — Frameworks, accepted patterns (do not learn patterns that duplicate these)
 - `draft/product.md` — Product requirements
@@ -133,41 +137,48 @@ If scope argument provided, filter to that path.
 Scan the codebase across these dimensions, looking for **recurring patterns** (3+ occurrences):
 
 #### Error Handling Conventions
+
 - How errors are caught, logged, and propagated
 - Custom error classes or error codes
 - Try/catch patterns, error boundaries
 - Retry and fallback strategies
 
 #### Naming Conventions
+
 - Variable, function, class naming styles beyond language defaults
 - File naming patterns (kebab-case, PascalCase, etc.)
 - Module/directory organization conventions
 
 #### Architecture Patterns
+
 - Import/dependency patterns (barrel exports, lazy loading)
 - State management approaches
 - API call patterns (centralized client, interceptors)
 - Component composition patterns
 
 #### Concurrency Patterns
+
 - Async/await usage conventions
 - Locking and synchronization approaches
 - Queue and worker patterns
 - Cancellation and timeout handling
 
 #### Data Flow Patterns
+
 - Validation placement (boundary vs deep)
 - Serialization/deserialization conventions
 - Caching strategies
 - Data transformation pipelines
 
 #### Testing Conventions
+
 - Test file placement and naming
 - Test structure (arrange/act/assert, given/when/then)
 - Mock/stub conventions
 - Fixture and factory patterns
 
 #### Configuration Patterns
+
 - Environment variable access patterns
 - Feature flag patterns
 - Config file conventions
@@ -181,9 +192,11 @@ Detect patterns that are being phased out by the team:
    - **New files** (last modified <6 months ago): low or zero occurrence of the pattern
    - If occurrence ratio old:new is >3:1, flag as a declining pattern
 2. **Mark declining patterns** — When writing to guardrails.md, add `declining: true` to the entry metadata:
+
    ```markdown
    - **Declining:** yes — found in 8 old files (avg age 18mo), 1 new file (avg age 2mo). Being replaced by [newer pattern].
    ```
+
 3. **Do NOT propagate declining patterns** — Quality commands should not flag absence of a declining pattern as inconsistency
 4. **Example:** Old error handling style `try/catch with manual logging` found in files last modified >1 year ago, newer files use structured error middleware — the old style is declining, not a convention to enforce
 
@@ -198,12 +211,14 @@ When in a monorepo (detected by `draft/service-index.md` existing OR multiple `d
    - Does Service A use a different approach than Service B for the same concern?
    - Example: Service A uses `Result<T, E>` for error handling, Service B uses exceptions
 3. **Flag inconsistencies** — Report cross-service divergences:
-   ```
+
+   ```text
    Cross-service inconsistency: Error Handling
      services/auth/ → uses custom Result type (5 files)
      services/billing/ → uses thrown exceptions (8 files)
      Suggestion: standardize on one approach
    ```
+
 4. **Respect intentional differences** — Do NOT flag inconsistencies when:
    - Services use different languages or frameworks
    - The pattern difference is documented in `tech-stack.md` or `.ai-context.md`
@@ -237,9 +252,10 @@ Scan the output for recurring message patterns (3+ occurrences of the same type)
 | `fix: don't X` / `fix: never X` | Team keeps violating X → anti-pattern candidate |
 | `refactor: replace X with Y` | X is declining, Y is the replacement → mark X as `declining: true` |
 | `chore: enforce X` / `chore: add X check` | X is being formalized → convention candidate |
-| `revert: ` followed by same topic 3+ times | That topic is consistently problematic → anti-pattern candidate |
+| `revert:` followed by same topic 3+ times | That topic is consistently problematic → anti-pattern candidate |
 
 **Rules:**
+
 - Do NOT add git-only signals as standalone entries. Use them only to adjust confidence of patterns already found in Step 2.2.
 - If a pattern appears in both commit history AND code (3+ occurrences): increase confidence by one level.
 - If a pattern appears only in commit history but not in current code: note as `historically_recurring: true` — do not add as active anti-pattern.
@@ -260,6 +276,7 @@ git log --follow --oneline -1 -- {file_containing_pattern}
 If `draft/graph/schema.yaml` exists (engine live), derive objective severity for all anti-pattern candidates based on the fanIn of files where the pattern was found via `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .`.
 
 For each anti-pattern candidate from Step 2.2:
+
 1. Check if any evidence files appear in the hotspot output from `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .`
 2. Take the highest fanIn value across all evidence files:
    - fanIn ≥ 10 → `graph_severity: critical` (breakage propagates to many callers)
@@ -303,9 +320,11 @@ Before saving any new pattern, check for conflicts with existing entries:
 3. **Check against Hard Guardrails** — Does the new pattern violate a hard guardrail?
 
 **If conflict found:**
+
 - Do NOT silently save the new pattern
 - Alert the user with both patterns side by side:
-  ```
+
+  ```text
   CONFLICT DETECTED:
 
   Existing convention: "Use async/await for all async operations"
@@ -320,6 +339,7 @@ Before saving any new pattern, check for conflicts with existing entries:
     [2] Replace existing with new (pattern has evolved)
     [3] Discard new (existing is correct)
   ```
+
 - Wait for user input before proceeding
 
 **Reference:** Google Code Health — conflicting patterns create confusion and should be resolved explicitly.
@@ -340,6 +360,7 @@ After discovering patterns, optionally compare project conventions against commu
 | **C/C++** | Google C++ Style Guide, C++ Core Guidelines |
 
 For each project convention that **deviates** from its language's community standard:
+
 1. Note the deviation in the summary report (not as an anti-pattern — deviations may be intentional)
 2. If the deviation is undocumented, suggest adding it to `tech-stack.md ## Accepted Patterns` with a rationale
 3. Example: project uses `snake_case` for TypeScript functions (deviates from `camelCase` convention) — flag for documentation, not correction
@@ -400,7 +421,7 @@ Follow the write procedure in `core/shared/pattern-learning.md`:
 
 Review all learned patterns with `confidence: high` and present promotion candidates:
 
-```
+```text
 Pattern promotion candidates:
 
 1. [Convention] "Centralized API client pattern" (high confidence, 12 files)
@@ -414,6 +435,7 @@ Pattern promotion candidates:
 ```
 
 For each promoted pattern:
+
 - **Convention → Accepted Pattern**: Append to `draft/tech-stack.md ## Accepted Patterns` and remove from guardrails.md Learned Conventions
 - **Convention → Hard Guardrail**: Move from Learned Conventions to Hard Guardrails section (as checked `[x]` item)
 - **Anti-Pattern → Hard Guardrail**: Move from Learned Anti-Patterns to Hard Guardrails section (as checked `[x]` item)
@@ -424,7 +446,7 @@ For each promoted pattern:
 
 Display results to the user:
 
-```
+```text
 /draft:learn complete
 
 Scanned: N source files across M directories
@@ -457,6 +479,7 @@ After `/draft:learn` populates guardrails.md, all quality commands automatically
 | **Unchecked Hard Guardrails** | Ignore (not enforced) |
 
 This creates a **continuous improvement loop**:
+
 1. Quality command runs → discovers patterns → updates guardrails.md
 2. Next quality command run → reads updated guardrails.md → fewer false positives, catches known-bad patterns
 3. `/draft:learn promote` → graduates stable patterns to permanent status

@@ -21,6 +21,7 @@ Identify the project's language(s) and test framework by examining the codebase:
 | `build.gradle`/`build.gradle.kts` | Java/Kotlin | JUnit | `gradle test` |
 
 **Resolution order:**
+
 1. Check `draft/tech-stack.md` first — it may explicitly state the test framework
 2. Look for existing test files and match their import/framework patterns
 3. Fall back to build system signals above
@@ -30,7 +31,8 @@ If the project is **polyglot** (multiple languages), detect per-component and ge
 **If no test framework is detected:** Mark all bugs with `Regression Test Status: N/A — no test framework detected` and proceed with bug reporting. **Do not skip bugs because tests cannot be written.** The regression test section is supplementary — the primary deliverable is the bug report.
 
 Record the detected configuration:
-```
+
+```yaml
 Language: [detected | none]
 Test Framework: [detected | none]
 Build System: [detected | none]
@@ -71,7 +73,8 @@ For each verified bug, search the codebase for existing tests before generating 
 4. **Document discovery results** in the bug report's Regression Test field
 
 **Example Existing Test Discovery:**
-```
+
+```text
 1. Bug location: src/parser.cpp:145 — off-by-one in tokenize()
 2. Grep: `rg 'tokenize' tests/` → found tests/parser_test.cpp
 3. Read tests/parser_test.cpp:
@@ -87,7 +90,8 @@ For each verified bug, search the codebase for existing tests before generating 
 Based on discovery results, generate tests in the project's native framework:
 
 #### When status is COVERED
-```
+
+```text
 **Regression Test:**
 **Status:** COVERED — existing test already catches this bug
 **Existing Test:** `tests/parser_test.cpp:45` — `TEST(Parser, TokenizeBoundary)`
@@ -95,7 +99,9 @@ No new test needed.
 ```
 
 #### When status is PARTIAL — add to existing test file
+
 #### When status is WRONG_ASSERTION — fix assertion in existing test
+
 #### When status is NO_COVERAGE — generate new test
 
 ### Test Case Requirements (all languages)
@@ -297,6 +303,7 @@ For bugs with status NO_COVERAGE, PARTIAL, or WRONG_ASSERTION, write the actual 
 #### NO_COVERAGE — Create new test file
 
 1. **Create directory** if it doesn't exist:
+
    ```bash
    mkdir -p <test_directory>/
    ```
@@ -315,6 +322,7 @@ For bugs with status NO_COVERAGE, PARTIAL, or WRONG_ASSERTION, write the actual 
 3. **Create or update build config** (if required by the build system):
 
    **C/C++ (Bazel)** — add `cc_test` to BUILD:
+
    ```python
    cc_test(
        name = "<source_filename>_test",
@@ -355,6 +363,7 @@ For bugs with status NO_COVERAGE, PARTIAL, or WRONG_ASSERTION, write the actual 
 4. No build config changes needed
 
 **Constraints:**
+
 - **Never modify production source code** — only test files and their build configs
 - Each test file must be valid for the project's test runner
 - Use the project's actual import paths, module names, and namespace conventions
@@ -392,7 +401,8 @@ After writing all test files, validate them using the project's native toolchain
    **Exception for Go:** `go vet` is preferred over `go build` for test files because Go compiles tests as part of `go test` only. `go vet` catches type errors and common issues without executing.
 
 4. **Validation summary** — Record results for the report:
-   ```
+
+   ```yaml
    BUILD_OK:     3 targets
    BUILD_FAILED: 1 target (tests/config/test_loader.py — ImportError: no module named 'config.loader')
    SKIPPED:      1 target (N/A — race condition not reliably testable)

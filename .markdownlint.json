@@ -6,6 +6,18 @@
   "//MD010": "Hard tabs are legitimate inside code blocks — TSV schemas, Makefile snippets.",
   "MD010": { "code_blocks": false },
 
+  "//MD007": "Unordered-list indent. Defaults to 2, but a bullet nested under an ordered item aligns at 3 (the width of \"1. \"), which is what this repo does throughout its numbered procedures. --fix de-indents those to 2, which lifts them out of the parent item entirely; the rule cannot tell the two cases apart.",
+  "MD007": false,
+
+  "//MD029": "Ordered-list prefix. The skills use ordered lists as numbered procedures whose numbers are cited in prose and carry across interleaved code blocks that formally end the list. The rule wants each resumed list to restart at 1, which would give a single procedure two step 1s.",
+  "MD029": false,
+
+  "//MD025": "Single H1 per document. This corpus is mostly fragments and templates, not documents: every SKILL.md body is inlined into one generated file under its own heading, and a template's body is copied into whatever document the user is writing. Extra H1s there are structure, not a defect.",
+  "MD025": false,
+
+  "//MD036": "Emphasis-as-heading. A heuristic that fires on any standalone emphasized line. Every occurrence here is a template placeholder instruction (\"**Describe the class level design**\"), a skip-note, a length hint, or a formula — promoting them to real headings would put authoring instructions in the table of contents.",
+  "MD036": false,
+
   "//MD024": "Duplicate headings. Keep a Changelog gives every release its own Added/Changed/Fixed section, which the default rule forbids outright. siblings_only still catches the real defect: the same release carrying two sections with one name.",
   "MD024": { "siblings_only": true },
 

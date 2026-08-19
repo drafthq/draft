@@ -31,6 +31,7 @@ synced_to_commit: "{FULL_SHA}"
 **Mode:** [strict | flexible | none]
 
 **Coverage Target:**
+
 ```yaml
 coverage_target: 95  # Minimum coverage percentage (default: 95%)
 ```
@@ -40,11 +41,13 @@ coverage_target: 95  # Minimum coverage percentage (default: 95%)
 **Iron Law:** No production code without a failing test first.
 
 The Cycle:
+
 1. **RED** - Write failing test, run it, VERIFY it FAILS
 2. **GREEN** - Write minimum code, run test, VERIFY it PASSES
 3. **REFACTOR** - Clean up, keep tests green throughout
 
 **Red Flags - Delete and Restart if:**
+
 - Code written before test exists
 - Test passes immediately (testing wrong thing or wrong code)
 - "Just this once" rationalization
@@ -52,17 +55,20 @@ The Cycle:
 - Running test mentally instead of actually
 
 **Checklist:**
+
 - [ ] Test written and committed BEFORE implementation
 - [ ] Test fails with expected failure (not syntax error)
 - [ ] Minimum code to pass (no extra features)
 - [ ] Refactor preserves green state
 
 ### Flexible TDD
+
 - [ ] Tests required but can be written after implementation
 - [ ] All code must have tests before marking complete
 - [ ] Refactoring encouraged
 
 ### No TDD
+
 - [ ] Tests optional
 - [ ] Manual verification acceptable
 
@@ -73,6 +79,7 @@ The Cycle:
 **Format:** `type(scope): description`
 
 ### Types
+
 | Type | Use For |
 |------|---------|
 | `feat` | New feature |
@@ -84,10 +91,12 @@ The Cycle:
 | `chore` | Build, tooling, dependencies |
 
 ### Scope
+
 - Use track ID for Draft work: `feat(add-auth): ...`
 - Use component name otherwise: `fix(api): ...`
 
 ### Commit Frequency
+
 - [ ] After each task completion
 - [ ] At phase boundaries
 - [ ] End of session
@@ -97,6 +106,7 @@ The Cycle:
 ## Code Review
 
 ### Self-Review Checklist
+
 - [ ] Code follows project style guide
 - [ ] Tests pass locally
 - [ ] No console.log or debug statements
@@ -104,6 +114,7 @@ The Cycle:
 - [ ] Edge cases considered
 
 ### Before Marking Task Complete
+
 - [ ] Run linter
 - [ ] Run tests
 - [ ] Review diff
@@ -126,11 +137,13 @@ Do not proceed to next phase until verification passes.
 ## Review Settings
 
 ### Auto-Review
+
 - [ ] Auto-review at track completion
 
 When enabled, runs `/draft:review track <id>` automatically when `/draft:implement` completes a track.
 
 ### Blocking Behavior
+
 - [ ] Block on review failures
 
 When enabled, halt track completion if critical (✗) issues found. Requires fixes before marking complete.
@@ -138,6 +151,7 @@ When enabled, halt track completion if critical (✗) issues found. Requires fix
 When disabled (default), review failures produce warnings only. Issues documented in `draft/tracks/<id>/review-report.md`.
 
 ### Review Scope (Stage 1 Automation)
+
 - [x] Architecture conformance
 - [x] Dead code detection
 - [x] Dependency cycle detection
@@ -153,17 +167,21 @@ Uncheck categories to skip during validation phase of review. All enabled by def
 ## Session Management
 
 ### Starting a Session
+
 1. Run `/draft:status` to see current state
 2. Read active track's spec.md and plan.md
 3. Find current task (marked `[~]` or first `[ ]`)
 
 ### Ending a Session
+
 1. Commit any pending changes
 2. Update plan.md with progress
 3. Add notes for next session if mid-task
 
 ### Context Handoff
+
 If task exceeds 5 iterations:
+
 1. Document current state in plan.md
 2. Note any discoveries or blockers
 3. Suggest resumption approach
@@ -173,9 +191,11 @@ If task exceeds 5 iterations:
 ## Toolchain
 
 ### VCS
+
 - [x] git + GitHub Pull Requests
 
 ### MCP Auto-Connect (optional)
+
 - [ ] Jira MCP — for ticket linking via `/draft:jira` (preview / create / review)
 - [ ] Confluence MCP — for design-doc and runbook lookups
 

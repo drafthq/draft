@@ -7,7 +7,7 @@ description: Technical documentation writing and maintenance. Modes — readme, 
 
 You are generating or updating technical documentation for this project using structured writing principles.
 
-## Red Flags — STOP if you're:
+## Red Flags — STOP if you're
 
 - Writing docs without reading the code first
 - Duplicating information that exists elsewhere (link instead)
@@ -22,6 +22,7 @@ You are generating or updating technical documentation for this project using st
 ## Pre-Check
 
 1. Check for Draft context:
+
 ```bash
 ls draft/ 2>/dev/null
 ```
@@ -41,6 +42,7 @@ If `draft/` doesn't exist, this skill works standalone — generate docs from co
 ## Step 2: Gather Source Material
 
 ### README Mode
+
 - Read existing `README.md` (if any)
 - Read `draft/product.md` — Product vision, users, goals
 - Read `draft/tech-stack.md` — Technologies, setup requirements
@@ -48,6 +50,7 @@ If `draft/` doesn't exist, this skill works standalone — generate docs from co
 - Scan for `Makefile`, `package.json`, `pyproject.toml` — Build/run commands
 
 ### Runbook Mode
+
 - Read `draft/architecture.md` or `draft/.ai-context.md` — Service topology, dependencies
 - Read `draft/workflow.md` — Deployment conventions
 - Read `draft/tech-stack.md` — Infrastructure details
@@ -55,12 +58,14 @@ If `draft/` doesn't exist, this skill works standalone — generate docs from co
 - If Jira MCP available: check recent incident tickets for the service
 
 ### API Mode
+
 - Read source code for public interfaces, exported functions, API routes
 - Read existing API docs (Swagger, OpenAPI, JSDoc, docstrings)
 - Read `draft/architecture.md` — API conventions, data models
 - Read `draft/tech-stack.md` — API framework details
 
 ### Onboarding Mode
+
 - Read ALL draft context files in order:
   1. `draft/product.md` — What is this project?
   2. `draft/tech-stack.md` — What technologies?
@@ -83,6 +88,7 @@ Follow these principles (from `core/agents/writer.md`):
 ## Step 4: Generate Document
 
 ### README Structure
+
 ```markdown
 # {Project Name}
 
@@ -105,6 +111,7 @@ Follow these principles (from `core/agents/writer.md`):
 ```
 
 ### Runbook Structure
+
 ```markdown
 # Runbook: {Service Name}
 
@@ -128,6 +135,7 @@ Follow these principles (from `core/agents/writer.md`):
 ```
 
 ### API Documentation Structure
+
 ```markdown
 # API: {Module Name}
 
@@ -144,6 +152,7 @@ Follow these principles (from `core/agents/writer.md`):
 ```
 
 ### Onboarding Structure
+
 ```markdown
 # Welcome to {Project Name}
 
@@ -172,6 +181,7 @@ Follow these principles (from `core/agents/writer.md`):
 ## Step 5: Output
 
 Save to:
+
 - README: `README.md` in project root
 - Runbook: `draft/docs/runbook-<service>.md`
 - API: `draft/docs/api-<module>.md`
@@ -180,6 +190,7 @@ Save to:
 Create `draft/docs/` directory if needed.
 
 **Pre-save validation:**
+
 - Every file path referenced in the doc resolves to a real file (broken links are a common LLM failure mode here).
 - Every relative link in the doc resolves under the project root.
 - Code blocks copied from sources match the current commit (no stale snippets).

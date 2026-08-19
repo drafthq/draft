@@ -64,28 +64,34 @@ Draft's agents do not operate from general training data alone. They draw on a c
 * Clean Architecture(Robert Martin) — Dependency rule, boundaries, use cases, separation of concerns. Cited for module boundary violations: "This violates the Dependency Rule (Clean Architecture) — domain shouldn't know about infrastructure."
 * Domain-Driven Design(Eric Evans) — Bounded contexts, ubiquitous language, aggregates, strategic design
 * Building Evolutionary Architectures(Ford, Parsons, Kua) — Fitness functions, incremental change, architectural governance
+
 ### Reliability & Operations
 
 * Release It!(Michael Nygard) — Stability patterns, circuit breakers, bulkheads, timeouts, failure modes. Cited for resilience recommendations: "Circuit breaker pattern (Release It!) would help here — fail fast instead of cascading timeouts."
 * Site Reliability Engineering(Google SRE Book) — SLOs, error budgets, toil reduction, incident response. The operational mindset that informs Draft's emphasis on production robustness.
 * The Phoenix Project(Kim, Behr, Spafford) — Flow, feedback, continuous improvement
+
 ### Craft & Practice
 
 * Working Effectively with Legacy Code(Michael Feathers) — Seams, characterization tests, breaking dependencies. Essential for brownfield projects where Draft analyzes existing code before proposing changes.
 * The Pragmatic Programmer(Hunt, Thomas) — Tracer bullets, DRY, orthogonality, good enough software
 * Refactoring(Martin Fowler) — Code smells, refactoring patterns, incremental improvement
+
 ### Testing
 
 * Growing Object-Oriented Software, Guided by Tests(Freeman, Pryce) — TDD outside-in, mock objects. Informs Draft's TDD workflow and the test-first cycle in/draft:implement.
 * Unit Testing Principles, Practices, and Patterns(Khorikov) — Test pyramid, test doubles, maintainable tests
+
 ### Security
 
 * OWASP Top 10— Injection, broken auth, XSS, insecure deserialization, security misconfiguration. Referenced during review and bughunt for security-dimension findings.
 * OWASP ASVS— Application Security Verification Standard for security requirements
 * OWASP Cheat Sheets— Specific guidance for auth, session management, input validation
+
 ### Resilience & Chaos
 
 * Netflix chaos engineering— Principles of deliberately injecting failures to build confidence in system resilience. Informs Draft's emphasis on failure-mode analysis during planning and review.
+
 ## How References Are Cited
 
 Draft's agents cite sources naturally during planning and review, not as footnotes but as inline reasoning:
@@ -114,4 +120,3 @@ Draft's current architecture treats context as static documents that are loaded 
 The underlying principle will remain constant: better structure produces better AI output. The documents may evolve. The methodology may expand. But the insight — that explicit, managed, versioned context is the most reliable way to direct AI behavior — is the foundation everything else builds on.
 
 The knowledge base does not only catalog good patterns. It also catalogs anti-patterns that agents actively watch for: distributed monoliths, shared databases between services, God classes, leaky abstractions, security by obscurity, hardcoded secrets, and the eight fallacies of distributed computing. These anti-patterns are flagged during review and bughunt when detected in the codebase.
-

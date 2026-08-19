@@ -75,4 +75,3 @@ For track-scoped decomposition, Draft can restructure an existingplan.mdto align
 Existing task statuses are preserved during restructuring: completed tasks stay completed, in-progress tasks get flagged if they span multiple modules, pending tasks are remapped freely. Tasks that don't map cleanly to any module are collected in an "Unmapped Tasks" section for developer decision — nothing is silently dropped.
 
 draft/architecture.mdis the source of truth for project-wide decomposition.draft/.ai-context.mdis derived from it via the Condensation Subroutine. Always updatearchitecture.mdfirst, then regenerate.ai-context.md. Completed modules are never removed or modified during re-decomposition.
-

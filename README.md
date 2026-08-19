@@ -91,25 +91,31 @@ Run `/draft` for the full command map.
 <summary><strong>Other ways to install →</strong></summary>
 
 ### Claude Code — native marketplace
+
 ```bash
 /plugin marketplace add drafthq/draft
 /plugin install draft
 ```
 
 ### Cursor — from GitHub
+
 Cursor requires `.cursor-plugin/plugin.json`; the `draft install cursor` command also registers the plugin via the shared Claude plugin registry that Cursor reads on many builds. To add from source instead, use *Settings > Rules, Skills, Subagents > Rules > New > Add from Github*:
-```
+
+```text
 https://github.com/drafthq/draft.git
 ```
 
 ### GitHub Copilot
+
 Copilot reads a committed instructions file — copy it directly (not a `draft install` host):
+
 ```bash
 mkdir -p .github && curl -o .github/copilot-instructions.md \
   https://raw.githubusercontent.com/drafthq/draft/main/integrations/copilot/.github/copilot-instructions.md
 ```
 
 ### Gemini
+
 ```bash
 curl -o .gemini.md https://raw.githubusercontent.com/drafthq/draft/main/integrations/gemini/.gemini.md
 ```
@@ -164,7 +170,7 @@ Skills also call into **shell helpers** under `scripts/tools/` for mechanical wo
 
 ## How It Works
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                        /draft:init                          │
 │    5-phase codebase analysis + signal detection + state     │
@@ -220,7 +226,7 @@ Both modes produce the same `product.md`, `tech-stack.md`, `workflow.md`,
 
 AI tools are fast but unstructured. Draft applies Context-Driven Development to impose clear boundaries: explicit context, phased execution, and built-in verification, ensuring outputs remain aligned, predictable, and production-ready.
 
-```
+```text
 product.md       →  "Build a task manager"
 tech-stack.md    →  "React, TypeScript, Tailwind"
 architecture.md  →  Comprehensive: 10-section graph-primary engineering reference, Mermaid diagrams (source of truth). Mature brownfield projects with strong existing agent docs (CLAUDE.md, INVARIANTS.md, etc.) receive early Context Quality Audit, graph fidelity dashboard, and explicit Relationship + Gaps sections (no blind duplication).
@@ -241,11 +247,13 @@ Each layer narrows the solution space. By the time AI writes code, decisions are
 ## Contributing
 
 ### Source of Truth
+
 1. `core/methodology.md` — Master methodology
 2. `skills/<name>/SKILL.md` — Command implementations
 3. `integrations/` — Auto-generated (don't edit)
 
 ### Update Workflow
+
 ```bash
 # 1. Edit core/methodology.md or skills/*/SKILL.md
 # 2. Rebuild integrations

@@ -83,7 +83,7 @@ The build script (`scripts/build-integrations.sh`) reads `SKILL_ORDER`, `CORE_FI
 
 | Workflow | Trigger | Does |
 |---|---|---|
-| `ci.yml` | push to `main`, PRs | Install path (repo-size gate + clean-clone smoke test), `make test` + integrations-freshness, lint (shellcheck blocking, markdownlint advisory) |
+| `ci.yml` | push to `main`, PRs | Install path (repo-size gate + clean-clone smoke test), `make test` + integrations-freshness, lint (shellcheck and markdownlint, both blocking) |
 | `release.yml` | `vX.Y.Z` tag push | Verifies tag matches `package.json`, extracts notes via `scripts/release-notes.sh`, publishes the GitHub Release |
 | `pages.yml` | push touching `web/` | Deploys the site |
 

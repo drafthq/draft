@@ -7,7 +7,7 @@ description: Initialize or refresh the knowledge-graph snapshot for a repository
 
 Initialize or refresh the `draft/graph/` knowledge-graph snapshot for a single repository. This is the narrow "give me a fresh structural graph" command — it does **not** generate `architecture.md`/`.ai-context.md` and does **not** re-inject doc diagram slots (both are `/draft:init`). For scope-aware, root-first graph memory across a monorepo (root spine + module→root links), use `/draft:init --graph-only`.
 
-## Red Flags - STOP if you're:
+## Red Flags - STOP if you're
 
 - Reporting counts without actually running `graph-snapshot.sh`
 - Claiming the graph is built when the engine was unavailable

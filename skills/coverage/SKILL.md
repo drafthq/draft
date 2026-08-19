@@ -7,7 +7,7 @@ description: Compute code coverage for active track or module. Targets 95%+ cove
 
 You are computing and reporting code coverage for the active track or a specific module. This complements the TDD workflow — TDD is the process (write test, implement, refactor), coverage is the measurement (how much code do those tests exercise).
 
-## Red Flags - STOP if you're:
+## Red Flags - STOP if you're
 
 - Reporting coverage without actually running the coverage tool
 - Making up coverage percentages
@@ -26,6 +26,7 @@ You are computing and reporting code coverage for the active track or a specific
 5. Check if `draft/tracks/<id>/bughunt-report-latest.md` (track scope) or `draft/bughunt-report-latest.md` (project scope) exists for cross-referencing (see Coverage-Bughunt Cross-Reference below)
 
 If no active track and no argument provided:
+
 - Tell user: "No active track. Provide a path or track ID, or run `/draft:new-track` first."
 
 ## Step 2: Detect Coverage Tool
@@ -54,6 +55,7 @@ If the script is unavailable or returns `framework: unknown`, fall back to the h
 | Ruby | `simplecov` |
 
 **Detection order (fallback path):**
+
 1. Check `tech-stack.md` for explicit testing section
 2. Check config files (`jest.config.*`, `vitest.config.*`, `pytest.ini`, `setup.cfg`, `pyproject.toml`, `.nycrc`)
 3. Check `package.json` scripts for coverage commands
@@ -62,6 +64,7 @@ If the script is unavailable or returns `framework: unknown`, fall back to the h
 ## Step 3: Determine Scope
 
 **Priority order:**
+
 1. If argument provided (path or module name): use as scope filter
 2. If track has `architecture.md` (or project has `.ai-context.md`) with an in-progress module: scope to that module's files
 3. If active track exists: scope to files changed in the track (use `git diff` against base branch)
@@ -84,6 +87,7 @@ DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}
 ```
 
 If the script is unavailable or returns `tool: unsupported`:
+
 1. Execute the coverage command. Request machine-readable output when possible: `--json` for Jest, `--cov-report=json` for pytest, `-coverprofile` for Go, `--coverage-output-format json` for dotnet.
 2. Capture full output
 3. If command fails:
@@ -95,7 +99,7 @@ If the script is unavailable or returns `tool: unsupported`:
 
 Parse coverage output and present in a standardized format:
 
-```
+```yaml
 ---
                      COVERAGE REPORT
 ---
@@ -151,7 +155,8 @@ For files below target (using per-module targets when configured — see Per-Mod
    - **Infrastructure** - Framework boilerplate, main entry points. Usually acceptable.
    - **Legacy/Brownfield** - Modules with 0% or very low coverage that need refactoring. Apply Characterization Testing (see below).
 3. **Suggest tests** for testable gaps:
-   ```
+
+   ```text
    SUGGESTED TESTS
    ─────────────────────────────────────────────────────────
    1. Test malformed JWT token handling (jwt.ts:45-52)
@@ -174,7 +179,8 @@ When encountering modules with 0% or very low coverage that need refactoring, do
 5. **Remove approval tests** — Once proper unit test coverage meets the target, retire the Golden Master tests.
 
 **Tool references:**
-- ApprovalTests (https://approvaltests.com/) — available for Java, C#, Python, JS, and more
+
+- ApprovalTests (<https://approvaltests.com/>) — available for Java, C#, Python, JS, and more
 - Verify (.NET) — snapshot testing library
 
 Present characterization testing recommendations in the gap analysis when applicable.
@@ -191,11 +197,11 @@ After measuring line coverage (and branch coverage if applicable), prompt the en
 
 | Language | Tool | Reference |
 |----------|------|-----------|
-| Java | PIT | https://pitest.org/ |
-| JavaScript/TypeScript | Stryker | https://stryker-mutator.io/ |
+| Java | PIT | <https://pitest.org/> |
+| JavaScript/TypeScript | Stryker | <https://stryker-mutator.io/> |
 | Python | mutmut | (Mutation testing tool) |
 | Rust | cargo-mutants | (Mutation testing tool) |
-| C# | Stryker.NET | https://stryker-mutator.io/ |
+| C# | Stryker.NET | <https://stryker-mutator.io/> |
 | Go | go-mutesting | (Mutation testing tool) |
 
 **Reference:** Google's mutation testing program is used by 6,000+ engineers and processes approximately 30% of all code diffs, validating that mutation testing scales to large codebases.
@@ -209,7 +215,8 @@ If a bughunt report exists (`draft/tracks/<id>/bughunt-report-latest.md` or `dra
 1. **Parse bughunt findings** — Extract file paths and line ranges of confirmed or suspected bugs.
 2. **Cross-reference with uncovered code paths** — Identify bughunt findings that fall in uncovered lines.
 3. **Flag as highest-priority test gaps** — Confirmed bugs in uncovered code are the most dangerous gaps. Present them prominently:
-   ```
+
+   ```text
    BUGHUNT CROSS-REFERENCE
    ─────────────────────────────────────────────────────────
    ⚠ CRITICAL: Bug "Race condition in session refresh" (bughunt #3)
@@ -220,6 +227,7 @@ If a bughunt report exists (`draft/tracks/<id>/bughunt-report-latest.md` or `dra
      at src/users/repository.ts:45 — IN UNCOVERED CODE
      → Write a regression test targeting this path
    ```
+
 4. **Prioritize suggested tests** — Tests that cover bughunt-flagged code should appear first in the SUGGESTED TESTS section.
 
 ## Per-Module Coverage Enforcement
@@ -255,7 +263,8 @@ coverage_targets:
 **Classification heuristic:** Infer module risk from directory names and file content when explicit configuration is absent. Flag the inferred classification in the report so the developer can correct it.
 
 In the coverage report, show per-module targets alongside actual coverage:
-```
+
+```text
 PER-FILE BREAKDOWN (module-level targets)
 ---
 src/auth/middleware.ts 96.2% [high_risk: 95%] PASS
@@ -271,6 +280,7 @@ src/generated/api.ts — [generated: excluded]
 **STOP.** Present the full coverage report and gap analysis.
 
 Ask developer:
+
 - Accept current coverage? (if at or above target)
 - Write additional tests for testable gaps?
 - Justify and document acceptable uncovered lines?
@@ -283,17 +293,20 @@ Ask developer:
 After developer approves:
 
 1. **Update plan.md** - Add coverage note to the relevant phase:
+
    ```markdown
    **Coverage:** 96.2% (target: 95%) - PASS
    - Uncovered: defensive null checks in jwt.ts (justified)
    ```
 
 2. **Update architecture context** — update the project-level `draft/architecture.md` with coverage data (not a track-level architecture file), then run the Condensation Subroutine (defined in `core/shared/condensation.md`) to regenerate `draft/.ai-context.md`. The Condensation Subroutine only applies to the project-level `draft/architecture.md` → `draft/.ai-context.md` pipeline:
+
    ```markdown
    - **Status:** [x] Complete (Coverage: 96.2%)
    ```
 
 3. **Update metadata.json** - Add coverage field if not present:
+
    ```json
    {
      "coverage": {
@@ -307,6 +320,7 @@ After developer approves:
 4. **Write detailed coverage report** to `draft/tracks/<id>/coverage-report-<timestamp>.md` (where `<timestamp>` is generated via `date +%Y-%m-%dT%H%M`, e.g., `2026-03-15T1430`) with YAML frontmatter (include `project`, `track_id`, `generated_by: "draft:coverage"`, `generated_at`, `git` metadata matching other skills) and timestamped entries for historical tracking.
 
    After writing the timestamped report, create a symlink pointing to it:
+
    ```bash
    ln -sf coverage-report-<timestamp>.md draft/tracks/<id>/coverage-report-latest.md
    ```
@@ -316,7 +330,8 @@ After developer approves:
 ## Completion
 
 Announce:
-```
+
+```text
 Coverage report complete.
 
 Overall: [percentage]% (target: [target]%)
@@ -335,6 +350,7 @@ Results recorded in:
 ## Re-running Coverage
 
 When coverage is run again on the same track/module:
+
 1. Compare with previous results from metadata.json. If no previous coverage data found in metadata.json, skip delta comparison and report current values only.
 2. Show delta: "Coverage improved from 87.3% to 96.2% (+8.9%)"
 3. Highlight newly covered lines

@@ -23,6 +23,7 @@ This plan makes completeness **deterministic and enforced**:
 **Design principle:** the *set of things to document* and *whether each is actually documented* are both ground truth produced by shell + graph — not agent honor system. LLM narration fills the prose; LLM judgment never decides the boundary of the work.
 
 **Explicitly carried over from v1 review (do not regress):**
+
 - No new runtime dependency. `jq` + the graph engine only — **no Node/Mermaid AST parser**.
 - Per-**type** thresholds, not global (ADR/Runbook/Dependency/DataModel are short by nature).
 - Extend the **existing** atomic gate and `okf-validate.sh`; don't reinvent them.
@@ -48,7 +49,7 @@ Decomposed:
 
 ### Root cause (the one that matters)
 
-```
+```text
 okf-emitter "Plan" step is LLM-driven
         │
         ▼
@@ -102,7 +103,7 @@ Everything else (stubs, thin pages, bad diagrams) is secondary. **If the expecte
 
 ### From LLM-judged to tool-derived completeness
 
-```
+```text
 BEFORE (today)                          AFTER (this plan)
 ──────────────                          ─────────────────
 Survey                                  Survey
@@ -116,7 +117,7 @@ Emit (mv) ◄── promotes even if gappy      Emit (mv) ◄── BLOCKED unle
 
 ### Validation stack (completeness-first ordering)
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │ Layer 4: Promotion gate (init / refresh)                     │
 │   draft.tmp/ → draft/  IFF  layers 1–3 pass                  │
@@ -155,11 +156,13 @@ Leaner than v1: **3 new tools + 1 orchestrator + 2 extensions.** (v1 proposed 6 
 **Inputs:** `--repo DIR`, `--scope PATH` (module-scoped init), `--manifest FILE` (optional override), `--min-fan-in INT` (default 2), `--json`, `--out FILE` (default `draft.tmp/.state/concept-plan.json`).
 
 **Expected-set discovery (priority order):**
+
 1. **Manifest** — `--manifest` / `draft/.state/component-manifest.yaml` if present (authoritative; required when graph unavailable + `--strict`).
 2. **Graph** — `graph-arch.sh --repo DIR` packages + `graph-hierarchy.sh` for sub-package nesting. Each package/sub-package/component at or above `--min-fan-in` becomes a required entry; entrypoints and detected features are always required.
 3. **Heuristic fallback** — top-level source dirs (excluding `test`, `qa`, `tools`, `vendor`, `node_modules`) when the engine is unavailable; emits `degraded: true`.
 
 **Output `concept-plan.json`:**
+
 ```json
 {
   "version": 1,
@@ -241,7 +244,8 @@ A **MISSING** row with `required: true` ⇒ exit 1 ⇒ promotion blocked.
 Required H2 sections match the template exactly ([concept.md:33-54](../core/templates/okf/concept.md#L33-L54)).
 
 **Anti-stub patterns (regex, case-insensitive, all types):**
-```
+
+```text
 see architecture\.md\b(?!.*because)      # bare redirect, not a contextual cross-ref
 deferred to ref-docs
 \bTBD\b|TODO:\s*document
@@ -260,12 +264,14 @@ stub page|placeholder page
 ### 4. `okf-validate-all.sh` — NEW (orchestrator)
 
 Single entry point for init, refresh, and CI:
+
 ```bash
 okf-validate-all.sh draft/wiki \
   --repo . --plan draft.tmp/.state/concept-plan.json \
   --path-index draft.tmp/.state/path-to-concept.json \
   --strict --report draft.tmp/.state/validation-report.json
 ```
+
 Runs Layer 1 (structure + reverse index) → Layer 2 (quality) → Layer 3 (coverage); aggregates one JSON report; exit non-zero on any hard failure. **The promotion `mv` is conditioned on this exit code.**
 
 ---
@@ -278,18 +284,20 @@ Runs Layer 1 (structure + reverse index) → Layer 2 (quality) → Layer 3 (cove
 ### 6. `okf-render-views.sh` — EXTEND
 
 Prepend an honesty banner to `architecture.md`:
+
 ```markdown
 > **Generated view** — source of truth is `draft/wiki/`.
 > Coverage: {mapped}/{expected} required components ({pct}%).
 > Validated: {ISO_TIMESTAMP} — {PASS|FAIL}.
 ```
+
 On gate failure (which already blocks promotion), the banner reads **INCOMPLETE — do not use for RCA.** Timestamp is passed in by the caller (tooling has no clock dependency).
 
 ---
 
 ## Updated OKF Pipeline (`okf-emitter.md`)
 
-```
+```text
 1. Survey   — existing 5-phase + graph snapshot
 2. Plan     — okf-plan-concepts.sh → draft.tmp/.state/concept-plan.json   ◄── NEW, deterministic
               log expected_total / required / deferred BEFORE any write
@@ -308,6 +316,7 @@ Step 2 produces the count the run is held to; step 5 enforces it; step 6 cannot 
 ## Configuration Schema
 
 `draft/.state/okf-quality.yaml` (optional; defaults apply when absent):
+
 ```yaml
 version: 1
 completeness:
@@ -331,8 +340,10 @@ strict: true
 ## Skill & Documentation Changes
 
 ### `skills/init/SKILL.md`
+
 Add an **OKF Completeness Verification** block mirroring the monolith Completion Verification at [SKILL.md:1378-1410](../skills/init/SKILL.md#L1378-L1410):
-```
+
+```text
 OKF COMPLETENESS VERIFICATION (blocking — tier 3+ okf mode)
 1. okf-plan-concepts.sh ran; expected/required/deferred counts logged BEFORE generation.
 2. Every required concept_id in concept-plan.json has a non-stub page.
@@ -341,25 +352,31 @@ OKF COMPLETENESS VERIFICATION (blocking — tier 3+ okf mode)
 5. No required package with fan_in >= floor is MISSING.
 → If any FAIL: do NOT mv draft.tmp/ draft/. Surface validation-report.json.
 ```
+
 Add red flag:
 > **Writing concept pages without first running `okf-plan-concepts.sh`, or finishing generation while any `required` plan entry is unwritten, is a completeness failure — not a stylistic one.**
 
 ### `skills/init/references/okf-emitter.md`
+
 - Replace the LLM-judged Plan step with the `okf-plan-concepts.sh` deterministic step (pipeline above).
 - Document `concept-plan.json` and `validation-report.json` schemas.
 - State: prose may be LLM-generated; **the concept plan, coverage.md, and validation reports are tool-generated only.**
 
 ### `core/templates/okf/concept.md`
+
 - Add footer marker `<!-- okf:concept-template v1 -->`.
 - Note: "Stub or redirect-only pages fail `okf-validate-quality.sh` and do not satisfy coverage."
 
 ### `core/templates/okf/coverage.md` — NEW
+
 - Tool-owned, `<!-- okf:coverage-generated -->`; agents supply only deferral reasons.
 
 ### `core/templates/component-manifest.yaml` — NEW (optional)
+
 - Schema + example for graph-unavailable repos.
 
 ### Integration build
+
 - After editing `okf-emitter.md` / `SKILL.md`: run `make build` to regenerate the Copilot integration; `make test` to cover new tools.
 
 ---
@@ -367,23 +384,28 @@ Add red flag:
 ## Implementation Phases (completeness-first, de-scoped)
 
 ### Phase 1 — Deterministic plan + coverage gate (the fix) — 2 weeks
+
 **Deliverables:** `okf-plan-concepts.sh`, `okf-coverage-check.sh`, `coverage.md` generator + template, `okf-validate.sh` reverse-index extension, `concept-plan.json` schema, fixtures `valid-complete` / `missing-module` / `low-coverage`.
 **Per-tool overhead (don't forget):** `TOOLS` entries in `scripts/lib.sh`, `tests/test-tools-okf-plan-concepts.sh` + `tests/test-tools-okf-coverage-check.sh`, `Makefile` `TEST_SCRIPTS` rows.
 **Acceptance:** a bundle missing a `fan_in ≥ 2` package **fails** coverage and is **not** promoted; `valid-complete` passes. Same fixture repo → identical plan across two runs.
 
 ### Phase 2 — Anti-stub quality gate — 1.5 weeks
+
 **Deliverables:** `okf-validate-quality.sh` (per-type thresholds, bash mermaid lint, O(n) dup), fixtures `stub-redirect` / `no-mermaid` / `bad-mermaid` / `duplicate-bodies`.
 **Acceptance:** stub pages fail; a present-but-empty page no longer satisfies coverage (Layer 3 + Layer 2 compose).
 
 ### Phase 3 — Orchestrator + pipeline integration — 1 week
+
 **Deliverables:** `okf-validate-all.sh`, `okf-render-views.sh` banner, `validation-report.json`, emitter pipeline rewrite (steps 2/5/6), SKILL Completeness Verification block, `make build`.
 **Acceptance:** an init that stops before the gate leaves `draft/` untouched; refresh of one module re-derives the full plan and re-runs all layers.
 
 ### Phase 4 — Refresh & repeatability hardening — 1 week
+
 **Deliverables:** refresh path re-derives manifest; new-since-last-run modules become `required`; `C-DRIFT` logged; `component-manifest.yaml` template for graph-unavailable repos.
 **Acceptance:** adding a module to the test repo and refreshing makes that module `required` and fails the gate until documented.
 
 ### Phase 5 — CI & ergonomics — 0.5 week
+
 **Deliverables:** `scripts/hooks/validate-wiki.sh` (optional pre-commit), README "OKF completeness gates" section, `--loosen` emergency bypass (logs `validation_report.bypassed: true`).
 **Acceptance:** documented escape hatch; default stays strict for init/refresh.
 
@@ -407,11 +429,13 @@ Add red flag:
 | `dangling-grounding` | `x-grounded-paths` not in repo → C-GROUND warn |
 
 ### Integration
+
 - Full `/draft:init` (okf) on a small synthetic multi-module repo → must complete and pass with **every** module documented.
 - Same repo with a module's pages deleted before validate → must **fail** promotion.
 - **Repeatability:** run plan twice on the synthetic repo → byte-identical `expected[]` set.
 
 ### Regression
+
 - `okf-validate.sh --structure-only` reproduces today's behavior exactly (migration safety).
 
 ---

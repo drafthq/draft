@@ -29,11 +29,12 @@ When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-firs
 
 Filesystem `grep` (e.g. `scan-markers.sh`) is still primary for TODO/FIXME marker discovery — markers are source-text, not graph-derived. The graph governs **prioritization**, the marker scan governs **discovery**.
 
-## Red Flags — STOP if you're:
+## Red Flags — STOP if you're
 
 See [shared red flags](../../core/shared/red-flags.md) — applies to all code-touching skills.
 
 Skill-specific:
+
 - Flagging intentional design choices as debt (check tech-stack.md accepted patterns first)
 - Cataloging debt without understanding the business context
 - Setting priorities without considering team capacity
@@ -236,6 +237,7 @@ Organize findings into three actionable tiers:
 Items that can be fixed in a single sprint or less. Do these first — they deliver the best return on investment.
 
 For each item:
+
 - Specific fix description
 - Estimated time (hours)
 - Suggested assignee pattern (e.g., "whoever touches this module next")
@@ -245,6 +247,7 @@ For each item:
 Items requiring dedicated effort. Create via `/draft:new-track` or route via `/draft:jira` (or `/draft:plan "tech debt remediation"`).
 
 For each item:
+
 - Scope and approach
 - Estimated effort (sprints)
 - Dependencies and sequencing
@@ -279,6 +282,7 @@ ln -sf tech-debt-report-${TIMESTAMP}.md draft/tech-debt-report-latest.md
 ```
 
 Report structure:
+
 1. **Executive Summary** — Total findings by category and priority tier, headline stats
 2. **Priority Matrix** — Table of all findings sorted by priority score
 3. **Category Details** — Per-category findings with file locations and evidence
@@ -298,6 +302,7 @@ Every tech-debt report must end with a `## Next Actions` section listing the sma
 ```
 
 Rules:
+
 - Tech-debt rarely "blocks" merge; mark `Blocker? = yes` only for items that will cause an outage on next deploy.
 - Suggest `/draft:new-track` for items >1 day of work, `/draft:adr` for design re-decisions, `/draft:implement` for surgical cleanups.
 - Cap at 10 actions; full backlog stays in the report body.
@@ -315,6 +320,7 @@ If `draft/graph/schema.yaml` does not exist, set `Graph files queried: NONE` and
 ## Graph Usage Report (append to debt report)
 
 Emit the canonical footer from [core/shared/graph-usage-report.md](../../core/shared/graph-usage-report.md) §Canonical footer. The lint hook `scripts/tools/check-graph-usage-report.sh` validates the section on save.
+
 ## Cross-Skill Dispatch
 
 - **Offered by:** `/draft:new-track` (refactor tracks — scope the debt before planning)

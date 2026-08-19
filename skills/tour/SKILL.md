@@ -7,7 +7,8 @@ description: Interactive onboarding walkthrough for a new engineer. Use for "giv
 
 Provide an interactive codebase walk-through based on existing architecture and guardrail constraints.
 
-## Red Flags - STOP if you're:
+## Red Flags - STOP if you're
+
 - Dumping the entire `architecture.md` into the chat window.
 - Giving answers to foundational pattern questions before prompting the developer to guess.
 - Explaining code the developer hasn't explicitly asked to view yet.

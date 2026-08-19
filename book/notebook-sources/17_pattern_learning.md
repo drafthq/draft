@@ -88,4 +88,3 @@ Pattern learning creates a continuous improvement cycle that makes each successi
 Pattern learning also runs as the final phase of/draft:deep-review,/draft:review, and/draft:bughunt. Every quality analysis that discovers patterns feeds them back into guardrails, so the system gets smarter with each run without requiring explicit/draft:learninvocations.
 
 Pattern learning solves a fundamental problem with AI coding assistants: they do not know your conventions. They generate code that works but does not match how your team does things./draft:learnobserves your codebase, extracts the implicit rules your team follows, and makes them explicit in a file the AI reads on every interaction. The AI stops guessing your conventions and starts enforcing them.
-

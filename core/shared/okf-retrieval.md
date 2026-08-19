@@ -20,7 +20,7 @@ If `draft/wiki/` does **not** exist (monolith mode), skip this procedure entirel
 
 The bundle is a tree: `.ai-context.md` (index root: Synopsis + Concept Map) → section indexes (`systems/`, `features/`, `reference/`, `entrypoints/`, `overview/`) → concept pages. Each node advertises a `description` routing key. Navigate it, do not flatten it.
 
-```
+```text
 1. Frame the query
    Extract routing terms from the active task: domain nouns from spec.md
    acceptance criteria, file paths / module names / tech terms from plan.md,

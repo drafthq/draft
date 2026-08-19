@@ -33,6 +33,7 @@ root `index.md` may declare **only** `okf_version`. A strict OKF consumer treats
 `index.md`/`log.md` as reserved and would reject the concept frontmatter.
 
 **Fix**
+
 - `core/templates/okf/index.md` — frontmatter reduced to `okf_version: "0.1"`; the
   Draft-internal frozen-vocab version moved to an `okf-types-version` body comment.
 - `core/templates/okf/section-index.md` — frontmatter removed entirely.
@@ -51,6 +52,7 @@ root `index.md` may declare **only** `okf_version`. A strict OKF consumer treats
 carry parseable frontmatter with a non-empty `type`. It had neither.
 
 **Fix**
+
 - `scripts/tools/okf-coverage-check.sh` — `write_coverage_page` now emits an OKF
   frontmatter block (`type: Report`, `title`, `description`, `resource`) before the
   generated marker. `Report` is a descriptive (non-frozen) type — OKF permits

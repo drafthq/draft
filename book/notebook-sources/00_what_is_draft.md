@@ -20,6 +20,7 @@ Draft calls thisContext-Driven Development. Every decision is grounded in explic
 * Not an IDE— Draft is a plugin that works inside your existing tools.
 * Not a replacement for thinking— Draft makes the thinking explicit and reviewable. You still make the decisions; Draft ensures they happen before code exists.
 * Not another AI wrapper— There is no API key, no hosted service, no vendor lock-in. Draft is markdown files and bash scripts.
+
 ## Who It's For
 
 Draft is for developers and teams who use AI coding assistants and have experienced the gap between "it generated code" and "it generated the right code." If you've ever had an AI assistant introduce a dependency your team doesn't use, violate your project's naming conventions, or build a feature that doesn't match what was actually needed — Draft addresses that gap structurally.
@@ -42,4 +43,3 @@ Draft works with the AI coding tools you already use:
 * Gemini— Via.gemini.mdbootstrap file
 * Antigravity IDE— Via global skill installation
 Chapter 1 explains the problem Draft solves — and why better prompting isn't the answer. Chapter 2 introduces the methodology. Chapter 3 gets you running in five minutes.
-

@@ -84,6 +84,7 @@ Check against the track's `spec.md`:
    - [ ] Integration points work as specified
 
 **Verdict options:**
+
 - **PASS** — All requirements met, all acceptance criteria verified
 - **PASS WITH NOTES** — All requirements met but minor gaps exist in acceptance criteria verification
 - **FAIL** — Missing requirements or acceptance criteria not met

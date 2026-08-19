@@ -147,6 +147,23 @@ unfalsifiable.
 
 ### Changed
 
+- **Markdownlint is a blocking CI gate.** It ran `continue-on-error` against a
+  backlog too large to enforce against; that backlog is cleared — 1691
+  violations to 0 across the tree — so anything it reports now was introduced by
+  the change under review, the same standard shellcheck is held to. Most of the
+  cleanup was mechanical (`--fix`: blank lines around headings, lists and
+  fences; list style; trailing whitespace), plus 232 fenced blocks that gained a
+  language tag. Four rules are switched off, each with its reason recorded in
+  `.markdownlint.json`, because they misread this corpus rather than finding
+  defects in it: MD007 and MD029 (the numbered procedures nest bullets at the
+  3-column ordered-list alignment and carry step numbers across interleaved code
+  blocks — `--fix` lifts those bullets out of their parent item and restarts the
+  numbering), MD025 (a SKILL.md body is a fragment inlined into a larger
+  document, not a document), and MD036 (fires on template placeholder
+  instructions like `**Describe the class level design**`).
+- **`skills/review/SKILL.md` had a malformed `2.5.` list marker.** Markdown has
+  no half-steps, so the item and everything indented under it fell out of the
+  list. Renumbered; no cross-reference cited those numbers.
 - **`install-smoke-test.sh` now asserts the project directory is untouched by a
   dry run,** not just `HOME`. `codex` and `opencode` default to project scope and
   write `AGENTS.md` into the cwd, which is the likelier leak and was unchecked.

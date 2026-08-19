@@ -12,6 +12,7 @@ You are conducting a code review using Draft's Context-Driven Development method
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Stage 1 (Automated Validation) **starts from the graph**:
 
 First resolve the bundled helpers:
+
 ```bash
 # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
 # is not exported into skill Bash). See core/shared/tool-resolver.md.
@@ -29,11 +30,12 @@ Filesystem `grep` is reserved for source-text scans (string literals, log messag
 
 When `draft/graph/schema.yaml` does **not** exist, the graph checks do not run and must be reported as not run — never inferred from grep. See Step 0.
 
-## Red Flags - STOP if you're:
+## Red Flags - STOP if you're
 
 See [shared red flags](../../core/shared/red-flags.md) — applies to all code-touching skills.
 
 Skill-specific:
+
 - Reviewing without reading the track's spec.md and plan.md first
 - Reporting findings without reading the actual code
 - Skipping spec compliance stage and jumping to code quality
@@ -49,6 +51,7 @@ Skill-specific:
 This command is the **canonical review parent**.
 
 It orchestrates review workflows at two levels:
+
 - **Track-level:** Review against spec.md and plan.md (three-stage: automated validation, spec compliance, code quality)
 - **Project-level:** Review arbitrary changes (automated validation + code quality)
 
@@ -97,18 +100,21 @@ Extract and validate command arguments from user input.
 ### Supported Arguments
 
 **Explicit review modes:**
+
 - `quick` - Route to `/draft:quick-review`
 - `bughunt` - Route to `/draft:bughunt`
 - `deep` - Route to `/draft:deep-review`
 - `assist` - Route to `/draft:assist-review`
 
 **Scope specifiers (mutually exclusive for baseline review):**
+
 - `track <id|name>` - Review specific track (exact ID or fuzzy name match)
 - `project` - Review uncommitted changes (`git diff HEAD`)
 - `files <pattern>` - Review specific file pattern (e.g., `src/**/*.ts`)
 - `commits <range>` - Review commit range (e.g., `main...HEAD`, `abc123..def456`)
 
 **Quality integration modifiers:**
+
 - `with-bughunt` - Include `/draft:bughunt` results
 - `with-assist` - Include `/draft:assist-review` summary
 - `full` - Enable all sensible add-ons for the selected scope (`with-bughunt`, `with-assist`, and any justified deep-review escalation)
@@ -123,6 +129,7 @@ Extract and validate command arguments from user input.
 ### Default Behavior
 
 If no arguments provided:
+
 - Auto-detect active `[~]` In Progress track from `draft/tracks.md`
 - If no `[~]` track, find first `[ ]` Pending track
 - If track found: display `Auto-detected track: <id> - <name> [<status>]` and proceed
@@ -169,9 +176,11 @@ Based on parsed arguments, determine review scope and load appropriate context.
 #### 2.1: Resolve Track
 
 1. **Check if argument is exact directory match:**
+
    ```bash
    ls draft/tracks/<arg>/ 2>/dev/null
    ```
+
    If exists → use this track
 
 2. **Parse tracks.md for fuzzy matching:**
@@ -188,12 +197,14 @@ Based on parsed arguments, determine review scope and load appropriate context.
 3. **Handle matches:**
    - **Exact match:** Use immediately
    - **Multiple matches:** Display numbered list with format:
-     ```
+
+     ```text
      Multiple tracks match '<input>':
      1. <id> - <name> [<status>]
      2. <id> - <name> [<status>]
      Select track (1-N):
      ```
+
      Validate selection is within 1-N range. Re-prompt on invalid input.
    - **No matches:** Error with suggestions (closest 3 by edit distance)
 
@@ -202,6 +213,7 @@ Based on parsed arguments, determine review scope and load appropriate context.
 Once track is resolved:
 
 1. **Verify track directory exists:**
+
    ```bash
    ls draft/tracks/<id>/ 2>/dev/null
    ```
@@ -211,12 +223,12 @@ Once track is resolved:
    - Extract: Summary, Requirements, Acceptance Criteria, Non-Goals
    - Store for Stage 1 compliance checks
 
-2.5. **Read hld.md and lld.md (when present):**
+3. **Read hld.md and lld.md (when present):**
    - `draft/tracks/<id>/hld.md` — extract §High-Level Design / Architecture, §Detailed Design (per-component subsections), §Dependencies, §Checklist (Performance/Scale/Security/Resiliency/Multi-tenancy/Upgrade/Cost), §Approvals
    - `draft/tracks/<id>/lld.md` — extract §Classes and Interfaces (signatures, invariants), §Data Model (schemas, migrations), §Error Handling, §Observability metrics
    - Store for HLD/LLD compliance pass (Stage 1.5 below)
 
-3. **Read plan.md:**
+4. **Read plan.md:**
    - Load `draft/tracks/<id>/plan.md`
    - Extract commit SHAs from completed `[x]` task lines only. Match pattern: 7+ character hex strings in parentheses, regex `\(([a-f0-9]{7,})\)`. Example: `- [x] **Task 1.1:** Description (7a7dc85)`. Collect SHAs in order of appearance; deduplicate keeping first occurrence.
    - Determine commit range:
@@ -225,15 +237,16 @@ Once track is resolved:
      - If the parent does NOT exist (first commit in the repo — `git rev-parse` fails): use the empty tree SHA `4b825dc642cb6eb9a060e54bf8d69288fbee4904` as the range start, i.e., `4b825dc642cb6eb9a060e54bf8d69288fbee4904..<last_SHA>`. Alternatively, for single-commit ranges, use `git diff-tree --root -p <first_SHA>` to obtain the diff.
      - Last commit: `<last_SHA>`
 
-4. **Check for incomplete work:**
+5. **Check for incomplete work:**
    - Parse plan.md task statuses
    - Count `[ ]`, `[~]`, `[x]`, `[!]` tasks
    - If `[ ]` or `[~]` tasks exist: Display warning and proceed:
-     ```
+
+     ```yaml
      Warning: Track has N incomplete tasks (M in-progress, K pending). Reviewing completed work only.
      ```
 
-5. **Handle missing files:**
+6. **Handle missing files:**
    - Missing spec.md: Error "spec.md not found for track <id>"
    - Missing plan.md: Warn "plan.md not found, skipping commit extraction"
    - No commits found: Warn "No commits found in plan.md, review may be incomplete"
@@ -252,17 +265,21 @@ Once track is resolved:
    - Scope: Specific files matching glob pattern
    - Command: `git diff HEAD -- <pattern>`
    - Validate pattern matches files:
+
      ```bash
      git ls-files <pattern> | head -1
      ```
+
      If empty: Error "No files match pattern '<pattern>'"
 
 3. **`commits <range>` argument:**
    - Scope: Commit range
    - Validate range exists:
+
      ```bash
      git rev-parse <range> 2>/dev/null
      ```
+
      If fails: Error "Invalid commit range '<range>'"
    - Command: `git diff <range>`
 
@@ -348,6 +365,7 @@ Generate diff output using smart chunking to avoid context overflow.
 ### 3.1: Determine Diff Size
 
 Run shortstat to check diff size:
+
 ```bash
 git diff --shortstat <range>
 ```
@@ -357,18 +375,24 @@ Parse output robustly — handle both singular (`1 file changed`) and plural (`N
 ### 3.2: Smart Chunking Strategy
 
 **Small/Medium changes (<300 lines changed):**
+
 - Run full diff in one pass:
+
   ```bash
   git diff <range>
   ```
+
 - Store complete diff for analysis
 
 **Large changes (≥300 lines changed):**
+
 - Announce: "Large changeset detected (N files). Using file-by-file review mode."
 - Get file list:
+
   ```bash
   git diff --name-only <range>
   ```
+
 - For each file:
   - Display progress: `[N/M] Reviewing <filename>`
   - Run: `git diff <range> -- <file>`
@@ -379,6 +403,7 @@ Parse output robustly — handle both singular (`1 file changed`) and plural (`N
 ### 3.3: Filter Files (Optional)
 
 Skip non-source files to focus review:
+
 - Ignore lock/minified: `*.lock`, `package-lock.json`, `yarn.lock`, `*.min.js`, `*.min.css`, `*.map`
 - Ignore build artifacts: `dist/`, `build/`, `target/`, `out/`, `__pycache__/`, `*.pyc`
 - Ignore vendored: `node_modules/`, `vendor/`, `.git/`
@@ -406,6 +431,7 @@ For the files changed in the diff, perform static checks using `grep` or similar
 - **Blast Radius Assessment** (if the `draft/graph/` snapshot exists):
 
    First resolve the bundled helpers:
+
    ```bash
    # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
    # is not exported into skill Bash). See core/shared/tool-resolver.md.
@@ -483,6 +509,7 @@ For the files changed in the diff, perform static checks using `grep` or similar
    - **E**levation of Privilege: Are authorization checks in place? (RBAC/ABAC check)
 
 **Verdict:**
+
 - **PASS:** No critical issues found → Proceed to Stage 2
 - **FAIL:** ANY Critical issue found (e.g., circular dependency, hardcoded secret, raw SQL injection) → List the static analysis failures, generate the review report, and **STOP**. Do not proceed to Stage 2. This prevents wasting effort on structurally broken code.
 
@@ -498,7 +525,7 @@ After completing Stage 1, recommend appropriate static analysis tools based on t
 | Go | gosec, staticcheck |
 | Rust | `cargo clippy`, `cargo audit` |
 | C/C++ | Clang Static Analyzer, cppcheck |
-| Multi-language | Semgrep (https://semgrep.dev/), CodeQL (semantic code analysis) |
+| Multi-language | Semgrep (<https://semgrep.dev/>), CodeQL (semantic code analysis) |
 
 References: Meta Infer for CI integration patterns, Google Error Prone for compile-time analysis.
 
@@ -513,12 +540,14 @@ Load `spec.md` acceptance criteria and verify implementation:
 #### 4.1: Requirements Coverage
 
 For each functional requirement in `spec.md`:
+
 - [ ] Requirement implemented (find evidence in diff)
 - [ ] Files modified/created match requirement
 
 #### 4.2: Acceptance Criteria
 
 For each criterion in `spec.md`:
+
 - [ ] Criterion met (check against diff)
 - [ ] Test coverage exists (if TDD enabled)
 
@@ -528,6 +557,7 @@ For each criterion in `spec.md`:
 - [ ] No extra unneeded work (scope creep)
 
 **Verdict:**
+
 - **PASS:** All requirements implemented AND all acceptance criteria met → Proceed to Stage 3
 - **PASS WITH NOTES:** All requirements met but minor gaps in acceptance criteria verification → Proceed to Stage 3 with notes
 - **FAIL:** ANY requirement missing OR ANY acceptance criterion not met → List gaps, report, and stop (no Stage 3)
@@ -544,12 +574,14 @@ For each criterion in `spec.md`:
 #### 2.5.2: HLD §Detailed Design coverage
 
 For every component subsection in HLD §Detailed Design:
+
 - [ ] Files listed in the component diff actually exist at the cited `path:line`
 - [ ] Each component's `Whitebox requirements addressed` list is non-empty
 
 #### 2.5.3: HLD §Checklist populated
 
 For `criticality ∈ {high, mission-critical}` (frontmatter):
+
 - [ ] §Performance, §Scale, §Security, §Resiliency, §Multi-tenancy, §Upgrade, §Cost are populated (not still "<Describe...>" placeholders)
 
 #### 2.5.4: Code-vs-HLD drift
@@ -565,6 +597,7 @@ For `criticality ∈ {high, mission-critical}` (frontmatter):
 - [ ] Diff respects LLD invariants (thread safety, idempotency, ordering)
 
 **Verdict:**
+
 - PASS → Stage 3
 - FAIL → list HLD/LLD gaps with severity Critical (drift) or Important (incomplete sections), then Stage 3
 
@@ -575,24 +608,29 @@ For `criticality ∈ {high, mission-critical}` (frontmatter):
 Analyze semantic code quality across four dimensions:
 
 #### 4.4: Architecture
+
 - [ ] Follows project patterns (from tech-stack.md or CLAUDE.md)
 - [ ] Appropriate separation of concerns
 - [ ] Critical invariants honored (if `.ai-context.md` exists — check ## Critical Invariants section)
 
 #### 4.5: Error Handling
+
 - [ ] Errors handled at appropriate level
 - [ ] User-facing errors are helpful
 - [ ] No silent failures
 
 #### 4.6: Testing
+
 - [ ] Tests test real logic (not implementation details)
 - [ ] Edge cases have test coverage
 
 #### 4.7: Maintainability
+
 - [ ] Code is readable without excessive comments
 - [ ] Consistent naming and style
 
 #### 4.8: Diff Complexity Metrics
+
 - [ ] No functions exceeding cognitive complexity threshold (>15)
 - [ ] No files with high churn + high complexity (flag as refactoring candidates)
 - [ ] No deeply nested control flow (>3 levels of nesting)
@@ -629,10 +667,12 @@ Classify all findings by severity:
 | **Minor** | Style, optimization, nice-to-have | Note for later, don't block |
 
 **Scope-specific behavior:**
+
 - For **track-level** reviews: Run all three stages. Stage 2 uses `spec.md` acceptance criteria loaded in Step 2.
 - For **project-level** reviews: Skip Stage 2 (no spec). Run Stage 1 and Stage 3 only.
 
 **Issue format:**
+
 ```markdown
 - [ ] [File:line] Description of issue `[RC-### or CQ-### or SEC-## if applicable]`
   - **Impact:** [what breaks/degrades]
@@ -650,11 +690,13 @@ Run the specialist workflows selected explicitly or by the Step 2.5 heuristics.
 ### 5.1: Run Bughunt
 
 **Track-level:**
+
 ```bash
 /draft:bughunt --track <id>
 ```
 
 **Project-level:**
+
 ```bash
 /draft:bughunt
 ```
@@ -689,11 +731,13 @@ If deep-review is recommended but not auto-run:
 ### 5.4: Aggregate Findings
 
 Merge findings from:
+
 1. Reviewer agent (Stage 1, 2, 3)
 2. Bughunt results (if run)
 3. Deep-review findings relevant to the current diff (if run)
 
 **Deduplication:**
+
 - Two findings are duplicates if they reference the **same file and line number**
 - Severity ordering: **Critical > Important > Minor**
 - On duplicate: keep the finding with highest severity; merge tool attribution as "Found by: reviewer, bughunt, deep-review" as applicable
@@ -712,6 +756,7 @@ Create unified review report in markdown format.
 **Path:** `draft/tracks/<id>/review-report-<timestamp>.md` (where `<timestamp>` is generated via `date +%Y-%m-%dT%H%M`, e.g., `2026-03-15T1430`)
 
 After writing the timestamped report, create a symlink pointing to it:
+
 ```bash
 ln -sf review-report-<timestamp>.md draft/tracks/<id>/review-report-latest.md
 ```
@@ -822,11 +867,13 @@ ln -sf review-report-<timestamp>.md draft/tracks/<id>/review-report-latest.md
 **Path:** `draft/review-report-<timestamp>.md` (where `<timestamp>` is generated via `date +%Y-%m-%dT%H%M`, e.g., `2026-03-15T1430`)
 
 After writing the timestamped report, create a symlink pointing to it:
+
 ```bash
 ln -sf review-report-<timestamp>.md draft/review-report-latest.md
 ```
 
 Similar format but:
+
 - No Stage 2 section (no spec compliance)
 - Header shows scope instead of track ID:
   - `project`: "Scope: Uncommitted changes"
@@ -881,7 +928,7 @@ Display summary to user with actionable next steps.
 
 ### Success Output
 
-```
+```text
 ✅ Review complete: <track_id>
 
 Report: draft/tracks/<id>/review-report-<timestamp>.md (symlink: review-report-latest.md)
@@ -907,7 +954,7 @@ Next: Address findings and run /draft:review again, or mark track complete.
 
 ### Failure Output
 
-```
+```text
 ❌ Review failed: <track_id>
 
 Report: draft/tracks/<id>/review-report-<timestamp>.md (symlink: review-report-latest.md)
@@ -939,20 +986,20 @@ A missing `draft/` directory is a **supported mode**, not a failure. Enter zero-
 
 The only legitimate stop is a repository with nothing to review:
 
-```
+```text
 No changes to review. Make a change, or run /draft:review commits <range>.
 ```
 
 ### No Tracks Found
 
-```
+```yaml
 Error: No tracks found in draft/tracks.md
 Run /draft:new-track to create your first track.
 ```
 
 ### Track Not Found
 
-```
+```yaml
 Error: Track 'xyz' not found.
 
 Did you mean:
@@ -964,7 +1011,7 @@ Use exact track ID or run /draft:status to see all tracks.
 
 ### Ambiguous Match
 
-```
+```text
 Multiple tracks match 'review':
 1. add-review-command - Add /draft:review Command [~]
 2. review-architecture-md - Review architecture.md [x]
@@ -974,7 +1021,7 @@ Select track (1-2):
 
 ### Invalid Git Range
 
-```
+```yaml
 Error: Invalid commit range 'main...feature'
 Git error: fatal: ambiguous argument 'feature': unknown revision
 
@@ -984,7 +1031,7 @@ Verify the range exists:
 
 ### Missing Commits in Plan
 
-```
+```text
 ⚠️ Warning: No commit SHAs found in plan.md
 
 Cannot determine commit range for review.
@@ -1020,56 +1067,67 @@ After generating the review report, execute the pattern learning phase from `cor
 ## Examples
 
 ### Review active track
+
 ```bash
 /draft:review
 ```
 
 ### Review specific track by ID
+
 ```bash
 /draft:review track add-user-auth
 ```
 
 ### Review specific track by name (fuzzy)
+
 ```bash
 /draft:review track "user authentication"
 ```
 
 ### Comprehensive track review
+
 ```bash
 /draft:review track add-user-auth full
 ```
 
 ### Review uncommitted changes
+
 ```bash
 /draft:review project
 ```
 
 ### Review specific files
+
 ```bash
 /draft:review files "src/**/*.ts"
 ```
 
 ### Review commit range
+
 ```bash
 /draft:review commits main...feature-branch
 ```
 
 ### Review with bughunt
+
 ```bash
 /draft:review track my-feature with-bughunt
 ```
 
 ### Explicit quick review via parent
+
 ```bash
 /draft:review quick files "src/**/*.ts"
 ```
 
 ### Explicit deep review via parent
+
 ```bash
 /draft:review deep auth
 ```
 
 ### Explicit assist review via parent
+
 ```bash
 /draft:review assist track my-feature
 ```
@@ -1089,6 +1147,7 @@ Every review report must end with a `## Next Actions` section listing the smalle
 ```
 
 Rules:
+
 - Critical findings produce blocker rows (`Blocker? = yes`); proceeding to merge is forbidden until cleared.
 - Each action is imperative ("Add CSRF token to /api/transfer"), not a restatement of the finding.
 - Suggest the Draft follow-up when one applies (`/draft:debug`, `/draft:regression`, `/draft:tech-debt`, `/draft:bughunt`, `/draft:adr`). Otherwise put `n/a`.
@@ -1105,24 +1164,28 @@ Rules:
 After review completion, based on findings:
 
 **If significant code quality findings:**
-```
+
+```text
 "Review complete. Consider:
   → /draft:tech-debt — Catalog and prioritize the technical debt found"
 ```
 
 **If new public APIs lack documentation:**
-```
+
+```text
   → /draft:documentation api — Document new API endpoints"
 ```
 
 **If undocumented design decisions discovered:**
-```
+
+```text
   → /draft:adr — Record architectural decisions found during review"
 ```
 
 ### Jira Sync
 
 If Jira ticket linked, sync via `core/shared/jira-sync.md`:
+
 - Attach `review-report-latest.md` to ticket
 - Post comment: "[draft] review-complete: {PASS/FAIL}. {n} findings: {critical} critical, {suggestions} suggestions."
 
@@ -1145,6 +1208,7 @@ Emit the canonical footer from [core/shared/graph-usage-report.md](../../core/sh
 As the last step after saving the review report, emit a metrics record. Best-effort — never block.
 
 **Payload fields:**
+
 ```json
 {
   "skill": "review",
@@ -1160,6 +1224,7 @@ As the last step after saving the review report, emit a metrics record. Best-eff
 ```
 
 **Emit call:**
+
 ```bash
 # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
 # is not exported into skill Bash). See core/shared/tool-resolver.md.

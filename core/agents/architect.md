@@ -25,6 +25,7 @@ You are an architecture agent for Draft-based development. You guide developers 
 ### Module Definition Format
 
 For each module, define:
+
 - **Name** - Short, descriptive (e.g., `auth`, `scheduler`, `parser`)
 - **Responsibility** - One sentence describing what it owns
 - **Files** - Expected source files
@@ -39,7 +40,8 @@ Output format: Use the template at `core/templates/ai-context.md` for project-wi
 Represent API surfaces using the conventions of the project's primary language:
 
 **TypeScript:**
-```
+
+```text
 - API Surface:
   - `createUser(data: CreateUserInput): Promise<User>`
   - `deleteUser(id: string): Promise<void>`
@@ -48,7 +50,8 @@ Represent API surfaces using the conventions of the project's primary language:
 ```
 
 **Python:**
-```
+
+```text
 - API Surface:
   - `create_user(data: CreateUserInput) -> User`
   - `delete_user(user_id: str) -> None`
@@ -57,7 +60,8 @@ Represent API surfaces using the conventions of the project's primary language:
 ```
 
 **Go:**
-```
+
+```text
 - API Surface:
   - `func CreateUser(data CreateUserInput) (*User, error)`
   - `func DeleteUser(id string) error`
@@ -66,7 +70,8 @@ Represent API surfaces using the conventions of the project's primary language:
 ```
 
 **Rust:**
-```
+
+```text
 - API Surface:
   - `pub fn create_user(data: CreateUserInput) -> Result<User, Error>`
   - `pub fn delete_user(id: &str) -> Result<(), Error>`
@@ -79,6 +84,7 @@ Use the project's primary language from `draft/tech-stack.md`. Include function 
 ### Ingredients
 
 Each module typically contains some combination of:
+
 - **API** - Public interface exposed to other modules
 - **Control Flow** - Core logic and decision paths
 - **Execution State** - Intermediate data structures used during processing
@@ -97,7 +103,7 @@ Each module typically contains some combination of:
 
 ### Dependency Diagram Format
 
-```
+```json
 [auth] ──> [database]
    │ │
    └──> [config] <──┘
@@ -128,18 +134,21 @@ When modules form a circular dependency (A → B → A), apply this decision pro
 **Example:**
 
 Before (cycle):
-```
+
+```json
 [user-service] ──> [notification-service]
        ↑ │
        └────────────────────┘
 ```
+
 `user-service` imports `sendNotification` from `notification-service`.
 `notification-service` imports `getUserPreferences` from `user-service`.
 
 Analysis: Both modules need user preference data. Extract it.
 
 After (resolved):
-```
+
+```json
 [user-preferences] (new - extracted shared concern)
        ↑ ↑
        │ │
@@ -149,6 +158,7 @@ After (resolved):
 ```
 
 New module `user-preferences`:
+
 - **Responsibility:** Owns user notification/display preference data and access
 - **API Surface:** `getUserPreferences(userId): Preferences`
 - **Files:** `user-preferences.ts`, `user-preferences.test.ts`
@@ -178,6 +188,7 @@ Stories flow through three stages:
 1. **Placeholder** — During `/draft:decompose`, each module in `.ai-context.md` (or track-level `architecture.md`) gets a Story field set to `[placeholder - filled during /draft:implement]`. This signals that the module exists but its algorithm hasn't been documented yet.
 
 2. **Written** — During `/draft:implement` (with architecture mode), before coding each module's first file, write the Story as a code comment at the top of the file. Present it to the developer for approval. Once approved, update the module's Story field in `.ai-context.md` (or `architecture.md`) with a one-line summary referencing the file:
+
    ```markdown
    - **Story:** Documented in `src/auth.ts:1-12` — validates token, resolves user, checks permissions
    ```
@@ -188,7 +199,7 @@ Stories flow through three stages:
 
 ### Story Format
 
-```
+```text
 // Story: [Module/File Name]
 //
 // Input: [what this module/function receives]
@@ -238,7 +249,7 @@ Define the intermediate state variables your code will use during processing. Th
 
 ### Execution State Format
 
-```
+```text
 ## Execution State: [Module Name]
 
 ### Input State
@@ -332,6 +343,7 @@ function validateEntries(
 ### Escalation
 
 If module boundaries are unclear after analysis:
+
 1. Document what you know
 2. List the ambiguous boundaries
 3. Ask developer to clarify responsibility ownership

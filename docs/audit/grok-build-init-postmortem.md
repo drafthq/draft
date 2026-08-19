@@ -45,7 +45,7 @@ Until (1)+(2)+(3) are fixed in `~/workspace/draft`, **init/refresh cannot be one
 
 **Evidence (live graph-arch on grok-build):**
 
-```
+```text
 codegen, common, mermaid-to-svg, dagre_rust, mc, graphlib_rust,
 ordered_hashmap, build, profile, workspace, str, list, dict, Cargo, int
 ```
@@ -159,7 +159,7 @@ Init on grok-build used the **plugin**. Fixes only in workspace draft do not app
    - Each member → required `systems/<crate-name-slug>.md`, `resource: <path>`, type Module (or Entrypoint if `[[bin]]` only package).
 2. Discovery priority:
 
-   ```
+   ```text
    --manifest > cargo|go|npm workspace discovery > graph packages > heuristic dirs
    ```
 
@@ -186,7 +186,7 @@ This makes “100% coverage” mean **repo-complete**, not **plan-complete**.
 
 **File:** `scripts/tools/okf-validate-all.sh`
 
-```
+```text
 L2 quality → L3 coverage (writes coverage.md) → L1 structure (link check last)
 ```
 
@@ -282,7 +282,7 @@ Draft can work around this with cargo discovery even if engine stays coarse.
 
 ## Suggested implementation order
 
-```
+```text
 1. grounded_count multi-line + validate-all re-check structure after coverage
 2. plan_from_cargo_workspace + noise filter + tests
 3. inventory coverage gate

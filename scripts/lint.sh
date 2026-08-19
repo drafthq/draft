@@ -40,6 +40,8 @@ if command -v markdownlint &> /dev/null; then
     fi
 else
     echo "⚠ markdownlint-cli not found. Skipping markdown linting."
+    echo "  CI gates on it — run: npx markdownlint-cli@0.49.1 \"**/*.md\" \\"
+    echo "        --ignore node_modules --ignore draft.tmp --ignore draft/tracks --ignore integrations"
 fi
 
 if [ $exit_code -eq 0 ]; then

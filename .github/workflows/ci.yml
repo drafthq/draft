@@ -97,13 +97,12 @@ jobs:
           done < <(find scripts tests -name '*.sh' -print0)
           exit $fail
 
-      # Advisory: ~4k pre-existing markdownlint violations across the skill
-      # corpus. Gating on it would block every PR for reasons unrelated to the
-      # PR. Reported, not enforced, until that backlog is cleared — then drop
-      # continue-on-error. Version-pinned so a new rule release does not silently
-      # change what "clean" means.
-      - name: Markdownlint (advisory)
-        continue-on-error: true
+      # Blocking as of this commit: the backlog that kept it advisory is cleared
+      # (1691 violations -> 0), so anything it reports now was introduced by the
+      # change under review — the same standard shellcheck is held to.
+      # Version-pinned so a new rule release does not silently change what
+      # "clean" means.
+      - name: Markdownlint (blocking)
         run: |
           npm install -g markdownlint-cli@0.49.1
           markdownlint "**/*.md" \

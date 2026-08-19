@@ -81,4 +81,3 @@ Same result quality. One-twelfth the cost. That difference is what makes teams a
 Beyond file-level changes, incremental refresh also tracks structural drift through signal re-classification. If your project had zero authentication files last month and now has five, that is not just "new files" — it is a new architectural concern. Draft flags signal drift separately from file changes because it has different implications: new signal categories may require generating entirely new sections ofarchitecture.md, not just updating existing ones.
 
 The combination of file-level freshness tracking, git commit anchoring, signal drift detection, and fact contradiction analysis gives Draft a multi-layered understanding of what changed, why it matters, and exactly which parts of the documentation need updating. No more stale context. No more full regeneration. Just precise, incremental evolution.
-

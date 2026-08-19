@@ -7,7 +7,7 @@ description: Design test strategies and test plans with coverage targets. Comple
 
 You are designing a testing strategy and test plan for this project or track.
 
-## Red Flags — STOP if you're:
+## Red Flags — STOP if you're
 
 - Writing a strategy without understanding the codebase
 - Setting unrealistic coverage targets (100% is rarely appropriate)
@@ -61,13 +61,16 @@ Read and follow the base procedure in `core/shared/draft-context-loading.md`.
    - CLI tools
 
 2. **Discover existing tests:**
+
    ```bash
    find . -name "*test*" -o -name "*spec*" | head -50
    ```
+
    Identify: test frameworks, test directories, existing coverage config, test runners.
 
 3. **Assess current coverage:**
    Check for existing coverage reports or configuration:
+
    ```bash
    ls coverage/ .nyc_output/ htmlcov/ .coverage 2>/dev/null
    ```
@@ -85,7 +88,7 @@ Read and follow the base procedure in `core/shared/draft-context-loading.md`.
 
 Tailor to the project architecture:
 
-```
+```text
         ┌─────────┐
         │ E2E │ Few, critical paths only
         ├─────────┤
@@ -111,6 +114,7 @@ Adjust the pyramid shape per architecture. A microservices backend may need a wi
 ### Coverage Targets
 
 Set realistic targets based on component criticality:
+
 - **Critical paths** (from .ai-context.md INVARIANTS): 95%+
 - **Business logic**: 85-90%
 - **Utilities/helpers**: 80%
@@ -121,6 +125,7 @@ Set realistic targets based on component criticality:
 ### Test Quality Guidelines
 
 Coverage alone is insufficient. Include guidance on:
+
 - **Assertion density:** At least one meaningful assertion per test (not just "doesn't throw")
 - **Boundary testing:** Edge cases, empty inputs, max values, off-by-one
 - **Error paths:** Test failure modes, not just happy paths
@@ -131,6 +136,7 @@ Coverage alone is insufficient. Include guidance on:
 ## Step 4: Gap Analysis
 
 Compare current state to targets:
+
 1. Run test discovery to count existing tests per module
 2. Identify modules with zero test coverage
 3. Identify critical paths (from INVARIANTS) without integration tests
@@ -157,6 +163,7 @@ Priority test cases to write, ordered by impact:
 7. Performance tests for latency-sensitive paths
 
 For each priority test, specify:
+
 - **What:** Description of the test scenario
 - **Why:** Which invariant, anti-pattern, or flow it protects
 - **How:** Test type (unit/integration/E2E), framework, key assertions
@@ -178,6 +185,7 @@ Include the report header table immediately after frontmatter:
 ```
 
 Save to:
+
 - Project-wide: `draft/testing-strategy.md`
 - Track-scoped: `draft/tracks/<id>/testing-strategy.md`
 

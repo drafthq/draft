@@ -67,7 +67,7 @@ track ID, or `_NONE_FOUND_` with justification.
 
 Flat list of files and functions touched in the spike. Files cited here
 without line numbers are exempt from drift checks (they document
-*familiarity*, not pinned facts).
+_familiarity_, not pinned facts).
 
 - _TBD_reference_1_path_ — _TBD_reference_1_symbol_ — _TBD_reference_1_role_
 - _TBD_reference_2_path_ — _TBD_reference_2_symbol_ — _TBD_reference_2_role_

@@ -16,7 +16,7 @@ This is how Draft adapts to your codebase without being told what kind of projec
 
 ### 1. Backend Routes
 
-Files inroutes/,handlers/,controllers/, or**/api/**. Route decorators like@app.route,@router,@RequestMapping. These drive deep treatment of API Definitions and Cross-Module Integration sections. A project with 12 route files gets exhaustive endpoint cataloging. A project with zero gets those sections skipped.
+Files inroutes/,handlers/,controllers/, or**/api/**. Route decorators <like@app.route>,@router,@RequestMapping. These drive deep treatment of API Definitions and Cross-Module Integration sections. A project with 12 route files gets exhaustive endpoint cataloging. A project with zero gets those sections skipped.
 
 ### 2. Frontend Routes
 
@@ -86,9 +86,8 @@ Now contrast this with a Go CLI tool that has zero frontend files, zero componen
 
 ## The Classification Procedure
 
-Signal classification is not heuristic. It is a file-matching procedure that runs during Phase 1 of architecture discovery. Draft counts files matching each category's detection patterns, excluding standard ignore paths (node_modules/,.git/,vendor/,draft/). The procedure is language-aware — a Python project looks for@app.routedecorators while a Java project looks for@RequestMappingannotations — but the signal categories are universal across all languages.
+Signal classification is not heuristic. It is a file-matching procedure that runs during Phase 1 of architecture discovery. Draft counts files matching each category's detection patterns, excluding standard ignore paths (node_modules/,.git/,vendor/,draft/). The procedure is language-aware — a Python project looks <for@app.routedecorators> while a Java project looks for@RequestMappingannotations — but the signal categories are universal across all languages.
 
 The result is a signal summary held in memory for Phase 5 (Synthesis), where it drives section-by-section generation decisions. It is then persisted todraft/.state/signals.jsonas the baseline for future drift detection.
 
 You do not configure signals. You do not tell Draft "this is a web app" or "skip the frontend sections." Draft discovers what your project contains by reading the file tree. If your project gains authentication files six months from now, the next/draft:init refreshwill detect the new signal category, flag it as structural drift, and generate the Security Architecture section for the first time. The architecture document evolves with your code.
-

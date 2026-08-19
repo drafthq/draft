@@ -88,8 +88,6 @@ Skills that emit telemetry via [emit-skill-metrics.sh](../../scripts/tools/emit-
 
 These fields are appended to `~/.draft/metrics.jsonl` along with the existing skill fields (`skill`, `track_id`, etc.) — no new state file is needed. Run `tail -100 ~/.draft/metrics.jsonl | jq -s 'group_by(.skill) | map({skill: .[0].skill, runs: length, avg_graph_queries: ([.[].graph_queries] | add / length), avg_grep_fallbacks: ([.[].fallback_grep_count] | add / length)})'` to monitor adherence per skill.
 
-
-
 ## Tooling Wrappers
 
 For common query modes, prefer the deterministic wrappers that ship with the plugin. Resolve their location via the canonical tool resolver (see [tool-resolver.md](tool-resolver.md)) before invoking. Skills run with cwd = the user's project and `${CLAUDE_PLUGIN_ROOT}` is **not** exported into skill Bash, so a bare `scripts/tools/git-metadata.sh` fails — establish `DRAFT_TOOLS` once before the first helper call, in the same Bash session as your tool calls (re-establish it if you split helper calls into a separate, later Bash block):

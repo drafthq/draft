@@ -8,7 +8,7 @@
 
 ## Architecture
 
-```
+```text
 Phase 1 (Map) N parallel reader agents bounded scope per agent (4 modules each)
                  each agent reads source files in its assigned modules
                  each agent outputs (A) IR JSON array — structured metadata for tables/diagrams
@@ -97,7 +97,7 @@ Large modules with deep sub-module hierarchies (e.g., 500+ files with 5+ sub-mod
 Use this verbatim as the `prompt` field when spawning each reader agent via the `Agent` tool.
 Replace `{MODULE_LIST}`, `{REPO_ROOT}`, and `{GRAPH_DATA_SUMMARY}` before sending.
 
-```
+```text
 You are a module reader agent. You have two jobs for each assigned module:
 (A) Extract structured IR JSON — metadata for tables and diagrams
 (B) Write a full §7 deep-dive section in Markdown — prose the synthesis agent will paste verbatim into architecture.md
@@ -206,7 +206,7 @@ Only when the graph shows clear internal structure with its own public surface o
 Use this as the prompt for the single synthesis agent in Phase 2.
 Replace `{CONCATENATED_IRS}`, `{GRAPH_DEPENDENCY_DIAGRAM}`, and `{ARCHITECTURE_TEMPLATE_STRUCTURE}`.
 
-```
+```text
 You are the synthesis agent. Your job is to assemble draft/architecture.md from reader outputs.
 
 ## Inputs
@@ -305,7 +305,7 @@ For tier 1–2, skip parallelism — one reader agent handles all modules sequen
 
 When assigning modules to reader agents (tier 3+), apply this priority ordering:
 
-```
+```text
 Rule 1: Assign high fan-in modules to separate readers
         (modules with many callers produce IRs that many other IRs reference)
 
@@ -319,7 +319,8 @@ Rule 4: Use tier table above for modules-per-agent target
 ```
 
 Example grouping heuristic (adapt to actual fan-in data from graph):
-```
+
+```yaml
 reader_A: [highest fan-in module alone] — never share high-fan-in with others
 reader_B: [coupled pair: module_X + module_Y] — modules that call each other
 reader_C: [data layer modules] — shared persistence/cache modules together
@@ -332,24 +333,30 @@ reader_E: [infra/bootstrap modules] — low fan-in, foundational
 ## Failure Modes and Recovery
 
 ### Reader produces prose instead of IR
+
 **Detection:** Output doesn't start with `[` or fails JSON.parse.
 **Recovery:** Retry that reader with stricter constraint:
-```
+
+```text
 RETRY INSTRUCTION: Your previous output was not valid JSON. Output ONLY the JSON array.
 The first character of your response MUST be `[`. No preamble. No explanation.
 ```
+
 **Fallback:** If retry fails, run those modules through the standard sequential analysis.
 
 ### IR is too sparse AND deep-dive is too short
+
 **Detection:** IR `token_budget_used < 150` for a module with >20 files AND deep-dive < 100 lines.
 **Recovery:** Re-run that reader with explicit instruction to read more source files and expand the deep-dive.
 If only the IR is sparse but the deep-dive is substantive, no action needed — prose is the primary output.
 
 ### Synthesis agent re-reads source outside policy
+
 **Detection:** Tool calls to Read for files not in the permitted-sections list during synthesis.
 **Prevention:** The synthesis prompt lists exactly which sections permit source reads. Outside those, synthesis derives from reader prose and IR.
 
 ### One reader agent fails entirely
+
 **Detection:** Agent returns error or times out.
 **Recovery:** Run the failed module group through standard sequential analysis.
 The other readers' IRs are still valid — only the failed group needs re-work.
@@ -359,7 +366,7 @@ This is the blast-radius advantage over single-agent: a reader failure is a part
 
 ## Token Budget Model
 
-```
+```text
 Phase 1 readers (parallel, ceil(M/4) agents):
   Per agent: 4 modules × ~4K source tokens = ~16K input
                  IR output: ~2K tokens/agent

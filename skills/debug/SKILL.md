@@ -29,11 +29,12 @@ When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-firs
 
 Filesystem `grep` is reserved for source-text scans (literal error strings, stack-trace symbols when the graph misses). Use the fallback sentence on graph miss.
 
-## Red Flags — STOP if you're:
+## Red Flags — STOP if you're
 
 See [shared red flags](../../core/shared/red-flags.md) — applies to all code-touching skills.
 
 Skill-specific:
+
 - Making code changes before reproducing the bug
 - Guessing at the cause instead of tracing data/control flow
 - Trying multiple fixes simultaneously ("shotgun debugging")
@@ -70,6 +71,7 @@ Debug can run standalone (without draft context) or within a draft track. If `dr
 Read and follow the base procedure in `core/shared/draft-context-loading.md`.
 
 Key context for debugging:
+
 - `.ai-context.md` — Module boundaries, data flows, invariants (crucial for tracing)
 - `tech-stack.md` — Language-specific debugging tools and techniques
 - `guardrails.md` — Known anti-patterns that may be causing the issue
@@ -78,12 +80,14 @@ Key context for debugging:
 ## Step 1: Parse Arguments
 
 Check for arguments:
+
 - `/draft:debug` — Interactive: ask what's broken
 - `/draft:debug <description>` — Start with the described problem
 - `/draft:debug track <id>` — Debug within a specific track context (load spec.md, plan.md)
 - `/draft:debug <JIRA-KEY>` — Pull context from Jira ticket via MCP
 
 If a Jira ticket is provided:
+
 1. Pull ticket via Jira MCP: `get_issue()`, `get_issue_description()`, `get_issue_comments()`
 2. Extract: URLs, log paths, stack traces, reproduction steps, affected services
 3. Use `curl`/`wget` to fetch any URLs mentioned (dashboards, error pages, API responses)
@@ -111,8 +115,10 @@ Reference `core/agents/debugger.md` Phase 1 for detailed investigation technique
 1. **Trace data flow** — Follow data from input to failure point, documenting each hop with `file:line` references
 2. **Trace control flow** — Map the execution path, identify where it diverges from expected behavior
 3. **Differential analysis** — Compare working vs failing cases:
+
    | Aspect | Working Case | Failing Case | Difference |
    |--------|-------------|-------------|------------|
+
 4. **Check boundaries** — Reference `.ai-context.md` module boundaries to scope the investigation
 
 Reference `core/agents/debugger.md` Phase 2 for language-specific debugging techniques.
@@ -143,9 +149,11 @@ Reference `core/agents/debugger.md` Phase 3 and `core/agents/rca.md` for 5 Whys 
 ### Test Writing Guardrail
 
 **STOP.** Before writing any test:
-```
+
+```yaml
 ASK: "Root cause confirmed: [summary]. Want me to write a regression test for this fix? [Y/n]"
 ```
+
 - If accepted: write regression test first (fails before fix, passes after)
 - If declined: note "Tests: developer-handled" and proceed to fix
 
@@ -172,6 +180,7 @@ Include the report header table immediately after frontmatter:
 ```
 
 Save to:
+
 - Track-scoped: `draft/tracks/<id>/debug-report.md`
 - Standalone: `draft/debug-report-<timestamp>.md` with symlink `debug-report-latest.md`
 
@@ -194,6 +203,7 @@ If `draft/graph/schema.yaml` does not exist, set `Graph files queried: NONE` and
 ## Graph Usage Report (append to debug report)
 
 Emit the canonical footer from [core/shared/graph-usage-report.md](../../core/shared/graph-usage-report.md) §Canonical footer. The lint hook `scripts/tools/check-graph-usage-report.sh` validates the section on save.
+
 ## Cross-Skill Dispatch
 
 - **Auto-invoked by:** `/draft:new-track` (bug tracks — Offer tier), `/draft:implement` (blocked tasks — Offer tier)

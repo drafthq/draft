@@ -7,7 +7,6 @@ description: Unified Jira entry point. Routes to preview (default), create, or r
 
 Single entry point for all Jira workflows: preview Draft tracks as Jira issues, create them via MCP (default = 1 Story per track; --epic = 1 Epic + 1-3 Stories), and review any Jira ticket (epic, story, bug, sub-task) end-to-end.
 
-
 ## Subcommand Routing
 
 Parse `$ARGUMENTS` and dispatch:
@@ -44,6 +43,7 @@ Assignee Display Name: <assignee-name>
 - **Team / Component / Swimlane / Assignee Display Name** — applied as defaults to every issue created by `create`. Empty values are skipped (Jira ignores blank fields).
 
 If a value is missing when needed:
+
 1. Prompt the user for it.
 2. Append to (or create) the `## Jira` section in `draft/workflow.md` so subsequent runs reuse it.
 
@@ -69,7 +69,7 @@ Generate a timestamped `jira-export-<timestamp>.md` (with `jira-export-latest.md
 
 **Flag handling:** Check `$ARGUMENTS` for `--epic` at the very start of this section. If present, set `EPIC_MODE=true` and remove the flag from the working arguments. This flag changes the entire output structure (see Step 2).
 
-## Red Flags — STOP if you're:
+## Red Flags — STOP if you're
 
 - Generating a preview without an approved plan.md
 - Assigning story points inconsistent with task count
@@ -123,7 +123,6 @@ synced_to_commit: "{FULL_SHA}"
 
 ## Mapping Structure
 
-
 ### Default behavior (recommended)
 
 - Every track becomes **exactly 1 Story**.
@@ -137,6 +136,7 @@ This keeps Jira clean and keeps the export focused on root issues by default.
 Use `/draft:jira preview --epic` or `/draft:jira create --epic` when you want an Epic.
 
 **Splitting rule (simple):**
+
 - 5 or fewer phases → **1 Story** under the Epic
 - More than 5 phases → split across **2 or 3 Stories** (maximum)
 
@@ -166,13 +166,16 @@ If no track found: tell the user "No track found. Run `/draft:new-track` to crea
 ## Step 2: Determine Export Mode, Count Phases, and Group Content
 
 ### 2.1 Detect Mode
+
 - If `EPIC_MODE=true` (from `--epic` flag), use Epic + Stories mode.
 - Otherwise, use **default single-Story mode**.
 
 ### 2.2 Count Phases and Decide Story Count (Epic Mode Only)
+
 Count the number of `## Phase` sections in `plan.md`.
 
 **Splitting guideline (when using --epic):**
+
 - Phases ≤ 5  → 1 Story under the Epic
 - Phases 6–12 → 2 Stories under the Epic
 - Phases > 12 → 3 Stories under the Epic (hard cap)
@@ -180,9 +183,11 @@ Count the number of `## Phase` sections in `plan.md`.
 Store the target number of stories: `TARGET_STORIES`.
 
 ### 2.3 Group Phases (for Epic Mode)
+
 Divide the phases as evenly as possible across `TARGET_STORIES`.
 
 Example grouping (store this in memory):
+
 - Story 1 gets phases 1..K
 - Story 2 gets phases K+1..M
 - Story 3 gets remaining phases
@@ -190,13 +195,16 @@ Example grouping (store this in memory):
 In **default mode**, ignore grouping — everything goes under one Story.
 
 ### 2.4 Build Data Structures
+
 For every phase:
+
 - Capture Phase name, Goal, Verification
 - Collect all its tasks (with status)
 
 Calculate total story points using the existing simple table (1-2 tasks = 1pt, 3-4=2pt, 5-6=3pt, 7+=5pt). This total goes on the root issue (or split across stories in epic mode if desired — default is to put total on the first Story).
 
 ### 2.5 Root Issue Data
+
 - Summary = Track title
 - Description base = content from `spec.md` (first 2-3 paragraphs) + later the full structured plan
 - Issue Type = "Story" (default) or "Epic" (--epic)
@@ -230,6 +238,7 @@ SYMLINK="draft/tracks/<track_id>/jira-export-latest.md"
 Create the file and the `latest` symlink.
 
 ### 4.1 Write Frontmatter + Header
+
 Use the standard YAML frontmatter.
 Add a `mode: default` or `mode: epic` field.
 
@@ -266,6 +275,7 @@ Include the Draft signature at the bottom of the description.
 **Jira Content Rule:** Keep every Story description **short and scannable**. Use compact headings and minimal text.
 
 If `mode: epic`:
+
 - Emit 1 to 3 `## Story N: [Short Title]` blocks (using the grouping decided in Step 2).
 - Under each Story, put the phases assigned to it as `### Phase ...` + **compact** task checklists.
 - Each Story gets its share of the total story points (or put the total on the first one — simple is fine).
@@ -276,6 +286,7 @@ Use the existing high-quality bug export format from `bughunt-report-latest.md`.
 These will become real Bug issues linked to the root (Epic or the main Story).
 
 ### 4.5 Final Notes in the Export
+
 Add at the top:
 
 > Default = 1 Story. Use `--epic` for 1 Epic + 1-3 Stories.
@@ -284,7 +295,7 @@ Update the symlink.
 
 ## Step 5: Report
 
-```
+```text
 Jira Preview Generated
 
 Track:   [track_id] - [title]
@@ -317,18 +328,22 @@ Next steps:
 ## Error Handling (preview)
 
 **plan.md has no phases:**
+
 - Tell user: "No phases found in plan.md. Run `/draft:new-track` to generate a proper plan."
 
 **spec.md missing:**
+
 - Use `plan.md` overview for root-issue description.
 - Warn: "spec.md not found, using plan overview for root-issue description."
 
 **jira-export-latest.md already exists:**
+
 - Check if the target file has been manually modified (user-added content not matching generated patterns — edited descriptions, added rows, changed story points from generated values).
 - If modifications detected, prompt: "Existing jira-export appears to have manual edits. Overwrite? [y/N]"
 - If unmodified, proceed with regeneration (new timestamped file + updated symlink).
 
 **Phase has no tasks:**
+
 - Create mid-level issue with 1 story point.
 - Add note: "No leaf issues defined for this phase."
 
@@ -338,7 +353,7 @@ Next steps:
 
 Create Jira issues from `jira-export-latest.md` using MCP-Jira. If no export file exists, auto-generates one first by running the `preview` subcommand.
 
-## Red Flags — STOP if you're:
+## Red Flags — STOP if you're
 
 - Creating Jira issues without reviewing `jira-export-latest.md` first (run `/draft:jira preview`)
 - Proceeding when MCP-Jira is not configured
@@ -372,7 +387,7 @@ Detect MCP-Jira tools. Known tool name variants: `mcp_jira_create_issue`, `jira_
 
 If unavailable:
 
-```
+```text
 MCP-Jira not configured.
 
 To create issues:
@@ -388,14 +403,17 @@ Stop execution.
 ## Step 4: Parse Export File (Export Format)
 
 Read the `mode` field from frontmatter:
+
 - `default` → expect 1 root Story
 - `epic`   → expect 1 Epic + 1–3 Stories
 
 ### Root Issue(s)
+
 - Parse the `## Root Issue` (and any `## Story N:` sections if mode=epic).
 - For each Story section: Summary, Description (which now contains the phases and task checklists), story points if present.
 
 ### Bug Issues
+
 Parse the `## Bug Issues` section completely (same as before). These are always created as separate Bug issues.
 
 **Important:** There are no longer "Mid-Level" or "Leaf Issues" tables that become separate Jira Tasks/Sub-tasks. All work items live inside the Story description(s).
@@ -430,7 +448,7 @@ Assignee Display Name: <assignee-name>
 
 Before creating issues, attempt to fetch project metadata via MCP to verify the project key exists:
 
-```
+```text
 MCP call: get_project (or equivalent)
 - project: [project key]
 ```
@@ -453,7 +471,7 @@ If `Assignee Display Name` is provided, resolve to an account ID via MCP user se
 
 Apply these to every `create_issue` call (omit any that resolved to empty in Step 4b):
 
-```
+```text
 - project: [Project Key]
 - labels: ["draft"]
 - component: [Component if set]
@@ -472,20 +490,21 @@ Apply these to every `create_issue` call (omit any that resolved to empty in Ste
 For each Story/Epic:
 **Jira Content Rule (strict):** The description sent to Jira must be concise. Use short summaries and compact structured sections only. Do not include long reasoning or exhaustive lists.
 
-```
+```text
 MCP call: create_issue
 - issue_type: Story or Epic
 - summary: ...
 - description: [concise content — phases as compact sections, tasks as short checklists]
 + shared field defaults
 ```
+
 Capture the keys.
 
 ### 5b. Create Bug Issues (from Bug Hunt Report)
 
 For every bug parsed in Step 4, create a real **Bug** issue:
 
-```
+```text
 MCP call: create_issue
 - issue_type: Bug
 - summary: ...
@@ -517,7 +536,7 @@ Set export file status to Created (via `jira-export-latest.md`):
 
 ## Step 7: Report (new simplified format)
 
-```
+```text
 Jira Issues Created
 
 Track:   [track_id] - [title]
@@ -543,7 +562,8 @@ Updated:
 ## Error Handling (create)
 
 **MCP call fails:**
-```
+
+```text
 Failed to create [issue type]: [error message]
 
 Partial creation:
@@ -563,7 +583,6 @@ Already-created issues will be detected by keys in jira-export-latest.md.
 
 **plan.md phases don't match export:** warn "Export has N mid-level issues but plan has M phases. Proceeding with export structure." Create based on export.
 
-
 ---
 
 # Subcommand: review
@@ -571,6 +590,7 @@ Already-created issues will be detected by keys in jira-export-latest.md.
 See [review.md](review.md) for the full epic/story/bug/sub-task qualification pipeline. The router delegates to that file when the user invokes `/draft:jira review <JIRA_ID>`.
 
 The review subcommand:
+
 - Accepts any Jira issue ID (epic, story, bug, sub-task) and adapts its depth to the issue type.
 - Runs a 7-phase pipeline: prerequisites → epic/story collection → document/test-plan synthesis → code change collection (Gerrit/GitHub/GitLab) → context synthesis → quality analysis (deep-review + bughunt + coverage) → test gap analysis → report.
 - Produces `draft/jira-review/<JIRA_ID>/qualification-report.md` and (if gaps exist) `remediation-plan.md`.

@@ -7,7 +7,8 @@ description: Reviewing someone else's PR for handoff/sign-off. Isolates structur
 
 Help human reviewers effectively review an executed track without shifting the entire cognitive burden onto them.
 
-## Red Flags - STOP if you're:
+## Red Flags - STOP if you're
+
 - Conducting standard unit tests; use `/draft:review` for that.
 - Fixing code rather than explaining logic and risk profiles to the human.
 - Reviewing output without first summarizing the source `spec.md` intent.

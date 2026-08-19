@@ -130,6 +130,7 @@ Draft creates adraft/.state/directory with four files that enable incremental re
 * signals.json— The signal classification from Phase 1, stored as a baseline. On refresh, Draft re-runs classification and diffs against the baseline to detect structural drift (e.g., auth files appearing for the first time).
 * run-memory.json— Run metadata, unresolved questions, and resumable checkpoints. If an init or refresh is interrupted, Draft can resume from where it left off.
 * facts.json— Atomic architectural facts with temporal metadata and relationship edges. Enables fact-level contradiction detection on refresh.
+
 ## Your First Track
 
 With initialization complete, you're ready to create your first feature track:
@@ -163,4 +164,3 @@ If nothing changed, Draft short-circuits: "Architecture context is current. Noth
 ## What Comes Next
 
 You now have a project with full context, a track with a spec and plan, and an implementation workflow that keeps AI constrained to your architecture. The next chapters dive into each stage of the workflow in detail — how specifications are crafted, how plans are structured, how implementation works task by task, and how the review process catches what the AI missed.
-

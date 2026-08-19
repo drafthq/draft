@@ -39,6 +39,7 @@ ADRs move through a defined lifecycle:
 * Accepted— The decision has been approved and is in effect. The team is expected to follow it.
 * Deprecated— The decision is no longer relevant because the context has changed. The original reasoning is preserved for historical reference.
 * Superseded— A newer decision has replaced this one. The old ADR links to the new one, and the new ADR links back, creating a traceable chain of evolving decisions.
+
 ## When to Create an ADR
 
 Not every decision warrants an ADR. Variable naming and code formatting do not. The threshold is: would a new team member reasonably ask "why?" and would the answer require more than one sentence?
@@ -50,6 +51,7 @@ Good candidates for ADRs:
 * Trade-off resolutions— Accepting eventual consistency for performance, choosing simplicity over extensibility
 * Architectural boundaries— Defining module ownership, API contracts between services, data flow directions
 * Security decisions— Authentication strategy, encryption approach, secret management
+
 ## ADR Evaluation
 
 ADRs are not write-once documents. As the codebase evolves, decisions may drift from implementation./draft:adrsupports evaluation mode to check whether existing code still aligns with recorded decisions, surfacing violations and drift before they become systemic.
@@ -69,4 +71,3 @@ Decisions change. What was correct six months ago may be wrong today because the
 When you run/draft:adr supersede 3, Draft updates ADR-003's status to "Superseded by ADR-007" and adds a reference link. The new ADR-007 includes "Supersedes ADR-003" in its references. Both documents are preserved. The old reasoning is not lost — it becomes historical context that explains the evolution of the system's architecture.
 
 When an ADR introduces a new technology, Draft suggests updatingdraft/tech-stack.md. When an ADR changes architectural patterns, Draft suggests updatingdraft/architecture.md(which triggers regeneration of.ai-context.mdvia the Condensation Subroutine). ADRs feed back into the living context that constrains future AI interactions.
-

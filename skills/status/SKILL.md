@@ -7,7 +7,7 @@ description: Display current progress of Draft tracks and active tasks. Shows ph
 
 Display a comprehensive overview of project progress.
 
-## Red Flags - STOP if you're:
+## Red Flags - STOP if you're
 
 - Reporting status without actually reading the files
 - Making up progress percentages
@@ -66,7 +66,7 @@ Check each track's `metadata.json` `type` field to determine display format.
 
 ### Standard (multi-phase) tracks
 
-```
+```yaml
 ---
                       DRAFT STATUS
 ---
@@ -95,7 +95,7 @@ ACTIVE TRACKS
 
 Quick-mode tracks use flat task numbering (`Task 1:`, `Task 2:`) without phases. Display them with a flat task list instead of the phase-grouped tree:
 
-```
+```json
 [track-id-3] Quick Feature
   Status: [~] In Progress
   Type: quick
@@ -111,7 +111,7 @@ Do **not** show `Phase: X/Y` for quick-mode tracks — they have no phases.
 
 ### Remaining sections (shared by both formats)
 
-```
+```text
 MODULES (if architecture.md exists)
 ---
 Module A [x] Complete (Coverage: 96.2%)
@@ -161,7 +161,7 @@ When `.ai-context.md` or `architecture.md` exists for a track (track-level or pr
 
 ## If No Tracks
 
-```
+```yaml
 ---
                       DRAFT STATUS
 ---
@@ -177,7 +177,7 @@ Get started:
 
 ## If Not Initialized
 
-```
+```text
 Draft not initialized in this project.
 
 Run /draft:init to initialize.

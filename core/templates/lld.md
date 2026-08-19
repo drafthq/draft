@@ -48,7 +48,7 @@ links:
 <Link to HLD and explain context here>
 
 > See [`./hld.md` §Background](./hld.md#background) for the high-level rationale. Use this section only for component-internal context the HLD doesn't cover.
-
+>
 > **Citations.** Use `path/to/file.ext:LINE` (or `LINE-RANGE`); verifier:
 > `scripts/tools/verify-citations.sh`. Prefer `// DRAFT-CITE: <id>` source
 > anchors over raw line numbers for code that moves often.
@@ -67,6 +67,7 @@ links:
 ## Low Level Design
 
 > **NOTE:**
+>
 > - HLD and Detailed Design covers components and interactions across various services that the feature touches
 > - LLD to be documented here is for each such component and internal implementation
 > - A single doc here can cover all components, or they can be split up, but the key is to ensure every component in every service the design touches has an LLD
@@ -159,6 +160,7 @@ links:
 > deploy-checklist fail on bare prose without diagram blocks.
 
 Examples:
+
 - List of steps to failover a multi-region database cluster
 - Analysis phase of a background data indexing service
 - Transferring session state information between authentication and profile services via a secure messaging protocol
@@ -188,13 +190,14 @@ sequenceDiagram
 
 **Pseudocode:**
 
-```
+```text
 1. validate inputs
 2. ...
 3. return result
 ```
 
 **Edge cases handled:**
+
 - {case 1 — what happens}
 - {case 2 — what happens}
 
@@ -269,9 +272,9 @@ sequenceDiagram
 
 List down all metrics that developers and SREs need to look at to identify issues:
 
-- 
-- 
-- 
+-
+-
+-
 
 ### Alerting Thresholds
 

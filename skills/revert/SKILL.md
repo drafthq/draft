@@ -7,7 +7,7 @@ description: "Git-aware revert that understands Draft tracks, phases, and tasks.
 
 Perform intelligent git revert that understands Draft's logical units of work.
 
-## Red Flags - STOP if you're:
+## Red Flags - STOP if you're
 
 - Reverting without showing preview first
 - Skipping user confirmation
@@ -23,9 +23,11 @@ Perform intelligent git revert that understands Draft's logical units of work.
 ## Step 0: Pre-flight Check
 
 1. **Verify Draft context exists:**
+
    ```bash
    ls draft/tracks.md 2>/dev/null
    ```
+
    If `draft/` does not exist: **STOP** — "No Draft context found. Run `/draft:init` first."
 
 2. **Check working tree:**
@@ -52,6 +54,7 @@ If user specifies by name/description, find the matching commits.
 **Fallback method (if SHAs missing but completed tasks exist):** Search git log by track ID pattern:
 
 For Draft-managed work, commits follow pattern:
+
 - `feat(<track_id>): <description>`
 - `fix(<track_id>): <description>`
 - `test(<track_id>): <description>`
@@ -71,7 +74,7 @@ git log --oneline --since="<phase_start>" --until="<phase_end>" --grep="<track_i
 
 Show user what will be reverted:
 
-```
+```text
 ═══════════════════════════════════════════════════════════
                     REVERT PREVIEW
 ═══════════════════════════════════════════════════════════
@@ -105,6 +108,7 @@ Maintain a list of successfully reverted commits during execution.
 Read `draft/workflow.md` → `## Toolchain` section for VCS CLI. See `core/shared/vcs-commands.md` for the full command mapping.
 
 **git mode:**
+
 ```bash
 # Revert each commit in reverse order (newest first)
 git revert --no-commit <commit1>
@@ -136,7 +140,7 @@ On conflict, report: "Successfully reverted: [list]. Conflict on: [sha]. Run `gi
 
 ## Step 6: Confirm
 
-```
+```text
 Revert complete
 
 Reverted:
@@ -162,12 +166,14 @@ If the process is interrupted between git revert and Draft state update, the rec
 ## Abort Handling
 
 If user says no to preview:
-```
+
+```text
 Revert cancelled. No changes made.
 ```
 
 If git revert has conflicts:
-```
+
+```text
 Revert conflict detected in: [files]
 
 Options:

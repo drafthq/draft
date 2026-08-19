@@ -194,9 +194,9 @@ For each component, populate one subsection:
 
 Provide a brief list and summary of all inventions associated with the proposed design.
 
-1. 
-2. 
-3. 
+1.
+2.
+3.
 
 **Were Invention Disclosure Forms (IDFs) submitted for the inventions listed?**
 
@@ -208,6 +208,7 @@ Provide a brief list and summary of all inventions associated with the proposed 
 ### Third Party Technology (TPT)
 
 **TPT includes:**
+
 - **Open Source Software (OSS):** Software licensed under an Open Source License (e.g., MIT, BSD, GPL, Apache)
 - **Commercial (non-OSS) Technology:** Non- software, documentation, content, APIs, SDKs, logos, artwork, data, GUIs, Tools, databases, and other intellectual property NOT licensed under an Open Source License
 
@@ -289,7 +290,7 @@ Provide a brief list and summary of all inventions associated with the proposed 
 
 ### Cost Implications <!-- REQUIRED -->
 
-*Primarily for SaaS deployments*
+_Primarily for SaaS deployments_
 
 - Include cloud cost calculation here
 - Is there any cost to the customer for cloud workloads?

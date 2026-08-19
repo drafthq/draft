@@ -29,6 +29,7 @@ Before investigating, follow the context loading procedure in `core/shared/draft
 4. **Document findings** - Write down what you observe
 
 **Red Flags - STOP if you're:**
+
 - Tempted to make a "quick fix"
 - Guessing at the cause
 - Changing code "to see what happens"
@@ -47,6 +48,7 @@ Before investigating, follow the context loading procedure in `core/shared/draft
 4. **Narrow the scope** - What's the smallest change that breaks it?
 
 **Questions to answer:**
+
 - Is this a data problem or code problem?
 - Is this a timing/race condition?
 - Is this an environment difference?
@@ -81,6 +83,7 @@ Select techniques appropriate to the language and failure type. Not all techniqu
 4. **Run the test** - Execute and compare to prediction
 
 **If hypothesis is wrong:**
+
 - Return to Phase 2
 - Do NOT try another random fix
 - Update your understanding
@@ -146,6 +149,7 @@ Do NOT guess at performance bottlenecks. Profile first.
 5. **Re-profile** — confirm the hot path is resolved and no new bottleneck appeared
 
 **Anti-patterns for performance debugging:**
+
 - Optimizing without profiling data
 - Optimizing code that isn't on the hot path
 - Micro-optimizing when the bottleneck is I/O
@@ -167,6 +171,7 @@ Do NOT guess at performance bottlenecks. Profile first.
 ## When to Escalate
 
 If after 3 hypothesis cycles you haven't found root cause:
+
 1. Document all findings
 2. List what you've eliminated
 3. Ask for external input

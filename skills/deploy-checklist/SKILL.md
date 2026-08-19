@@ -17,11 +17,12 @@ When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-firs
 
 Filesystem `grep` is reserved for source-text scans (migration file names, flag-key strings). Module/impact discovery goes through the graph.
 
-## Red Flags — STOP if you're:
+## Red Flags — STOP if you're
 
 See [shared red flags](../../core/shared/red-flags.md) — applies to all code-touching skills.
 
 Skill-specific:
+
 - Deploying without a rollback plan
 - Skipping database migration verification
 - Deploying on Friday without explicit team approval
@@ -87,6 +88,7 @@ not be considered "ready to deploy" if `pre_deploy_status != passing`.
 ## Step 1: Parse Arguments
 
 Check for arguments:
+
 - `/draft:deploy-checklist` — Interactive: detect active track or ask for service name
 - `/draft:deploy-checklist <service>` — Generate checklist for named service
 - `/draft:deploy-checklist track <id>` — Generate from track's change scope
@@ -111,7 +113,7 @@ Generate a four-phase checklist customized to the project's tech stack. Adapt it
 
 ### Phase 0: HLD/LLD Gate (track-scoped only, when hld.md exists)
 
-> ** blocker:** the HLD's §Checklist sections were the design-time commitment. If they are still empty at deploy time, the design was never validated against operational reality. This phase enforces that.
+> **blocker:** the HLD's §Checklist sections were the design-time commitment. If they are still empty at deploy time, the design was never validated against operational reality. This phase enforces that.
 
 For `criticality ∈ {high, mission-critical}` (read from `hld.md` frontmatter `classification.criticality`), every row below MUST be checked before Phase 1 begins. For `standard` criticality, missing rows produce warnings but do not block. For `low`, this phase is informational.
 
@@ -176,6 +178,7 @@ If a partial file is needed for tracking, write it with `status: BLOCKED` in the
 ### Rollback Triggers
 
 Initiate rollback if ANY of these occur:
+
 - Error rate exceeds 2x baseline
 - p95 latency exceeds 3x baseline
 - Data corruption detected
@@ -195,10 +198,12 @@ Initiate rollback if ANY of these occur:
 ## Step 4: Present and Track
 
 Present the checklist interactively. For each critical item (marked **bold**):
+
 - If unchecked and user wants to proceed: warn "Critical item unchecked: [item]. Are you sure? [y/N]"
 - Default: stop and address critical items
 
 Allow the user to:
+
 - Check off items as they complete them
 - Add custom items specific to this deployment
 - Mark items as N/A with justification
@@ -219,6 +224,7 @@ Include the report header table immediately after frontmatter:
 ```
 
 Save to:
+
 - Track-scoped: `draft/tracks/<id>/deploy-checklist.md`
 - Standalone: `draft/deploy-checklist-<timestamp>.md` with symlink `deploy-checklist-latest.md`
 
@@ -241,6 +247,7 @@ If `draft/graph/schema.yaml` does not exist, set `Graph files queried: NONE` and
 ## Graph Usage Report (append to checklist)
 
 Emit the canonical footer from [core/shared/graph-usage-report.md](../../core/shared/graph-usage-report.md). The lint hook `scripts/tools/check-graph-usage-report.sh` validates the section on save.
+
 ## Cross-Skill Dispatch
 
 - **Auto-invoked by:** `/draft:upload` (pre-upload verification)

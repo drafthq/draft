@@ -7,7 +7,7 @@ description: "Initialize Draft project context for Context-Driven Development �
 
 Initialize a Draft project for Context-Driven Development.
 
-## Red Flags - STOP if you're:
+## Red Flags - STOP if you're
 
 - Re-initializing a project that already has `draft/` without using `refresh` mode
 - Skipping brownfield analysis for an existing codebase
@@ -31,7 +31,7 @@ Initialize a Draft project for Context-Driven Development.
 > **READ THIS BEFORE WRITING A SINGLE LINE OF architecture.md.**
 > The document MUST use the EXACT modern graph-primary structure below. Freeform sections, renamed headings, or missing mandatory sections are FAILURES. This is the single forward-looking format — no legacy 28-section or volume-oriented material is accepted.
 
-```
+```text
 ## 1. Executive Summary + Graph Health Dashboard
 ## 2. Critical Invariants & Safety Rules (with provenance)
 ## 3. Primary Control & Data Flows (Graph + Synthesis)
@@ -55,6 +55,7 @@ Initialize a Draft project for Context-Driven Development.
 The knowledge graph — served live by the local `codebase-memory-mcp` engine (packages, languages, routes, fan-in/out, hotspots) and queried via the `graph-*.sh` wrappers — is the **deterministic structural ground truth** for the system's actual architecture. Draft is engine-only: `draft/graph/` holds only the `schema.yaml` gate marker; all graph data comes from live queries.
 
 **You are running inside a powerful agentic coding environment** (Cursor, Claude Code, Copilot, Windsurf, etc.) that maintains its own rich, continuously updated index of the entire codebase. **Use that indexed knowledge aggressively** in addition to the explicit graph data and direct source reads. Your environment's index often captures higher-level intent, naming patterns, cross-file workflows, and architectural signals that the static graph may not fully express yet. Combine both sources:
+
 - Graph = authoritative modules, edges, public surfaces, hotspots, call relationships.
 - Your IDE/Agent index + full project understanding = semantic layer, workflow discovery, intent, and validation of the graph.
 
@@ -163,6 +164,7 @@ synced_to_commit: "{FULL_SHA}"
 ### Usage in Refresh
 
 The `synced_to_commit` field is critical for incremental refresh:
+
 - `/draft:init refresh` reads this field to find changed files since last sync
 - If `git.dirty: true`, warn user that docs may not reflect committed state
 - After refresh, update `synced_to_commit` to current HEAD
@@ -192,6 +194,7 @@ synced_to_commit: "a1b2c3d4e5f6789012345678901234567890abcd"
 ## Pre-Check
 
 Check for arguments:
+
 - `refresh`: Update existing context without full re-init
 - `--graph-only`: Build/refresh only the code-graph knowledge memory (no markdown) — see the fast path below
 - `--module-only`: When run in a sub-module, do not touch the root graph (the module→root link is marked `pending`)
@@ -248,6 +251,7 @@ ls draft/ 2>/dev/null
 ```
 
 If `draft/` exists with context files:
+
 - Announce: "Project already initialized. Use `/draft:init refresh` to update context or `/draft:new-track` to create a feature."
 - Stop here.
 
@@ -286,11 +290,13 @@ Use `--module-only` to skip touching the root (the link is marked `pending` and 
 ### Migration Detection
 
 If `draft/architecture.md` exists WITHOUT `draft/.ai-context.md`:
+
 - Announce: "Detected architecture.md without .ai-context.md. Would you like to generate .ai-context.md? This will condense your existing architecture.md into a token-optimized AI context file."
 - If user accepts: Run the Condensation Subroutine to derive `.ai-context.md` from existing `architecture.md`
 - If user declines: Continue without .ai-context.md
 
 If `draft/.ai-context.md` exists WITHOUT `draft/architecture.md`:
+
 - Announce: "Detected .ai-context.md without its source architecture.md. The derived file exists but its primary source is missing (may have been accidentally deleted). Recommend running `/draft:init refresh` to regenerate architecture.md from codebase analysis."
 - Do NOT delete the existing `.ai-context.md` — it still provides useful context until `architecture.md` is regenerated
 
@@ -301,16 +307,21 @@ If the user runs `/draft:init refresh`:
 **0. State-Aware Pre-Check** (before any refresh work):
 
    **a. Check for interrupted previous run:**
+
    ```bash
    cat draft/.state/run-memory.json 2>/dev/null
    ```
+
    If `status` is `"in_progress"`, offer to resume from `resumable_checkpoint` or start fresh.
 
    **b. Load freshness state (if available):**
+
    ```bash
    cat draft/.state/freshness.json 2>/dev/null
    ```
+
    If `freshness.json` exists, compute current file hashes and diff against stored hashes:
+
    - **Changed files**: Hash differs from stored → these files need re-analysis
    - **New files**: Present in current tree but not in stored → new modules/components to document
    - **Deleted files**: Present in stored but not in current tree → sections to prune
@@ -321,16 +332,20 @@ If the user runs `/draft:init refresh`:
    Stop here unless the user insists.
 
    **c. Load signal state (if available):**
+
    ```bash
    cat draft/.state/signals.json 2>/dev/null
    ```
+
    If `signals.json` exists, re-run signal classification (Phase 1 step 5) and diff against stored signals:
+
    - **New signal categories** (0→N): A new architectural concern appeared (e.g., auth files added for the first time). Flag these — new architecture.md sections may need to be generated.
    - **Removed signal categories** (N→0): An architectural concern was removed. Flag for section pruning.
    - **Signal count changes**: Significant growth (>50% increase) suggests the section needs deeper treatment.
 
    Report signal drift:
-   ```
+
+   ```text
    Signal drift detected:
      NEW:     auth_files (0 → 5) — §16 Security Architecture needs generation
      GROWN:   backend_routes (12 → 24) — §12 API Definitions, §14 Cross-Module Integration need expansion
@@ -355,6 +370,7 @@ If the user runs `/draft:init refresh`:
    Otherwise (**`monolith` mode** — `draft/architecture.md` is the source of truth and no `draft/wiki/` exists), use metadata-based incremental analysis. If freshness state is available from step 0b, use file-level deltas to scope the refresh more precisely than git-diff alone:
 
    **a. Read synced commit from metadata:**
+
    ```bash
    # Extract synced_to_commit from YAML frontmatter
    SYNCED_SHA=$(grep "synced_to_commit:" draft/architecture.md | head -1 | sed 's/.*synced_to_commit:[[:space:]]*"\{0,1\}\([^"]*\)"\{0,1\}/\1/')
@@ -365,12 +381,15 @@ If the user runs `/draft:init refresh`:
      # Jump to step (i) — full refresh
    fi
    ```
+
    This returns the commit SHA the docs were last synced to (more reliable than file modification time). The SHA is validated before use to prevent silent failures in `git diff`.
 
    **b. Get changed files since that commit:**
+
    ```bash
    git diff --name-only <SYNCED_SHA> HEAD -- . ':!draft/'
    ```
+
    This lists all source files changed since the last architecture sync, excluding the draft/ directory itself.
 
    **c. Check if docs were generated with dirty state:**
@@ -411,9 +430,11 @@ If the user runs `/draft:init refresh`:
 
    **i. Fallback to full refresh:**
    If `synced_to_commit` is missing from metadata, or the commit SHA doesn't exist in git history:
+
    ```bash
    git cat-file -t <SYNCED_SHA> 2>/dev/null || echo "not found"
    ```
+
    If this returns "not found", run full 5-phase architecture discovery instead.
 
    - If `draft/architecture.md` does NOT exist and the project is brownfield, offer to generate it now
@@ -443,7 +464,8 @@ If the user runs `/draft:init refresh`:
       - **NEW**: Fact not previously recorded — add with full timestamps
       - **STALE**: Fact's source file was deleted — mark `last_active_at` as stale, reduce confidence
    3. **Generate Fact Evolution Report** — display summary to user:
-      ```
+
+      ```text
       Fact Evolution Report:
         CONFIRMED:  N facts unchanged
         UPDATED:    N facts superseded (old → new)
@@ -451,6 +473,7 @@ If the user runs `/draft:init refresh`:
         NEW:        N facts discovered
         STALE:      N facts from deleted files
       ```
+
    4. **Update relationship edges** in `facts.json` knowledge graph
 
 3. **Product Refinement**: Ask if product vision/goals in `draft/product.md` need updates.
@@ -476,8 +499,10 @@ Classify and emit **Context Quality Report** (always, even if none found):
 - Low/None: Standard project.
 
 If High or Medium:
+
 - Emit terminal report with file list, sizes/signals, and explicit warning:
-  ```
+
+  ```text
   Context Quality Report:
     High-quality agent-optimized docs detected:
     - CLAUDE.md (10k+ lines, purpose-built for AI coding assistants)
@@ -486,6 +511,7 @@ If High or Medium:
   Duplication risk: Generating a large parallel architecture.md can create divergence in safety-critical systems. Highest risk is inconsistent documentation, not insufficient volume.
   Action: architecture.md will be graph-primary (Full mode) with mandatory "Graph Coverage Gaps" and "Relationship to Existing Authoritative Documentation" sections. Strong cross-references + provenance tags required. Prose duplication of existing high-fidelity material is a verification failure.
   ```
+
 - Set internal flag `EXISTING_CONTEXT_QUALITY=high` (propagate to synthesis, writing, and Completion Verification steps).
 - Force §30 (Relationship) and §29 (Gaps) as non-skippable in later phases.
 - In Completion Verification: add explicit check that Relationship section defers appropriately and adds only graph-derived or synthesized value.
@@ -497,11 +523,13 @@ This audit ensures Draft is safe and effective for mature brownfield projects th
 Analyze the current directory to classify the project:
 
 **Brownfield (Existing)** indicators:
+
 - Has `package.json`, `requirements.txt`, `go.mod`, `Cargo.toml`, etc.
 - Has `src/`, `lib/`, or similar code directories
 - Has git history with commits
 
 **Greenfield (New)** indicators:
+
 - Empty or near-empty directory
 - Only has README or basic config
 
@@ -580,6 +608,7 @@ ARCH=$("$DRAFT_TOOLS/graph-arch.sh" --repo .)
 
 **Step 1.4.5 — Compute Codebase Tier:**
 From the live `$ARCH` (above), extract:
+
 - `M = $ARCH | jq '.packages | length'` (modules)
 - `F = $ARCH | jq '[.node_labels[] | select(.label=="Function" or .label=="Method") | .count] | add // 0'` (functions+methods)
 - `P = $ARCH | jq '.routes | length'` (routes / RPCs)
@@ -609,11 +638,14 @@ Hold ranked list in memory — it replaces directory scanning for module discove
 Query for diagram content and write into architecture.md slots using the standard marker format.
 
 For Section 4.4 (module-deps slot):
+
 ```bash
 "$DRAFT_TOOLS/mermaid-from-graph.sh" --repo . --diagram module-deps
 ```
+
 The tool emits a ready-to-inject ` ```mermaid ``` ` block (or an empty stub on exit 2). Write between the markers:
-```
+
+```text
 <!-- GRAPH:module-deps:START -->
 {mermaid block from the tool}
 <!-- GRAPH:module-deps:END -->
@@ -621,7 +653,8 @@ The tool emits a ready-to-inject ` ```mermaid ``` ` block (or an empty stub on e
 
 For Section 20 (hotspots slot):
 Run `"$DRAFT_TOOLS/hotspot-rank.sh" --repo . --top 10`, take the top 10 by fanIn, build a markdown table:
-```
+
+```text
 <!-- GRAPH:hotspots:START -->
 | Symbol | fanIn |
 |--------|-------|
@@ -631,17 +664,20 @@ Run `"$DRAFT_TOOLS/hotspot-rank.sh" --repo . --top 10`, take the top 10 by fanIn
 ```
 
 For Appendix E (proto-map slot):
+
 ```bash
 "$DRAFT_TOOLS/mermaid-from-graph.sh" --repo . --diagram proto-map
 ```
+
 The tool emits a ` ```mermaid ``` ` block from detected routes (empty stub if none). Write:
-```
+
+```text
 <!-- GRAPH:proto-map:START -->
 ```mermaid
 {diagram content}
 ```
 <!-- GRAPH:proto-map:END -->
-```
+```text
 
 **If slot markers are absent** (first run on a repo that has no prior slot structure): write the slot content at the designated location in the template. The markers are always present in `core/templates/architecture.md`, so this path is only hit if a user has an older pre-slot architecture.md.
 
@@ -726,6 +762,7 @@ Use the modules-per-agent count from the tier table above (4 for tier 4/5; all m
 
 For each reader group, prepare a compact summary from graph artifacts:
 ```
+
 Modules: [execution, fill_processor, order_manager]
 Hotspot files:
   execution/engine.go (847 lines, fanIn=12)
@@ -734,7 +771,8 @@ Hotspot files:
 Module edges (from $ARCH .packages fan-in/out):
   execution → [risk, data, services]
   fill_processor → [execution, persistence]
-```
+
+```text
 
 **Step 3: Spawn all reader agents in parallel using the Agent tool.**
 
@@ -750,11 +788,13 @@ Each reader agent:
 
 **Critical constraints to include in reader prompts:**
 ```
+
 MUST output IR JSON array only.
 MUST NOT write any documentation or architecture sections.
 MUST NOT read files outside assigned modules.
 Token budget: max 600 tokens per module in IR output.
-```
+
+```text
 
 **Step 4: Collect and validate reader outputs.**
 
@@ -786,7 +826,9 @@ The synthesis agent:
 
 **Source reading policy for synthesis agent (enforce in prompt):**
 ```
+
 Read source (and aggressively use your full project index) for:
+
 - §6 Core Operational Flows — the most important system-level workflows, lifecycles, and state machines (this is the highest-ROI section for future coding accuracy)
 - §12 API / Interface surface
 - §14 Cross-module integration sequences
@@ -794,7 +836,8 @@ Read source (and aggressively use your full project index) for:
 - §18 Key Design Patterns
 
 All other sections: compose primarily from the graph + reader outputs + IR, with light additional reads only where needed for diagram accuracy.
-```
+
+```text
 
 #### Phase 3: Parallel Finalization
 
@@ -996,7 +1039,7 @@ Follow these steps in order. The specific files to look for depend on the langua
 
    **Build a signal summary** (hold in memory for Phase 5):
 
-   ```
+   ```text
    Signal Classification:
      backend_routes:    12 files  → §12, §14 HIGH
      services:           8 files  → §5, §7 HIGH
@@ -1060,12 +1103,14 @@ Follow these steps in order. The specific files to look for depend on the langua
 Generate `draft/architecture.md` using the modern 10-section graph-primary structure defined in the **MANDATORY SECTION CHECKLIST** above and in `core/templates/architecture.md`.
 
 The document is:
+
 - Primarily derived from the deterministic knowledge graph (`draft/graph/`).
 - Explicit about fidelity (frontmatter `graph:` block + Dashboard).
 - Required to carry provenance/fidelity tags on all significant claims.
 - Duplication-aware when high-quality agent docs (CLAUDE.md, INVARIANTS.md, etc.) are detected by the Context Audit.
 
 **Full details, per-section guidance, provenance rules, and examples** live in:
+
 - `core/templates/architecture.md` (the source of truth for the 10 sections + Generation Contract)
 - `references/architecture-spec.md` (deprecated legacy notes — **10-section template wins on any conflict**)
 
@@ -1091,12 +1136,14 @@ Generate `draft/.ai-context.md` — a **machine-optimized** context file for AI/
 ### Design Principles
 
 This file is **NOT for humans**. It is optimized for:
+
 1. **Token efficiency** — minimize tokens while maximizing information density
 2. **Machine parseability** — use consistent, structured formats that LLMs process efficiently
 3. **Self-containment** — complete context without referencing other files
 4. **Action-orientation** — everything an AI needs to make safe, correct code changes
 
 **Format choices**:
+
 - Use YAML-like key-value pairs (not prose paragraphs)
 - Use arrow notation for graphs (not Mermaid)
 - Use compact tables with `|` separators
@@ -1194,33 +1241,40 @@ interface {Name} {
 ```
 
 ## CATALOG:{Category}
+
 {id}|{type}|{file}|{purpose}
 {id}|{type}|{file}|{purpose}
 
 ## CATALOG:{AnotherCategory}
+
 {id}|{type}|{file}|{purpose}
 
 ## THREADS
+
 {pool_name}|{count}|{runs_what}
 {pool_name}|{count}|{runs_what}
 
 ## CONFIG
+
 {param}|{default}|{critical:Y/N}|{purpose}
 {param}|{default}|{critical:Y/N}|{purpose}
 
 ## ERRORS
+
 {scenario}: {recovery}
 {scenario}: {recovery}
 retry_policy: {policy}
 backoff: {strategy}
 
 ## CONCURRENCY
+
 {component}: {rule} -> {violation_consequence}
 {component}: {rule} -> {violation_consequence}
 locks: [{lock1}@{file}, {lock2}@{file}]
 lock_order: {lock1} < {lock2} < {lock3}
 
 ## EXTEND:{ExtensionType}
+
 create: {path/pattern}
 implement: {interface}@{file}
 required: [{method1}, {method2}]
@@ -1230,14 +1284,17 @@ deps: [{dep1}, {dep2}]
 test: {test_pattern}
 
 ## EXTEND:{AnotherType}
+
 ...
 
 ## TEST
+
 unit: {command}
 integration: {command}
 hooks: [{hook1}@{file}, {hook2}@{file}]
 
 ## FILES
+
 entry: {path}
 config: {path}
 routes: {path}
@@ -1247,14 +1304,17 @@ tests: {path}
 build: {path}
 
 ## VOCAB
+
 {term}: {definition}
 {term}: {definition}
 
 ## REFS
+
 tech_stack: draft/tech-stack.md
 workflow: draft/workflow.md
 product: draft/product.md
-```
+
+```text
 
 ### Machine-Readable Graph Notation
 
@@ -1262,34 +1322,42 @@ Use these consistent notations for graphs:
 
 **Component hierarchy** (tree notation):
 ```
+
 Root
   ├─Child1: purpose
   ├─Child2: purpose
   │   ├─Grandchild1: purpose
   │   └─Grandchild2: purpose
   └─Child3: purpose
-```
+
+```text
 
 **Dependency arrows** (directed graph):
 ```
+
 A -[protocol]-> B      # A depends on B via protocol
 A --> B                # A depends on B (direct call)
 A -.-> B               # A optionally depends on B
 A <--> B               # bidirectional dependency
-```
+
+```text
 
 **Data flow** (pipeline notation):
 ```
+
 Source --{DataType}--> Transform --{DataType}--> Sink
          |
          +--> Branch --{DataType}--> AlternateSink
-```
+
+```text
 
 **State transitions**:
 ```
+
 State1 --(event)--> State2
 State2 --(event)--> State3 | State4  # conditional
-```
+
+```text
 
 ### Compression Techniques
 
@@ -1360,6 +1428,7 @@ After completing the 5-phase analysis:
    ```
 
 2. **Write `draft/architecture.md`** with this EXACT structure:
+
    ```markdown
    ---
    project: "{PROJECT_NAME from above}"
@@ -1390,7 +1459,7 @@ After completing the 5-phase analysis:
 
 3. **Run Completion Verification (MANDATORY)** — Before proceeding to `.ai-context.md`, verify architecture.md meets signal-quality, fidelity, and duplication-aware requirements (volume is now guidance only, secondary to provenance and honesty):
 
-   ```
+   ```text
    SIGNAL QUALITY & FIDELITY VERIFICATION (replaces volume proxy)
 
    Hard (blocking) checks — all must PASS:
@@ -1435,6 +1504,7 @@ After completing the 5-phase analysis:
 6. **Present for review**: Show the user a summary of what was discovered, including the Completion Verification scores, before proceeding to Step 2.
 
 **CRITICAL**:
+
 - Do NOT skip the YAML frontmatter metadata block — it enables incremental refresh
 - Do NOT skip the Completion Verification — it catches shallow output before it becomes permanent
 - Generate architecture.md FIRST, verify it meets thresholds, then derive .ai-context.md, then .ai-profile.md
@@ -1484,6 +1554,7 @@ Extract atomic architectural facts discovered during Phases 1-5. Each fact is a 
 ```
 
 **Fact categories:**
+
 - `data-flow` — How data moves through the system
 - `architecture` — Structural patterns and module organization
 - `invariant` — Rules that must always hold true
@@ -1499,7 +1570,7 @@ Extract atomic architectural facts discovered during Phases 1-5. Each fact is a 
 
 ### 1.7.1 Freshness State (`draft/.state/freshness.json`)
 
-Compute SHA-256 hashes of all source files analyzed during Phases 1-5. This enables **file-level staleness detection** on subsequent refreshes — more granular than `synced_to_commit` which only detects that _some_ commits happened.
+Compute SHA-256 hashes of all source files analyzed during Phases 1-5. This enables **file-level staleness detection** on subsequent refreshes — more granular than `synced_to_commit` which only detects that *some* commits happened.
 
 ```bash
 # Generate SHA-256 hashes for all analyzed source files (exclude draft/, node_modules/, .git/, vendor/)
@@ -1593,6 +1664,7 @@ Persist run state for cross-session continuity. If `draft:init` is interrupted m
 **On completion:** Update `status` to `"completed"` and set `completed_at`. Keep `unresolved_questions` — these are surfaced to the user in the completion report and are valuable context for future refreshes.
 
 **On next invocation:** If `run-memory.json` exists with `status: "in_progress"`:
+
 - Announce: "Detected incomplete previous run (started {started_at}, completed phases: {list}). Resume from {last_phase} or start fresh?"
 - If resume: Skip completed phases, continue from `resumable_checkpoint`
 - If fresh: Overwrite run memory and start from Phase 1
@@ -1619,6 +1691,7 @@ Present for approval, iterate if needed, then write to `draft/product.md`.
 ## Step 3: Tech Stack
 
 For Brownfield projects, auto-detect from:
+
 - `package.json` → Node.js/TypeScript
 - `requirements.txt` / `pyproject.toml` → Python
 - `go.mod` → Go
@@ -1637,6 +1710,7 @@ Create `draft/workflow.md` using the template from `core/templates/workflow.md`.
 **Include the Standard File Metadata header at the top of the file.**
 
 Ask about:
+
 - TDD preference (strict/flexible/none)
 - Commit style and frequency
 - Validation settings (auto-validate, blocking behavior)
@@ -1734,6 +1808,7 @@ Keep one-line descriptions accurate to what each file actually contains. This in
 the single committed entry point to the `draft/` bundle.
 
 **Finalize run memory:** Update `draft/.state/run-memory.json`:
+
 - `status`: `"completed"`
 - `completed_at`: current ISO timestamp
 - Preserve `unresolved_questions` — these are displayed in the completion report below
@@ -1742,6 +1817,7 @@ For **Brownfield** projects, announce:
 "Draft initialized successfully with comprehensive analysis!
 
 Created:
+
 - draft/index.md (plain docs index — navigable table of contents for the draft/ bundle)
 - draft/.ai-profile.md (20-50 lines — ultra-compact always-injected profile, Tier 0)
 - draft/.ai-context.md (200-400 lines — token-optimized AI context, self-contained, Tier 1)
@@ -1763,6 +1839,7 @@ Unresolved questions from analysis:
 {list each question — these are areas where the AI couldn't determine the answer with confidence}
 
 Next steps:
+
 1. Review draft/product.md — verify product vision, users, and goals reflect current reality
 2. Review draft/tech-stack.md — verify languages, frameworks, and accepted patterns are accurate
 3. Review draft/workflow.md — verify TDD, commit, and review settings match your team's process
@@ -1777,6 +1854,7 @@ For **Greenfield** projects, announce:
 "Draft initialized successfully!
 
 Created:
+
 - draft/index.md (plain docs index — navigable table of contents for the draft/ bundle)
 - draft/product.md
 - draft/tech-stack.md
@@ -1786,6 +1864,7 @@ Created:
 - draft/.state/run-memory.json (run metadata)
 
 Next steps:
+
 1. Review draft/product.md — verify product vision, users, and goals reflect current reality
 2. Review draft/tech-stack.md — verify languages, frameworks, and accepted patterns are accurate
 3. Review draft/workflow.md — verify TDD, commit, and review settings match your team's process
@@ -1802,7 +1881,6 @@ A self-contained procedure for generating `draft/.ai-context.md` from `draft/arc
 **Authoritative definition** lives at `core/shared/condensation.md` (already inlined into integrations). It covers inputs, outputs, tier-scaled budgets, the META/GRAPH/INVARIANTS/INTERFACES/CATALOG/THREADS/CONFIG/ERRORS/EXTEND sections, and the GRAPH:MODULE-HOTSPOTS / GRAPH:FAN-IN / GRAPH:PROTO-MAP enrichments.
 
 After running condensation, also run the **Profile Generation Subroutine** below to regenerate `draft/.ai-profile.md`.
-
 
 ## Profile Generation Subroutine
 
@@ -1821,6 +1899,7 @@ Read `draft/.ai-context.md`. Extract the YAML frontmatter metadata block.
 #### Step 2: Write YAML Frontmatter
 
 Start `draft/.ai-profile.md` with an updated YAML frontmatter block. Copy all `git.*` and `synced_to_commit` fields. Set:
+
 - `generated_by`: the calling command (e.g., `draft:init`, `draft:implement`)
 - `generated_at`: current ISO 8601 timestamp
 
@@ -1854,7 +1933,7 @@ After initialization completes, suggest relevant follow-up skills based on proje
 
 If during architecture discovery (Step 1.5), anti-patterns or technical debt signals are detected in signal classification:
 
-```
+```text
 "Detected architectural debt patterns in this codebase. Consider running:
   → /draft:tech-debt — Catalog and prioritize existing technical debt"
 ```
@@ -1863,7 +1942,7 @@ If during architecture discovery (Step 1.5), anti-patterns or technical debt sig
 
 At completion (Step 6), after announcing next steps, present categorized follow-up skills:
 
-```
+```text
 What's Next:
 ─────────────────────────────
 Start building:

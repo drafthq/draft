@@ -32,21 +32,25 @@ Run `/draft:learn` to scan the codebase and update learned patterns. Quality com
 <!-- Hard constraints that must never be violated. Check [x] to enable enforcement. -->
 
 ### Git & Version Control
+
 - [ ] No direct commits to main/master
 - [ ] No force push to shared branches
 - [ ] PR required for all changes
 
 ### Code Quality
+
 - [ ] No console.log/print statements in production code
 - [ ] No commented-out code blocks
 - [ ] No TODO comments without linked issue
 
 ### Security
+
 - [ ] No secrets/credentials in code
 - [ ] No disabled security checks without documented exception
 - [ ] Dependencies must pass security audit
 
 ### Testing
+
 - [ ] Tests required before merge
 - [ ] No skipped tests without documented reason
 - [ ] Coverage must not decrease
@@ -67,6 +71,7 @@ Run `/draft:learn` to scan the codebase and update learned patterns. Quality com
 - [x] G1.12: No `shared_ptr` binding to non-trivial objects (EventDriver holders) in callbacks
 
 ### C++/Systems — Concurrency & Locking
+
 - [x] G2.1: No mutable operations under shared/read locks
 - [x] G2.2: Always release spinlock before invoking callbacks or `Finish()`
 - [x] G2.3: No expensive object destruction under spinlock protection
@@ -74,12 +79,14 @@ Run `/draft:learn` to scan the codebase and update learned patterns. Quality com
 - [x] G2.5: No synchronous waits (`Trigger::Wait`) in async code paths
 
 ### C++/Systems — Control Flow & Error Handling
+
 - [x] G3.1: Always `return` after `Finish()` in conditional blocks
 - [x] G3.2: CHECKs for internal consistency only — never for external input validation
 - [x] G3.3: No side-effecting expressions inside DCHECK
 - [x] G3.4: CHECK/DCHECK/LOG(DFATAL) selection per severity matrix
 
 ### C++/Systems — Format & API Correctness
+
 - [x] G4.1: Printf format specifiers must match argument types
 - [x] G4.2: MemTracer Print vs Printf selection (lazy construction vs immediate materialization)
 - [x] G4.3: Use Maybe-prefixed MemTracer variants only when op may be finished
@@ -87,9 +94,11 @@ Run `/draft:learn` to scan the codebase and update learned patterns. Quality com
 - [x] G4.5: `boost::optional<bool>` tests presence, not value — use `*xx` or `.value_or()`
 
 ### C++/Systems — GFlags & Runtime Configuration
+
 - [x] G5.1: Snapshot gflag values at op start — never depend on flag stability mid-op
 
 ### C++/Systems — Performance
+
 - [x] G6.1: Avoid `ByteSize()` on proto objects in hot paths
 - [x] G6.2: Prefer repeated fields over map fields in proto for serialization-sensitive paths
 - [x] G6.3: No inline execution in `SpawnWorkersAndJoin` `done_cb`

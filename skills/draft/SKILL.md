@@ -7,7 +7,7 @@ description: "Lists Draft's canonical workflow commands, explains the Context-Dr
 
 Draft is a methodology for structured software development: **Context → Spec & Plan → Implement → Verify**
 
-## Red Flags - STOP if you're:
+## Red Flags - STOP if you're
 
 - Jumping straight to implementation without reading existing Draft context
 - Suggesting `/draft:implement` before a track has an approved spec and plan
@@ -22,16 +22,19 @@ Draft is a methodology for structured software development: **Context → Spec &
 ## Workflow Commands
 
 ### Canonical Workflow
-```
+
+```text
 init → plan → implement → review → upload
                ↑            |
                └────────────┘  (review auto-invoked at phase boundaries)
 ```
 
 ### Primary Workflow (Parent) Commands
+
 These 7 canonical parent commands coordinate and orchestrate the entire development lifecycle, automatically routing to specialist subcommands when appropriate.
 
 ### Routed Core Workflows (5 routers)
+
 The 5 router commands provide intent-based dispatch into the 20+ specialist commands. Use the router form for discoverability; leaf commands remain supported for compatibility.
 
 | Router | Scope | Dispatches To (examples) |
@@ -47,39 +50,45 @@ The 5 router commands provide intent-based dispatch into the 20+ specialist comm
 ---
 
 ### Specialist & Subcommands
+
 These commands remain available for targeted, specialist execution outside parent command orchestration. **Every command below appears exactly once in this reference.**
 
 #### 1. Planning & Architecture
-* `/draft:new-track` - Create a new feature/bug track with structured `spec.md` and `plan.md`
-* `/draft:decompose` - Perform module-level decomposition with dependency mapping
-* `/draft:change` - Safely manage and document mid-track requirement changes and plan updates
-* `/draft:adr` - Write Architecture Decision Records to capture permanent technical choices
+
+- `/draft:new-track` - Create a new feature/bug track with structured `spec.md` and `plan.md`
+- `/draft:decompose` - Perform module-level decomposition with dependency mapping
+- `/draft:change` - Safely manage and document mid-track requirement changes and plan updates
+- `/draft:adr` - Write Architecture Decision Records to capture permanent technical choices
 
 #### 2. Quality & Testing
-* `/draft:quick-review` - Fast, lightweight 4-dimension code review for staged changes or diffs
-* `/draft:bughunt` - Exhaustive 14-dimension codebase-wide bug hunt with verification protocol
-* `/draft:deep-review` - Rigorous module-scoped lifecycle audit (ACID compliance, resilience)
-* `/draft:coverage` - Measure and report code coverage (targeting 95%+ for changed code)
-* `/draft:testing-strategy` - Design testing plan and identify coverage/mocking strategies
-* `/draft:learn` - Discover coding patterns from recent Git diffs and update `draft/guardrails.md`
+
+- `/draft:quick-review` - Fast, lightweight 4-dimension code review for staged changes or diffs
+- `/draft:bughunt` - Exhaustive 14-dimension codebase-wide bug hunt with verification protocol
+- `/draft:deep-review` - Rigorous module-scoped lifecycle audit (ACID compliance, resilience)
+- `/draft:coverage` - Measure and report code coverage (targeting 95%+ for changed code)
+- `/draft:testing-strategy` - Design testing plan and identify coverage/mocking strategies
+- `/draft:learn` - Discover coding patterns from recent Git diffs and update `draft/guardrails.md`
 
 #### 3. Operations & Debugging
-* `/draft:status` - Display a comprehensive overview of active track phases, tasks, and modules
-* `/draft:revert` - Safely roll back active tasks or commits using Git-aware tracking
-* `/draft:debug` - Structured 4-stage debugging flow (reproduce → isolate → diagnose → fix)
-* `/draft:standup` - Summarize git activity and file changes for standup reporting
-* `/draft:deploy-checklist` - Pre-deployment checklist verification with automated rollback triggers
-* `/draft:upload` - Pre-upload gate: review, HLD approvals, validator chain, then git upload/PR
-* `/draft:incident-response` - Coordinate incident lifecycle (triage → mitigate → postmortem)
+
+- `/draft:status` - Display a comprehensive overview of active track phases, tasks, and modules
+- `/draft:revert` - Safely roll back active tasks or commits using Git-aware tracking
+- `/draft:debug` - Structured 4-stage debugging flow (reproduce → isolate → diagnose → fix)
+- `/draft:standup` - Summarize git activity and file changes for standup reporting
+- `/draft:deploy-checklist` - Pre-deployment checklist verification with automated rollback triggers
+- `/draft:upload` - Pre-upload gate: review, HLD approvals, validator chain, then git upload/PR
+- `/draft:incident-response` - Coordinate incident lifecycle (triage → mitigate → postmortem)
 
 #### 4. Setup & Documentation
-* `/draft` - Display this command overview and help reference
-* `/draft:init` - Single scope-aware entry point: builds the root-first code graph (`draft/graph/`) and project context; run at the repo root or inside any sub-module (monorepo context comes from running it at root)
-* `/draft:discover` - Phase 0 code-spike report (hotspots, mode flags, open questions) before spec freeze
-* `/draft:documentation` - Generate structured codebase documentation (API, Onboarding, Runbooks)
-* `/draft:tech-debt` - Audit technical debt across 6 key dimensions
+
+- `/draft` - Display this command overview and help reference
+- `/draft:init` - Single scope-aware entry point: builds the root-first code graph (`draft/graph/`) and project context; run at the repo root or inside any sub-module (monorepo context comes from running it at root)
+- `/draft:discover` - Phase 0 code-spike report (hotspots, mode flags, open questions) before spec freeze
+- `/draft:documentation` - Generate structured codebase documentation (API, Onboarding, Runbooks)
+- `/draft:tech-debt` - Audit technical debt across 6 key dimensions
 
 **Integration:**
+
 | Command | Purpose |
 |---------|---------|
 | `/draft:jira` | Unified Jira workflows (preview / create / review) |
@@ -123,9 +132,10 @@ flowchart TD
 ## Actionability: Command Invocation Examples
 
 ### Example 1: `/draft:status`
+
 Parses active tracks, phases, tasks, and module mappings:
 
-```
+```yaml
 PROJECT: Bookshelf API Service
 
 [track-042] OAuth2 Integration  —  [~] In Progress  (Phase 2/3, 4/9 tasks)
@@ -137,9 +147,10 @@ PROJECT: Bookshelf API Service
 ```
 
 ### Example 2: `/draft:implement`
+
 Reads `plan.md`, picks the current incomplete task, and continues it (TDD-aware):
 
-```
+```text
 Active track: [track-042] OAuth2 Integration
 Current task: [~] 2.1 Implement token generation endpoint
 TDD: on  →  writing tests/auth/token_generation_test.go (Red stage)
@@ -163,9 +174,9 @@ Used throughout `plan.md` files and referenced by the validation checkpoints abo
 
 You can also use natural language. Prefer the 5 router commands (`/draft:plan`, `/draft:ops`, `/draft:docs`, `/draft:discover`, `/draft:jira`) for grouped access; they analyze intent and dispatch.
 
-* **[quality-guide.md](./quality-guide.md)** — Quality Audit Spectrum, command choices, and coordination with external bug-hunting tools.
-* **[context-files.md](./context-files.md)** — Schema, role, and usage of each file inside the `draft/` context directory.
-* **[intent-mapping.md](./intent-mapping.md)** — Maps natural language phrasing to precise Draft commands for conversational AI usage.
+- **[quality-guide.md](./quality-guide.md)** — Quality Audit Spectrum, command choices, and coordination with external bug-hunting tools.
+- **[context-files.md](./context-files.md)** — Schema, role, and usage of each file inside the `draft/` context directory.
+- **[intent-mapping.md](./intent-mapping.md)** — Maps natural language phrasing to precise Draft commands for conversational AI usage.
 
 ---
 

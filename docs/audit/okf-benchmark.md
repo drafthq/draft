@@ -118,6 +118,7 @@ defs — so only the *marginal* delta reflects context cost). Reads = tool_uses.
   default.
 
 **Caveats that bound this result (and shape the re-run):**
+
 1. **Adversarial-to-OKF baseline.** finbrainiac-platform is a *mature, AI-doc-
    optimized* repo (its own architecture.md §10 rates Context Quality "HIGH"); its
    237-line `.ai-context.md` is unusually dense and accurate, so the monolith is

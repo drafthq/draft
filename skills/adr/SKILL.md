@@ -7,7 +7,7 @@ description: Create and manage Architecture Decision Records. Documents signific
 
 You are creating or managing Architecture Decision Records (ADRs) for this project.
 
-## Red Flags - STOP if you're:
+## Red Flags - STOP if you're
 
 - Creating an ADR without understanding the decision context
 - Documenting trivial decisions that don't warrant an ADR (e.g., variable naming)
@@ -23,20 +23,24 @@ You are creating or managing Architecture Decision Records (ADRs) for this proje
 ## Pre-Check
 
 1. Verify Draft is initialized:
+
 ```bash
 ls draft/ 2>/dev/null
 ```
 
 If `draft/` doesn't exist:
+
 - Tell user: "Project not initialized. Run `/draft:init` first."
 - Stop here.
 
 2. Check for existing ADR directory:
+
 ```bash
 ls draft/adrs/ 2>/dev/null
 ```
 
 If `draft/adrs/` doesn't exist, create it:
+
 ```bash
 mkdir -p draft/adrs
 ```
@@ -44,6 +48,7 @@ mkdir -p draft/adrs
 ## Step 1: Parse Arguments
 
 Check for arguments:
+
 - `/draft:adr` — Interactive mode: ask about the decision
 - `/draft:adr "decision title"` — Create ADR with given title
 - `/draft:adr list` — List all existing ADRs
@@ -52,7 +57,9 @@ Check for arguments:
 ### List Mode
 
 If argument is `list`:
+
 1. Prefer the deterministic `adr-index.sh` wrapper for the listing — it returns a structured JSON `{adrs:[{id,title,date,status,path,related_tracks}]}` derived from each ADR's frontmatter. Resolve via the canonical tool resolver (see [core/shared/tool-resolver.md](../../core/shared/tool-resolver.md)):
+
    ```bash
    DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}/scripts/tools"
    [ -d "$DRAFT_TOOLS" ] || DRAFT_TOOLS="$(ls -d ~/.claude/plugins/cache/*/draft/*/scripts/tools 2>/dev/null | sort -V | tail -1)"
@@ -64,9 +71,10 @@ If argument is `list`:
      ls draft/adrs/ # fallback: enumerate files manually
    fi
    ```
+
 2. Display summary table:
 
-```
+```text
 Architecture Decision Records
 
 | # | Title | Status | Date |
@@ -81,6 +89,7 @@ Stop here after listing.
 ### Supersede Mode
 
 If argument is `supersede <number>`:
+
 1. Read the ADR file `draft/adrs/<number>-*.md`
 2. Change status from `Accepted` to `Superseded by ADR-<new_number>`
 3. In the OLD ADR's References section, add: "Superseded by ADR-<new_number>"
@@ -91,6 +100,7 @@ If argument is `supersede <number>`:
 ### Evaluate Mode
 
 If argument starts with `evaluate`:
+
 - `/draft:adr evaluate <proposal or description>` — Evaluate a design proposal
 
 1. Read the proposal (from arguments, pasted text, file path, or ask user to describe)
@@ -106,7 +116,7 @@ If argument starts with `evaluate`:
 
 5. Output evaluation report (do not save to file — display directly):
 
-```
+```text
 # Design Evaluation: <Title>
 
 ## Summary
@@ -138,6 +148,7 @@ Stop here after evaluation.
 ### Design Mode
 
 If argument starts with `design`:
+
 - `/draft:adr design <system or component>` — Full system/component design
 
 1. Gather requirements:
@@ -201,11 +212,13 @@ If an active track exists and `draft/tracks/<id>/hld.md` is present:
 
 1. Read HLD §Alternatives Considered table.
 2. If any row is marked `Promote to ADR? yes` and has not been promoted yet (no matching ADR exists), offer:
-   ```
+
+   ```text
    Found 1 unpromoted alternative in <track>/hld.md:
      - {alternative} — rejected because: {reason}
    Promote to ADR? [Y/n]
    ```
+
 3. When promoting:
    - Pre-fill ADR §Context from HLD §Background and the §High-Level Design / Key Design Decisions row that drove this rejection.
    - Pre-fill ADR §Decision from the HLD §Key Design Decision that was selected over this alternative.
@@ -220,11 +233,13 @@ If invoked outside a track context, skip 2.1 and proceed with normal interactive
 Follow the base procedure in `core/shared/draft-context-loading.md`.
 
 Read relevant Draft context:
+
 - `draft/.ai-context.md` — Current architecture patterns, invariants, data paths, and constraints. Falls back to `draft/architecture.md` for legacy projects.
 - `draft/tech-stack.md` — Current technology choices
 - `draft/product.md` — Product requirements that influence the decision
 
 Cross-reference the decision against existing context:
+
 - Does it align with documented architecture patterns?
 - Does it introduce a new technology not in tech-stack.md?
 - Does it affect product requirements?
@@ -335,7 +350,7 @@ originating_track: "{<track_id> or null}"
 
 Present the ADR to the user for review:
 
-```
+```text
 ADR-<number> created: <title>
 File: draft/adrs/<number>-<kebab-case-title>.md
 Status: Proposed
@@ -353,7 +368,7 @@ If the decision affects existing Draft context:
 
 ## ADR Status Lifecycle
 
-```
+```text
 Proposed → Accepted → [Deprecated | Superseded by ADR-xxx]
 ```
 
@@ -365,11 +380,14 @@ Proposed → Accepted → [Deprecated | Superseded by ADR-xxx]
 ## Error Handling
 
 **If no draft/ directory:**
+
 - Tell user to run `/draft:init` first
 
 **If ADR number conflict:**
+
 - Increment to next available number
 - Warn: "ADR-<number> already exists. Using ADR-<next>."
 
 **If superseding non-existent ADR:**
+
 - Warn: "ADR-<number> not found. Check `draft/adrs/` for valid ADR numbers."

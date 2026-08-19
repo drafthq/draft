@@ -60,4 +60,3 @@ okf-validate-quality.sh and therefore does NOT satisfy okf-coverage-check.sh —
 the bundle will not be promoted. Diagram types (Subsystem/Module/Feature/
 Entrypoint) require ≥1 valid Mermaid block and ≥2 x-grounded-paths.
 -->
-

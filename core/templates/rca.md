@@ -64,15 +64,19 @@ generated_at: "{ISO_TIMESTAMP}"
 ## Prevention Items
 
 ### Detection Improvement
+
 - [ ] [monitoring/alerting improvement to catch this sooner]
 
 ### Process Improvement
+
 - [ ] [review/testing improvement to prevent this class of bug]
 
 ### Code Improvement
+
 - [ ] [guard/validation to add in code]
 
 ### Architecture Improvement
+
 - [ ] [structural change if needed to make this class of bug impossible]
 
 ## Proposed Fix
@@ -80,8 +84,10 @@ generated_at: "{ISO_TIMESTAMP}"
 [Brief description of the fix approach — developer reviews before implementation]
 
 **Files to modify:**
+
 - `file1:line` — [change description]
 - `file2:line` — [change description]
 
 **Regression test:**
+
 - [Description of regression test to write — pending developer approval]

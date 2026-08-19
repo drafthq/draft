@@ -11,6 +11,7 @@ Referenced by: `/draft:bughunt`, `/draft:deep-review`, `/draft:review`, `/draft:
 Execute this phase **after** the main analysis and report generation are complete. This phase updates `draft/guardrails.md` with newly discovered patterns.
 
 **Skip this phase if:**
+
 - `draft/` directory does not exist (no Draft context)
 - Analysis found zero findings to learn from
 - Running in a read-only or preview mode
@@ -110,6 +111,7 @@ Append under `## Learned Anti-Patterns`:
 ```
 
 `graph_severity` derivation rules (from live hotspot query `scripts/tools/hotspot-rank.sh --repo .` fanIn values):
+
 - fanIn ≥ 10 in any evidence file → `critical`
 - fanIn 5–9 → `high`
 - fanIn 1–4 → `medium`

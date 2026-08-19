@@ -45,6 +45,7 @@ approvers:
 > is rendered from `metadata.json:status`; never edit it inline.
 
 ## Context References
+
 - **Product:** `draft/product.md` — [pending]
 - **Tech Stack:** `draft/tech-stack.md` — [pending]
 - **Architecture:** `draft/.ai-context.md` — [pending]
@@ -59,16 +60,21 @@ approvers:
 > `<!-- VERIFIER:IGNORE END -->` so they don't fail the verifier.
 
 ## Problem Statement
+
 [To be developed through intake conversation]
 
 ## Background & Why Now
+
 [To be developed through intake conversation]
 
 ## Requirements
+
 ### Functional
+
 [To be developed through intake conversation]
 
 ### Non-Functional
+
 [To be developed through intake conversation]
 
 ## Acceptance Criteria
@@ -82,9 +88,11 @@ approvers:
 | AC-2 | _TBD_ac_2_description_ | _TBD_ac_2_test_id_ |
 
 ## Non-Goals
+
 [To be developed through intake conversation]
 
 ## Technical Approach
+
 [To be developed through intake conversation]
 
 ## Eligibility / Cap Policy <!-- OPTIONAL -->
@@ -118,6 +126,7 @@ approvers:
 | QA | _TBD_approver_qa_ | Test plan review | [ ] |
 
 ### Approval Gates
+
 - [ ] Spec approved by Product Owner
 - [ ] Architecture reviewed by Tech Lead
 - [ ] Security review completed (if touching auth, data, or external APIs)
@@ -138,29 +147,35 @@ approvers:
 <!-- Define rollout approach for production delivery -->
 
 ### Rollout Phases
+
 1. **Canary** (1-5% traffic) — Validate core flows, monitor error rates
 2. **Limited GA** (25%) — Expand to subset, watch performance metrics
 3. **Full GA** (100%) — Complete rollout
 
 ### Feature Flags
+
 - Flag name: `[feature_flag_name]`
 - Default: `off`
 - Kill switch: [yes/no]
 
 ### Rollback Plan
+
 - Trigger: [e.g., error rate >1%, latency >500ms p95]
 - Process: [e.g., disable feature flag, revert deployment]
 - Data rollback: [e.g., migration revert script, N/A]
 
 ### Monitoring
+
 - Dashboard: [link or name]
 - Alerts: [e.g., PagerDuty rule for error rate spike]
 - Key metrics: [e.g., error rate, latency, throughput]
 
 ## Open Questions
+
 [Tracked during conversation]
 
 ## Conversation Log
+>
 > Key decisions and reasoning captured during intake.
 
 [Conversation summary will be added here]

@@ -82,4 +82,3 @@ Deep review is expensive in terms of time and token usage. It is not meant for e
 Regular/draft:reviewchecks whether code matches the spec, follows conventions, and passes quality gates. Deep review assumes the code is correct and asks whether it will survive the conditions that production imposes: failures, load, concurrency, crashes, and the slow degradation that happens over months of operation. They complement each other — review for development quality, deep review for operational readiness.
 
 After completing the audit, deep review runs the pattern learning phase, updatingdraft/guardrails.mdwith architecture and concurrency conventions discovered during the module analysis. These patterns feed back into future reviews and implementations, making each subsequent deep review more precise.
-

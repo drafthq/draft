@@ -53,6 +53,7 @@ What separates/draft:bughuntfrom generic static analysis is its use of Draft con
 * Data state machines— If the architecture defines valid state transitions (e.g., Order: pending → confirmed → shipped), bughunt checks for code that allows invalid transitions
 * Failure recovery matrix— If the architecture claims operations are idempotent, bughunt verifies those claims by tracing retry paths
 * Consistency boundaries— Where eventual consistency is documented, bughunt looks for stale reads, lost events, and missing reconciliation at those seams
+
 ## Regression Test Generation
 
 For each verified bug, bughunt generates a regression test in the project's native test framework. The test is designed tofail against the current buggy codeand pass after the fix — serving as both proof of the bug and protection against regression.
@@ -84,4 +85,3 @@ Beyond checking for known CVEs, bughunt examinestyposquatting risk(packages with
 ### Dimension 13: Algorithmic Complexity
 
 This dimension goes beyond obvious O(n^2) loops. Bughunt identifiesregex catastrophic backtracking— nested quantifiers like(a+)+applied to user-controlled input that can lock a CPU for minutes. It findscache invalidation stormswhere a cache miss triggers recomputation that itself invalidates caches, creating a thundering herd. And it catcheshot path inefficiencywhere linear scans are used where hash maps would suffice, or the same collection is sorted repeatedly.
-

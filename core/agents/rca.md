@@ -69,6 +69,7 @@ Before investigating, load and reference the project's big picture documents:
 **Output:** Reproduction confirmed with evidence. Blast radius and SLO impact documented. Investigation scoped to specific module(s).
 
 **Anti-patterns:**
+
 - Starting to read code before reproducing
 - Assuming the bug reporter's diagnosis is correct
 - Investigating the entire system instead of scoping first
@@ -82,18 +83,23 @@ Before investigating, load and reference the project's big picture documents:
 **Techniques (use the most appropriate):**
 
 #### Control Flow Tracing
+
 Follow the execution path from entry point to failure:
-```
+
+```text
 request arrives → handler (file:line)
   → validation (file:line) ✓ passes
   → service call (file:line) ✓ returns data
   → transformation (file:line) ✗ FAILS HERE
 ```
+
 Document each hop with `file:line` references.
 
 #### Data Flow Tracing
+
 Track data transformation through the system:
-```
+
+```yaml
 input: { userId: "abc", role: "admin" }
   → after auth middleware (file:line): { userId: "abc", role: "admin", verified: true }
   → after service layer (file:line): { userId: "abc", role: null } ← DATA LOST HERE
@@ -101,6 +107,7 @@ input: { userId: "abc", role: "admin" }
 ```
 
 #### Differential Analysis (Google SRE Practice)
+
 Compare what works vs. what doesn't:
 
 | Aspect | Working Case | Failing Case | Difference |
@@ -112,8 +119,10 @@ Compare what works vs. what doesn't:
 This narrows the investigation to the specific difference that causes the failure.
 
 #### 5 Whys (Toyota/Google Practice)
+
 Once you find the immediate cause, ask "why" to find the root:
-```
+
+```text
 1. Why did the request fail? → NullPointerException at file:line
 2. Why was the value null? → The cache returned stale data
 3. Why was the cache stale? → The invalidation event was dropped
@@ -125,6 +134,7 @@ Once you find the immediate cause, ask "why" to find the root:
 **Output:** Data/control flow trace with exact code references. Divergence point identified.
 
 **Anti-patterns:**
+
 - Reading code randomly instead of tracing the specific flow
 - Assuming you know the code path without verifying
 - Skipping the "what works" comparison
@@ -149,6 +159,7 @@ Once you find the immediate cause, ask "why" to find the root:
 | 1 | Cache returns stale data when TTL=0 | Unit test with TTL=0 | Should return stale | Returns stale | **Confirmed** |
 
 **If hypothesis fails:**
+
 - Do NOT try a random different fix
 - Record the failed hypothesis (it narrows the search space)
 - Return to Phase 2 with updated understanding

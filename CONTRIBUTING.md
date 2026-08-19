@@ -20,6 +20,7 @@ make lint     # Run linters (requires shellcheck, markdownlint-cli)
 - (Optional) [pre-commit](https://pre-commit.com/) — git hook management
 
 Install pre-commit hooks:
+
 ```bash
 pre-commit install
 ```
@@ -37,7 +38,7 @@ Always branch from `main`. Keep branches short-lived.
 
 Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
-```
+```text
 <type>(<scope>): <description>
 
 Types: feat, fix, docs, chore, refactor, test, ci
@@ -45,7 +46,8 @@ Scopes: skills, core, integrations, scripts, tests
 ```
 
 Examples:
-```
+
+```text
 feat(skills): add /draft:migrate command
 fix(new-track): handle empty track names
 docs(readme): update installation instructions
@@ -80,7 +82,7 @@ ci(workflows): add shellcheck to CI pipeline
 | **Install path** | `check-repo-size.sh` (tree at HEAD under the size cap) and `install-smoke-test.sh` (shallow clone → manifest discovery → per-host `--dry-run` install) | Yes |
 | **Test suites** | `make test`, plus a check that `integrations/` matches a fresh `make build` | Yes |
 | **Lint** | shellcheck over `scripts/` and `tests/` | Yes |
-| **Lint** | markdownlint over `**/*.md` | No — advisory against a large pre-existing backlog |
+| **Lint** | markdownlint over `**/*.md` | Yes — the tree is clean, so anything it reports is yours |
 
 Reproduce the install-path jobs locally before pushing:
 

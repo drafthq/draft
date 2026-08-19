@@ -79,4 +79,3 @@ All supported IDEs receive the same Draft methodology. The differences are opera
 The methodology is identical. The context files are identical. The plans, specs, architecture documents, and tracks are identical regardless of which IDE produced them. A team can have one developer using Claude Code and another using Copilot — both work on the samedraft/directory with full compatibility.
 
 Skills (skills/<name>/SKILL.md) are the source of truth. Integration files are generated artifacts. Never edit.github/copilot-instructions.mddirectly — edit the skill, runmake build, and the integration files are regenerated. This ensures all platforms stay in sync.
-

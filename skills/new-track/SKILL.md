@@ -9,7 +9,7 @@ Create a new track (feature, bug fix, or refactor) for Context-Driven Developmen
 
 **Feature Description:** $ARGUMENTS
 
-## Red Flags - STOP if you're:
+## Red Flags - STOP if you're
 
 - Creating a track without reading existing Draft context (product.md, tech-stack.md, .ai-context.md)
 - Asking questions without contributing expertise or trade-off analysis
@@ -25,6 +25,7 @@ Create a new track (feature, bug fix, or refactor) for Context-Driven Developmen
 ## Pre-Check
 
 1. Verify Draft is initialized:
+
 ```bash
 ls draft/product.md draft/tech-stack.md draft/workflow.md draft/tracks.md 2>/dev/null
 ```
@@ -36,6 +37,7 @@ If missing, tell user: "Project not initialized. Run `/draft:init` first."
    - Quick mode is for: hotfixes, tiny isolated changes, work scoped to 1-3 hours
 
 3. Load full project context (these documents ARE the big picture — every track must be grounded in them):
+
 - Read `draft/product.md` — product vision, users, goals, constraints, guidelines (optional section)
 - Read `draft/tech-stack.md` — languages, frameworks, patterns, code style, accepted patterns
 - Read `draft/.ai-context.md` (if exists) — system map, modules, data flows, invariants, security architecture. Falls back to `draft/architecture.md` for legacy projects.
@@ -43,19 +45,23 @@ If missing, tell user: "Project not initialized. Run `/draft:init` first."
 - Read `draft/guardrails.md` (if exists) — hard guardrails, learned conventions, learned anti-patterns
 - Read `draft/tracks.md` — existing tracks to check for overlap or dependencies
 - **Scan recent track impact memory** (overlap detection): for each completed track in `draft/tracks/*/metadata.json` updated within the last 30 days, read the `impact` block (if present). Build a map `module → [recent_track_ids]`. After Step 4 (scope distillation), once the candidate modules for the new track are known, intersect them with this map. If overlap exists, surface it in the intake summary:
-  ```
+
+  ```text
   Overlap warning: track <id> recently touched modules <A>, <B>.
   Review draft/tracks/<id>/metadata.json#impact before proceeding.
   ```
+
   This is informational, not blocking — the user decides whether to proceed, depend on the prior track, or rebase scope.
 
 4. Load guidance references:
+
 - Read `core/templates/intake-questions.md` — structured questions for intake
 - Read `core/knowledge-base.md` — vetted sources for AI guidance
 
 ## Step 1: Generate Track ID
 
 Create a short, kebab-case ID from the description (use the stripped description if `--quick` was present):
+
 - "Add user authentication" → `add-user-auth`
 - "Fix login bug" → `fix-login-bug`
 
@@ -124,13 +130,15 @@ mkdir -p draft/tracks/<track_id>
 ```
 
 Then execute **Step 8** (Create Metadata & Update Tracks) with these overrides for quick tracks:
+
 - `"type": "quick"` (not `feature|bugfix|refactor`)
 - `"phases": {"total": 1, "completed": 0}` (plan has exactly 1 phase)
 
 Skip Steps 2–7.
 
 After Step 8 completes, announce:
-```
+
+```text
 Quick track created: <track_id>
 
 Files: spec.md (minimal), plan.md (flat)
@@ -143,7 +151,7 @@ Next: /draft:implement
 
 Create the track directory and draft files immediately with skeleton structure:
 
-### Create `draft/tracks/<track_id>/spec-draft.md`:
+### Create `draft/tracks/<track_id>/spec-draft.md`
 
 **MANDATORY: Include YAML frontmatter with git metadata.** Gather git info first:
 
@@ -283,7 +291,7 @@ synced_to_commit: "{FULL_SHA}"
 [Conversation summary will be added here]
 ```
 
-### Create `draft/tracks/<track_id>/plan-draft.md`:
+### Create `draft/tracks/<track_id>/plan-draft.md`
 
 **MANDATORY: Include YAML frontmatter with git metadata** (same git info as spec-draft.md):
 
@@ -341,6 +349,7 @@ Follow the structured intake from `core/templates/intake-questions.md`. You are 
 ### Your Role as AI Collaborator
 
 For each question:
+
 1. **Ask** the question clearly
 2. **Listen** to the user's response
 3. **Contribute** your expertise:
@@ -355,12 +364,13 @@ For each question:
 ### Citation Style
 
 Ground advice in vetted sources:
+
 - "Consider CQRS here (DDIA, Ch. 11) — separates read/write concerns."
 - "This could violate the Dependency Rule (Clean Architecture)."
 - "Circuit breaker pattern (Release It!) would help prevent cascade failures."
 - "Watch for OWASP A01:2021 — Broken Access Control."
 
-### Red Flags - STOP if you're:
+### Red Flags - STOP if you're
 
 - Asking questions without contributing expertise
 - Accepting answers without probing deeper with "why"
@@ -377,18 +387,22 @@ Ground advice in vetted sources:
 ## Step 3A: Intake Flow (Feature / Refactor)
 
 ### Phase 1: Existing Documentation
+
 - "Do you have existing documentation for this work? (PRD, RFC, design doc, Jira ticket)"
 - If yes: Ingest, extract key points, identify gaps
 - AI contribution: "I've extracted [X, Y, Z]. I notice [gap] isn't covered yet."
 
 ### Phase 2: Problem Space
+
 Walk through problem questions from intake-questions.md:
+
 - What problem are we solving?
 - Why does this problem matter now?
 - Who experiences this pain?
 - What's the scope boundary?
 
 After each answer:
+
 - Contribute relevant patterns, similar problems, domain concepts
 - Challenge assumptions with "why" questions
 - Update spec-draft.md Problem Statement section
@@ -396,13 +410,16 @@ After each answer:
 **Checkpoint:** "Here's the problem as I understand it: [summary]. Does this capture it?"
 
 ### Phase 3: Solution Space
+
 Walk through solution questions:
+
 - What's the simplest version that solves this?
 - Why this approach over alternatives?
 - What are we explicitly NOT doing?
 - How does this fit with current architecture?
 
 After each answer:
+
 - Present 2-3 alternative approaches with trade-offs
 - Cross-reference .ai-context.md (or architecture.md) for integration points
 - Suggest tech-stack.md patterns to leverage
@@ -411,13 +428,16 @@ After each answer:
 **Checkpoint:** "The proposed approach is [summary]. I've identified these alternatives: [list]. Your reasoning for this choice is [X]. Correct?"
 
 ### Phase 4: Risk & Constraints
+
 Walk through risk questions:
+
 - What could go wrong?
 - What dependencies or blockers exist?
 - Why might this fail?
 - Security or compliance considerations?
 
 After each answer:
+
 - Surface risks user may not have considered
 - Reference OWASP, distributed systems fallacies, failure modes
 - Fact-check assumptions against project context
@@ -426,12 +446,15 @@ After each answer:
 **Checkpoint:** "Key risks identified: [list]. Are there others you're aware of?"
 
 ### Phase 5: Success Criteria
+
 Walk through success questions:
+
 - How do we know this is complete?
 - How will we verify it works?
 - What would make stakeholders accept this?
 
 After each answer:
+
 - Suggest measurable, testable acceptance criteria
 - Recommend testing strategies appropriate to feature type
 - Align with product.md goals
@@ -446,17 +469,20 @@ After each answer:
 #### Refactor Tracks → Tech-Debt Offer
 
 If track type is refactor:
-```
+
+```text
 "Want to run a tech-debt analysis to prioritize what to address?
   → /draft:tech-debt scans 6 debt categories with prioritization
   Run tech-debt analysis? [Y/n]"
 ```
+
 If accepted: invoke `/draft:plan "tech debt for this refactor"`, use its prioritized output to scope the refactor spec.
 
 #### Design Decision Detection → ADR Suggestion
 
 If spec introduces technology not in `tech-stack.md` or changes service boundaries in `.ai-context.md`:
-```
+
+```text
 "This involves a significant design decision. Consider running:
   → /draft:plan \"adr ...\" to document the architectural decision"
 ```
@@ -468,6 +494,7 @@ If spec introduces technology not in `tech-stack.md` or changes service boundari
 For bugs, incidents, or Jira-sourced issues. Tighter scope, investigation-focused.
 
 ### Phase 1: Symptoms & Context
+
 - "What's the exact error or unexpected behavior?"
 - "Who is affected? How often does this occur?"
 - "When did this start? Any recent changes?"
@@ -475,6 +502,7 @@ For bugs, incidents, or Jira-sourced issues. Tighter scope, investigation-focuse
 AI contribution: Pattern recognition for common bug types, severity assessment.
 
 ### Phase 2: Reproduction
+
 - "What are the exact steps to reproduce?"
 - "What environment conditions are required?"
 - "What's the expected vs actual behavior?"
@@ -482,12 +510,14 @@ AI contribution: Pattern recognition for common bug types, severity assessment.
 AI contribution: Suggest additional reproduction scenarios, edge cases to check.
 
 ### Phase 3: Blast Radius
+
 - "What still works correctly?"
 - "Where does the failure boundary lie?"
 
 AI contribution: Help narrow investigation scope, reference architecture.md for module boundaries.
 
 ### Phase 4: Code Locality
+
 - "Where do you suspect the bug is?"
 - "What's the entry point and failure point?"
 
@@ -504,6 +534,7 @@ When triggered, execute the auto-triage pipeline before proceeding to Step 4:
 #### Triage Step 1: Gather External Context
 
 If Jira ticket provided:
+
 1. Pull ticket via Jira MCP: `get_issue()`, `get_issue_description()`, `get_issue_comments()`
 2. Extract from ticket: URLs, log paths, stack traces, reproduction steps, affected services
 3. Use `curl`/`wget` to fetch any URLs mentioned (dashboards, error pages, API responses)
@@ -512,19 +543,21 @@ If Jira ticket provided:
 
 #### Triage Step 2: Offer Debug Session
 
-```
+```text
 "Bug track detected with [Jira context / error description]. Run a structured debug session before writing the spec?
   → /draft:discover debug will help reproduce and isolate the issue
   Run debug session? [Y/n]"
 ```
 
 If accepted:
+
 - Invoke `/draft:discover "debug ..."` (routes to debug) with gathered triage context
 - Feed the Debug Report into spec-draft.md "Reproduction" and "Root Cause Hypothesis" sections
 
 #### Triage Step 3: RCA Analysis
 
 If debug session produced findings:
+
 - Invoke RCA agent methodology from `core/agents/rca.md`
 - Perform 5 Whys analysis using debug findings
 - Assess blast radius from `.ai-context.md`
@@ -533,6 +566,7 @@ If debug session produced findings:
 #### Triage Step 4: Generate rca.md
 
 Create `draft/tracks/<track_id>/rca.md` using the template from `core/templates/rca.md`:
+
 - Include root cause, classification, timeline, evidence, prevention items
 - Include YAML frontmatter with git metadata
 - Link to debug report and gathered evidence
@@ -540,12 +574,13 @@ Create `draft/tracks/<track_id>/rca.md` using the template from `core/templates/
 #### Triage Step 5: Sync to Jira
 
 If Jira ticket linked, sync via `core/shared/jira-sync.md`:
+
 - Attach `rca.md` to ticket
 - Post comment: "[draft] rca-complete: Root cause identified — {1-line summary}. Prevention: {count} items."
 
 #### Triage Step 6: Developer Checkpoint
 
-```
+```text
 "RCA complete. Findings:
   Root cause: {summary}
   Classification: {type}
@@ -560,6 +595,7 @@ Only proceed to spec/plan generation after developer approval.
 ### Step 3B.6: Incident Context Detection
 
 If track description contains "incident", "outage", "SEV", or "postmortem":
+
 - Check for existing postmortem: `ls draft/tracks/*/incident-*.md 2>/dev/null`
 - If none found, suggest: "Run `/draft:ops incident-response postmortem` first to capture incident context."
 - If found, feed postmortem findings into spec-draft.md.
@@ -575,6 +611,7 @@ After completing intake sections:
 3. Ask: "Want to refine any section, or ready to finalize?"
 
 If refining:
+
 - Continue conversation on specific sections
 - Update drafts as discussion progresses
 - Return to this step when ready
@@ -588,23 +625,26 @@ Before finalizing, offer a quick spec stress-test. This takes 2 minutes and ofte
 Based on the track type (feature / bug / refactor), present 3 pre-selected challenge techniques:
 
 **Feature tracks:**
+
 1. **Pre-mortem** — "It's 6 months later and this feature failed. What went wrong?"
 2. **Scope Boundary** — "What's the smallest version that still achieves the core goal?"
 3. **Edge Case Storm** — Surface 5 boundary conditions not yet in the ACs
 
 **Bug tracks:**
+
 1. **Root Cause Depth** — "Is the reported symptom the real bug, or a symptom of something deeper?"
 2. **Blast Radius** — "What else could this fix inadvertently break?"
 3. **Regression Risk** — "What existing behavior might this change inadvertently affect?"
 
 **Refactor tracks:**
+
 1. **Behavior Preservation** — "List every externally visible behavior that must be identical before and after"
 2. **Integration Impact** — "Which callers will break if this interface changes?"
 3. **Rollback Complexity** — "If this refactor needs reverting mid-flight, what's the path?"
 
 Present to the user:
 
-```
+```text
 Quick stress-test before finalizing — pick one or skip:
 
 1. [Technique name] — [one-line prompt]
@@ -640,25 +680,31 @@ Present final spec.md for acknowledgment.
 
 Based on finalized spec, build out plan-draft.md:
 
-### For Feature / Refactor:
+### For Feature / Refactor
+
 Create phased breakdown:
+
 - Phase 1: Foundation / Setup
 - Phase 2: Core Implementation
 - Phase 3: Integration & Polish
 
 For each phase:
+
 - Define Goal and Verification criteria
 - Break into specific Tasks with file references
 - Identify dependencies between tasks
 
 AI contribution:
+
 - Suggest task ordering based on dependencies
 - Reference tech-stack.md for implementation patterns
 - Identify testing requirements per task
 - Flag integration points with .ai-context.md modules
 
-### For Bug & RCA:
+### For Bug & RCA
+
 Use fixed 3-phase structure:
+
 - Phase 1: Investigate & Reproduce
 - Phase 2: Root Cause Analysis
 - Phase 3: Fix & Verify
@@ -706,11 +752,12 @@ ls draft/tracks/<track_id>/spec.md draft/tracks/<track_id>/plan.md 2>/dev/null
 ```
 
 If either missing:
+
 - ERROR: "Track creation incomplete. Missing files: [list missing]"
 - "Expected: spec.md and plan.md in draft/tracks/<track_id>/"
 - Halt - do not create metadata.json or update tracks.md
 
-### Create `draft/tracks/<track_id>/metadata.json`:
+### Create `draft/tracks/<track_id>/metadata.json`
 
 ```json
 {
@@ -744,10 +791,11 @@ cat draft/tracks/<track_id>/metadata.json | python3 -c "import sys,json; json.lo
 ```
 
 If invalid or missing:
+
 - ERROR: "Failed to write valid metadata.json for track <track_id>"
 - Halt - do not update tracks.md (prevents orphaned track entries)
 
-### Update `draft/tracks.md`:
+### Update `draft/tracks.md`
 
 Add under Active:
 
@@ -781,6 +829,7 @@ grep "<track_id>" draft/tracks.md
 ```
 
 If not found:
+
 - ERROR: "Failed to update tracks.md with new track entry"
 - "Expected track_id '<track_id>' in draft/tracks.md Active section"
 - Provide recovery: "Manually add track entry to draft/tracks.md or remove draft/tracks/<track_id>/ and retry"
@@ -793,11 +842,13 @@ Announce:
 "Track created: <track_id>
 
 Created:
+
 - draft/tracks/<track_id>/spec.md
 - draft/tracks/<track_id>/plan.md
 - draft/tracks/<track_id>/metadata.json
 
 Updated:
+
 - draft/tracks.md
 
 Key decisions documented in spec.md Conversation Log.
@@ -811,6 +862,7 @@ Next: Review the spec and plan, then run `/draft:implement` to begin."
 ### Jira Sync at Completion
 
 If Jira ticket is linked (from spec.md or metadata.json), sync via `core/shared/jira-sync.md`:
+
 - Attach `spec.md` and `plan.md` to ticket
 - Post comment: "[draft] spec-complete: Specification and plan generated for track {id}. {phase_count} phases, {task_count} tasks."
 
@@ -819,7 +871,8 @@ If Jira ticket is linked (from spec.md or metadata.json), sync via `core/shared/
 Based on track type, suggest relevant follow-ups:
 
 **Bug tracks:**
-```
+
+```text
 "Track ready for implementation. Also consider:
   → /draft:ops incident-response postmortem — If this bug caused an incident
   → /draft:discover debug — Structured investigation
@@ -827,14 +880,16 @@ Based on track type, suggest relevant follow-ups:
 ```
 
 **Feature tracks:**
-```
+
+```text
 "Track ready for implementation.
   Next: /draft:implement
   Also: /draft:discover \"test strategy\" — Define test approach for this feature"
 ```
 
 **Refactor tracks:**
-```
+
+```text
 "Track ready for implementation.
   Next: /draft:implement
   Also: /draft:plan \"adr ...\" — Document refactoring decisions"

@@ -12,6 +12,7 @@ You are performing a lightweight, ad-hoc code review. This is the fast alternati
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Quick-review keeps the graph load light:
 
 First resolve the bundled helpers:
+
 ```bash
 # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
 # is not exported into skill Bash). See core/shared/tool-resolver.md.
@@ -26,11 +27,12 @@ DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}
 
 Filesystem `grep` is reserved for source-text scans (literal strings, regex patterns). Symbol and caller discovery go through the graph.
 
-## Red Flags — STOP if you're:
+## Red Flags — STOP if you're
 
 See [shared red flags](../../core/shared/red-flags.md) — applies to all code-touching skills.
 
 Skill-specific:
+
 - Reviewing without reading the code first
 - Providing generic feedback not grounded in the actual code
 - Missing security implications in authentication/authorization code
@@ -67,12 +69,14 @@ If no draft context, proceed with generic review — still valuable.
 ## Step 1: Parse Arguments
 
 Check for arguments:
+
 - `/draft:quick-review` — Review staged changes (`git diff --cached`) or current branch diff
 - `/draft:quick-review <file>` — Review specific file(s)
 - `/draft:quick-review <PR-URL>` — Review a pull request (via GitHub/GitHub MCP)
 - `/draft:quick-review <commit-range>` — Review specific commits
 
 Determine the diff to review:
+
 1. If PR URL: fetch via GitHub MCP (`get_change_detail`, `get_change_diff`) or GitHub
 2. If file path: read the file(s)
 3. If commit range: `git diff <range>`
@@ -82,7 +86,7 @@ Determine the diff to review:
 
 Before the four-dimension review, run `"$DRAFT_TOOLS/hotspot-rank.sh" --repo .` and check if any files in scope appear in the output. If any file has a `fanIn` in the top 20% of the list, add this warning at the top of the review report:
 
-```
+```text
 ⚠ HIGH IMPACT: {file} is a high-fanIn hotspot (fanIn={N}). Changes here propagate to many callers — review with extra care.
 ```
 
@@ -209,6 +213,7 @@ If `draft/graph/schema.yaml` does not exist, set `Graph files queried: NONE` and
 ## Graph Usage Report (append to review report)
 
 Emit the canonical footer from [core/shared/graph-usage-report.md](../../core/shared/graph-usage-report.md) §Canonical footer. The lint hook `scripts/tools/check-graph-usage-report.sh` validates the section on save.
+
 ## Cross-Skill Dispatch
 
 - **Offered by:** `/draft:implement` at phase boundaries as lightweight alternative to full review

@@ -5,11 +5,13 @@
 Generate `draft/architecture.md` — a graph-primary human-readable engineering reference.
 
 **Output format**:
+
 - Markdown report with Mermaid diagrams, tables, and code blocks
 - **Target length: fidelity-first** — cover all 10 mandatory sections with graph-grounded accuracy and diagram correctness
 - End the document with: `"End of analysis. Queries should reference the .ai-context.md file for token efficiency."`
 
 **CRITICAL — Template Structure Compliance:**
+
 - The output MUST use the EXACT 10-section structure from `core/templates/architecture.md` (§1–§10)
 - Do NOT create freeform/custom section names or resurrect 28-section numbering
 - Do NOT skip mandatory sections — if a section does not apply, include the heading with "N/A — {reason}"
@@ -68,11 +70,13 @@ _(Skip or adapt sections per the Adaptive Sections table above.)_
 ### 1. Executive Summary
 
 Write **one paragraph** that states:
+
 - What the module IS (identity)
 - What it DOES (responsibilities)
 - Its role in the larger system
 
 Follow with a **Key Facts** bullet list:
+
 - Primary language(s) and version
 - Binary / entry-point / package name
 - Architecture style (e.g., distributed master/worker, client-server, daemon, library, microservice, monolith, serverless, CLI tool)
@@ -87,7 +91,7 @@ Follow with a **Key Facts** bullet list:
 
 A compact block optimized for fast AI-agent context loading. Fill in every field that applies; mark others as "N/A":
 
-```
+```text
 **Module**           : {PROJECT_NAME}
 **Root Path**        : ./
 **Language**         : (e.g., C++17, Go 1.21, Python 3.12, TypeScript 5.3, Rust 1.75, Java 21)
@@ -136,11 +140,13 @@ A compact block optimized for fast AI-agent context loading. Fill in every field
 #### 4.1 High-Level Topology
 
 **MANDATORY: Generate a Mermaid `flowchart TD` diagram** showing:
+
 - The main process / service and its internal components (as nested subgraphs)
 - External services and dependencies (as a separate subgraph)
 - Directional arrows showing primary data / control flow
 
 Example structure (adapt to actual codebase):
+
 ```mermaid
 flowchart TD
     subgraph Service["MyService"]
@@ -162,7 +168,8 @@ Write the `GRAPH:module-deps` injection slot into architecture.md:
 If graph build succeeded (Step 1.4.7 completed), write the populated slot content using the diagram from Step 1.4.7. If filtered (>30 modules), include the filter note. Dashed edges indicate circular dependencies.
 
 If graph binary was not found: write the slot with placeholder body so draft:init --graph-only can populate it later:
-```
+
+```text
 <!-- GRAPH:module-deps:START -->
 [Graph data unavailable — run draft:init --graph-only to populate after graph binary is installed]
 <!-- GRAPH:module-deps:END -->
@@ -187,6 +194,7 @@ For CLI tools: parse args → validate → execute → output → exit.
 #### 5.1 Top-Level Orchestrator
 
 For the main controller / manager / app class:
+
 - Describe its role in one sentence.
 - **Owned Components** — table:
 
@@ -198,6 +206,7 @@ For the main controller / manager / app class:
 #### 5.2 Dependency Injection / Wiring Pattern
 
 Describe how components reference each other. Common patterns to look for:
+
 - Constructor injection (Spring, Guice, etc.)
 - Service locator / context struct (C++ pattern)
 - Module system (Python, Node.js imports)
@@ -230,6 +239,7 @@ Use ✓ for direct calls, ✓(RPC) for remote procedure calls, ✓(HTTP) for RES
 **Purpose**: This section captures the **real behavioral architecture** — the primary ways the system moves through time, state, and control flow. It is more valuable for correct code generation and modification than static component descriptions.
 
 The LLM **must** combine:
+
 - The deterministic knowledge graph (modules, edges, entry points, public surfaces, hotspots, call targets)
 - Its full indexed project understanding from the host Cursor / Claude Code / Copilot environment
 - Targeted source reads only for confirmation and detail
@@ -247,6 +257,7 @@ Synthesize the 2–5 most important operational views for the system. Typical ca
 - For plugin / meta-tooling / agent platforms: the core execution or dispatch model (skill/command/agent lifecycle, frontmatter contract enforcement, generation/condensation pipeline, parallel analysis protocol, track/decompose/implement lifecycle, etc.)
 
 Each diagram must be a **stateDiagram-v2**, **sequenceDiagram**, or detailed **flowchart** containing:
+
 - Real actor / state / stage names from the actual codebase
 - Labeled transitions using actual function, message, or event names where possible
 - `alt` / `opt` / `loop` / `critical` where branching, repetition, or error handling exists
@@ -312,6 +323,7 @@ Synthesize a single, accurate Mermaid diagram (`stateDiagram-v2`, `sequenceDiagr
 #### Sub-Module Guidance (when graph justifies recursion)
 
 When a module has clear internal structure visible in live engine query `get_architecture .packages` (fan-in/out) or live per-package queries:
+
 - Create `##### 7.X.Y {Parent}/{Child}` subsections only for children that have their own meaningful public surface or high internal fan-in.
 - Each sub-module subsection follows the same compact pattern: graph facts + **one mandatory workflow/state diagram** + ≤60 words Design Notes.
 - Do not descend further unless the child itself shows additional clear boundaries in the graph data.
@@ -326,6 +338,7 @@ When a module has clear internal structure visible in live engine query `get_arc
 | (enumerate ALL public methods — at least 5 entries) | | |
 
 **Interaction with Sibling Sub-Modules**:
+
 - Calls `{sibling}/` for {purpose}
 - Called by `{sibling}/` when {trigger}
 - Shares `{base|common}/` types: {list key shared types}
@@ -336,7 +349,8 @@ When a module has clear internal structure visible in live engine query `get_arc
 **Notable Mechanisms**: {caching, retry, batching, scheduling, etc.}
 
 **Error Handling**: How errors propagate within this sub-module and to the parent.
-```
+
+```text
 
 #### Per-Sub-Module Template (Medium — 10–49 files)
 
@@ -357,7 +371,8 @@ When a module has clear internal structure visible in live engine query `get_arc
 ```{language}
 // actual code from the interface header, 10-20 lines
 ```
-```
+
+```text
 
 #### Operation Catalog Template (for ops/handler directories)
 
@@ -379,7 +394,7 @@ Use `"$DRAFT_TOOLS/graph-callers.sh" --symbol <module>` or `"$DRAFT_TOOLS/graph-
 
 For a module like `icebox/` with sub-directories `master/` (200+ files), `slave/` (150+ files), `client/` (20 files), `base/` (40 files):
 
-```
+```text
 #### 7.3 icebox
   [Top-level module deep-dive: role, overall architecture diagram, cross-sub-module interaction]
 
@@ -405,6 +420,7 @@ For a module like `icebox/` with sub-directories `master/` (200+ files), `slave/
 This produces 300–500+ lines for `icebox/` alone, which is proportional to its 917-file complexity.
 
 **MANDATORY for stateful modules and sub-modules**: Include a `stateDiagram-v2` showing state transitions:
+
 ```mermaid
 stateDiagram-v2
     [*] --> Idle
@@ -470,6 +486,7 @@ Table:
 #### 9.2 Registry / Registration Mechanism
 
 Describe how plugins are registered. Common patterns:
+
 - Explicit registry calls in an init file
 - Decorator / annotation-based auto-registration
 - Convention-based discovery (file naming, directory scanning)
@@ -574,6 +591,7 @@ Table:
 #### 12.3 External-Facing API (if distinct from internal)
 
 List endpoints grouped by function. Reference the actual definition files:
+
 - `.proto` files for gRPC / protobuf
 - OpenAPI / Swagger specs for REST
 - GraphQL schema files
@@ -643,6 +661,7 @@ sequenceDiagram
 ```
 
 Each sequence diagram MUST show:
+
 - All participant lifelines (components / services)
 - Request → response arrows with payload descriptions
 - Conditional branches (alt/opt blocks) where logic diverges
@@ -834,13 +853,15 @@ For each significant pattern (typically 4–8), provide a COMPLETE writeup:
 ```
 
 **Anti-Pattern to Avoid**:
+
 ```{language}
 // Show what NOT to do
 // This helps AI agents avoid common mistakes
 ```
 
 **When to Apply**: Guidance on when new code should use this pattern.
-```
+
+```text
 
 **MANDATORY**: Code snippets must be ACTUAL CODE from the codebase, not pseudocode or simplified examples. Include enough context (10-30 lines) to understand the pattern.
 
@@ -1088,7 +1109,8 @@ Write the `GRAPH:proto-map` injection slot into architecture.md.
 If graph build succeeded and proto files exist (Step 1.4.7 completed), write the populated slot content using the diagram from Step 1.4.7.
 
 If graph binary was not found or no proto files exist, write the slot with placeholder:
-```
+
+```text
 <!-- GRAPH:proto-map:START -->
 [Graph data unavailable — run draft:init --graph-only to populate after graph binary is installed]
 <!-- GRAPH:proto-map:END -->
@@ -1130,6 +1152,7 @@ Before finalizing architecture.md, verify your output meets these quality gates.
 **If any depth gate fails: re-read source for the failing sections and expand. Do NOT proceed to .ai-context.md generation until all depth gates pass.**
 
 **Checklist additions:**
+
 - [ ] Graph injection slots populated (GRAPH:module-deps, GRAPH:hotspots, GRAPH:proto-map) if schema.yaml exists
 - [ ] At least 28 + 5 appendices present (including new Appendix E)
 
@@ -1234,6 +1257,7 @@ Fix: Apply the tiered sub-module analysis. For each Large sub-module, create a `
 
 **FAILURE 5 — Missing Operational Diagrams:**
 Detection: Any of these three diagrams is absent from the document:
+
   - §3.3 initialization sequence diagram
   - §7.4 execution topology diagram
   - §16.2 failure decision tree

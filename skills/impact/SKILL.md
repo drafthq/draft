@@ -7,7 +7,8 @@ description: Generate a project-wide impact report on Draft track delivery — p
 
 Generate a project-wide impact report measuring Context-Driven Development effectiveness across all tracks.
 
-## Red Flags - STOP if you're:
+## Red Flags - STOP if you're
+
 - Profiling code coverage instead of measuring track-level impact.
 - Rewriting tracker logic when local state objects are available for inspection.
 - Generating reports without reading existing track metadata first.
@@ -92,6 +93,7 @@ Every impact/telemetry report must end with a `## Next Actions` section listing 
 ```
 
 Rules:
+
 - Impact reports are advisory — `Blocker? = no` is the default; mark `yes` only when a metric breach demands immediate process change.
 - Suggest `/draft:tech-debt` for systemic friction, `/draft:adr` for methodology adjustments, `/draft:tour` for onboarding gaps.
 - Cap at 7 actions.

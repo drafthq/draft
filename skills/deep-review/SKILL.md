@@ -12,6 +12,7 @@ Perform an exhaustive end-to-end lifecycle review of a service, component, or mo
 When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-first lookup contract in [core/shared/graph-query.md](../../core/shared/graph-query.md) §Mandatory Lookup Contract. Deep-review uses the graph to **narrow review scope** — a key 30–50% scope reduction:
 
 First resolve the bundled helpers:
+
 ```bash
 # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
 # is not exported into skill Bash). See core/shared/tool-resolver.md.
@@ -28,11 +29,12 @@ DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}
 
 Filesystem `grep` is reserved for source-text scans (API contract strings, secret patterns, log message audits). Module enumeration and caller tracing go through the graph.
 
-## Red Flags - STOP if you're:
+## Red Flags - STOP if you're
 
 See [shared red flags](../../core/shared/red-flags.md) — applies to all code-touching skills.
 
 Skill-specific:
+
 - Acting without reading the Draft context (`draft/.ai-context.md`, `draft/tech-stack.md`, `draft/product.md`)
 - Modifying production code. This command is for auditing and reporting only. Fixes should be handled in a separate implementation track.
 - Reviewing a module that was already reviewed recently, unless explicitly requested.
@@ -74,6 +76,7 @@ If `.ai-context.md` is missing, check for `draft/architecture.md` as a fallback 
 ## Review Phases
 
 ### Phase 1: Context & Structural Analysis
+
 - Load Draft context following the procedure in `core/shared/draft-context-loading.md`. Use loaded context to understand intended boundaries and critical invariants.
 - **Load track HLD/LLD if any track owns this module.** Scan `draft/tracks/*/hld.md` for §Detailed Design components matching the module path. When found, extract claims from §High-Level Design / Key Design Decisions, §Checklist (Performance/Scale/Security/Resiliency/Multi-tenancy/Upgrade/Cost), §Observability, §Deployment, and any LLD §Classes and Interfaces invariants and §Error Handling policies. These claims become the design contract this audit measures against (HLD claims vs code reality).
 - **Load Learned Anti-Patterns** — If `draft/guardrails.md` exists, read the `## Learned Anti-Patterns` section before analysis begins. During the audit, when an issue matches a learned anti-pattern, prefix the finding with `[KNOWN-ANTI-PATTERN: {pattern name}]`. This separates newly discovered issues from documented recurring patterns and allows the report to recommend systemic remediation rather than isolated fixes.
@@ -124,7 +127,7 @@ Every finding in this phase must cite the relevant rule range (e.g., `[RC-008..R
   - **Latency profiles:** Are p50, p95, p99 latency targets defined and achievable?
   - **Error budget:** What percentage of the error budget has been consumed? Is the module in "protect" or "innovate" mode?
   - **Availability:** Does the module's uptime target (99.9%, 99.99%) match its actual architecture?
-  - If no SLOs are defined, recommend defining them. Reference: Google SRE (https://sre.google/sre-book/service-level-objectives/).
+  - If no SLOs are defined, recommend defining them. Reference: Google SRE (<https://sre.google/sre-book/service-level-objectives/>).
 - **Database Schema Analysis:**
   - **Missing indexes:** Queries filtering/joining on unindexed columns.
   - **Wide table scans:** SELECT * or queries without WHERE clauses on large tables.
@@ -154,6 +157,7 @@ For each HLD claim extracted in Phase 1, validate it against code:
 Surface gaps as findings with prefix `[HLD-DRIFT: §<section>]` (Important if the gap is documentation-vs-implementation drift; Critical if the code violates a stated invariant or security claim).
 
 ### Phase 4: Identify Actionable Fixes (Spec Generation)
+
 Instead of mutating the source code, translate all findings into clear, actionable requirements that a developer (or agent) can implement via Test-Driven Development.
 
 ### Phase 5: Resilience & Chaos Engineering Assessment
@@ -225,11 +229,13 @@ reviewer: "{model name from runtime}"
 **Verdict:** PASS / CONDITIONAL PASS / FAIL
 
 **Verdict criteria:**
+
 - **FAIL** = any Critical issue found.
 - **CONDITIONAL PASS** = no Critical issues but Important issues exist.
 - **PASS** = only Minor issues or no issues.
 
 Format findings as actionable tasks:
+
 ```markdown
 ### [Critical/Important/Minor] Issue Name `[RC-### or CQ-### or SEC-## if applicable]`
 **File:** path/to/file:line
@@ -245,6 +251,7 @@ Cite the most specific rule ID from `core/guardrails/review-checks.md` (RC-###),
 **For Phase 3 (Security):** Load `core/guardrails/security.md` and apply the 5-step security reasoning chain. Hard red line violations (SEC-01…SEC-10) are always Critical. Run `core/guardrails/dependency-triage.md` procedure for any dependency manifest files in the module's scope `[RC-014]`.
 
 **Constraints:**
+
 - Do not refactor code yourself.
 - Flag ambiguous fixes for human review instead of guessing.
 - If the module is too large, decompose it and review sub-modules sequentially.
@@ -272,6 +279,7 @@ Every deep-review report must end with a `## Next Actions` section listing the s
 ```
 
 Rules:
+
 - Production-blocking findings (`[SEC-*]`, ACID violations, unbounded resource use) produce blocker rows.
 - Suggest `/draft:adr` for structural changes, `/draft:new-track` for multi-week remediation, `/draft:incident-response` for hot issues, `/draft:tech-debt` for systemic items.
 - Cap at 10 actions; group related fixes under one row.
@@ -283,14 +291,16 @@ Rules:
 After deep-review audit completion:
 
 **If architecture debt found:**
-```
+
+```text
 "Architecture debt identified in module audit. Consider:
   → /draft:tech-debt — Catalog and prioritize the architecture debt
   → /draft:adr — Document undiscovered design decisions found during review"
 ```
 
 **If documentation gaps found:**
-```
+
+```text
   → /draft:documentation runbook — Generate operational runbook for this module"
 ```
 
@@ -307,11 +317,13 @@ If `draft/graph/schema.yaml` does not exist, set `Graph files queried: NONE` and
 ## Graph Usage Report (append to report)
 
 Emit the canonical footer from [core/shared/graph-usage-report.md](../../core/shared/graph-usage-report.md) §Canonical footer. The lint hook `scripts/tools/check-graph-usage-report.sh` validates the section on save.
+
 ## Skill Telemetry
 
 As the last step after saving the deep-review report, emit a metrics record. Best-effort — never block.
 
 **Payload fields:**
+
 ```json
 {
   "skill": "deep-review",
@@ -327,6 +339,7 @@ As the last step after saving the deep-review report, emit a metrics record. Bes
 ```
 
 **Emit call:**
+
 ```bash
 # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
 # is not exported into skill Bash). See core/shared/tool-resolver.md.

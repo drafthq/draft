@@ -79,4 +79,3 @@ Evening: you run/draft:deep-reviewon the auth module after a security concern. D
 Token budgets are finite. A 400-line.ai-context.mdplus a comprehensive 10-sectionarchitecture.mdplus 150 facts consumes significant context window space — space that competes with the actual code being analyzed, the spec being checked, and the plan being followed. Tiering is not an optimization. It is a necessity. Without it, large projects would hit context limits before the AI could even begin working.
 
 The three-tier system also reflects a truth about information relevance: most of your project's architectural knowledge is irrelevant to any single task. Loading it anyway does not make the AI smarter. It makes it noisier. Focused context produces focused output.
-

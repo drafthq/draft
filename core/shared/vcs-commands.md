@@ -38,7 +38,7 @@ git rev-list [range]             # Commit listing
 
 Draft uses [Conventional Commits](https://www.conventionalcommits.org/) for traceability:
 
-```
+```text
 <type>(<track_id>): <description>
 
 [optional body]
@@ -49,11 +49,13 @@ Draft uses [Conventional Commits](https://www.conventionalcommits.org/) for trac
 Common `<type>` values: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `perf`.
 
 Footer fields (when applicable):
+
 - `Refs: <issue or PR number>` — link to issue tracker
 - `Co-Authored-By: <name> <email>` — for AI-assisted commits
 
 If a Jira ticket is linked in `spec.md`, include it in the body or footer:
-```
+
+```text
 feat(add-auth): implement OAuth2 callback
 
 Refs: ENG-1234
@@ -78,6 +80,7 @@ git push -u origin <branch>
 ```
 
 Then open a PR via the `gh` CLI or the GitHub web UI:
+
 ```bash
 gh pr create --title "<title>" --body "<description>"
 ```

@@ -11,7 +11,7 @@ Qualify any Jira ticket — Epic, Story, Bug, or Sub-task — by running a manda
 
 **Invoked via:** `/draft:jira review <JIRA_ID>`. The router in [SKILL.md](SKILL.md) dispatches here.
 
-## Red Flags — STOP if you're:
+## Red Flags — STOP if you're
 
 - Skipping Phase 0 prerequisites — MCP servers and `draft/` context are **required**.
 - Treating `context.md` as the final report — it's intermediate input for quality analysis.
@@ -42,7 +42,7 @@ Throughout the rest of this document, "story" means "child story (epic mode) OR 
 
 ## Pipeline Overview
 
-```
+```text
 Phase 0: Prerequisites & MCP Discovery       ← fail-fast, verify ALL MCPs, branch on issuetype
 Phase 1: Issue & Story Collection             (Jira MCP) — fan-out for Epic, self-only otherwise
 Phase 2: Document Collection & Synthesis      (WebFetch / configured MCPs)
@@ -80,10 +80,13 @@ previous_run: "{path to previous qualification-report.md or null}"
 Git state (branch, commit, dirty, synced_to_commit) is read from `draft/metadata.json` — include a human-readable summary table in the report body but do not embed git fields in frontmatter.
 
 Gather git metadata at pipeline start from `draft/metadata.json`:
+
 ```bash
 python3 -c "import json; d=json.load(open('draft/metadata.json')); print(d['git']['branch'], d['git']['commit_short'], d['synced_to_commit'])"
 ```
+
 Fallback if `draft/metadata.json` absent:
+
 ```bash
 git branch --show-current
 git rev-parse HEAD
@@ -99,6 +102,7 @@ git status --porcelain | head -1
 ### 0.1 Validate Input
 
 Parse `$ARGUMENTS` as a Jira issue key:
+
 - If matches `<PROJECT>-<NUMBER>` (e.g., `ENG-446236`, `PROJ-1234`): use as-is.
 - If numeric-only (e.g., `446236`): prompt user for project prefix — do NOT assume.
 - If invalid format: **STOP** with usage example.
@@ -128,7 +132,7 @@ Record the detected Code Review MCP type — Phase 3 adapts its calls accordingl
 
 The working directory **must** have Draft context. `draft:deep-review`, `draft:bughunt`, and `draft:coverage` depend on it.
 
-```
+```text
 IF draft/.ai-context.md AND draft/architecture.md exist:
   → Use existing context
   → Read synced_to_commit from draft/metadata.json (fallback: draft/.ai-context.md YAML frontmatter for pre-migration installs)
@@ -144,12 +148,13 @@ ELSE:
 
 After validating input and verifying MCPs, fetch the issue's type:
 
-```
+```text
 get_issue(key=<JIRA_ID>, prune_mode="minimal")
   → record issue_type, parent (for sub-tasks)
 ```
 
 Branch based on `issue_type`:
+
 - **Epic** → enable Phase 1.3 fan-out (collect child stories).
 - **Story / Bug** → skip Phase 1.3 fan-out; treat self as the only story record.
 - **Sub-task** → skip Phase 1.3 fan-out; treat self as the only story record; fetch parent for context.
@@ -164,6 +169,7 @@ ls draft/jira-review/<JIRA_ID>/qualification-report.md 2>/dev/null
 ```
 
 If a previous run exists:
+
 - Note its `generated_at` timestamp for delta comparison in Phase 7.
 - Do NOT delete — the new run overwrites.
 
@@ -181,7 +187,7 @@ Announce: "Starting Jira Review Pipeline for `<JIRA_ID>`"
 
 ### 1.1 Issue Metadata
 
-```
+```text
 get_issue(key=<JIRA_ID>, prune_mode="full")
 get_issue_description(issue_key=<JIRA_ID>)
 get_issue_comments(issue_key=<JIRA_ID>, prune_mode="default")
@@ -190,9 +196,11 @@ get_issue_comments(issue_key=<JIRA_ID>, prune_mode="default")
 From the full issue, extract and store: key, summary, status, assignee, priority, type, created, updated, labels, components, fix versions.
 
 For **Sub-task** type, also fetch the parent:
-```
+
+```text
 get_issue(key=<PARENT_KEY>, prune_mode="minimal")
 ```
+
 Record parent key and summary — included in the report for context, not qualified itself.
 
 ### 1.2 Extract Artifact Links
@@ -206,6 +214,7 @@ Scan issue description, custom fields, and comments for:
 | TestRail Results | TestRail URLs, embedded pass/fail data | "TestRail: Results", "Test Results", "QA Results" |
 
 Also check:
+
 - `get_linked_issues(issue_key=<JIRA_ID>)` for documentation-type tickets.
 - Jira attachments (design docs uploaded directly to the issue).
 
@@ -217,13 +226,14 @@ For each artifact: record URL, type, and hold for Phase 2.
 
 For **Epic**:
 
-```
+```text
 get_issues(jql="\"Epic Link\" = <JIRA_ID>", max_results=100, prune_mode="default")
 ```
 
 **Pagination:** If `truncated: true`, increase `max_results` or make follow-up calls. Do not silently drop stories.
 
 **Fallbacks** (try in order, stop when results found):
+
 1. `get_issues(jql="parent = <JIRA_ID>", max_results=100)` — Jira Cloud uses `parent` instead of `Epic Link`.
 2. `get_linked_issues(issue_key=<JIRA_ID>, relationship_type="epic child")`.
 3. `get_linked_issues(issue_key=<JIRA_ID>)` — all links, filter child/subtask types.
@@ -233,7 +243,8 @@ If all return zero: flag "no stories found", produce minimal report.
 ### 1.4 Story Enrichment
 
 Per story (or per the single self-record for non-Epic):
-```
+
+```text
 get_issue(key=<STORY_ID>, prune_mode="default")
 get_issue_comments(issue_key=<STORY_ID>, prune_mode="default")
 ```
@@ -246,13 +257,15 @@ Extract from fields: "TestRail: Results" if present.
 ### 1.5 Sub-Task Collection
 
 Per story, check for sub-tasks:
-```
+
+```text
 get_linked_issues(issue_key=<STORY_ID>, relationship_type="subtask")
 ```
 
 Or parse the `subtasks` field from `get_issue(key=<STORY_ID>, prune_mode="full")`.
 
 For each sub-task:
+
 - Collect its code-review links from comments (same extraction as stories).
 - Roll up sub-task code changes into the parent story's change set.
 - Do NOT treat sub-tasks as independent stories for gap analysis.
@@ -277,6 +290,7 @@ Check each code-deliverable story status:
 | Blocked | Blocked, Impediment | "BLOCKED — escalation needed" |
 
 Additional flags:
+
 - No description or acceptance criteria → "INCOMPLETE SPEC — gap".
 - Code-deliverable + no code-review links in comments → "NO CODE CHANGES — verify in Phase 3".
 
@@ -296,6 +310,7 @@ Additional flags:
 6. All fail → record URL + "could not access" + flag as process gap.
 
 **If content retrieved from local Draft artifacts**, synthesis pulls directly:
+
 - §Background → Goals and scope.
 - §High Level Design (Architecture, Key Design Decisions, Alternatives Considered) → Architecture / design decisions, key trade-offs.
 - §Detailed Design → API changes.
@@ -304,6 +319,7 @@ Additional flags:
 - §Approvals signed/unsigned → process compliance signal.
 
 **If content retrieved from external doc**, synthesize and write to `draft/jira-review/<JIRA_ID>/design-doc-synthesis.md` (with metadata header):
+
 - Goals and scope.
 - Architecture / design decisions.
 - API changes, data model changes.
@@ -311,6 +327,7 @@ Additional flags:
 - Non-functional requirements (performance, security, scalability).
 
 **Process gap signals** to flag:
+
 - Track exists in `draft/tracks/` but no `hld.md` AND no external design doc — qualification gap.
 - HLD exists but Approvals table fully unsigned — review-process gap (track was implemented without sign-off).
 - HLD `synced_to_commit` is older than the latest merged code change for the track — drift gap (design and code diverged).
@@ -320,15 +337,18 @@ Additional flags:
 **Test Plan document** — same access strategy as 2.1. Synthesize test strategy and coverage goals.
 
 **TestRail integration** (if TestRail MCP available):
+
 - Extract test suite/run IDs from: Test Plan URL path segments, Jira "TestRail: Results" field, or story-level TestRail references.
 - Fetch: test case ID, title, status (passed/failed/blocked/untested), mapped story.
 - Fetch: test run results, pass rate summary.
 
 **If TestRail MCP not available:**
+
 - WebFetch on TestRail URLs.
 - Parse "TestRail: Results" Jira field for embedded data (pass/fail counts, test case references).
 
 **Write to** `draft/jira-review/<JIRA_ID>/test-data-synthesis.md` (with metadata header):
+
 - Total test cases with pass/fail/blocked/untested counts.
 - Test cases mapped to specific stories.
 - Stories without test cases (test gaps).
@@ -372,7 +392,7 @@ Group result: `{STORY_ID: [change_id_1, change_id_2, ...]}`. Include sub-task ch
 
 For each change ID (Gerrit example shown; adapt calls for GitHub/GitLab):
 
-```
+```text
 get_change_details(change_id, options=["ALL_REVISIONS", "MESSAGES", "REVIEWERS"])
   → status (NEW/MERGED/ABANDONED), owner, reviewers, labels, branch,
     insertions/deletions, patchset count (_number from revisions)
@@ -436,6 +456,7 @@ Extract code-review links from **issue-level comments** (Phase 1.1). These are c
 ### 3.6 No Changes for Code Story
 
 If a code-deliverable story has **no code changes** (including sub-tasks):
+
 - Check issue-level changes for commit messages mentioning the story ID.
 - If still none: flag "implementation gap — no code changes found".
 
@@ -529,12 +550,15 @@ Generate `draft/jira-review/<JIRA_ID>/context.md` (with metadata header) combini
 ### Where — Codebase Impact
 (Files grouped by module from consolidated change set:)
 ```
+
 module_a/ (N files)
+
   - file1.cc (MODIFIED)
   - file2.h (ADDED)
 module_b/ (N files)
   - file3.py (MODIFIED)
-```
+
+```text
 
 ### How — Technical Approach
 (Per-module: 2-3 sentences summarizing what the code changes do. Derived from commit
@@ -598,6 +622,7 @@ For each story, include under `## Per-Story Detail`:
 ### Learnings Narrative Per Story
 
 For **bug-fix stories** (5 sections):
+
 1. **What was the issue** — symptoms, scope, observables, impact. Generalize using patterns rather than raw ticket IDs.
 2. **RCA** — primary cause, contributing factors. Incorporate code-review insights from `list_change_comments` if relevant.
 3. **Resolution** — fix type, change ID, branch, merge status, who reviewed. Reference patchset count.
@@ -605,6 +630,7 @@ For **bug-fix stories** (5 sections):
 5. **Learnings** — technical, operational, process takeaways. Test gaps.
 
 For **feature stories** (5 sections):
+
 1. **What was the requirement** — goal, user need, scope, acceptance criteria. Cross-reference design doc synthesis.
 2. **Technical approach** — design decisions, patterns, integration points.
 3. **Implementation** — key files from `list_change_files`, change scope (insertions/deletions).
@@ -697,11 +723,12 @@ All three commands use the `draft/` context established in Phase 0.
 ### 5.1 /draft:deep-review
 
 Run per changed module. Module selection follows deep-review's own priority:
+
 1. Check `draft/.ai-context.md` for `## Modules` or `## Module Catalog` — match against modules from the consolidated change set.
 2. If no module catalog: use top-level directories from the consolidated file list.
 3. Run once per affected module:
 
-```
+```text
 draft:deep-review <module-name-or-directory>
 ```
 
@@ -716,11 +743,12 @@ Produces per-module: ACID compliance, resilience, observability, configuration a
 Run scoped to specific file paths from the consolidated change set.
 
 **Invocation protocol:** bughunt prompts for scope type when invoked. Pre-answer the prompt:
+
 1. Select **"Specific paths"** when bughunt asks for scope.
 2. Supply the consolidated file list from Phase 3.4 as the target paths.
 3. If bughunt asks for track context, respond: "No track — running as part of /draft:jira review pipeline".
 
-```
+```text
 /draft:bughunt
 → (scope prompt) → "Specific paths"
 → (paths prompt) → <consolidated file list from Phase 3.4>
@@ -736,13 +764,14 @@ Produces: severity-ranked bug list (Critical/High/Medium/Low) with code evidence
 
 Run with explicit path argument per changed module:
 
-```
+```text
 /draft:coverage <module-directory>
 ```
 
 Coverage reads `coverage_target` from `draft/workflow.md` (default: **95%** if absent).
 
 **Track requirement workaround:** `/draft:coverage` expects an active track and writes to `draft/tracks/<id>/coverage-report.md`. Since `jira review` does not create a track:
+
 1. Coverage will look for an active track from `draft/tracks.md` — if none exists, it will warn.
 2. Capture coverage output directly from the tool's console/response text.
 3. Record the coverage percentages, gap analysis, and uncovered files in the review context document (Phase 4).
@@ -753,6 +782,7 @@ Coverage reads `coverage_target` from `draft/workflow.md` (default: **95%** if a
 ### 5.4 Partial Completion Handling
 
 If any Phase 5 command fails:
+
 - Record which commands completed and which failed.
 - Continue with remaining commands — do NOT abort the pipeline.
 - In Phase 7, note failed analyses: "draft:coverage — FAILED: no test framework detected" etc.
@@ -801,6 +831,7 @@ From Phase 3.4 test file classification:
 | Story ships only test files | Test-only change (backfill, refactor) — positive signal |
 
 Per story, assign a **Test Shipping Status**:
+
 - **TESTED**: code changes include test files covering the production changes.
 - **PARTIALLY TESTED**: some production files have companion tests (unchanged or in different changes).
 - **UNTESTED**: no test files shipped, no companion tests in codebase.
@@ -809,6 +840,7 @@ Per story, assign a **Test Shipping Status**:
 ### 6.3 Acceptance Criteria → Test Mapping
 
 Per code-deliverable story:
+
 1. Extract acceptance criteria (from Phase 1.4).
 2. Map to **codebase tests** discovered in 6.1 (test function names that exercise the criterion).
 3. Map to **TestRail test cases** (from Phase 2.2, if available) — if TestRail unavailable, leave column blank and weight codebase tests + coverage higher.
@@ -857,7 +889,7 @@ Generate **framework-specific, copy-pasteable test suggestions** for every ident
 
 For each production file/function without adequate test coverage:
 
-```
+```yaml
 Test:     <descriptive_test_function_name>
 Type:     Unit
 Priority: Critical / High / Medium
@@ -873,7 +905,8 @@ Sketch:
 <include setup/teardown if needed>
 <test the specific changed function with meaningful assertions>
 ```
-```
+
+```text
 
 **Focus areas** (in priority order):
 1. Changed functions with zero test coverage.
@@ -887,6 +920,7 @@ Sketch:
 For each Critical/High bughunt finding (from 6.5):
 
 ```
+
 Test:     regression_<bug_description>
 Type:     Regression
 Priority: Critical (matches bughunt severity)
@@ -897,18 +931,21 @@ Tests:    <reproduces the exact bug scenario>
 Why:      Prevents regression of <bughunt finding>
 
 Sketch:
+
 ```<language>
 <test that sets up the vulnerable state>
 <triggers the code path that had the bug>
 <asserts correct behavior — the bug does NOT manifest>
 ```
-```
+
+```text
 
 #### Integration Tests — for cross-module changes
 
 When code changes span multiple modules (from Phase 3.4 consolidated change set):
 
 ```
+
 Test:     integration_<module_a>_<module_b>_<scenario>
 Type:     Integration
 Priority: High
@@ -918,12 +955,14 @@ Tests:    <interaction between modules — data flow, API contract, event handli
 Why:      Cross-module changes risk breaking integration points
 
 Sketch:
+
 ```<language>
 <set up both modules with test fixtures>
 <exercise the integration point changed by the issue>
 <assert end-to-end behavior across module boundary>
 ```
-```
+
+```text
 
 **Trigger conditions** for integration test suggestions:
 - Stories whose code changes touch files in 2+ modules.
@@ -1222,10 +1261,13 @@ Total: <N> changes across <M> stories
 ## All Files Changed
 (Deduplicated, grouped by module:)
 ```
+
 module_a/ (N files)
+
   - file1.cc (MODIFIED, stories: ENG-111, ENG-222)
   - file2.h (ADDED, stories: ENG-111)
-```
+
+```yaml
 Total: <N> files across <M> modules
 ```
 

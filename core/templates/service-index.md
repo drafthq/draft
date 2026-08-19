@@ -43,6 +43,7 @@ The following services have not been initialized with `/draft:init`:
 - `[path/to/service]/`
 
 Initialize each one by running `/draft:init` inside its directory — it links the module's graph up to the root spine:
+
 ```bash
 cd [path/to/service] && /draft:init
 ```

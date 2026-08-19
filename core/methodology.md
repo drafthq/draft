@@ -9,6 +9,7 @@ Draft is a methodology for Context-Driven Development that ensures consistent, h
 ### The Core Problem
 
 AI coding assistants are powerful but undirected. Without structure, they:
+
 - Make assumptions about requirements
 - Choose arbitrary technical approaches
 - Produce code that doesn't fit the existing codebase
@@ -73,7 +74,7 @@ Draft solves this through **Context-Driven Development**: structured documents t
 
 ### The Constraint Hierarchy
 
-```
+```text
 product.md → "Build a task manager for developers"
   ↓
 tech-stack.md → "Use React, TypeScript, Tailwind"
@@ -93,7 +94,7 @@ Each layer narrows the solution space. By the time AI writes code, most decision
 
 Draft uses a layered context system inspired by memory tiering — see `core/shared/draft-context-loading.md` for the authoritative specification.
 
-```
+```text
 Layer 0: .ai-profile.md (20-50 lines) — Always loaded. Minimum project context.
 Layer 1: .ai-context.md (200-400 lines) — Base context: boundaries, invariants, flows.
 Layer 1.5: draft/graph/*.jsonl — Structural graph (when available).
@@ -145,6 +146,7 @@ graph LR
 ### Keeping AI Constrained
 
 Without constraints, AI will:
+
 1. **Over-engineer** — add abstractions, utilities, "improvements" you didn't ask for
 2. **Assume context** — guess at requirements instead of asking
 3. **Lose focus** — drift across the codebase making tangential changes
@@ -164,6 +166,7 @@ The AI becomes an executor of pre-approved work, not an autonomous decision-make
 **This is Draft's most important feature.**
 
 The workflow:
+
 1. Developer runs `/draft:plan` — AI routes to the right planning workflow, usually `/draft:new-track`
 2. Developer reviews and edits these documents
 3. Developer commits them for peer review
@@ -178,6 +181,7 @@ The workflow:
 | AI decisions are implicit | AI decisions are documented |
 
 **Benefits:**
+
 - **Faster reviews** — Reviewers approve approach, not implementation details
 - **Fewer rewrites** — Catch design issues before code exists
 - **Knowledge transfer** — Specs document *why*, not just *what*
@@ -201,12 +205,14 @@ Draft's artifacts are designed for team collaboration through standard git workf
 ### When to Use Draft
 
 **Good fit:**
+
 - Features requiring design decisions
 - Work that will be reviewed by others
 - Complex multi-step implementations
 - Anything where "just do it" has failed before
 
 **Overkill:**
+
 - One-line bug fixes
 - Typo corrections
 - Exploratory prototypes you'll throw away
@@ -249,6 +255,7 @@ Writing specs feels slower. It isn't.
 | Wrong feature entirely | Days wasted | Caught in review |
 
 The overhead is constant (~20% for simple tasks). The savings scale with:
+
 - **Complexity** — More moving parts = more value from upfront planning
 - **Team size** — More reviewers = more value from documented decisions
 - **Criticality** — Higher stakes = more value from discipline
@@ -306,7 +313,7 @@ Draft works with **Claude Code** (native `.claude-plugin/` support) and **Cursor
 
 ## Core Workflow
 
-```
+```text
 Context → Spec & Plan → Implement
 ```
 
@@ -321,7 +328,7 @@ A **track** is a high-level unit of work (feature, bug fix, refactor). Each trac
 
 Two layouts are supported; both are valid:
 
-```
+```text
 # Single-track project (default) # Multi-track project
 draft/ draft/tracks/<track-id>/
 ├── spec.md ├── spec.md
@@ -387,6 +394,7 @@ Plans are organized into phases:
 ### Task Granularity
 
 Good tasks are:
+
 - Completable in a focused session
 - Have clear success criteria
 - Produce testable output
@@ -534,6 +542,7 @@ Creates a new track (feature, bug fix, or refactor) with a specification and pha
 #### Context Loading
 
 Every new track loads the full project context before spec creation:
+
 - `draft/product.md` — product vision, users, goals, guidelines
 - `draft/tech-stack.md` — languages, frameworks, patterns, accepted patterns
 - `draft/.ai-context.md` — system map, modules, data flows, invariants, security architecture (if exists). Falls back to `draft/architecture.md` for legacy projects.
@@ -555,6 +564,7 @@ New track auto-detects the track type from the description and dialogue:
 #### Specification Creation (Feature)
 
 Engages in dialogue to understand scope before generating `spec.md`:
+
 - **What** — Exact scope and boundaries
 - **Why** — Business/user value
 - **Acceptance criteria** — How we know it's done
@@ -564,6 +574,7 @@ Engages in dialogue to understand scope before generating `spec.md`:
 #### Specification Creation (Bug / RCA)
 
 For bugs, incidents, and Jira-sourced issues. Focused investigation, not broad exploration:
+
 - **Symptoms** — Exact error, affected users/flows, frequency
 - **Reproduction** — Steps to trigger, environment conditions
 - **Blast Radius** — What's broken AND what's not (scopes the investigation)
@@ -575,6 +586,7 @@ The spec is presented for approval and iterated until the developer is satisfied
 #### Plan Creation
 
 Based on the approved spec, generates a phased task breakdown in `plan.md`:
+
 - **Feature tracks:** Tasks organized into phases (Foundation → Implementation → Integration → Polish)
 - **Bug tracks:** Fixed 3-phase structure: Investigate & Reproduce → Root Cause Analysis → Fix & Verify. Includes an RCA Log table for tracking hypotheses.
 - Each task specifies target files and test files
@@ -586,6 +598,7 @@ Also creates `metadata.json` (status tracking) and registers the track in `draft
 #### Track ID
 
 Auto-generated kebab-case from the description:
+
 - Full description converted to lowercase
 - Spaces replaced with hyphens
 - Special characters removed
@@ -620,6 +633,7 @@ Implements tasks from the active track's plan, following the TDD workflow when e
 #### Task Selection
 
 Scans `plan.md` for the first uncompleted task:
+
 - `[ ]` Pending — picks this one
 - `[~]` In Progress — resumes this one
 - `[x]` Completed — skips
@@ -668,6 +682,7 @@ This keeps `/draft:implement` as the common entry point while preserving explici
 #### Phase Boundary Review
 
 When all tasks in a phase are `[x]`, a three-stage review is triggered:
+
 1. **Stage 1: Automated Validation** — Fast static checks (architecture conformance, dead code, circular dependencies, OWASP security, performance anti-patterns)
 2. **Stage 2: Spec Compliance** — Verify all requirements for the phase are implemented
 3. **Stage 3: Code Quality** — Verify patterns, error handling, test quality; classify issues as Critical/Important/Minor
@@ -692,6 +707,7 @@ When all phases complete: update `plan.md`, `metadata.json`, and `draft/tracks.m
 ### `/draft:status` — Show Progress
 
 Displays a comprehensive overview of project progress:
+
 - All active tracks with phase and task counts
 - Current task indicator
 - Module status (if `.ai-context.md` exists) with coverage percentages
@@ -789,6 +805,7 @@ Documents significant technical decisions with context, alternatives, and conseq
 #### When to Use
 
 Create an ADR during or after `/draft:plan` when making architectural decisions:
+
 - Adopting a new technology or framework
 - Changing system architecture or module boundaries
 - Selecting between multiple viable approaches with trade-offs
@@ -799,6 +816,7 @@ Skip ADRs for trivial decisions (variable naming, formatting) or reversible choi
 #### ADR Structure
 
 Each ADR contains:
+
 - **Context** — The issue or forces driving the decision (technical, business, organizational)
 - **Decision** — What we're proposing/doing, stated in active voice ("We will...")
 - **Alternatives Considered** — At least 2 alternatives with pros/cons and rejection rationale
@@ -885,6 +903,7 @@ When graph data exists, baseline review always includes blast-radius / hotspot i
 #### Track-Level Review
 
 Reviews a track's implementation against its spec.md and plan.md:
+
 - **Stage 1 (Automated Validation):** Fast, static checks for structural flaws (dead code, circular dependencies, OWASP secrets, N+1 patterns).
 - **Stage 2 (Spec Compliance):** Verifies all functional requirements and acceptance criteria are met.
 - **Stage 3 (Code Quality):** Evaluates architecture, error handling, testing, and maintainability.
@@ -894,6 +913,7 @@ Extracts commit SHAs from plan.md to determine diff range. Supports fuzzy track 
 #### Project-Level Review
 
 Reviews arbitrary changes (static validation + code quality only, no spec compliance):
+
 - `project` — uncommitted changes
 - `files <pattern>` — specific file patterns
 - `commits <range>` — commit range
@@ -963,6 +983,7 @@ Handles mid-track requirement changes without losing work. Analyzes the impact o
 #### When to Use
 
 Use when requirements shift after a track is already in progress:
+
 - A stakeholder changes scope mid-sprint
 - A dependency constraint forces a pivot
 - New information invalidates part of the original spec
@@ -992,6 +1013,7 @@ Use when requirements shift after a track is already in progress:
 Draft supports granular pre-implementation design for complex projects. **Architecture mode is automatically enabled when `draft/tracks/<id>/.ai-context.md` exists** (created by `/draft:decompose`). Falls back to `draft/tracks/<id>/architecture.md` for legacy projects.
 
 **How it works:**
+
 1. Run `/draft:decompose` on a track → Creates `draft/tracks/<id>/architecture.md` (and derived `.ai-context.md`)
 2. Run `/draft:implement` → Automatically detects `architecture.md` and enables architecture features
 3. Features: Story writing, Execution State design, Function Skeletons, ~200-line chunk reviews
@@ -1071,19 +1093,21 @@ Coverage complements TDD — TDD is the process (write test, implement, refactor
 ### When to Use Architecture Mode
 
 **Good fit:**
+
 - Multi-module features with component dependencies
 - New projects where architecture decisions haven't been made
 - Complex algorithms or data transformations
 - Teams wanting maximum review granularity
 
 **Overkill:**
+
 - Simple features touching 1-2 files
 - Bug fixes with clear scope
 - Configuration changes
 
 ### Workflow with Architecture Mode
 
-```
+```text
 /draft:init
      │ (creates draft/architecture.md + draft/.ai-context.md for brownfield)
      │
@@ -1115,6 +1139,7 @@ Sync tracks to Jira via the unified router:
 `/draft:jira preview` → review/edit export → `/draft:jira create`
 
 Story points are auto-calculated from task count:
+
 - 1-2 tasks = 1 point
 - 3-4 tasks = 2 points
 - 5-6 tasks = 3 points

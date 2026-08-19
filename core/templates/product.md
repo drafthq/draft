@@ -26,10 +26,12 @@ generated_at: "{ISO_TIMESTAMP}"
 ## Target Users
 
 ### Primary Users
+
 - **[User Type 1]**: [What they need, their context]
 - **[User Type 2]**: [What they need, their context]
 
 ### Secondary Users
+
 - **[Admin/Support]**: [Their interaction with the product]
 
 ---
@@ -37,15 +39,18 @@ generated_at: "{ISO_TIMESTAMP}"
 ## Core Features
 
 ### Must Have (P0)
+
 1. **[Feature 1]**: [Brief description]
 2. **[Feature 2]**: [Brief description]
 3. **[Feature 3]**: [Brief description]
 
 ### Should Have (P1)
+
 1. **[Feature 4]**: [Brief description]
 2. **[Feature 5]**: [Brief description]
 
 ### Nice to Have (P2)
+
 1. **[Feature 6]**: [Brief description]
 
 ---
@@ -61,16 +66,16 @@ generated_at: "{ISO_TIMESTAMP}"
 ## Constraints
 
 ### Technical
+
 - [Constraint, e.g., "Must support IE11"]
 - [Constraint, e.g., "API response time < 200ms"]
 
 ### Business
+
 - [Constraint, e.g., "Must comply with GDPR"]
 - [Constraint, e.g., "Budget for external APIs: $X/month"]
 
 ### Timeline
-- [Milestone 1]: [Date]
-- [Milestone 2]: [Date]
 
 ---
 
@@ -93,19 +98,23 @@ Things explicitly out of scope for this product:
 ## Guidelines (Optional)
 
 ### Writing Style
+
 - **Tone:** [professional / casual / technical]
 - **Voice:** [first person "we" / third person "the system" / second person "you"]
 - **Terminology:** [domain-specific terms and definitions]
 
 ### UX Principles
+
 1. [e.g., "Convention over configuration" — minimize required decisions]
 2. [e.g., "Accessible by default" — WCAG AA compliance minimum]
 3. [e.g., "Progressive disclosure" — show complexity only when needed]
 
 ### Error Handling
+
 - **Error message tone:** [helpful / technical / minimal]
 - **User feedback patterns:** [toasts / modals / inline / status bar]
 
 ### Content Standards
+
 - **Date format:** [ISO 8601 / localized / relative]
 - **Internationalization:** [i18n required / English-only / planned]

@@ -35,7 +35,7 @@ generated_at: "{ISO_TIMESTAMP}"
 
 ## Component Graph
 
-```
+```json
 {project_root}/
 ├── {module1}/ ← {5-10 word description}
 │ ├── {submod1}/ ← {description} ({Ncc} cc, {Nh} h)
@@ -114,6 +114,7 @@ None ✓
 {One paragraph or bullets explaining how components find each other.}
 
 Key injection points:
+
 - `{token1}`: {what it provides}
 - `{token2}`: {what it provides}
 - `{token3}`: {what it provides}
@@ -144,7 +145,7 @@ interface {ServiceName} {
 
 ## Dependency Graph
 
-```
+```json
 [{Component}] -> (HTTP) -> [{ExternalService}]
 [{Component}] -> (SQL) -> [{Database}]
 [{Component}] -> (gRPC) -> [{PeerService}]

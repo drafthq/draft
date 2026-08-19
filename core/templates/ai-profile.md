@@ -9,12 +9,14 @@ generated_at: "{ISO_TIMESTAMP}"
 # {PROJECT_NAME} Profile
 
 ## Project
+
 - Name: {PROJECT_NAME}
 - One-liner: {ONE_LINE_PRODUCT_DESCRIPTION}
 - Primary users: {USER_TYPES}
 - Repository layout: {monorepo|polyrepo|single-service}
 
 ## Stack
+
 - Language: {LANGUAGE}
 - Framework: {FRAMEWORK}
 - Database: {DATABASE}
@@ -26,17 +28,22 @@ generated_at: "{ISO_TIMESTAMP}"
 - Entry: {ENTRY_POINT}
 
 ## INVARIANTS
+
 {Top 3-5 critical invariants from .ai-context.md, one per line, with file:line refs}
 
 ## NEVER
+
 {2-3 safety rules — things that must never happen}
 
 ## Key Operational Models (from §6 / GRAPH:OPERATIONAL)
+
 - {Most critical flow 1 — one line}
 - {Most critical flow 2 (if space allows)}
 
 ## Active Tracks
+
 {List of active track IDs and one-line descriptions, or "none"}
 
 ## Recent Changes
+
 {Last 3-5 significant commits or changes, one per line}

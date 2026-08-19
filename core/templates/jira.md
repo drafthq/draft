@@ -28,11 +28,12 @@ labels: # Labels to apply to all created issues
 # Jira Story Template (Minimal)
 
 ## Summary
+
 [Brief, descriptive title]
 
 ## Description
 
-```
+```text
 h3. Description:
 
 Problem Statement:
@@ -68,7 +69,7 @@ Use Cases:
 
 ## Acceptance Criteria
 
-```
+```text
 - [ ] [Criterion 1: Specific, testable requirement]
 - [ ] [Criterion 2: Specific, testable requirement]
 - [ ] [Criterion 3: Specific, testable requirement]
@@ -77,35 +78,42 @@ Use Cases:
 ## Required Fields
 
 ### Standard Fields
+
 - **Issue Type:** Story
 - **Priority:** Medium
 - **Components:** [Component name]
 - **Fix Version/s:** [Version or master]
 
 ### People
+
 - **Assignee:** [Your email]
 - **Product Owner:** [PO email]
 - **Tech Lead:** [Tech lead email]
 - **Scrum Master:** [Scrum master email]
 
 ### Team
+
 - **Developers:** [List developer emails]
 - **Reviewers:** [List reviewer emails]
 
 ### Story Details
+
 - **Story Points:** [1/2/3/5/8/13]
 - **Work Type:** Operational Excellence
 - **Sub-Team:** [Sub-team name]
 - **Organization:** R&D
 
 ### Development Status
+
 - **Development Status:** Not-Started
 
 ### Security
+
 - **Requires Security Review:** Yes/No
 - **Security Review Status:** Review Needed
 
 ### Quality Gates
+
 - [ ] Tasks complete
 - [ ] Functional Testing complete
 - [ ] 100% code unit tested or Automated
@@ -113,6 +121,7 @@ Use Cases:
 - [ ] i18n impact review
 
 ### Other
+
 - **Risk Assessment:** Toss Up
 - **Priority Level:** Normal
 - **Category:** Uncategorized

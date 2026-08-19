@@ -5,6 +5,7 @@ Shared procedure for gathering git metadata and generating YAML frontmatter in D
 Referenced by: All skills that generate Draft reports — including `/draft:bughunt`, `/draft:deep-review`, `/draft:review`, `/draft:quick-review`, `/draft:tech-debt`, `/draft:deploy-checklist`, `/draft:incident-response`, `/draft:debug`, `/draft:standup`, `/draft:testing-strategy`
 
 > **Two-tier metadata pattern:**
+>
 > - **Project-level artifacts** (`draft/architecture.md`, `.ai-context.md`, `.ai-profile.md`, `product.md`, `workflow.md`, etc.): git state lives in `draft/metadata.json` only. Per-file frontmatter carries only `project`, `module`, `generated_by`, `generated_at`. Skills read `synced_to_commit` from `draft/metadata.json`.
 > - **Session/report artifacts** (`draft/bughunt-report-*.md`, `draft/review-*.md`, etc.): embed full git frontmatter using the template below — these are point-in-time snapshots, not refreshable docs.
 > - **Track artifacts** (`tracks/<id>/spec.md`, `hld.md`, etc.): git state lives in `tracks/<id>/metadata.json`. Per-file frontmatter carries only stable fields.

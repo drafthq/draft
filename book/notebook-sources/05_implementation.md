@@ -90,4 +90,3 @@ The Architect does not make implementation decisions. It establishes boundaries,
 During implementation, shortcuts sometimes happen. When the AI encounters a workaround or known-imperfect solution, it logs it in aTech Debtsection at the bottom ofplan.mdwith location, description, severity (Low/Medium/High), and a payback trigger — the condition that should prompt repayment. Only genuine debt is logged: intentional shortcuts with known consequences, not everything imperfect.
 
 With implementation complete, the next step is review — a three-stage process that verifies everything the plan promised was actually delivered.
-

@@ -7,7 +7,7 @@ description: Generate standup summary from git history, track progress, and Jira
 
 You are generating a standup summary from recent development activity. This is a **read-only** skill — it makes no changes to the codebase or track files.
 
-## Red Flags — STOP if you're:
+## Red Flags — STOP if you're
 
 - Modifying any files (this is read-only)
 - Fabricating activity that didn't happen
@@ -42,6 +42,7 @@ If `draft/` exists, read and follow `core/shared/draft-context-loading.md`.
 ## Step 1: Parse Arguments
 
 Check for arguments:
+
 - `/draft:standup` — Default: last 24 hours of activity
 - `/draft:standup <days>` — Activity from last N days
 - `/draft:standup weekly` — Full week summary (Monday-Friday)
@@ -68,6 +69,7 @@ fi
 ```
 
 Parse commit messages for:
+
 - Track IDs (from `type(track-id): description` convention — already extracted as `track_id` in JSONL)
 - Task completions
 - Bug fixes
@@ -76,6 +78,7 @@ Parse commit messages for:
 ### Source 2: Track Progress (if draft context exists)
 
 Read `draft/tracks.md` for active tracks:
+
 - Current status and phase
 - Tasks completed since last standup
 - Blockers (tasks marked `[!]`)
@@ -85,6 +88,7 @@ Read `draft/tracks.md` for active tracks:
   [core/shared/template-contract.md](../../core/shared/template-contract.md).
 
 For each active track, read `plan.md` to determine:
+
 - Tasks completed (count `[x]` with recent commit SHAs)
 - Current task (first `[ ]` or `[~]`)
 - Phase progress
@@ -92,6 +96,7 @@ For each active track, read `plan.md` to determine:
 ### Source 3: Jira Activity (if MCP available)
 
 If Jira MCP is available:
+
 - Query recent ticket transitions (status changes)
 - Check for new comments or assignments
 - Pull sprint board status
@@ -99,6 +104,7 @@ If Jira MCP is available:
 ### Source 4: GitHub Activity (if MCP available)
 
 If GitHub MCP is available:
+
 - Query open reviews authored by user
 - Check for new review comments received
 - Query recently merged changes
@@ -110,6 +116,7 @@ tail -50 ~/.draft/metrics.jsonl 2>/dev/null
 ```
 
 If the file exists and has records in the standup period, enrich the standup with skill activity:
+
 - **implement** records: count tasks completed, note TDD pass/fail rate
 - **review** records: note reviews run and their verdicts
 - **bughunt** records: note bug hunts run and critical counts
@@ -154,6 +161,7 @@ Format using the standard Yesterday/Today/Blockers structure:
 Present the standup summary directly in the conversation. Do not write to any file unless explicitly requested.
 
 If the user asks to save:
+
 - Save to `draft/standup-<date>.md`
 - Symlink: `draft/standup-latest.md`
 

@@ -101,6 +101,7 @@ If `draft/.state/facts.json` exists, it provides granular fact-level context:
 Facts are NOT loaded in full for every command — use relevance filtering (see below).
 
 Additional state files used by refresh operations (not loaded during normal context loading):
+
 - `draft/.state/freshness.json` — SHA-256 hashes for file-level staleness detection
 - `draft/.state/signals.json` — signal classification for structural drift detection
 
@@ -111,6 +112,7 @@ Not all context is equally relevant to every task. When a specific track or task
 ### When to Apply
 
 Apply relevance scoring when ALL of these conditions are true:
+
 1. A specific track or task is active (has `spec.md` and/or `plan.md`)
 2. `draft/.ai-context.md` exists and is above tier-1 minimum (100 lines)
 3. The command benefits from focused context (`/draft:implement`, `/draft:bughunt`, `/draft:review`)
@@ -212,6 +214,7 @@ If analyzing a specific track, also load:
 | `draft/tracks/<id>/plan.md` | Implementation tasks, phases, dependencies |
 
 Use track context to:
+
 - Verify implemented features match spec requirements
 - Check edge cases listed in spec are handled
 - Focus analysis on files modified/created by the track

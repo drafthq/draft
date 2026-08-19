@@ -21,6 +21,7 @@ The reviewer scans the diff for five categories of issues:
 * Dependency Cycle Detection— Traces import chains for new imports to ensure no circular dependencies (A imports B, B imports C, C imports A) are introduced. Circular dependencies indicate poor module boundaries.
 * Security Scanning (OWASP)— Scans the diff for hardcoded secrets and API keys, SQL injection risks (string concatenation in queries), and XSS vulnerabilities (innerHTMLor raw DOM insertion).
 * Performance Anti-Patterns— Detects N+1 database queries (loops containing queries), blocking synchronous I/O within async functions, and unbounded queries lacking pagination.
+
 ### Context-Specific Checks
 
 Stage 1 also identifies the primary domain of changed files and applies targeted checks. If the diff touches authentication files, the reviewer checks for timing-safe comparisons, constant-time operations, and secure random generation. Database migrations get checked for backward compatibility, index coverage, and zero-downtime safety. API endpoints get checked for input validation, rate limiting, and authentication guards. Configuration changes are scanned for exposed secrets and missing startup validation.
@@ -106,4 +107,3 @@ Each review creates a timestamped report file. Areview-report-latest.mdsymlink a
 The review report updatesmetadata.jsonwith the review verdict, timestamp, and a running review count. This metadata feeds into/draft:status, giving you a project-wide view of which tracks have been reviewed and which still need attention.
 
 With code reviewed and issues resolved, the track nears completion. The next chapter covers the operational commands that manage tracks throughout their lifecycle — monitoring progress, handling mid-stream requirement changes, and safely rolling back work when needed.
-

@@ -94,4 +94,3 @@ Agents are not invoked directly. They are activated automatically by the skill t
 The activation is seamless. When/draft:implementencounters a blocked task, it loads the Debugger protocol and follows the four phases. When/draft:reviewruns at a phase boundary, it loads the Reviewer protocol and executes all three stages. The developer does not need to know which agent is active — they see the structured output.
 
 Agents do not replace human judgment. They structure AI behavior so that judgment happens at the right moments. The Architect presents module boundaries for approval. The Planner presents specs for review. The Reviewer flags issues for human decision. Every agent has escalation procedures for when it cannot resolve ambiguity — it documents what it knows, lists what is unclear, and asks. It does not guess.
-

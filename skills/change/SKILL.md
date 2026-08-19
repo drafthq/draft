@@ -7,7 +7,7 @@ description: Handle mid-track requirement changes. Analyzes impact on completed 
 
 You are handling a mid-track requirement change using Draft's Context-Driven Development methodology.
 
-## Red Flags - STOP if you're:
+## Red Flags - STOP if you're
 
 - Applying changes to spec.md or plan.md without showing the user what will change first
 - Invalidating `[x]` completed tasks without flagging them explicitly
@@ -38,11 +38,13 @@ Extract from `$ARGUMENTS`:
 ### Default Behavior
 
 If no `track <id>` specified:
+
 - Auto-detect the active `[~]` In Progress track from `draft/tracks.md`
 - If no `[~]` track, find the first `[ ]` Pending track
 - Display: `Auto-detected track: <id> - <name>` before proceeding
 
 If no change description provided:
+
 - Error: "Usage: `/draft:change <description>` or `/draft:change track <id> <description>`"
 
 ---
@@ -73,7 +75,8 @@ For each requirement and acceptance criterion, classify the effect:
 | **Unaffected** | No change needed |
 
 Produce a concise impact list. Example:
-```
+
+```text
 Spec impact:
 - AC #2 "User can export to CSV" → Modified (now also requires JSON format)
 - AC #5 "Export limited to 1000 rows" → Removed (no row limit)
@@ -81,6 +84,7 @@ Spec impact:
 ```
 
 **HLD impact** (only when `hld.md` exists):
+
 - §Architecture / Component Diagram — does the change introduce new modules or alter integration edges?
 - §Detailed Design — does any per-component subsection need updating, or are new components introduced?
 - §Dependencies — new/removed dependent components?
@@ -89,6 +93,7 @@ Spec impact:
 - §Deployment — does the deployment surface change?
 
 **LLD impact** (only when `lld.md` exists):
+
 - §Classes and Interfaces — signatures added/modified/removed?
 - §Data Model — schema changes? New fields? Migration required?
 - §Key Algorithms and Workflows — algorithm changes? New sequence diagrams needed?
@@ -97,7 +102,7 @@ Spec impact:
 
 **Re-approval flag:** If the HLD Approvals table has any signed rows (Date column populated) AND the change touches HLD structural sections (Architecture, Detailed Design, Dependencies, Checklist, IP, Deployment), surface this warning prominently:
 
-```
+```text
 ⚠️ HLD modified after sign-off — Approvals table requires re-circulation.
     Signed rows: [list which roles signed and when]
     Changed sections: [list of HLD sections impacted]
@@ -130,7 +135,7 @@ For each task in `plan.md`, determine if the spec change affects it:
 
 Display a clear summary before proposing any file changes:
 
-```
+```yaml
 Change: [change description]
 Track: <track_id> — <track_name>
 
@@ -178,7 +183,7 @@ Show before/after for each impacted LLD section. Preserve §Approvals verbatim. 
 
 ## Step 7: CHECKPOINT
 
-```
+```text
 Apply these changes to spec.md and plan.md? [yes / no / edit]
 ```
 
@@ -208,7 +213,7 @@ Apply these changes to spec.md and plan.md? [yes / no / edit]
 
 4. Announce:
 
-```
+```text
 Changes applied: <track_id>
 
 Updated:
@@ -235,19 +240,22 @@ Next: /draft:implement to continue, or /draft:review to assess current state.
 ## Error Handling
 
 ### Track Not Found
-```
+
+```yaml
 Error: Track '<id>' not found.
 Run /draft:status to see available tracks.
 ```
 
 ### No Active Track
-```
+
+```yaml
 Error: No active track found.
 Use: /draft:change track <id> <description>
 ```
 
 ### No Spec or Plan
-```
+
+```yaml
 Error: Missing spec.md or plan.md for track <id>.
 Cannot perform change analysis without both files.
 ```
@@ -257,11 +265,13 @@ Cannot perform change analysis without both files.
 ## Examples
 
 ### Change description for active track
+
 ```bash
 /draft:change the export format should support JSON in addition to CSV
 ```
 
 ### Targeting a specific track
+
 ```bash
 /draft:change track add-export-feature also require a progress indicator for exports over 500 rows
 ```

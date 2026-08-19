@@ -88,4 +88,3 @@ The specification and plan are not created in a vacuum. During intake, the AI co
 Draft refuses to implement without an approved specification and plan. This is by design. The most expensive bugs are not logic errors — they are building the wrong thing. A 30-minute intake conversation is cheap compared to a week of implementing the wrong feature.
 
 With the specification finalized and the plan approved, the track is ready for implementation. The next chapter covers how/draft:implementexecutes the plan, one task at a time, with the same discipline that created it.
-

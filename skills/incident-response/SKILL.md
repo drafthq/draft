@@ -7,7 +7,7 @@ description: Incident management lifecycle — triage, communicate, mitigate, po
 
 You are managing an incident through its full lifecycle using structured incident management practices.
 
-## Red Flags — STOP if you're:
+## Red Flags — STOP if you're
 
 - Fixing before communicating (stakeholders must know first)
 - Skipping severity classification
@@ -22,6 +22,7 @@ You are managing an incident through its full lifecycle using structured inciden
 ## Pre-Check
 
 1. Check for Draft context:
+
 ```bash
 ls draft/ 2>/dev/null
 ```
@@ -53,6 +54,7 @@ Classify severity:
 | **SEV4** | Next business day | Assigned engineer | Cosmetic issue, minor inconvenience |
 
 Assess:
+
 1. **What is broken?** (from description or Jira ticket)
 2. **Who is affected?** (from `draft/product.md` user types if available)
 3. **What is the blast radius?** (from `draft/.ai-context.md` service topology if available)
@@ -62,7 +64,7 @@ Assess:
 
 Generate initial status update:
 
-```
+```yaml
 INCIDENT: {description}
 Severity: SEV{1-4}
 Impact: {who/what is affected}
@@ -228,6 +230,7 @@ Or track-scoped: `draft/tracks/<id>/postmortem.md`
 ### Step 5: Jira Sync
 
 Follow `core/shared/jira-sync.md`:
+
 - Attach postmortem to Jira ticket
 - Post comment: "[draft] Postmortem complete. Root cause: {1-line summary}. {N} action items."
 

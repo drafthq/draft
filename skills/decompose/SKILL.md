@@ -29,7 +29,7 @@ When `draft/graph/schema.yaml` exists, this skill **must** follow the graph-firs
 
 Filesystem `grep`/`find` for module discovery is only permitted **after** a documented graph miss, using the fallback sentence `Graph returned no match for <X>; falling back to grep.` and recorded in the Graph Usage Report.
 
-## Red Flags - STOP if you're:
+## Red Flags - STOP if you're
 
 See [shared red flags](../../core/shared/red-flags.md) — applies to all code-touching skills. In particular, the **Ground-Truth Red Flags** are load-bearing for decompose: HLD/LLD are design-mandated artifacts and TBD citations on Modified modules fail review.
 
@@ -44,6 +44,7 @@ must pass clean on the regenerated set. Plan.md must back-link to
 [core/shared/discovery-schema.md](../../core/shared/discovery-schema.md).
 
 Skill-specific:
+
 - Defining modules without understanding the codebase
 - Creating modules with circular dependencies
 - Making modules too large (>3 files, excluding test files) or too small (single function)
@@ -67,6 +68,7 @@ For track-scoped decomposition, also derive the human-readable track title used 
 - `{TRACK_TITLE}` — first-level heading text from the active track's `spec.md` (the `# ...` line). If `spec.md` has no H1, fall back to the `{TRACK_ID}`.
 
 Also extract from `spec.md` frontmatter:
+
 - `classification.criticality`, `classification.data_classification`, `classification.deployment_surface` — copy verbatim into hld.md frontmatter.
 - `approvers.*` — pre-fill the HLD Approvals table (tech_leads, arb_leads, cloudops_leads, qa_leads, pm_leads) and LLD Approvals table (team_leads, tech_leads, qa). If a field is empty in spec.md, leave the table cell empty — do not invent names.
 
@@ -100,6 +102,7 @@ Parse `$ARGUMENTS` for flags first, then strip them before interpreting the rema
 - `--lld` → **LLD mode** — generate Section 6 (Low-Level Design) in addition to HLD. Strip from arguments before scope detection.
 
 Scope detection (on stripped arguments):
+
 - `project` or no argument with no active track → **Project-wide** decomposition → `draft/architecture.md` + `draft/.ai-context.md`
 - Track ID or active track exists → **Track-scoped** decomposition → `draft/tracks/<id>/hld.md` (always) + `draft/tracks/<id>/lld.md` (when triggered)
 
@@ -135,25 +138,30 @@ For brownfield projects, scan the existing codebase using these concrete steps:
 ### Codebase Scanning Patterns
 
 **Directory structure** — Map top-level organization:
+
 ```bash
 ls -d src/*/ lib/*/ app/*/ packages/*/ 2>/dev/null
 ```
 
 **Entry points** — Find main files and exports:
+
 - Look for: `index.ts`, `main.ts`, `app.ts`, `mod.rs`, `__init__.py`, `main.go`
 - Check `package.json` `main`/`exports` fields, `pyproject.toml` entry points, `go.mod` module path
 
 **Existing module boundaries** — Identify by:
+
 - Directory-per-feature patterns (e.g., `src/auth/`, `src/users/`)
 - Package files (`package.json` in subdirs, `__init__.py`, `go` package declarations)
 - Barrel exports (`index.ts` re-exporting from a directory)
 
 **Dependency patterns** — Trace imports:
+
 - Search for `import` / `require` / `from` statements across source files
 - Identify which directories import from which other directories
 - Flag cross-cutting imports (e.g., `utils/` imported everywhere)
 
 **File type filters by language:**
+
 | Language | Source Extensions | Config Files |
 |----------|-------------------|--------------|
 | TypeScript/JS | `*.ts`, `*.tsx`, `*.js`, `*.jsx` | `tsconfig.json`, `package.json` |
@@ -180,6 +188,7 @@ This data is deterministic and exhaustive. The manual scanning recipes above onl
 Propose a module breakdown through dialogue:
 
 For each module, define:
+
 - **Name** - Short, descriptive identifier
 - **Responsibility** - One sentence: what this module owns
 - **Files** - Expected source files (existing or to be created)
@@ -193,6 +202,7 @@ For each module, define:
 2. Target 1-3 files per module
 3. Every module needs a clear API boundary
 4. **Minimal Coupling** — communicate through interfaces, not internals
+
 - Modules should be testable in isolation
 - Each module typically contains: API, control flow, execution state, functions
 
@@ -200,7 +210,7 @@ For each module, define:
 
 **STOP.** Present the module breakdown to the developer.
 
-```
+```yaml
 ---
                    MODULE BREAKDOWN
 ---
@@ -235,7 +245,7 @@ After modules are approved:
 
 **STOP.** Present the dependency diagram and implementation order.
 
-```
+```yaml
 ---
                  DEPENDENCY ANALYSIS
 ---
@@ -277,6 +287,7 @@ Template selection depends on scope:
 - **Track-scoped** → `core/templates/hld.md` (always) and `core/templates/lld.md` (when triggered)
 
 **Output location:**
+
 - Project-wide: Update `draft/architecture.md` with the module changes, then run the Condensation Subroutine (defined in `core/shared/condensation.md`) to regenerate `draft/.ai-context.md`.
 - Track-scoped: write to `draft/tracks/<id>/hld.md` and (when triggered) `draft/tracks/<id>/lld.md`.
 
@@ -287,6 +298,7 @@ Template selection depends on scope:
 Generate `draft/tracks/<id>/hld.md` from `core/templates/hld.md`. Populate every section that has a directive — do not ship placeholders.
 
 **Frontmatter:**
+
 - Copy git metadata from current repo state.
 - Copy `classification.*` from `spec.md` frontmatter (criticality, data_classification, deployment_surface). The HLD's `links.*` block is statically correct in `core/templates/hld.md` — do not copy it from spec.md.
 
@@ -297,6 +309,7 @@ Generate `draft/tracks/<id>/hld.md` from `core/templates/hld.md`. Populate every
 **§Requirements:** Do not duplicate `spec.md`. Verify the link references resolve to actual sections in spec.md; if a section is missing, flag it.
 
 **§High Level Design / Architecture:**
+
 - **`<!-- GRAPH:track-component-diagram -->` slot:** Render Mermaid `flowchart TD` with three subgraphs — `Track` (modules in scope from Step 3), `Existing` (existing modules this track touches per integration edges), `External` (DB, queue, 3P APIs). Label edges with transport (HTTP / RPC / queue / direct call) when non-obvious.
 - **Architecture narrative** (≤300 words). Explain how blackbox requirements map to the architecture. Name the architectural style. Justify from observable evidence.
 
@@ -307,11 +320,13 @@ Generate `draft/tracks/<id>/hld.md` from `core/templates/hld.md`. Populate every
 **§High Level Design / Alternatives Considered:** Table format. Promote any non-trivial rejected alternative to a standalone ADR via `/draft:adr` and link both ways.
 
 **§Detailed Design:**
+
 - **`<!-- GRAPH:track-component-table -->` slot:** Render one row per module from Step 3. Columns: Module, Status (`New`/`Modified`/`Existing`), Files (count + comma list), Public API count, Fan-In, Fan-Out, Complexity (`Low`/`Medium`/`High`), Primary Deps, Citation (`path:line` of entry symbol).
 - **Mandatory Citation Gate:** For every row whose Status is `Modified` or `Existing`, the Citation cell **MUST** resolve to a real `path:line` from a file you Read in this run. `TBD` is only legal for `Status: New` rows, and only when the planned file path is filled (e.g. `Citation: newscribe/server/ops/shuffle_memory_eligibility.h (planned)`). If a Modified-row Citation is unresolved, **halt** — Read the file, locate the entry symbol, and fill the cell before emitting the table. See [graph-query.md](../../core/shared/graph-query.md) §Ground-Truth Discipline rules G1 and G3.
 - **Per-component subsection:** One `#### {Component Name}` block per module. Fill Responsibility, Status, Entry point (resolved `path:line` for Modified/Existing modules), Public API link to LLD, Whitebox requirements addressed (AC IDs from spec.md), Design notes (≤200 words).
 
 **§Dependencies:**
+
 - **`<!-- GRAPH:track-dependencies -->` slot:** Render rows per cross-module integration edge of kind `call`/`import`/`event`/`shared-schema`. Columns: Dependent Component, Edge Kind, Impact Assessment (Small/Medium/Large — graph fan-in heuristic: 1–2 = Small, 3–5 = Medium, 6+ = Large), Description, Citation. The Citation column is bound by the same Mandatory Citation Gate as the component table.
 
 **§Intellectual Property, §Checklist, §Deployment, §Observability:** These are author-driven sections that the design author completes before the HLD is presented for approval. Decompose's job is to **scaffold structured TBD bullets**, not to invent claims and not to leave bare `-` placeholders.
@@ -388,11 +403,13 @@ When triggered, generate `draft/tracks/<id>/lld.md` from `core/templates/lld.md`
 **§Requirements:** Link-only to `spec.md`; list AC IDs covered by this LLD.
 
 **§Low Level Design / Classes and Interfaces:**
+
 - **`<!-- GRAPH:track-class-table -->` slot:** Render per-module table from graph public-API index. One row per public symbol. Columns: Symbol, Kind (class/iface/func/method), Signature, Visibility, Citation (`path:line`), Concurrency Notes.
 - **Mandatory Citation Gate (LLD):** Same rule as HLD §Detailed Design. For every symbol whose owning module has Status `Modified` or `Existing`, Citation must resolve to a real `path:line` from a file Read in this run. For `Status: New` symbols, Citation may be `<planned path>:<planned line or TBD>` provided the file path is concrete. A bare `TBD` cell is a halt — fix before emitting.
 - **Per-component subsection:** Public API table with full signatures, params, returns, errors, citation. Document Preconditions, Postconditions, Invariants (thread safety, idempotency, ordering).
 
 **§Low Level Design / Data Model:**
+
 - **`<!-- GRAPH:track-data-models -->` slot:** Render one block per new/modified entity. Pull proto/struct/class declarations and field metadata from the graph data-model index.
 - **Per-model subsection:** Field table (type, nullable, default, validation), Storage, Indexes/Keys, Migration path.
 
@@ -432,6 +449,7 @@ Run unconditionally — idempotent if files are already clean.
 ### CHECKPOINT (MANDATORY)
 
 **STOP.** Present the generated `hld.md` (and `lld.md` if generated) to the developer. Call out:
+
 - Which graph slots were populated vs. unpopulated (and why — e.g., "no proto definitions found, GRAPH:track-data-models slot empty").
 - Whether LLD was generated, and the trigger (`--lld` flag or auto-triggered by High-complexity module X).
 - Author-driven sections that still need manual content: §IP, §Checklist (HLD), §PaaS/§UT (LLD), §Observability metrics/thresholds.
@@ -452,7 +470,7 @@ If this is a track-scoped decomposition and a `plan.md` exists:
 `core/templates/plan.md` (and tracks generated from it at template_version
 ≥ 2.0.0) wraps phase tables in:
 
-```
+```text
 <!-- DECOMPOSE:REGENERATE START -->
 ... phase tables ...
 <!-- DECOMPOSE:REGENERATE END -->
@@ -479,6 +497,7 @@ When restructuring plan.md around modules, follow these rules for existing tasks
 **Completed tasks `[x]`:** Preserve exactly as-is. Map them to the appropriate module phase. Do not rename, reorder, or modify. Add a note: `(preserved from original plan)`.
 
 **In-progress tasks `[~]`:** Map to the appropriate module phase. Flag for developer review if the task spans multiple modules:
+
 ```markdown
 - [~] **Task 2.1:** Original task description
   - ⚠ REVIEW: This task may need splitting across modules [auth] and [database]
@@ -489,6 +508,7 @@ When restructuring plan.md around modules, follow these rules for existing tasks
 **Blocked tasks `[!]`:** Preserve the blocked status and reason. Map to appropriate module. If the blocker is in a different module, add a cross-module dependency note.
 
 **Conflict handling:** If a task doesn't map cleanly to any module:
+
 1. List it under a `### Unmapped Tasks` section at the end
 2. Flag it for developer decision
 3. Never silently drop tasks
@@ -497,7 +517,7 @@ When restructuring plan.md around modules, follow these rules for existing tasks
 
 **STOP.** Present the updated plan structure.
 
-```
+```text
 PROPOSED PLAN RESTRUCTURE
 ---
 Phase 1: [Module A] (Foundation)
@@ -521,7 +541,8 @@ After applying the approved plan changes:
 ## Completion
 
 **Track-scoped announcement:**
-```
+
+```text
 Track decomposition complete.
 
 Created: draft/tracks/<id>/hld.md
@@ -547,7 +568,8 @@ Next steps:
 ```
 
 **Project-wide announcement** (when scope = project):
-```
+
+```text
 Project architecture refresh complete.
 
 Updated: draft/architecture.md
@@ -570,6 +592,7 @@ When adding new modules to the project-wide architecture:
 4. Run the Condensation Subroutine (defined in `core/shared/condensation.md`) to regenerate `draft/.ai-context.md`
 
 **Safe write pattern for architecture.md:**
+
 1. Backup `architecture.md` → `architecture.md.backup`
 2. Write changes to `architecture.md.new`
 3. Present diff for review
@@ -579,12 +602,14 @@ When adding new modules to the project-wide architecture:
 ## Updating design context
 
 **Project-wide rerun** (running `/draft:decompose` on existing `.ai-context.md` / `architecture.md`):
+
 1. Read the existing context file
 2. Ask developer what changed (new modules, removed modules, restructured boundaries)
 3. Follow the same checkpoint process for changes
 4. Update `draft/architecture.md`, preserving completed module statuses and stories, then regenerate `.ai-context.md`
 
 **Track-scoped rerun** (running `/draft:decompose <track>` on existing `hld.md` / `lld.md`):
+
 1. Read the existing HLD (and LLD if present)
 2. If the track's `spec.md` has materially changed, prefer `/draft:change` first to amend spec/plan and flag HLD/LLD impact
 3. Otherwise, regenerate the graph-fenced slots only (component diagram, component table, dependencies table, class table, data models). Author-driven sections (§IP, §Checklist, §PaaS, §UT, §Observability) and the §Approvals table are preserved verbatim
@@ -598,7 +623,7 @@ When adding new modules to the project-wide architecture:
 
 After defining module boundaries and interfaces:
 
-```
+```text
 "Decomposition complete. Consider:
 
 Testing:
@@ -614,7 +639,8 @@ Architecture:
 ### Dependency Cycle Detection
 
 If dependency analysis (Step 4) detects cycles or high coupling:
-```
+
+```text
 "Detected dependency cycles / high coupling. Consider:
   → /draft:tech-debt — Catalog architecture debt and prioritize remediation"
 ```
@@ -622,6 +648,7 @@ If dependency analysis (Step 4) detects cycles or high coupling:
 ### ADR Auto-Invocation
 
 When decomposition involves breaking a monolith, choosing module boundaries, or extracting services:
+
 - Auto-invoke: "This decomposition is a significant architectural decision. Creating ADR to document rationale."
 - Invoke `/draft:adr "Module boundary decisions for {project}"`
 
@@ -644,11 +671,13 @@ If `draft/graph/schema.yaml` does not exist, set `Graph files queried: NONE` and
 ## Graph Usage Report (append to output)
 
 Emit the canonical footer from [core/shared/graph-usage-report.md](../../core/shared/graph-usage-report.md) §Canonical footer. The lint hook `scripts/tools/check-graph-usage-report.sh` validates the section on save.
+
 ## Skill Telemetry
 
 As the last step after the completion announcement, emit a metrics record. Best-effort — never block.
 
 **Payload fields:**
+
 ```json
 {
   "skill": "decompose",
@@ -661,6 +690,7 @@ As the last step after the completion announcement, emit a metrics record. Best-
 ```
 
 **Emit call:**
+
 ```bash
 # Locate Draft's bundled helpers (cwd is the user's project; ${CLAUDE_PLUGIN_ROOT}
 # is not exported into skill Bash). See core/shared/tool-resolver.md.

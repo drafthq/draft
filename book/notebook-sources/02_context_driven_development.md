@@ -84,6 +84,7 @@ Draft auto-detects the track type from the description:
 
 * Feature / Refactor— Detected by keywords like "add," "implement," "refactor," "improve." Gets a standard spec template and flexible phased plan.
 * Bug / RCA— Detected by "fix," "bug," "investigate," or references to production incidents. Gets a focused bug spec with Code Locality and Blast Radius sections, and a fixed three-phase plan: Investigate → Root Cause Analysis → Fix & Verify.
+
 ### Track Lifecycle
 
 Every track follows the same lifecycle:
@@ -143,4 +144,3 @@ Draft addresses each with a specific mechanism:
 The result: the AI becomes an executor of pre-approved work, not an autonomous decision-maker. It has the full power of an AI coding assistant, channeled through a constraint system that ensures its output matches what the team actually needs.
 
 The next chapter shows you how to set this up in your project in five minutes.
-

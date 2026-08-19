@@ -13,9 +13,11 @@ adversarial verification + gap sweep. 33 findings CONFIRMED with repros, 1 PLAUS
 remaining row (gaps + deferred refactors). `make test` (72 suites) green.
 
 ## Status taxonomy
+
 DONE · IN-PROGRESS · BLOCKED · PLANNED · GAP · DESIGN-ONLY · WON'T-DO · SIGN-OFF
 
 ## Workstream rollup
+
 | Workstream | Progress | DONE | PLANNED | GAP | WON'T-DO | Notes |
 |---|---|---|---|---|---|---|
 | A. Shell-tool correctness | `[██████████] 100%` | 15 | 0 | 0 | 0 | set -e crashes, escaping, validator false-negatives |
@@ -26,6 +28,7 @@ DONE · IN-PROGRESS · BLOCKED · PLANNED · GAP · DESIGN-ONLY · WON'T-DO · S
 | F. Deferred cleanups | `[██████████] 100%` | 3 | 0 | 0 | 1 | refactors + arg guards shipped |
 
 ## Backlog (risk/impact-first)
+
 | Done | ID | Item | WS | Status | Pri | Blocked by | Source |
 |---|---|---|---|---|---|---|---|
 | [x] | WT-001 | check-track-hygiene.sh — grep pipe killed script on zero TBD | A | DONE | P0 | — | review C35 |
@@ -62,15 +65,17 @@ DONE · IN-PROGRESS · BLOCKED · PLANNED · GAP · DESIGN-ONLY · WON'T-DO · S
 | [x] | WT-032 | scan-markers.sh — unimplemented --include-untracked removed from usage | E | DONE | P3 | — | review C34 |
 | [x] | WT-033 | tool-resolver.md — resolution order matches resolve-tools.sh (dogfood = step 2) | E | DONE | P3 | — | review C37 |
 | [x] | WT-034 | Integrations regenerated (make build) after init/OKF + core doc changes | E | DONE | P0 | — | review C6 |
-| [x] | WT-035 | graph_bootstrap() in _lib.sh; 15 wrappers deduped (incl. hotspot-rank, cycle-detect, mermaid-from-graph) | F | DONE | P3 | — | review C8 |
+| [x] | WT-035 | graph_bootstrap() in_lib.sh; 15 wrappers deduped (incl. hotspot-rank, cycle-detect, mermaid-from-graph) | F | DONE | P3 | — | review C8 |
 | [x] | WT-036 | SKILL_META table in lib.sh replaces both case statements; tests source lib.sh directly | F | DONE | P3 | — | review C9 |
 | [x] | WT-037 | arg-parse value guards: 89 sites across 38 tools use ${2:?--flag requires a value} | F | DONE | P3 | — | review C19 |
 | [x] | ~~WT-038~~ | validate_skill_body_format `\|\| true` masking — REFUTED as active bug | F | WON'T-DO | — | — | review C23 |
 
 ## Per-workstream detail
+
 No open items — every row is DONE except WT-038 (WON'T-DO, refuted finding).
 
 ## Source-document map
+
 | Source doc | Covers IDs |
 |---|---|
 | Session review evidence (finder/verifier transcripts, 2026-07-15) | WT-001…WT-038 |
@@ -80,6 +85,7 @@ No open items — every row is DONE except WT-038 (WON'T-DO, refuted finding).
 | CLAUDE.md / CHANGELOG.md | WT-030, WT-031 |
 
 ## Reconciliation log
+
 | Date | ID | Change | Evidence |
 |---|---|---|---|
 | 2026-07-15 | WT-037 | WON'T-DO — low severity, wide surface, no behavioral gain | verifier C19: exit 1 either way |
