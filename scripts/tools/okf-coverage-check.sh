@@ -167,6 +167,7 @@ write_coverage_page() {
             fi
         done < <(jq -r '.expected[] | [.concept_id, (.required|tostring), (.reason_if_deferred // "-"), (.type // "Module"), (.fan_in // 0 | tostring)] | @tsv' "$PLAN")
     } > "$tmp"
+    apply_dest_mode "$tmp" "$out"   # mktemp is 0600; mv would strip the dest's mode
     mv "$tmp" "$out"
 }
 [[ $WRITE_PAGE -eq 1 ]] && write_coverage_page

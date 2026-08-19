@@ -5,6 +5,21 @@
 
 # shellcheck shell=bash
 
+# Give a mktemp-created replacement file the mode its destination should carry.
+# mktemp creates 0600 and `mv` swaps the inode, so an atomic rewrite silently
+# strips the destination's permissions (a 0644 doc came back 0600). Call this on
+# the temp file BEFORE the mv. Uses the destination's current mode when it
+# exists, else the mode a plain `>` redirect would have produced under the
+# caller's umask.
+apply_dest_mode() {
+    local tmp="$1" dest="${2:-}" mode=""
+    if [[ -n "$dest" && -e "$dest" ]]; then
+        mode="$(stat -c '%a' "$dest" 2>/dev/null || stat -f '%Lp' "$dest" 2>/dev/null || true)"
+    fi
+    [[ -n "$mode" ]] || mode="$(printf '%o' "$(( 0666 & ~0$(umask) ))")"
+    chmod "$mode" "$tmp" 2>/dev/null || true
+}
+
 json_escape() {
     local s="$1"
     s="${s//\\/\\\\}"
@@ -15,7 +30,6 @@ json_escape() {
     printf '%s' "$s"
 }
 
-# Extract a top-level YAML frontmatter field value from a Markdown file.
 # Discover track directories under a repo root (default: caller's Draft repo).
 discover_track_dirs() {
     local repo_root="${1:-}"
@@ -90,6 +104,7 @@ skill_line_cap() {
     printf '%s' "$global_cap"
 }
 
+# Extract a top-level YAML frontmatter field value from a Markdown file.
 get_yaml_field() {
     local file="$1"
     local key="$2"
@@ -108,11 +123,6 @@ get_yaml_field() {
         }
     ' "$file"
 }
-
-# Locate the `codebase-memory-mcp` binary (Draft knowledge-graph engine).
-# Sets MEMORY_BIN globally; returns 0 if found, 1 otherwise.
-# Preference: PATH > Draft-managed install (~/.cache/draft/bin) > vendored bin/<arch> under known roots.
-# No legacy fallbacks: the Aether `graph`/`graph-clang` binaries are retired.
 
 # GitHub-flavored-markdown-ish heading id (shared by TOC, anchors, link fixers).
 # Keeps underscores; strips other punctuation; collapses whitespace to '-'.
@@ -154,6 +164,11 @@ grounded_paths_count() {
     ' "$file"
 }
 
+# Locate the `codebase-memory-mcp` binary (Draft knowledge-graph engine).
+# Sets MEMORY_BIN globally; returns 0 if found, 1 otherwise.
+# Precedence: DRAFT_MEMORY_DISABLE (hard off) > DRAFT_MEMORY_BIN > PATH >
+# Draft-managed install (~/.cache/draft/bin) > vendored bin/<arch> under known roots.
+# No legacy fallbacks: the Aether `graph`/`graph-clang` binaries are retired.
 find_memory_bin() {
     local repo_abs="$1"
     local self_repo="$2"

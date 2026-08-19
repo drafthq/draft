@@ -24,11 +24,21 @@ function readJson(filePath, fallback) {
   }
 }
 
+// The temp file is a fresh inode, so renaming it over the destination discards
+// the destination's permissions. settings.json can carry env secrets and is often
+// deliberately 0600 — a plain write would silently widen it to the umask default.
 function writeJsonAtomic(filePath, data) {
   const dir = path.dirname(filePath);
   fs.mkdirSync(dir, { recursive: true });
   const tmp = `${filePath}.tmp.${process.pid}`;
+  let mode;
+  try {
+    mode = fs.statSync(filePath).mode & 0o777;
+  } catch {
+    /* new file — let the umask decide, exactly as a plain write would */
+  }
   fs.writeFileSync(tmp, JSON.stringify(data, null, 2) + '\n', 'utf8');
+  if (mode !== undefined) fs.chmodSync(tmp, mode);
   fs.renameSync(tmp, filePath);
 }
 

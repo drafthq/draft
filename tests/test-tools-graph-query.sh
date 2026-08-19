@@ -96,6 +96,25 @@ set +e
 set -e
 assert "Write verb after a backtick-quoted span → exit 1" "$([[ "$rc" == "1" ]] && echo true || echo false)"
 
+# --- The --tool path carries Cypher too, and must obey the same guard ---
+# `query_graph` takes raw Cypher in its payload, so allowlisting the tool without
+# scanning its `query` left the read-only contract fully bypassable.
+set +e
+"$TOOL" --repo "$FIXTURE" --tool query_graph --json '{"query":"MATCH (n) DETACH DELETE n"}' >/dev/null 2>&1; rc=$?
+set -e
+assert "Write verb inside --tool query_graph payload → exit 1" "$([[ "$rc" == "1" ]] && echo true || echo false)"
+
+set +e
+"$TOOL" --repo "$FIXTURE" --tool query_graph --json '{"query":"MATCH (f {name:'"'"'DELETE'"'"'}) RETURN f"}' >/dev/null 2>&1; rc=$?
+set -e
+assert "Symbol literally named DELETE in a --tool payload is not a false positive" \
+    "$([[ "$rc" != "1" ]] && echo true || echo false)"
+
+set +e
+"$TOOL" --repo "$FIXTURE" --tool query_graph --json 'not json' >/dev/null 2>&1; rc=$?
+set -e
+assert "Malformed --json → exit 1" "$([[ "$rc" == "1" ]] && echo true || echo false)"
+
 # --- Non-allowlisted tool rejected ---
 set +e
 "$TOOL" --repo "$FIXTURE" --tool delete_project --json '{}' >/dev/null 2>&1; rc=$?

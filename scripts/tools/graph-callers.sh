@@ -9,7 +9,10 @@
 #   scripts/tools/graph-callers.sh --repo DIR --symbol NAME
 #                                  [--transitive[=N]] [--prod-only] [--qualified]
 #
-# Output: JSON {symbol, callers:[{name,file[,hop]}], status, source}.
+# Output: JSON {symbol, callers:[{name,file,qualified[,hop]}], status, source}.
+#   `file` is always a path (empty when the engine does not carry one — the
+#   trace_path expander behind --transitive returns no file_path); the symbol's
+#   qualified name is in `qualified`, never smuggled into `file`.
 #   source = "memory-graph" | "unavailable"
 #   status = "ok" | "no-edges" | "no-match" | "unavailable"
 #            (fail-loud: distinguishes node-not-found from node-has-no-callers
@@ -92,7 +95,7 @@ if [[ "$TRANSITIVE" -eq 1 ]]; then
     fi
     echo "$RES" | jq --arg s "$SYMBOL" --arg st "$STATUS" '
         {symbol:$s,
-         callers: [ (.callers // [])[] | {name:.name, file:(.qualified_name // ""), hop:(.hop // 1)} ],
+         callers: [ (.callers // [])[] | {name:.name, file:(.file_path // ""), qualified:(.qualified_name // ""), hop:(.hop // 1)} ],
          status:$st, source:"memory-graph"}'
     exit 0
 fi
@@ -113,5 +116,5 @@ STATUS="$(gq_symbol_status "$PROJECT" "$SYM_ESC" "$RES")"
 
 echo "$RES" | jq --arg s "$SYMBOL" --arg st "$STATUS" '
     {symbol:$s,
-     callers: [ (.rows // [])[] | {name:.[0], file:.[1]} ],
+     callers: [ (.rows // [])[] | {name:.[0], file:(.[1] // ""), qualified:""} ],
      status:$st, source:"memory-graph"}'

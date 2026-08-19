@@ -127,6 +127,8 @@ if (( WRITE_PROJECT_METADATA )); then
     fi
     CMD="${GENERATED_BY:-draft:init}"
     _tmp="$(mktemp "${META_FILE}.XXXXXX")"
+    # errexit on a failed write would otherwise leave metadata.json.XXXXXX behind.
+    trap 'rm -f "$_tmp"' EXIT
     cat > "$_tmp" <<EOF
 {
   "\$schema": "Draft Project Metadata Schema",
@@ -150,7 +152,11 @@ if (( WRITE_PROJECT_METADATA )); then
   "synced_to_commit": "$FULL_SHA"
 }
 EOF
+    # mktemp creates 0600 and `mv` swaps the inode — carry the destination's mode
+    # across, or an atomic rewrite silently strips the file's permissions.
+    apply_dest_mode "$_tmp" "$META_FILE"
     mv -f "$_tmp" "$META_FILE"
+    trap - EXIT
     echo "Written: $META_FILE (synced_to_commit=$FULL_SHA)"
     exit 0
 fi

@@ -20,7 +20,6 @@ DRAFT=""
 FILE=""
 WIKI=""
 DO_FIX=0
-DO_CHECK=1
 
 usage() {
     cat <<'EOF'
@@ -35,7 +34,7 @@ Flags:
   --file FILE   single markdown file to rewrite/check
   --wiki DIR    wiki bundle (required with --file for basename map)
   --fix        rewrite broken/ambiguous links in place
-  --check       report broken links (default on)
+  --check       accepted for symmetry with --fix; checking is unconditional
   --help
 
 Exit: 0 clean, 1 broken links remain, 2 bad invocation.
@@ -48,7 +47,7 @@ while [[ $# -gt 0 ]]; do
         --file) FILE="${2:?--file requires a value}"; shift 2;;
         --wiki) WIKI="${2:?--wiki requires a value}"; shift 2;;
         --fix) DO_FIX=1; shift;;
-        --check) DO_CHECK=1; shift;;
+        --check) shift;;   # checking always runs; accepted so callers can be explicit
         --help|-h) usage; exit 0;;
         -*) echo "Unknown flag: $1" >&2; usage >&2; exit 2;;
         *) echo "Unexpected arg: $1" >&2; exit 2;;
@@ -65,83 +64,17 @@ fi
 [[ -n "$FILE" && -f "$FILE" ]] || { echo "ERROR: --file or --draft/architecture.md required" >&2; exit 2; }
 [[ -n "$WIKI" && -d "$WIKI" ]] || { echo "ERROR: wiki dir required" >&2; exit 2; }
 
-# Build basename → list of wiki-relative paths (relative to draft root as wiki/...)
-declare -A BASENAME_MAP_MULTI=()
-while IFS= read -r -d '' p; do
-    rel="wiki/${p#"$WIKI"/}"
-    base="$(basename "$p")"
-    if [[ -n "${BASENAME_MAP_MULTI[$base]:-}" ]]; then
-        BASENAME_MAP_MULTI[$base]="${BASENAME_MAP_MULTI[$base]}|$rel"
-    else
-        BASENAME_MAP_MULTI[$base]="$rel"
-    fi
-done < <(find "$WIKI" -type f -name '*.md' -print0)
-
-pick_target() {
-    local base="$1" label="$2"
-    local cands="${BASENAME_MAP_MULTI[$base]:-}"
-    [[ -n "$cands" ]] || { echo ""; return; }
-    if [[ "$cands" != *"|"* ]]; then
-        printf '%s' "$cands"
-        return
-    fi
-    local lab; lab="$(printf '%s' "$label" | tr '[:upper:]' '[:lower:]')"
-    IFS='|' read -ra arr <<< "$cands"
-    local pref
-    if [[ "$lab" == *product* || "$lab" == *feature* || "$lab" == *user*guide* || "$lab" == *install* ]]; then
-        for pref in "${arr[@]}"; do [[ "$pref" == *"/features/"* ]] && { printf '%s' "$pref"; return; }; done
-    fi
-    if [[ "$lab" == *build* || "$lab" == *runbook* || "$lab" == *ops* || "$lab" == *source* ]]; then
-        for pref in "${arr[@]}"; do [[ "$pref" == *"/overview/"* ]] && { printf '%s' "$pref"; return; }; done
-    fi
-    for order in /systems/ /features/ /overview/ /reference/ /entrypoints/; do
-        for pref in "${arr[@]}"; do
-            [[ "$pref" == *"$order"* ]] && { printf '%s' "$pref"; return; }
-        done
-    done
-    printf '%s' "${arr[0]}"
+command -v python3 >/dev/null 2>&1 || {
+    echo "ERROR: python3 is required by ${0##*/} (link rewriting and validation)" >&2
+    exit 2
 }
 
-# Collect heading slugs from a file for anchor checks
-build_slugs() {
-    local f="$1"
-    declare -gA SLUGS=()
-    local counts=()
-    # shellcheck disable=SC2034
-    while IFS= read -r line; do
-        [[ "$line" =~ ^#{1,6}[[:space:]]+(.*)$ ]] || continue
-        local raw="${BASH_REMATCH[1]}"
-        local s; s="$(gfm_slug "$raw")"
-        local n="${SLUGS[_count_$s]:-0}"
-        SLUGS[_count_$s]=$((n+1))
-        if [[ $n -eq 0 ]]; then
-            SLUGS[$s]=1
-        else
-            SLUGS["${s}-$n"]=1
-        fi
-    done < "$f"
-}
+# Link resolution (basename disambiguation, section preference) lives in the
+# Python pass inside fix_file — it builds its own basename map from the same
+# wiki tree. The former bash twin, pick_target(), had no callers.
 
-resolve_ok() {
-    local src="$1" href="$2"
-    [[ "$href" =~ ^https?:// || "$href" =~ ^mailto: ]] && return 0
-    if [[ "$href" == \#* ]]; then
-        local a="${href#\#}"
-        [[ -n "${SLUGS[$a]:-}" ]] && return 0
-        return 1
-    fi
-    local path="${href%%\#*}"
-    [[ -z "$path" ]] && return 0
-    local dir; dir="$(cd "$(dirname "$src")" && pwd)"
-    local draft_root=""
-    if [[ -n "$DRAFT" ]]; then
-        draft_root="$(cd "$DRAFT" && pwd)"
-    else
-        draft_root="$(cd "$(dirname "$src")" && pwd)"
-    fi
-    [[ -e "$dir/$path" || -e "$draft_root/$path" || -e "$path" ]] && return 0
-    return 1
-}
+# Anchor and link validation lives in the Python pass at the bottom of this
+# file — it is the only checker, and it computes its own slug table.
 
 fix_file() {
     local src="$1"
@@ -239,11 +172,8 @@ def repl(m):
 new = re.sub(r"\[([^\]]*)\]\(([^)]+)\)", repl, text)
 out.write_text(new if new.endswith("\n") else new + "\n", encoding="utf-8")
 PY
-    if [[ $DO_FIX -eq 1 ]]; then
-        mv "$tmp" "$src"
-    else
-        rm -f "$tmp"
-    fi
+    apply_dest_mode "$tmp" "$src"   # mktemp is 0600; mv would strip the dest's mode
+    mv "$tmp" "$src"
 }
 
 if [[ $DO_FIX -eq 1 ]]; then
@@ -254,16 +184,7 @@ if [[ $DO_FIX -eq 1 ]]; then
     fi
 fi
 
-# Check
-build_slugs "$FILE"
-broken=0
-total=0
-while IFS= read -r line; do
-    # crude extract — enough for validation
-    :
-done < /dev/null
-
-# Python check for reliability
+# Check — the single source of link/anchor truth
 broken_out="$(python3 - "$FILE" "${DRAFT:-$(dirname "$FILE")}" "$WIKI" <<'PY'
 import sys, re
 from pathlib import Path

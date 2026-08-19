@@ -8,7 +8,9 @@
 #                                are rejected before the engine ever sees them).
 #   --tool NAME --json '{...}'   passthrough to any read-only engine tool
 #                                (get_code_snippet, search_graph, get_graph_schema,
-#                                trace_path, …). Destructive tools are rejected.
+#                                trace_path, …). Destructive tools are rejected, and
+#                                a `query` field in --json is scanned for write
+#                                verbs exactly like --cypher.
 #
 # Dialect limits (engine v0.8.x — see _graph_queries.sh for the full list):
 #   SAFE   : fixed-length patterns, `=`, `<`, `STARTS WITH`, `NOT x STARTS WITH`,
@@ -46,7 +48,8 @@ Flags:
   --cypher STR   Read-only openCypher query (write verbs CREATE/MERGE/DELETE/SET/
                  REMOVE/DROP/DETACH are rejected). The {project} is injected.
   --tool NAME    Engine tool to call (read-only allowlist). Combine with --json.
-  --json STR     JSON args for --tool (the project is injected if absent).
+  --json STR     JSON args for --tool (the project is injected if absent). A
+                 `query` field is write-verb checked like --cypher.
   --help         Show this help.
 
 Dialect: avoid coalesce(), <>, NOT EXISTS, NOT(pattern), WITH-aggregation,
@@ -129,17 +132,34 @@ strip_quoted_spans() {
     printf '%s' "$out"
 }
 
-# Reject write verbs in --cypher BEFORE the engine sees the query.
-if [[ -n "$CYPHER" ]]; then
-    STRIPPED="$(strip_quoted_spans "$CYPHER")" || {
+# Reject write verbs BEFORE the engine sees the query.
+reject_write_verbs() {
+    local stripped upper
+    stripped="$(strip_quoted_spans "$1")" || {
         echo "ERROR: write verbs are not allowed (read-only passthrough)" >&2
         exit 1
     }
-    UPPER="$(printf '%s' "$STRIPPED" | tr '[:lower:]' '[:upper:]')"
-    if printf '%s' "$UPPER" | grep -Eqw 'CREATE|MERGE|DELETE|SET|REMOVE|DROP|DETACH'; then
+    upper="$(printf '%s' "$stripped" | tr '[:lower:]' '[:upper:]')"
+    if printf '%s' "$upper" | grep -Eqw 'CREATE|MERGE|DELETE|SET|REMOVE|DROP|DETACH'; then
         echo "ERROR: write verbs are not allowed (read-only passthrough)" >&2
         exit 1
     fi
+}
+
+if [[ -n "$CYPHER" ]]; then
+    reject_write_verbs "$CYPHER"
+fi
+
+# --tool carries Cypher too: query_graph takes it in the payload's `query` field,
+# so guarding only --cypher left the read-only contract fully bypassable via
+# `--tool query_graph --json '{"query":"MATCH (n) DETACH DELETE n"}'`. Scan any
+# `query` a tool payload carries, not just query_graph's, so a future
+# query-bearing tool is covered by construction. jq-gated: without jq nothing can
+# reach the engine anyway (graph_bootstrap fails first).
+if [[ -n "$TOOL" ]] && command -v jq >/dev/null 2>&1; then
+    echo "$TOOL_JSON" | jq -e . >/dev/null 2>&1 || { echo "ERROR: --json is not valid JSON" >&2; exit 1; }
+    TOOL_QUERY="$(echo "$TOOL_JSON" | jq -r '.query // empty' 2>/dev/null || true)"
+    [[ -z "$TOOL_QUERY" ]] || reject_write_verbs "$TOOL_QUERY"
 fi
 
 unavailable() { echo '{"source":"unavailable"}'; exit 2; }
@@ -152,7 +172,6 @@ if [[ -n "$CYPHER" ]]; then
     printf '%s\n' "$RES"
 else
     # Inject the resolved project into the tool args unless the caller set one.
-    echo "$TOOL_JSON" | jq -e . >/dev/null 2>&1 || { echo "ERROR: --json is not valid JSON" >&2; exit 1; }
     ARGS="$(echo "$TOOL_JSON" | jq -c --arg p "$PROJECT" 'if has("project") then . else . + {project:$p} end')"
     RES="$(memory_cli "$TOOL" "$ARGS" 2>/dev/null || true)"
     [[ -n "$RES" ]] || unavailable

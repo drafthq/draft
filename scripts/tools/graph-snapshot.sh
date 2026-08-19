@@ -77,9 +77,24 @@ mkdir -p "$OUT"
 
 # Prune any stale fat-snapshot artifacts from a prior (pre-engine-only) run so a
 # re-index migrates the repo to the thin model.
-rm -f "$OUT/architecture.json" "$OUT/hotspots.jsonl" \
-      "$OUT/module-deps.mermaid" "$OUT/proto-map.mermaid" 2>/dev/null || true
-rm -rf "$OUT/okf" 2>/dev/null || true
+#
+# Gated on $OUT carrying positive evidence that Draft owns it. --out is
+# caller-supplied and the mkdir -p above will happily create a typo'd path, so an
+# ungated `rm -rf "$OUT/okf"` turns a mistyped flag into data loss. Evidence is
+# the default location, a marker from a previous run, or a prior fat snapshot
+# (which always carried architecture.json / hotspots.jsonl).
+draft_owns_out_dir() {
+    [[ "$OUT" == "$REPO_ABS/draft/graph" ]] && return 0
+    [[ -f "$OUT/schema.yaml" ]] && return 0
+    [[ -f "$OUT/architecture.json" || -f "$OUT/hotspots.jsonl" ]] && return 0
+    return 1
+}
+
+if draft_owns_out_dir; then
+    rm -f "$OUT/architecture.json" "$OUT/hotspots.jsonl" \
+          "$OUT/module-deps.mermaid" "$OUT/proto-map.mermaid" 2>/dev/null || true
+    rm -rf "$OUT/okf" 2>/dev/null || true
+fi
 
 # schema.yaml — provenance + gate. Counts are point-of-index provenance only;
 # the live engine is authoritative.

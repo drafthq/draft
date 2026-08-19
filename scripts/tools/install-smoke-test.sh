@@ -43,6 +43,8 @@ if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
 fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=_lib.sh
+source "$SCRIPT_DIR/_lib.sh"
 REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 KEEP=0
 EMIT_JSON=0
@@ -175,10 +177,15 @@ if [[ -d "$CLONE" ]]; then
             fi
         done
         # A dry run that writes is worse than one that fails — it means the real
-        # installer's plan/apply split leaks.
+        # installer's plan/apply split leaks. Both destinations must be checked:
+        # codex and opencode default to project scope and write AGENTS.md into the
+        # cwd, so a HOME-only assertion misses the likeliest leak.
         record "dry run left HOME untouched" \
             "$([[ -z "$(ls -A "$FAKE_HOME")" ]] && echo true || echo false)" \
             "$(ls -A "$FAKE_HOME" | tr '\n' ' ')"
+        record "dry run left the project dir untouched" \
+            "$([[ -z "$(ls -A "$PROJECT")" ]] && echo true || echo false)" \
+            "$(ls -A "$PROJECT" | tr '\n' ' ')"
     fi
 
     # 5. Engine fetcher is present and self-documenting (never invoked here —
@@ -195,7 +202,10 @@ if [[ "$EMIT_JSON" -eq 1 ]]; then
     sep=""
     for r in "${RESULTS[@]}"; do
         IFS='|' read -r name ok detail <<< "$r"
-        printf '%s{"name":"%s","ok":%s,"detail":"%s"}' "$sep" "$name" "$ok" "${detail//\"/\\\"}"
+        # json_escape (from _lib.sh) also handles backslashes and control chars —
+        # a Windows path or a stack trace in a captured stderr line used to emit
+        # invalid JSON.
+        printf '%s{"name":"%s","ok":%s,"detail":"%s"}' "$sep" "$(json_escape "$name")" "$ok" "$(json_escape "$detail")"
         sep=","
     done
     printf ']}\n'

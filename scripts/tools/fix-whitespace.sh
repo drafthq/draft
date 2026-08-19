@@ -83,6 +83,9 @@ fix_file() {
         return 1 # already clean — no change on disk
     fi
 
+    # mktemp creates 0600 and `mv` swaps the inode — carry the destination's mode
+    # across, or an atomic rewrite silently strips the file's permissions.
+    apply_dest_mode "$_tmp" "$file"
     mv -f "$_tmp" "$file"
     return 0
 }

@@ -2,20 +2,25 @@
 #
 # Shared validation library for Draft skill files.
 #
-# Sourced by test suites. Defines constants and validation functions
-# but does not execute anything when sourced.
+# Sourced by test suites and the build script. Defines constants and validation
+# functions only — no side effects at source time, shell options included. Every
+# consumer sets its own `set -euo pipefail`; doing it here would silently change
+# the behaviour of whatever sourced us.
 #
 # Usage:
 #   source scripts/lib.sh
 #
-
-set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 SKILLS_DIR="$ROOT_DIR/skills"
 CORE_DIR="$ROOT_DIR/core"
 TOOLS_DIR="$ROOT_DIR/scripts/tools"
+
+# Shared shell helpers (json_escape, apply_dest_mode, …). Side-effect free at
+# source time, so this is safe for every consumer of lib.sh.
+# shellcheck source=tools/_lib.sh
+source "$TOOLS_DIR/_lib.sh"
 
 # ─────────────────────────────────────────────────────────
 # Skill ordering (canonical order for all references)

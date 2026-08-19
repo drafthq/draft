@@ -7,6 +7,8 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=tools/_lib.sh
+source "$SCRIPT_DIR/tools/_lib.sh"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 BOOK_DIR="$ROOT/web/book"
 CHAPTERS_DIR="$BOOK_DIR/chapters"
@@ -573,6 +575,7 @@ LANDING_MAIN_START
 </body>
 </html>
 LANDING_FOOTER
+    apply_dest_mode "$_tmp" "$_out"   # mktemp is 0600; mv would strip the dest's mode
     mv -f "$_tmp" "$_out"
 }
 

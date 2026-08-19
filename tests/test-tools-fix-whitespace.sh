@@ -59,6 +59,23 @@ run "$NONL"
 assert "missing final newline added" \
     "$([[ "$(cat "$NONL")" == "no newline" && "$(wc -c < "$NONL" | tr -d ' ')" == "11" ]] && echo true || echo false)"
 
+# --- The rewrite must not change the file's permissions ---
+# mktemp creates 0600 and `mv` swaps the inode, so the normaliser used to hand
+# back a 0600 file no matter what it was given.
+PERM="$FIXTURE/perm.md"
+printf 'trailing   \n\n\n' > "$PERM"
+chmod 644 "$PERM"
+run "$PERM"
+MODE="$(stat -c '%a' "$PERM" 2>/dev/null || stat -f '%Lp' "$PERM" 2>/dev/null)"
+assert "normalising a 0644 file leaves it 0644" "$([[ "$MODE" == "644" ]] && echo true || echo false)"
+
+PERM6="$FIXTURE/perm600.md"
+printf 'trailing   \n\n\n' > "$PERM6"
+chmod 600 "$PERM6"
+run "$PERM6"
+MODE6="$(stat -c '%a' "$PERM6" 2>/dev/null || stat -f '%Lp' "$PERM6" 2>/dev/null)"
+assert "a deliberately 0600 file stays 0600" "$([[ "$MODE6" == "600" ]] && echo true || echo false)"
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 exit "$FAIL"

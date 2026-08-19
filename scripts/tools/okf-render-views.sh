@@ -24,6 +24,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=scripts/tools/_lib.sh
 source "$SCRIPT_DIR/_lib.sh"
 
+command -v python3 >/dev/null 2>&1 || {
+    echo "ERROR: python3 is required by ${0##*/} (link rewriting in rendered views)" >&2
+    exit 2
+}
+
 BUNDLE=""
 ARCH_OUT=""
 WEB_OUT=""
@@ -56,7 +61,7 @@ Flags:
                            this tool has no clock dependency).
   --help                   Show this help.
 
-Requires jq (already a Draft prereq) for --web. Exit 0 ok, 1 error, 2 bundle not found.
+Requires jq (for --web) and python3 (link rewriting). Exit 0 ok, 1 error, 2 bundle not found.
 EOF
 }
 
@@ -217,6 +222,7 @@ render_architecture() {
             strip_frontmatter "$BUNDLE/$rel" | rewrite_body_links "$rel"
         done < <(ordered_pages)
     } >"$tmp"
+    apply_dest_mode "$tmp" "$out"   # mktemp is 0600; mv would strip the dest's mode
     mv "$tmp" "$out"
     if [[ -x "$SCRIPT_DIR/okf-fix-links.sh" ]]; then
         draft_dir="$(cd "$(dirname "$out")" && pwd)"
@@ -313,6 +319,7 @@ inject_concept_map() {
         /<!-- CONCEPT-MAP:END -->/ { skip=0 }
         !skip { print }
     ' "$target" >"$tmp"
+    apply_dest_mode "$tmp" "$target"   # mktemp is 0600; mv would strip the dest's mode
     mv "$tmp" "$target"
     echo "injected Concept Map → $target"
 }
@@ -487,6 +494,7 @@ show(decodeURIComponent(location.hash.slice(1)) || ORDER[0]);
 HTML_TAIL
 
     mkdir -p "$(dirname "$out")"
+    apply_dest_mode "$tmp" "$out"   # mktemp is 0600; mv would strip the dest's mode
     mv "$tmp" "$out"
     echo "rendered offline HTML viewer → $out ($(find "$BUNDLE" -type f -name '*.md' | grep -c .) pages)"
 }

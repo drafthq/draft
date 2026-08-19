@@ -9,7 +9,9 @@
 # Usage:
 #   scripts/tools/graph-impact.sh --repo DIR (--file PATH | --symbol NAME) [--depth N]
 #
-# Output: JSON {target, kind, impacted:[{name,file,hop}], source}.
+# Output: JSON {target, kind, impacted:[{name,file,qualified,hop}], source}.
+#   `file` is always a path (empty when the engine carries none); the qualified
+#   name has its own field rather than being emitted as if it were a path.
 #   source = "memory-graph" | "unavailable"
 #
 # Exit codes: 0 OK, 1 invocation error, 2 graph engine unavailable.
@@ -78,7 +80,7 @@ if [[ -n "$SYMBOL" ]]; then
     echo "$RES" | jq -e . >/dev/null 2>&1 || unavailable "$TARGET" "$KIND"
     echo "$RES" | jq --arg t "$TARGET" '
         {target:$t, kind:"symbol",
-         impacted: [ (.callers // [])[] | {name:.name, file:(.qualified_name // ""), hop:(.hop // 1)} ],
+         impacted: [ (.callers // [])[] | {name:.name, file:(.file_path // ""), qualified:(.qualified_name // ""), hop:(.hop // 1)} ],
          source:"memory-graph"}'
 else
     # File impact: detect_changes maps the working-tree diff to impacted symbols.

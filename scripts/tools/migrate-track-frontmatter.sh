@@ -225,7 +225,11 @@ EOF
                 (( BACKUP )) && cp "$path" "$path.bak"
                 # %s\n restores the EOF newline stripped by command substitution
                 # (same pattern as fix-whitespace.sh).
-                local _tmp; _tmp="$(mktemp "${path}.XXXXXX")"; printf '%s\n' "$after" > "$_tmp" && mv -f "$_tmp" "$path"
+                local _tmp; _tmp="$(mktemp "${path}.XXXXXX")"
+                printf '%s\n' "$after" > "$_tmp"
+                # mktemp creates 0600 and `mv` swaps the inode — carry the mode across.
+                apply_dest_mode "$_tmp" "$path"
+                mv -f "$_tmp" "$path"
                 printf 'migrate: stripped ephemeral frontmatter from %s\n' "$path"
             fi
         fi

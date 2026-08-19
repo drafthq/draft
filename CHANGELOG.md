@@ -64,8 +64,71 @@ unfalsifiable.
   actions carry no `src`, so `fsx.exists(undefined)` threw and the install
   aborted with `Bundled asset missing: undefined`. Latent — no shipped host plan
   emits one — but `fsAction` supports the kind.
+- **`resolve-tools.sh` aborted at step 5 instead of falling through.** `newest()`
+  ran `ls -d <glob> | sort -V | tail -1`; on a glob miss `ls` exits non-zero,
+  `pipefail` propagated it, and `errexit` killed the resolver mid-chain. Steps
+  6-8 were unreachable and the exit code was 2, not the documented 1 — so a
+  Cursor-only install (step 7) resolved to nothing and every helper failed to
+  load. The fallback chain now runs to completion.
+- **Atomic rewrites reset files to 0600.** `mktemp` creates at 0600 and `mv`
+  swaps the inode, so every helper using that pattern silently stripped the
+  destination's permissions: `fix-whitespace.sh` handed back a 0600 file
+  whatever it was given, and each `make build` left the generated integrations
+  owner-only. New shared helper `apply_dest_mode` (in `scripts/tools/_lib.sh`,
+  re-exported through `scripts/lib.sh`) carries the destination's mode across,
+  applied in `build-integrations.sh`, `build-book.sh`, `fix-whitespace.sh`,
+  `git-metadata.sh`, `migrate-track-frontmatter.sh`, `okf-fix-links.sh`,
+  `okf-render-views.sh`, and `okf-coverage-check.sh`.
+- **`okf-fix-links.sh` and `okf-render-views.sh` required `python3` without
+  saying so.** Both shell out to it under `set -e`, so on a host without Python
+  the OKF path — the default output mode for tier 3-5 projects — died at exit
+  127 partway through, after `--fix` had already rewritten files. Both now check
+  up front and fail with a clear message, and `python3` is listed in CLAUDE.md's
+  prerequisites.
+- **`graph-callers.sh --transitive` and `graph-impact.sh` put a qualified name
+  in the field documented as `file`.** The `trace_path` expander returns no
+  `file_path`, so the qualified name was emitted as if it were a path while the
+  single-hop branch of the same tool emitted a real one. `file` is now always a
+  path (empty when the engine has none) and `qualified` is its own field.
+- **`build-integrations.sh` reported "Agent refs: preserved (not stripped)" for
+  both builds.** The Copilot transform rewrites `@architect` and friends to
+  `@workspace`, so the status line stated the opposite of what it did for one of
+  the two outputs. `verify_output` now takes the description per build.
+- **`graph-snapshot.sh` ran `rm -rf "$OUT/okf"` against an unvalidated `--out`.**
+  Combined with the `mkdir -p` above it, a typo'd flag created a directory and
+  then recursively deleted a subtree inside it. The prune now requires positive
+  evidence that Draft owns the directory (default location, an existing
+  `schema.yaml`, or a prior fat snapshot).
+- **`install-smoke-test.sh --json` emitted invalid JSON** when a captured stderr
+  line contained a backslash or control character — it escaped only `"`. It now
+  uses `json_escape` from `_lib.sh`.
 
 ### Security
+- **`graph-query.sh --tool query_graph` bypassed the read-only guard entirely.**
+  The write-verb scan ran only on `--cypher`; `query_graph` is on the tool
+  allowlist and takes raw Cypher in its payload, so
+  `--tool query_graph --json '{"query":"MATCH (n) DETACH DELETE n"}'` reached the
+  engine unchecked and could wipe the graph index. The scan is now a shared
+  `reject_write_verbs` applied to both entry points, and to any tool payload
+  carrying a `query` field — not just `query_graph` — so a future query-bearing
+  tool is covered by construction.
+- **Tool resolution no longer trusts the working directory ahead of the
+  installed plugin.** `resolve-tools.sh` returned `$PWD/scripts/tools` as soon as
+  it saw a `resolve-tools.sh` there, before the install marker and the plugin
+  registry. Since skills execute whatever it prints, and Draft is routinely
+  pointed at repositories nobody trusts, any repo shipping that path captured
+  execution. The cwd is now the last resort, gated on Draft's own plugin
+  manifest; the bare `$PWD/scripts/tools` fallback (which matched any project
+  using that very common layout) is gone. Work on Draft itself with
+  `DRAFT_PLUGIN_ROOT="$PWD"`, which is step 1 and always wins.
+- **Atomic rewrites no longer widen file permissions.** `writeJsonAtomic` in
+  `cli/src/lib/cursor-registry.js` wrote a fresh temp file and renamed it over
+  `~/.claude/settings.json`, discarding the destination's mode — a deliberately
+  0600 settings file holding env secrets came back 0644. It now carries the
+  destination's mode across.
+- **`.github/workflows/pages.yml` pins `actions/deploy-pages` by SHA**
+  (`cd2ce8f`, v5.0.0). It was the one action still on a mutable tag, in a job
+  holding `pages: write` and `id-token: write`.
 - **`release.yml` no longer interpolates `${{ }}` expressions into `run:`
   blocks.** A `workflow_dispatch` input was expanded textually before bash
   parsed the line, so a crafted tag could execute commands in a job holding
@@ -75,6 +138,18 @@ unfalsifiable.
   hardening rather than a remote hole.
 
 ### Changed
+- **`install-smoke-test.sh` now asserts the project directory is untouched by a
+  dry run,** not just `HOME`. `codex` and `opencode` default to project scope and
+  write `AGENTS.md` into the cwd, which is the likelier leak and was unchecked.
+- **`scripts/lib.sh` no longer runs `set -euo pipefail` at source time.** Its own
+  header promised no side effects while it silently changed the shell options of
+  all 16 files that source it. Every one of them sets its own strict mode.
+- **Dead code removed from `okf-fix-links.sh`** (326 → 247 lines): `resolve_ok()`
+  had no callers, which left `build_slugs()`/`SLUGS` feeding nothing;
+  `pick_target()` and its `BASENAME_MAP_MULTI` builder were a bash twin of logic
+  the Python pass already does itself; a `while read … done < /dev/null` loop had
+  an empty body and could never execute; and `--check` was parsed into a variable
+  nothing read. Checking is unconditional and the flag is now documented as such.
 - **Graph engine pin bumped to `codebase-memory-mcp` v0.9.0** (from v0.8.1) in
   `scripts/fetch-memory-engine.sh`. Upstream ships ~61% faster indexing with a
   crash supervisor that quarantines a bad file instead of aborting the run,

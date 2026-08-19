@@ -29,7 +29,8 @@ scripts/tools/graph-snapshot.sh --repo .                # index repo + write dra
 scripts/tools/hotspot-rank.sh --repo .                  # fan-in-ranked hotspots (live query)
 scripts/tools/graph-impact.sh --repo . --symbol <name>  # blast radius for a symbol (live query)
 
-# Prerequisites: Bash 4.0+, jq (graph tools), Node 18+ (draft CLI), shellcheck, markdownlint-cli (lint only)
+# Prerequisites: Bash 4.0+, jq (graph tools), Node 18+ (draft CLI), python3 (OKF mode:
+#                okf-fix-links.sh / okf-render-views.sh), shellcheck, markdownlint-cli (lint only)
 ```
 
 Tests use a custom bash framework (`tests/test-helpers.sh`) with `assert()`, `pass()`, `fail()` helpers. No external test runner.

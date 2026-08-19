@@ -457,8 +457,12 @@ COMMON_HEADER2
 # Verification
 # ─────────────────────────────────────────────────────────
 
+# $2 describes how this build treated agent references (@architect, …) — the
+# Copilot transform rewrites them to @workspace while the AGENTS.md one keeps
+# them, so a single hardcoded line reported the opposite for one of the two.
 verify_output() {
     local output_file="$1"
+    local agent_refs="${2:-preserved (not stripped)}"
 
     local line_count old_syntax_count at_draft_count
     read -r line_count old_syntax_count at_draft_count < <(awk '
@@ -515,7 +519,7 @@ verify_output() {
         echo "  Syntax check: OK (no @draft references)"
     fi
 
-    echo "  Agent refs: preserved (not stripped)"
+    echo "  Agent refs: $agent_refs"
 
     return 0
 }
@@ -540,7 +544,8 @@ main() {
     trap 'rm -f "$copilot_tmp"' EXIT
     build_integration transform_copilot_syntax > "$copilot_tmp"
     echo "  Generated: $COPILOT_OUTPUT"
-    if verify_output "$copilot_tmp"; then
+    if verify_output "$copilot_tmp" "rewritten to @workspace"; then
+        apply_dest_mode "$copilot_tmp" "$COPILOT_OUTPUT"   # mktemp is 0600
         mv "$copilot_tmp" "$COPILOT_OUTPUT"
         trap - EXIT
     else
@@ -557,7 +562,8 @@ main() {
     trap 'rm -f "$agents_tmp"' EXIT
     build_integration transform_agents_syntax > "$agents_tmp"
     echo "  Generated: $AGENTS_OUTPUT"
-    if verify_output "$agents_tmp"; then
+    if verify_output "$agents_tmp" "preserved (not stripped)"; then
+        apply_dest_mode "$agents_tmp" "$AGENTS_OUTPUT"   # mktemp is 0600
         mv "$agents_tmp" "$AGENTS_OUTPUT"
         trap - EXIT
     else
