@@ -16,6 +16,10 @@ integrations/copilot/.github/copilot-instructions.md.*
 *.zip
 *.tar.gz
 
+# Per-session git worktrees. Each holds a linked checkout, so a blanket
+# `git add -A` stages it as a gitlink to a commit no clone can fetch.
+worktrees-wt/
+
 # Claude Code session state
 .claude/scheduled_tasks.lock
 .claude/settings.local.json
