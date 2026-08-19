@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`hotspot-rank.sh` reported unmeasured complexity as zero.** When the
+  property query failed it substituted an empty row set, so every symbol came
+  back `complexity: 0, cognitive: 0`, those zeros were folded into `score`, and
+  the result still said `source:"memory-graph"` — a fan-in-only ranking was
+  indistinguishable from a fully measured one. The hotspots themselves come from
+  a fail-loud call, so they are still returned; the outcome is now recorded as
+  `enrichment: "ok" | "unavailable"` and the unmeasured fields are omitted rather
+  than emitted as zeros.
+- **`mermaid-from-graph.sh` could not tell a broken engine from an empty graph.**
+  A failed query was swallowed into an empty row set, so "this repo has no
+  cross-file imports" and "the engine is unavailable" both rendered the same
+  `graph not built` diagram. The two cases now render distinctly.
+
 ## [3.7.1] - 2026-08-19
 
 ### Fixed

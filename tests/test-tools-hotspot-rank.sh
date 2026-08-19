@@ -45,6 +45,36 @@ if command -v jq >/dev/null 2>&1; then
     top_out="$(DRAFT_MEMORY_BIN="$MOCK" "$TOOL" --repo "$FIXTURE" --top 1)"
     count="$(echo "$top_out" | jq '.hotspots | length')"
     assert "--top 1 returns 1 entry" "$([[ "$count" == "1" ]] && echo true || echo false)"
+    assert "A working run records enrichment=ok" \
+        "$(echo "$out2" | jq -e '.enrichment == "ok"' >/dev/null 2>&1 && echo true || echo false)"
+
+    # --- Engine reachable, but the graph query itself fails ---
+    # A failed query is not an empty graph. Engine 0.10.x returns a human-readable
+    # summary instead of JSON, which is exactly this shape.
+    BROKEN="$FIXTURE/brokenbin/codebase-memory-mcp"
+    mkdir -p "$FIXTURE/brokenbin"
+    cat > "$BROKEN" <<'BROKENMOCK'
+#!/usr/bin/env bash
+if [[ "$1" == "--version" ]]; then echo "codebase-memory-mcp 0.0.0-mock"; exit 0; fi
+[[ "$1" == "cli" ]] || { echo '{}'; exit 0; }
+case "$2" in
+  list_projects)    echo '{"projects":[]}' ;;
+  index_repository) echo '{"project":"mock","status":"indexed"}' ;;
+  get_architecture) echo '{"hotspots":[{"name":"foo","qualified_name":"mock.foo","fan_in":5}],"routes":[]}' ;;
+  query_graph)      echo "rows: 0  (cols: a b)" ;;   # not JSON
+  *)                echo '{}' ;;
+esac
+exit 0
+BROKENMOCK
+    chmod +x "$BROKEN"
+
+    bad="$(DRAFT_MEMORY_BIN="$BROKEN" "$TOOL" --repo "$FIXTURE")"
+    assert "A failed props query is recorded as enrichment=unavailable" \
+        "$(echo "$bad" | jq -e '.enrichment == "unavailable"' >/dev/null 2>&1 && echo true || echo false)"
+    assert "Hotspots survive a failed props query (get_architecture is the source)" \
+        "$(echo "$bad" | jq -e '(.hotspots | length) >= 1' >/dev/null 2>&1 && echo true || echo false)"
+    assert "Unmeasured complexity is omitted, never reported as 0" \
+        "$(echo "$bad" | jq -e '.hotspots[0] | has("complexity")' >/dev/null 2>&1 && echo false || echo true)"
 fi
 
 echo ""

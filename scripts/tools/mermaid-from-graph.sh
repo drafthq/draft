@@ -57,25 +57,39 @@ if [[ ! -d "$REPO" ]]; then
     exit 1
 fi
 
+# $1: "unavailable" (engine/query failed) or "empty" (query ran, no such edges).
+# Swallowing a failed query with `{}` used to make both look identical, so an
+# engine failure and a repo with genuinely no cross-file imports produced the
+# same "graph not built" diagram — the reader could not tell which they had.
 stub() {
-    cat <<'EOF'
+    if [[ "${1:-unavailable}" == "empty" ]]; then
+        cat <<'EOF'
+```mermaid
+%% graph is built, but holds no edges of this kind — nothing to draw
+flowchart LR
+    empty["no edges"]
+```
+EOF
+    else
+        cat <<'EOF'
 ```mermaid
 %% graph data unavailable — index the repo with the graph engine first
 flowchart LR
     empty["graph not built"]
 ```
 EOF
+    fi
     exit 2
 }
 
-graph_bootstrap "$REPO" || stub
+graph_bootstrap "$REPO" || stub unavailable
 
 # module-deps: real IMPORTS edges (the auto-derived dependency graph). Self-imports
 # (src == dst) are dropped so the diagram is a true cross-file graph. Capped at 40
 # edges for readability.
 render_module_deps() {
-    local res; res="$(gq_run "$PROJECT" "$(gq_q_imports)" || echo '{}')"
-    local edges; edges="$(echo "${res:-{\}}" | jq -r '
+    local res; res="$(gq_run "$PROJECT" "$(gq_q_imports)")" || return 2
+    local edges; edges="$(echo "$res" | jq -r '
         [ (.rows // [])[] | {s:(.[0]|tostring), d:(.[1]|tostring)}
           | select(.s != "" and .d != "" and .s != .d) ]
         | unique | .[0:40][] | "    \"" + .s + "\" --> \"" + .d + "\""' 2>/dev/null || true)"
@@ -85,23 +99,25 @@ render_module_deps() {
 
 # co-change: FILE_CHANGES_WITH coupling (the prior module-deps proxy).
 render_co_change() {
-    local res; res="$(gq_run "$PROJECT" "$(gq_q_co_change)" || echo '{}')"
-    local edges; edges="$(echo "${res:-{\}}" | jq -r '(.rows // [])[] | "    \"" + (.[0]|tostring) + "\" --> \"" + (.[1]|tostring) + "\""' 2>/dev/null || true)"
+    local res; res="$(gq_run "$PROJECT" "$(gq_q_co_change)")" || return 2
+    local edges; edges="$(echo "$res" | jq -r '(.rows // [])[] | "    \"" + (.[0]|tostring) + "\" --> \"" + (.[1]|tostring) + "\""' 2>/dev/null || true)"
     if [[ -z "$edges" ]]; then return 1; fi
     printf '```mermaid\nflowchart LR\n%s\n```\n' "$edges"
 }
 
 render_proto_map() {
     local res; res="$(memory_cli get_architecture \
-        "$(jq -n --arg p "$PROJECT" '{project:$p, aspects:["routes"]}')" || echo '{}')"
-    local edges; edges="$(echo "${res:-{\}}" | jq -r '(.routes // [])[] | "    \"" + ((.method // "")|tostring) + " " + ((.path // "")|tostring) + "\" --> \"" + ((.handler // "?")|tostring) + "\""' 2>/dev/null || true)"
+        "$(jq -n --arg p "$PROJECT" '{project:$p, aspects:["routes"]}')" || true)"
+    [[ -n "$res" ]] && echo "$res" | jq -e . >/dev/null 2>&1 || return 2
+    local edges; edges="$(echo "$res" | jq -r '(.routes // [])[] | "    \"" + ((.method // "")|tostring) + " " + ((.path // "")|tostring) + "\" --> \"" + ((.handler // "?")|tostring) + "\""' 2>/dev/null || true)"
     if [[ -z "$edges" ]]; then return 1; fi
     printf '```mermaid\nflowchart LR\n%s\n```\n' "$edges"
 }
 
+# rc 2 = the query failed; rc 1 = it ran and returned nothing. Different stubs.
 case "$DIAGRAM" in
-    module-deps) render_module_deps || stub ;;
-    co-change)   render_co_change || stub ;;
-    proto-map)   render_proto_map || stub ;;
+    module-deps) render_module_deps || { rc=$?; [[ $rc -eq 1 ]] && stub empty || stub unavailable; } ;;
+    co-change)   render_co_change   || { rc=$?; [[ $rc -eq 1 ]] && stub empty || stub unavailable; } ;;
+    proto-map)   render_proto_map   || { rc=$?; [[ $rc -eq 1 ]] && stub empty || stub unavailable; } ;;
     *) echo "Unknown --diagram '$DIAGRAM' (expected module-deps|co-change|proto-map)" >&2; exit 1 ;;
 esac

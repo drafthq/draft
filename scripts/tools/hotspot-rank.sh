@@ -71,8 +71,20 @@ ARCH_JSON="$(memory_cli get_architecture \
 echo "$ARCH_JSON" | jq -e . >/dev/null 2>&1 || unavailable
 
 # Pre-computed complexity/cognitive/is_entry_point per symbol (merged onto fan-in).
-PROPS_JSON="$(gq_run "$PROJECT" "$(gq_q_node_props)" || echo '{"rows":[]}')"
-echo "$PROPS_JSON" | jq -e . >/dev/null 2>&1 || PROPS_JSON='{"rows":[]}'
+#
+# The hotspots themselves come from get_architecture above, which is fail-loud,
+# so a failure here costs enrichment rather than the whole result — worth keeping
+# the ranking for. But it must not pass silently: substituting an empty row set
+# gave every symbol complexity 0 and cognitive 0, folded those zeros into `score`,
+# and still reported source:"memory-graph", so a fan-in-only ranking was
+# indistinguishable from a fully measured one. Record the outcome instead, and
+# omit the fields rather than emitting measurements that were never taken.
+if PROPS_JSON="$(gq_run "$PROJECT" "$(gq_q_node_props)")"; then
+    ENRICHMENT="ok"
+else
+    PROPS_JSON='{"rows":[]}'
+    ENRICHMENT="unavailable"
+fi
 
 # Merge via temp files (the props row set can exceed argv limits on large repos).
 TMP_ARCH="$(mktemp)"; TMP_PROPS="$(mktemp)"
@@ -80,7 +92,8 @@ trap 'rm -f "$TMP_ARCH" "$TMP_PROPS"' EXIT
 printf '%s' "$ARCH_JSON" > "$TMP_ARCH"
 printf '%s' "$PROPS_JSON" > "$TMP_PROPS"
 
-jq -n --slurpfile arch "$TMP_ARCH" --slurpfile props "$TMP_PROPS" --argjson top "$TOP" '
+jq -n --slurpfile arch "$TMP_ARCH" --slurpfile props "$TMP_PROPS" --argjson top "$TOP" \
+      --arg enrichment "$ENRICHMENT" '
     ((($props[0].rows) // []) | map(select(.[0] != null))) as $prows
     | (reduce $prows[] as $r ({};
           .[$r[0]] = {c:((($r[1]) // "0") | tonumber? // 0),
@@ -89,10 +102,11 @@ jq -n --slurpfile arch "$TMP_ARCH" --slurpfile props "$TMP_PROPS" --argjson top 
     | [ (($arch[0].hotspots) // [])[]
         | (.qualified_name) as $q
         | ($pmap[$q] // {c:0, cog:0, ep:false}) as $p
-        | {id:$q, name:.name, fanIn:(.fan_in // 0),
-           complexity:$p.c, cognitive:$p.cog,
-           score:((.fan_in // 0) + $p.c + $p.cog),
-           isEntryPoint:$p.ep} ]
+        | ({id:$q, name:.name, fanIn:(.fan_in // 0),
+            score:((.fan_in // 0) + $p.c + $p.cog)}
+           + (if $enrichment == "ok"
+              then {complexity:$p.c, cognitive:$p.cog, isEntryPoint:$p.ep}
+              else {} end)) ]
     | sort_by(-.score)
     | (if $top > 0 then .[0:$top] else . end) as $h
-    | {hotspots:$h, source:"memory-graph"}'
+    | {hotspots:$h, enrichment:$enrichment, source:"memory-graph"}'
