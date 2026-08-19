@@ -56,8 +56,13 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+      # jq ships in the GitHub-hosted runner image (1.7.1 on ubuntu-24.04, 1.6 on
+      # 22.04), so installing it was a redundant apt call on the same mirror that
+      # stalled the Lint job twice. Assert it instead: if a future image drops it,
+      # this fails here with an obvious message rather than as a confusing
+      # graph-tool test failure further down.
+      - name: Verify jq is available
+        run: jq --version
 
       - name: Configure git identity
         run: |

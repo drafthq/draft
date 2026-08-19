@@ -197,6 +197,12 @@ unfalsifiable.
   for 12 minutes, once until the job was cancelled — and because both lint
   checks are blocking, that took them down as `skipped` rather than failing
   honestly. The repo is clean under v0.11.0.
+- **CI no longer apt-installs `jq` either.** It ships in the runner image (1.7.1
+  on ubuntu-24.04, 1.6 on 22.04), so the install was a redundant call to the same
+  package mirror that stalled the Lint job. Replaced with a `jq --version`
+  assertion, so a future image dropping it fails there with an obvious message
+  rather than as a confusing graph-tool test failure. `ci.yml` now makes no apt
+  calls at all.
 - **`markdownlint` now runs with `--ignore-path .gitignore`** in CI and in
   `scripts/lint.sh`. Its glob does not consult git, so a local `make lint` was
   linting gitignored artifacts a fresh CI checkout never has — a generated 1 MB
