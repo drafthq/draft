@@ -24,7 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   now happen in jq, and the dialect notes in `_graph_queries.sh` record that
   property-to-property comparison is unsupported.
 
-
 ## [3.7.0] - 2026-08-19
 
 Adoption-audit remediation. The audit's finding was that the funnel, not the product, was the constraint:
