@@ -216,9 +216,23 @@
         <!-- Unreleased -->
         <article class="changelog-entry">
             <div class="changelog-entry-header">
-                <span class="changelog-version">v3.7.0</span>
+                <span class="changelog-version">v3.7.1</span>
                 <span class="changelog-date">2026-08-19</span>
                 <span class="changelog-tag changelog-tag--latest">Latest</span>
+                <span class="changelog-tag">Graph</span>
+            </div>
+            <div class="changelog-category">Fixed</div>
+            <ul class="changelog-changes">
+                <li><strong>Cycle detection reported a clean result from a query that never ran.</strong> A failed graph query was swallowed and the tool carried on, emitting <code>source:"memory-graph"</code> with zero cycles &mdash; the one failure mode a caller cannot detect. A failed query now reports <code>unavailable</code>, as every sibling tool already did.</li>
+                <li><strong>Two-node cycle detection had never worked.</strong> The query compared one property against another, which the graph engine's parser rejects, so it failed on every call &mdash; hidden by the bug above. Mutual recursion went undetected while the tool reported success. The comparison is gone and the de-duplication it was doing now happens after the query.</li>
+            </ul>
+        </article>
+
+        <!-- v3.7.0 -->
+        <article class="changelog-entry">
+            <div class="changelog-entry-header">
+                <span class="changelog-version">v3.7.0</span>
+                <span class="changelog-date">2026-08-19</span>
                 <span class="changelog-tag">Review</span>
                 <span class="changelog-tag">Security</span>
                 <span class="changelog-tag">CI</span>
