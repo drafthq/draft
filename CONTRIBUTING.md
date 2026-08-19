@@ -15,7 +15,7 @@ make lint     # Run linters (requires shellcheck, markdownlint-cli)
 - Bash 4.0+
 - Node 18+ — the `draft` CLI and several test suites
 - `jq` — the graph tooling and its tests
-- [shellcheck](https://github.com/koalaman/shellcheck) — shell script linting
+- [shellcheck](https://github.com/koalaman/shellcheck) — shell script linting (CI pins v0.11.0)
 - [markdownlint-cli](https://github.com/igorshubovych/markdownlint-cli) — markdown linting
 - (Optional) [pre-commit](https://pre-commit.com/) — git hook management
 

@@ -32,7 +32,7 @@ echo ""
 # Markdownlint
 if command -v markdownlint &> /dev/null; then
     echo "[*] Running markdownlint..."
-    if ! markdownlint "**/*.md" --ignore "node_modules" --ignore "draft.tmp" --ignore "draft/tracks" --ignore "integrations"; then
+    if ! markdownlint "**/*.md" --ignore-path .gitignore --ignore "node_modules" --ignore "draft.tmp" --ignore "draft/tracks" --ignore "integrations"; then
         echo "✗ Markdownlint found issues."
         exit_code=1
     else
@@ -40,7 +40,7 @@ if command -v markdownlint &> /dev/null; then
     fi
 else
     echo "⚠ markdownlint-cli not found. Skipping markdown linting."
-    echo "  CI gates on it — run: npx markdownlint-cli@0.49.1 \"**/*.md\" \\"
+    echo "  CI gates on it — run: npx markdownlint-cli@0.49.1 \"**/*.md\" --ignore-path .gitignore \\"
     echo "        --ignore node_modules --ignore draft.tmp --ignore draft/tracks --ignore integrations"
 fi
 

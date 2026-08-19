@@ -191,6 +191,17 @@ unfalsifiable.
 
 ### Changed
 
+- **CI installs a pinned, checksum-verified shellcheck** (v0.11.0, static
+  binary from the upstream release) instead of `apt-get install shellcheck`. The
+  apt step stalled on the runner's package mirror twice in three pushes — once
+  for 12 minutes, once until the job was cancelled — and because both lint
+  checks are blocking, that took them down as `skipped` rather than failing
+  honestly. The repo is clean under v0.11.0.
+- **`markdownlint` now runs with `--ignore-path .gitignore`** in CI and in
+  `scripts/lint.sh`. Its glob does not consult git, so a local `make lint` was
+  linting gitignored artifacts a fresh CI checkout never has — a generated 1 MB
+  `AGENTS.md` and everything under `docs/internal/` — and failing on files CI
+  cannot see. Local and CI runs now cover exactly the same set.
 - **Markdownlint is a blocking CI gate.** It ran `continue-on-error` against a
   backlog too large to enforce against; that backlog is cleared — 1691
   violations to 0 across the tree — so anything it reports now was introduced by
