@@ -39,7 +39,7 @@ Tests use a custom bash framework (`tests/test-helpers.sh`) with `assert()`, `pa
 
 ### Build Pipeline (the critical path)
 
-```
+```text
 skills/<name>/SKILL.md  ──┐
 core/methodology.md       ├──→  scripts/build-integrations.sh  ──→  integrations/copilot/.github/copilot-instructions.md
 core/shared/*.md          │                                          (~23,600 lines, auto-generated)
@@ -48,6 +48,7 @@ core/agents/*.md          ──┘
 ```
 
 The build script (`scripts/build-integrations.sh`) reads `SKILL_ORDER`, `CORE_FILES`, and `TOOLS` from `scripts/lib.sh` (sourced) and:
+
 1. Iterates `SKILL_ORDER` (33 skills in current two-tier model, order matters)
 2. Validates YAML frontmatter (`name:` and `description:` required)
 3. Validates body format: blank, `# Title`, blank, then content
@@ -112,6 +113,7 @@ Coverage in tests: `tests/test-skill-references.sh`.
 ### Syntax Transformation Rules
 
 The build script transforms skill content for platform compatibility:
+
 - `/draft:command` → `draft command` (Copilot uses bare syntax, no slash prefix)
 - `@architect`, `@debugger`, etc. → `@workspace` (Copilot agent references)
 
@@ -160,6 +162,7 @@ The npm `version` lifecycle hook runs `scripts/sync-version.sh`, which propagate
 When users run `/draft:init`, it creates a `draft/` directory in their project. **Output mode is tier-gated** (`DRAFT_INIT_MODE` unset → tier 1–2 `monolith`, tier 3–5 `okf`; explicit `DRAFT_INIT_MODE=monolith|okf` overrides). Mode changes **only** the `architecture.md` / `.ai-context.md` packaging; **all other files below are produced in both modes.**
 
 Always produced (mode-independent):
+
 - **`index.md`** — Plain docs index listing the prose context files and tracks.md; notes the graph is engine-only.
 - **`product.md`**, **`tech-stack.md`**, **`workflow.md`**, **`guardrails.md`** — Project config files
 - **`.ai-profile.md`** — Ultra-compact 20-50 line always-injected profile (derived from .ai-context.md)
@@ -168,6 +171,7 @@ Always produced (mode-independent):
 - **`graph/`** — Holds only `schema.yaml` (gate marker: engine + project metadata, point-of-index counts; `access: engine-live`). All structural graph data is queried live from the `codebase-memory-mcp` engine via the `scripts/tools/graph-*.sh` wrappers.
 
 Packaging differs by mode:
+
 - **`monolith`** (tier 1–2 default) — **`architecture.md`** is the source of truth (10-section graph-primary reference with Mermaid); **`.ai-context.md`** is the token-optimized 200-400 line AI context derived from it.
 - **`okf`** (tier 3+ default) — **`wiki/`** is the source of truth (OKF concept taxonomy, one concept per file); **`.ai-context.md`** is the index root (Synopsis + Concept Map); **`architecture.md`** is a generated rendered view of the bundle; **`wiki/web/index.html`** is an optional offline viewer. See `skills/init/references/okf-emitter.md`.
 

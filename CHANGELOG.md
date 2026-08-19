@@ -13,6 +13,7 @@ regression test, releases were invisible, and the central efficacy claim was
 unfalsifiable.
 
 ### Added
+
 - **`/draft:review` runs with zero setup.** A missing `draft/` directory is now
   a supported mode, not an error. The review resolves scope from git, runs
   Stage 1 and Stage 3 against plugin guardrails, renders the report inline
@@ -45,6 +46,7 @@ unfalsifiable.
   all three now do.
 
 ### Fixed
+
 - **A repo path containing `"` or `\` silently disabled every graph tool.**
   `memory_index_bounded` built the engine payload by string concatenation, so
   such a path produced malformed JSON, the index call failed, and every graph
@@ -102,8 +104,14 @@ unfalsifiable.
 - **`install-smoke-test.sh --json` emitted invalid JSON** when a captured stderr
   line contained a backslash or control character — it escaped only `"`. It now
   uses `json_escape` from `_lib.sh`.
+- `check-repo-size.sh`-class SIGPIPE bug: `sort | head` under `pipefail` failed
+  non-deterministically depending on pipe-buffer occupancy. Both new tools
+  materialize before slicing.
+- `bench-report.sh` computes the graph delta from raw counts; differencing two
+  independently-rounded percentages shifted it by up to 0.1pp.
 
 ### Security
+
 - **`graph-query.sh --tool query_graph` bypassed the read-only guard entirely.**
   The write-verb scan ran only on `--cypher`; `query_graph` is on the tool
   allowlist and takes raw Cypher in its payload, so
@@ -138,6 +146,7 @@ unfalsifiable.
   hardening rather than a remote hole.
 
 ### Changed
+
 - **`install-smoke-test.sh` now asserts the project directory is untouched by a
   dry run,** not just `HOME`. `codex` and `opencode` default to project scope and
   write `AGENTS.md` into the cwd, which is the likelier leak and was unchecked.
@@ -177,13 +186,6 @@ unfalsifiable.
   from the prerequisites. Adds what CI runs, how to reproduce the install-path
   jobs locally, and the release procedure.
 
-### Fixed
-- `check-repo-size.sh`-class SIGPIPE bug: `sort | head` under `pipefail` failed
-  non-deterministically depending on pipe-buffer occupancy. Both new tools
-  materialize before slicing.
-- `bench-report.sh` computes the graph delta from raw counts; differencing two
-  independently-rounded percentages shifted it by up to 0.1pp.
-
 ## [3.6.0] - 2026-07-15
 
 Full-codebase review release: 10-angle review with per-finding adversarial
@@ -191,6 +193,7 @@ verification produced 37 confirmed findings — all fixed (see
 `docs/WORK_TRACKER.md` for the finding-by-finding record).
 
 ### Fixed
+
 - **Validators no longer crash on clean input.** `check-track-hygiene.sh`
   (zero TBD markers) and `verify-doc-anchors.sh` (`(planned)` line with no
   path token) aborted under `set -euo pipefail` with no output; both now pass
@@ -220,6 +223,7 @@ verification produced 37 confirmed findings — all fixed (see
   `migrate-track-frontmatter.sh` preserves the EOF newline.
 
 ### Changed
+
 - **DRAFT_TOOLS canonical preamble** now honors the `DRAFT_PLUGIN_ROOT`
   override first (matching `resolve-tools.sh` precedence); all 24 files
   carrying the inline resolver migrated, and `core/shared/graph-query.md`
@@ -232,10 +236,12 @@ verification produced 37 confirmed findings — all fixed (see
   helper instead of 15 copies of the engine-bootstrap sequence.
 
 ### Removed
+
 - Retired `core/templates/track-architecture.md` (replaced by
   `hld.md`/`lld.md`; the decompose skill had already declared it retired).
 
 ### Added
+
 - Six previously-missing test suites wired into `make test` (72 total):
   cross-references, HLD/LLD contract, skill-script invocation discipline, and
   tool suites for `check-graph-usage-report`, `check-template-noop`,
@@ -245,6 +251,7 @@ verification produced 37 confirmed findings — all fixed (see
 ## [3.5.3] - 2026-06-25
 
 ### Fixed
+
 - **OKF bundle now conforms to the OKF v0.1 spec.** The emitted `draft/wiki/`
   bundle carries the spec-required index frontmatter and generates
   `coverage.md`, so downstream OKF consumers can validate the bundle shape.
@@ -252,16 +259,19 @@ verification produced 37 confirmed findings — all fixed (see
 ## [3.5.2] - 2026-06-24
 
 ### Fixed
+
 - **Wiki completeness is enforced.** `/draft:init` (okf mode) now requires a
   concept page for every module, rejects empty/shallow pages, and fails on
   broken index links (PR #47).
 
 ### Changed
+
 - User-facing prose says "wiki" instead of "OKF" throughout the docs.
 
 ## [3.5.1] - 2026-06-22
 
 ### Fixed
+
 - **`/draft:init` engine indexing is memory-bounded.** The
   `codebase-memory-mcp` index run is wrapped in a cgroup scope capped at 25%
   of system RAM, so indexing a large repo can no longer exhaust the machine.
@@ -269,6 +279,7 @@ verification produced 37 confirmed findings — all fixed (see
 ## [3.5.0] - 2026-06-20
 
 ### Added
+
 - **Deterministic wiki completeness gates.** New `okf-plan-concepts.sh` plan
   and `okf-coverage-check.sh` coverage gates enforce that the okf-mode wiki
   covers the full module surface before an init/refresh is accepted.
@@ -276,6 +287,7 @@ verification produced 37 confirmed findings — all fixed (see
 ## [3.4.0] - 2026-06-20
 
 ### Added
+
 - **Tree-search retrieval over the OKF bundle (PageIndex-style).** New
   `core/shared/okf-retrieval.md` adds a vectorless, reasoning-based retrieval
   loop for projects emitted in `okf` mode (`draft/wiki/` present). Agents now
@@ -289,6 +301,7 @@ verification produced 37 confirmed findings — all fixed (see
   Copilot and Agents integrations.
 
 ### Changed
+
 - Website, book, and blog refresh: new "Drafting Table" hero identity, refreshed
   social/meta copy and social-preview card, professionalized footer, and two new
   blog posts on relevance-based / reasoning-based vectorless retrieval.
@@ -296,6 +309,7 @@ verification produced 37 confirmed findings — all fixed (see
 ## [3.3.1] - 2026-06-19
 
 ### Fixed
+
 - **`/draft:init refresh` never regenerated the OKF `wiki/` bundle.** The init
   skill's Refresh Mode described only the `monolith` path (refresh
   `architecture.md` → regenerate `.ai-context.md`/`.ai-profile.md`), with no
@@ -310,6 +324,7 @@ verification produced 37 confirmed findings — all fixed (see
   initial-generation branch. Cross-host integrations regenerated.
 
 ### Changed
+
 - **Documentation, website, and book synced to v3.3.0.** OKF taxonomy mode is
   now documented across README, `web/index.html`, `web/what-is-draft`,
   `llms.txt`/`llms-full.txt`, and the book (getting-started, context-tiering);
@@ -321,6 +336,7 @@ verification produced 37 confirmed findings — all fixed (see
 ## [3.3.0] - 2026-06-19
 
 ### Added
+
 - **`/draft:init` OKF taxonomy emitter (tier-gated default).**
   An init output mode that replaces the monolithic `architecture.md`
   with an OKF v0.1 concept bundle under `draft/wiki/` (one concept per file,
@@ -358,6 +374,7 @@ verification produced 37 confirmed findings — all fixed (see
   manifest, failing loud on a missing required field.
 
 ### Fixed
+
 - **Cursor install never surfaced `/draft:*` commands.** `draft install cursor`
   copied the plugin tree to `~/.cursor/plugins/local/draft/` but never registered
   or enabled it, so skills and slash commands never appeared in Cursor chat. The
@@ -371,6 +388,7 @@ verification produced 37 confirmed findings — all fixed (see
 ## [3.2.1] - 2026-06-15
 
 ### Fixed
+
 - **Graph tooling unreachable on Claude Code marketplace/npm installs.** Skills
   invoked the bundled `scripts/tools/*.sh` helpers by bare, cwd-relative paths
   (e.g. `scripts/tools/graph-arch.sh`). Because a skill's shell runs with the
@@ -382,6 +400,7 @@ verification produced 37 confirmed findings — all fixed (see
   marketplace clone → cwd) and invoke helpers as `"$DRAFT_TOOLS/<tool>.sh"`.
 
 ### Added
+
 - **`scripts/tools/resolve-tools.sh`** — canonical resolver that locates the
   bundled `scripts/tools/` dir regardless of install layout (Claude Code cache,
   marketplace clone, Cursor, or in-repo dev). Documented in
@@ -393,6 +412,7 @@ verification produced 37 confirmed findings — all fixed (see
 ## [3.2.0] - 2026-06-14
 
 ### Added
+
 - **Full codebase-memory-mcp capability adoption (graph tooling v2).** Draft now
   uses the whole graph engine instead of a thin ~3-edge slice. All Cypher is
   centralized in a new sourced module `scripts/tools/_graph_queries.sh` (single
@@ -429,6 +449,7 @@ verification produced 37 confirmed findings — all fixed (see
 ## [3.1.5] - 2026-06-14
 
 ### Changed
+
 - **The knowledge graph is now engine-only.** Draft no longer commits a
   machine-readable mirror of the graph. `scripts/tools/graph-snapshot.sh` indexes
   the repo into the local `codebase-memory-mcp` engine and writes a single committed
@@ -442,6 +463,7 @@ verification produced 37 confirmed findings — all fixed (see
   tracks with one-line descriptions — no OKF framing or `okf_version` frontmatter.
 
 ### Removed
+
 - **Open Knowledge Format (OKF) emission** added in 3.0.0. Deleted
   `scripts/tools/okf-emit.sh`, `okf-bundle.sh`, `okf-check.sh` (and their tests).
   No more `draft/graph/okf/` bundle.
@@ -452,6 +474,7 @@ verification produced 37 confirmed findings — all fixed (see
 ## [3.0.0] - 2026-06-14
 
 ### Added
+
 - **Open Knowledge Format (OKF) emission by default.** The knowledge-graph
   snapshot now also writes an [OKF v0.1](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md)
   bundle to `draft/graph/okf/` (`index.md` + cross-linked `modules/<name>.md`
@@ -482,12 +505,14 @@ verification produced 37 confirmed findings — all fixed (see
   touching the root (the module→root link is marked `pending`).
 
 ### Changed
+
 - **`/draft:init` markdown is scope-asymmetric.** A root init now generates a
   sparse, high-level system map that links down to each module's context (no deep
   per-module prose); a module init generates the full detailed reference. The
   graph layer stays symmetric (root spine + per-module snapshots, linked).
 
 ### Removed
+
 - **`/draft:index` is removed — folded into the scope-aware `/draft:init`.**
   Monorepo context now comes from running `/draft:init` at the repo root (sparse
   root map + whole-repo graph spine) and in each sub-module (detailed context +
@@ -498,6 +523,7 @@ verification produced 37 confirmed findings — all fixed (see
 ## [2.8.3] - 2026-06-14
 
 ### Fixed
+
 - **`draft install claude-code` no longer hangs.** `claude plugin marketplace
   add drafthq/draft` does a `git clone` of the repo, and the repo carried ~670 MB
   of audiobook `.m4a` files in HEAD (`web/book/audio/audio-files/`). Even claude's
@@ -516,6 +542,7 @@ verification produced 37 confirmed findings — all fixed (see
 ## [2.8.2] - 2026-06-14
 
 ### Documentation
+
 - **README now documents the full router surface.** The command reference
   previously listed only the specialist leaf commands; it now also documents the
   4 top-tier routers (`/draft:plan`, `/draft:ops`, `/draft:docs`,
@@ -529,6 +556,7 @@ verification produced 37 confirmed findings — all fixed (see
 ## [2.8.1] - 2026-06-14
 
 ### Fixed
+
 - **Knowledge-graph engine fetch no longer 404s.** `scripts/fetch-memory-engine.sh`
   pinned `DEFAULT_VERSION="v0.7.0"`, but the upstream `codebase-memory-mcp` `0.7.0`
   release publishes no binary assets, so every fetch failed with a 404 and graph
@@ -540,6 +568,7 @@ verification produced 37 confirmed findings — all fixed (see
 ## [2.8.0] - 2026-06-13
 
 ### Changed
+
 - **`draft install claude-code` now upgrades an existing install** instead of
   no-op'ing on "already installed". The plan runs four idempotent `claude plugin`
   steps — `marketplace add`, `marketplace update`, `install`, `update` — so a
@@ -559,6 +588,7 @@ verification produced 37 confirmed findings — all fixed (see
 ## [2.7.1] - 2026-06-13
 
 ### Fixed
+
 - **`draft install claude-code` now actually registers the plugin.** The 2.7.0
   installer copied the plugin into the project folder, but Claude Code only
   loads plugins from its own registry — so `/draft:*` commands never appeared
@@ -572,21 +602,30 @@ verification produced 37 confirmed findings — all fixed (see
 ## [2.7.0] - 2026-06-13
 
 ### Changed
+
 - **Installation rewritten as an npm CLI (`@drafthq/draft`)** — `draft install <host>` replaces the previous `curl | bash scripts/install.sh` flow. Run `npx @drafthq/draft install <host>` (or install globally with `npm install -g @drafthq/draft`), where `<host>` is `claude-code`, `cursor`, `codex`, or `opencode`. `draft list` shows every host and its target; flags: `--global`/`--project`, `--dry-run`, `--force`, `--no-graph`. The CLI bundles all assets, so installs are self-contained (no runtime `git clone`).
 
 ### Added
+
 - **Cross-host `AGENTS.md` integration** — `scripts/build-integrations.sh` now also generates `integrations/agents/AGENTS.md` (the full inlined methodology with native agent names preserved), consumed by the `codex` and `opencode` installers.
 
 ### Removed
+
 - **`scripts/install.sh`** — the `curl | bash` universal installer is removed in favor of the npm CLI. GitHub Copilot and Gemini are no longer installable "hosts"; copy their committed instructions file directly (see README).
 
 ## [2.6.0] - 2026-06-11
 
 ### Changed
+
 - **Graph engine replaced with [codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp)** — Draft's knowledge graph is now powered by codebase-memory-mcp (tree-sitter + LSP across 159 languages, 100% local, no API key). The previous in-house Node.js + tree-sitter-WASM engine is retired. The engine is fetched on install (`scripts/fetch-memory-engine.sh`, checksum-verified) into `~/.cache/draft/bin` rather than vendored, and resolved via `scripts/tools/_lib.sh:find_memory_bin` (`DRAFT_MEMORY_BIN` > PATH > managed > vendored). Set `DRAFT_MEMORY_DISABLE=1` to opt out.
 - **Graph artifacts** — `draft/graph/` now holds a lightweight committed snapshot (`schema.yaml`, `architecture.json`, `hotspots.jsonl`, `*.mermaid`) instead of the per-language JSONL indexes. Live structural queries run on demand against the engine.
+- **Public website & book completely synchronized** — Exhaustive pass across `web/index.html`, `web/llms-full.txt`, `web/llms.txt`, all notebook sources, and rendered `web/book/chapters/*.html`. Removed every stale reference to removed flat Jira commands and outdated "28 commands" language. The live site now accurately presents the 5-router architecture.
+- **Build & registration** — `SKILL_ORDER`, `CORE_FILES`, and `TOOLS` updated in `scripts/lib.sh`. Static "Available Commands" and "Intent Mapping" tables in `build-integrations.sh` now lead with the 5 routers.
+- **`skills/GRAPH.md`** — Full rewrite of topology description, Mermaid diagrams, execution chains, and dependency matrix to reflect the routed two-tier model.
+- All cross-references, skill bodies, core docs, and high-level documentation updated for the new surface.
 
 ### Added
+
 - **`/draft:graph` command** — Initialize or refresh the `draft/graph/` snapshot for a repo (optional `<path>` argument). Ensures the engine is present (fetching if needed), then builds and reports counts/hotspots/cycles.
 - **New graph tools** — `graph-snapshot.sh` (committed snapshot), `graph-impact.sh` (file/symbol blast radius), `graph-callers.sh` (caller enumeration), plus `fetch-memory-engine.sh` (pinned, checksum-verified engine install).
 - **Two-tier command architecture** — 4 primary workflow commands (`init`, `new-track`, `implement`, `review`) + 5 routers (`plan`, `ops`, `docs`, `discover`, `jira`) as the recommended public interface. 22 specialist commands are dispatched underneath the routers.
@@ -597,20 +636,16 @@ verification produced 37 confirmed findings — all fixed (see
 - **New router skills** — `skills/plan/`, `skills/ops/`, `skills/docs/`, `skills/discover/`, `skills/jira/`.
 - **`docs/MIGRATION.md`** — Actionable guidance for transitioning from the old flat command surface to the router model.
 
-### Changed
-- **Public website & book completely synchronized** — Exhaustive pass across `web/index.html`, `web/llms-full.txt`, `web/llms.txt`, all notebook sources, and rendered `web/book/chapters/*.html`. Removed every stale reference to removed flat Jira commands and outdated "28 commands" language. The live site now accurately presents the 5-router architecture.
-- **Build & registration** — `SKILL_ORDER`, `CORE_FILES`, and `TOOLS` updated in `scripts/lib.sh`. Static "Available Commands" and "Intent Mapping" tables in `build-integrations.sh` now lead with the 5 routers.
-- **`skills/GRAPH.md`** — Full rewrite of topology description, Mermaid diagrams, execution chains, and dependency matrix to reflect the routed two-tier model.
-- All cross-references, skill bodies, core docs, and high-level documentation updated for the new surface.
-
 ### Removed
+
 - `skills/jira-preview/` and `skills/jira-create/` directories and all associated flat command references.
 
 ### Fixed
+
 - Critical packaging defect: advanced review pipeline was invisible to Copilot/Gemini users because `review.md` lived outside `references/`.
 - Numerous stale command strings, count mismatches ("28 commands"), and public documentation drift across the book and website.
 
-All 25+ test suites pass, `make build` + `make lint` clean, zero branding leaks or internal references in public tree. Public surfaces at https://getdraft.dev are now authoritative.
+All 25+ test suites pass, `make build` + `make lint` clean, zero branding leaks or internal references in public tree. Public surfaces at <https://getdraft.dev> are now authoritative.
 
 ## [2.4.0] - 2026-04-26
 
@@ -650,5 +685,5 @@ All 25+ test suites pass, `make build` + `make lint` clean, zero branding leaks 
 
 - **CI's `make build` invocation** — added the missing target so re-enabling auto-triggers won't fail with "No rule to make target 'build'".
 - **Duplicate `workflow_dispatch:` keys** in `.github/workflows/pages.yml` — would have failed `check-yaml`.
-- **`.h` C++ detection by substring** in graph engine — was triggering on any header containing `class ` (comments, identifiers, strings); now requires a real `class Name {`/`class Name :` pattern.
+- **`.h` C++ detection by substring** in graph engine — was triggering on any header containing `class` followed by a space (comments, identifiers, strings); now requires a real `class Name {`/`class Name :` pattern.
 - **Mermaid loader CRLF handling** — graph mermaid generator now tolerates Windows-edited JSONL.

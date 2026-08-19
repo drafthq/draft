@@ -27,7 +27,7 @@ usage text, and `core/shared/graph-query.md:117` is therefore false on one of th
 
 **Failure (demonstrated):**
 
-```
+```console
 $ graph-query.sh --repo R --cypher 'MATCH (n) DETACH DELETE n'
 ERROR: write verbs are not allowed (read-only passthrough)   # exit 1
 
@@ -60,7 +60,7 @@ project being reviewed.
 **Failure (demonstrated):** a directory containing a copied `scripts/tools/resolve-tools.sh`
 resolves to itself even with a valid install elsewhere:
 
-```
+```console
 $ cd /tmp/victim && resolve-tools.sh
 /tmp/victim/scripts/tools
 ```
@@ -84,7 +84,7 @@ and the `d="$(newest …)"` assignment trips `errexit`.
 immediately after line 60 — steps 6 (marketplace clone), 7 (**Cursor local install**) and 8
 are never reached, and the script exits **2**, not the documented 1:
 
-```
+```console
 ++ ls -d '…/.claude/plugins/cache/*/draft/*/scripts/tools'
 + d=
 $ echo $?   →  2      # steps 6-8 never ran
@@ -106,15 +106,19 @@ permissions are silently discarded. Sites: `build-integrations.sh:539,556`,
 
 **Failure (demonstrated):**
 
-```
-$ ls -l a.md      →  -rw-r--r--
+```console
+$ ls -l a.md
+-rw-r--r-- 1 user user 24 a.md
 $ fix-whitespace.sh a.md
-$ ls -l a.md      →  -rw-------
+fix-whitespace: normalised 1 file(s):
+ a.md
+$ ls -l a.md
+-rw------- 1 user user 18 a.md
 ```
 
 **Live evidence in this tree right now** — every `make build` does the same to its own output:
 
-```
+```text
 -rw------- integrations/copilot/.github/copilot-instructions.md
 -rw------- integrations/agents/AGENTS.md
 ```
