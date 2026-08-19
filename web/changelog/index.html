@@ -216,9 +216,23 @@
         <!-- Unreleased -->
         <article class="changelog-entry">
             <div class="changelog-entry-header">
-                <span class="changelog-version">v3.7.1</span>
+                <span class="changelog-version">v3.7.2</span>
                 <span class="changelog-date">2026-08-19</span>
                 <span class="changelog-tag changelog-tag--latest">Latest</span>
+                <span class="changelog-tag">Graph</span>
+            </div>
+            <div class="changelog-category">Fixed</div>
+            <ul class="changelog-changes">
+                <li><strong>Hotspot ranking reported unmeasured complexity as zero.</strong> When the property query failed, every symbol came back with complexity and cognitive scores of 0, those zeros were summed into the ranking score, and the result still claimed the graph had answered &mdash; a fan-in-only ranking was indistinguishable from a fully measured one. The run now records whether enrichment loaded, and omits what it could not measure.</li>
+                <li><strong>Diagram generation could not tell a broken engine from an empty graph.</strong> Both rendered "graph not built", so a repo with genuinely no cross-file imports looked like a failed index. The two now render distinctly.</li>
+            </ul>
+        </article>
+
+        <!-- v3.7.1 -->
+        <article class="changelog-entry">
+            <div class="changelog-entry-header">
+                <span class="changelog-version">v3.7.1</span>
+                <span class="changelog-date">2026-08-19</span>
                 <span class="changelog-tag">Graph</span>
             </div>
             <div class="changelog-category">Fixed</div>
