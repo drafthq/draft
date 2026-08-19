@@ -58,18 +58,26 @@ graph_bootstrap "$REPO" || unavailable
 # 2- and 3-node CALLS cycles. Cypher lives in _graph_queries.sh (label-agnostic;
 # the Phase 0 fix — code units are mostly :Method, and CALLS only connects
 # callables). LIMIT 100 caps each, so results are a sample, not exhaustive.
-R2="$(gq_run "$PROJECT" "$(gq_q_cycles2)" || echo '{}')"
-R3="$(gq_run "$PROJECT" "$(gq_q_cycles3)" || echo '{}')"
+#
+# A failed query is not an empty result. Substituting `{}` and carrying on
+# reported `source:"memory-graph"` with zero cycles — a clean bill of health
+# derived from a query that never ran, which is exactly the true-negative
+# confusion Guardrail 4 exists to prevent, and the one failure mode a caller
+# cannot detect. Both queries must land for the sample to mean anything, so
+# either failure routes to `unavailable`. gq_run only ever echoes validated
+# JSON, so nothing downstream needs a second shape guard.
+R2="$(gq_run "$PROJECT" "$(gq_q_cycles2)")" || unavailable
+R3="$(gq_run "$PROJECT" "$(gq_q_cycles3)")" || unavailable
 
-# Guard against empty/non-JSON engine output so --argjson never aborts the script.
-echo "$R2" | jq -e . >/dev/null 2>&1 || R2='{}'
-echo "$R3" | jq -e . >/dev/null 2>&1 || R3='{}'
-
+# Self-loops and duplicate orderings are filtered here rather than in Cypher:
+# the engine rejects `a.x < b.x`, which is what the query used to rely on.
+# A 2-cycle comes back twice (A,B and B,A), hence the doubled LIMIT upstream.
 jq -n --argjson r2 "$R2" --argjson r3 "$R3" '
-    ( ((($r2.rows) // []) | length) >= 100
+    ( ((($r2.rows) // []) | length) >= 200
       or ((($r3.rows) // []) | length) >= 100 ) as $trunc
+    | ( ($r2.rows // []) | map(select(.[0] != .[1])) | unique_by(sort) ) as $two
     | {
-        cycles: (((($r2.rows) // []) + (($r3.rows) // []))),
+        cycles: ($two + ($r3.rows // [])),
         truncated: $trunc,
         source: "memory-graph"
       }'

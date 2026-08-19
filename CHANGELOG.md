@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`cycle-detect.sh` reported a clean result from a query that never ran.** A
+  failed `gq_run` was replaced with `{}` and the tool carried on, emitting
+  `source:"memory-graph"` with zero cycles — the one failure mode a caller cannot
+  detect, and exactly the true-negative confusion the module's fail-loud
+  guardrail exists to prevent. Either cycle query failing now routes to
+  `source:"unavailable"` and exit 2.
+- **The 2-node cycle query had never worked.** `gq_q_cycles2` carried
+  `WHERE a.qualified_name < b.qualified_name` to drop self-loops and emit each
+  mutual pair once, but the engine cannot parse a property-to-property
+  comparison — it fails with `expected value at pos N`. The fail-open above hid
+  that on every call since the query was written, so mutual recursion went
+  undetected while the tool reported success. The comparison is gone; both jobs
+  now happen in jq, and the dialect notes in `_graph_queries.sh` record that
+  property-to-property comparison is unsupported.
+
+
 ## [3.7.0] - 2026-08-19
 
 Adoption-audit remediation. The audit's finding was that the funnel, not the product, was the constraint:

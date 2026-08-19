@@ -12,7 +12,10 @@
 #            `STARTS WITH`, `NOT x STARTS WITH`, `AND`, `OR`, relationship-type
 #            alternation `[:A|B]`, simple `count(x)`.
 #   UNSAFE : coalesce(), `<>` / `!=` / `<=` / `>=`, `NOT EXISTS(...)`,
-#            `NOT (pattern)`, `WITH`-grouping aggregation, multi-pattern joins.
+#            `NOT (pattern)`, `WITH`-grouping aggregation, multi-pattern joins,
+#            and comparing one property against another (`a.x < b.x` — the
+#            parser wants a literal on the right and fails with "expected value
+#            at pos N"). `<` against a literal is fine.
 #            Every builder below stays inside the SAFE set.
 #
 # Label-agnostic on name matches: code units are :Method ⪢ :Function in OO repos;
@@ -43,7 +46,12 @@ gq_q_exists()            { printf "MATCH (f {name:'%s'}) RETURN f.name AS name L
 gq_q_callers()           { printf "MATCH (c)-[:CALLS]->(f {name:'%s'}) RETURN c.name AS caller, c.file_path AS file LIMIT 200" "$1"; }
 gq_q_callers_prod()      { printf "MATCH (c)-[:CALLS]->(f {name:'%s'}) WHERE c.is_test=false AND NOT c.file_path STARTS WITH 'tests/' RETURN c.name AS caller, c.file_path AS file LIMIT 200" "$1"; }
 gq_q_callers_qualified() { printf "MATCH (c)-[:CALLS]->(f {qualified_name:'%s'}) RETURN c.name AS caller, c.file_path AS file LIMIT 200" "$1"; }
-gq_q_cycles2()           { printf "MATCH (a)-[:CALLS]->(b)-[:CALLS]->(a) WHERE a.qualified_name < b.qualified_name RETURN a.qualified_name AS a, b.qualified_name AS b LIMIT 100"; }
+# The `WHERE a.qualified_name < b.qualified_name` this used to carry was doing
+# two jobs — drop self-loops, and emit each mutual pair once instead of twice —
+# but the engine cannot parse a property-to-property comparison, so the query
+# failed on every call and cycle-detect swallowed the error. Both jobs now happen
+# in jq downstream; the limit is doubled because the raw rows come in pairs.
+gq_q_cycles2()           { printf "MATCH (a)-[:CALLS]->(b)-[:CALLS]->(a) RETURN a.qualified_name AS a, b.qualified_name AS b LIMIT 200"; }
 gq_q_cycles3()           { printf "MATCH (a)-[:CALLS]->(b)-[:CALLS]->(c)-[:CALLS]->(a) RETURN a.qualified_name AS a, b.qualified_name AS b, c.qualified_name AS c LIMIT 100"; }
 gq_q_tests()             { printf "MATCH (t)-[:TESTS]->(f {name:'%s'}) RETURN t.qualified_name AS test, t.file_path AS file LIMIT 200" "$1"; }
 gq_q_tested_all()        { printf "MATCH (t)-[:TESTS]->(f) RETURN f.qualified_name AS symbol LIMIT 2000"; }
