@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.7.0] - 2026-08-19
+
 Adoption-audit remediation. The audit's finding was that the funnel, not the product, was the constraint:
 the wedge command required the expensive command first, the install path had no
 regression test, releases were invisible, and the central efficacy claim was
