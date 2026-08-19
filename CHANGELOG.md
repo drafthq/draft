@@ -47,6 +47,16 @@ unfalsifiable.
 
 ### Fixed
 
+- **`/draft:graph` refreshed nothing after the first index.** `graph-snapshot.sh`
+  obtained its index solely through `memory_ensure_index`, which calls
+  `index_repository` only when the project is *absent* — correct for the
+  `graph-*.sh` query wrappers, which must stay cheap, but wrong for the one tool
+  whose job is the refresh. Every subsequent run was a no-op that still printed
+  `Indexed <project>` and rewrote the gate marker with a fresh `generated_at`, so
+  a symbol deleted from the tree stayed resolvable, a newly added one never
+  appeared, and nothing surfaced the staleness. This repo's own marker claimed
+  currency while sitting on a June index from an older engine build. The refresh
+  now issues an explicit re-index; the query wrappers are unchanged.
 - **The offline wiki viewer executed content from the repository it documented.**
   `okf-render-views.sh --web` inlines every page into a `<script>` block. Only the
   markdown body was passed through the `</` → `<\/` filter; the page title, type,

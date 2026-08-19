@@ -73,6 +73,15 @@ command -v jq >/dev/null 2>&1 || { echo "jq required" >&2; exit 2; }
 PROJECT="$(memory_ensure_index "$REPO_ABS" || true)"
 [[ -n "$PROJECT" ]] || { echo "could not index repo — nothing written" >&2; exit 2; }
 
+# ...then ALWAYS re-index. memory_ensure_index calls index_repository only when the
+# project is ABSENT — correct for the graph-*.sh query wrappers, which must stay
+# cheap — so on an already-indexed repo this tool used to write a gate marker with a
+# fresh `generated_at` over a frozen index: a deleted symbol stayed resolvable, a new
+# one never appeared, and nothing in the output said so. Refreshing is this tool's
+# entire job. The engine indexes incrementally, so the repeat call is cheap.
+REFRESHED="$(memory_index_bounded "$REPO_ABS" 2>/dev/null | jq -r '.project // empty' 2>/dev/null || true)"
+[[ -n "$REFRESHED" ]] && PROJECT="$REFRESHED"
+
 mkdir -p "$OUT"
 
 # Prune any stale fat-snapshot artifacts from a prior (pre-engine-only) run so a

@@ -12,4 +12,4 @@
 | Audit | Findings | State |
 |---|---|---|
 | [xreview-codebase-2026-08-18](../audit/xreview-codebase-2026-08-18.md) | 5 + 10 suggestions | All fixed |
-| [xreview-blindspots-2026-08-18](../audit/xreview-blindspots-2026-08-18.md) | 7 + 10 suggestions | All fixed; one `SC2034` lint follow-up needs a shellcheck-enabled run |
+| [xreview-blindspots-2026-08-18](../audit/xreview-blindspots-2026-08-18.md) | 1 critical + 7 + 10 suggestions | All fixed; 2 markdownlint-gate observations left for the in-flight `md-blocking` work |

@@ -10,11 +10,71 @@ and closed by naming exactly what it had **not** read:
 > `check-*`/`verify-*` family. **This is the largest blind spot.** … `tests/` (81 files,
 > ≈8,000 lines) — executed, not read.
 
-This pass targets that list rather than re-covering ground. All seven Important findings
-below were reproduced by running the code; four flip an exit status.
+This pass targets that list rather than re-covering ground. Every finding below was
+reproduced by running the code; five flip an exit status. The Critical one was found while
+refreshing the repo's own knowledge graph — the refresh tool does not refresh.
 
 `make test` — **80/80 suites, 1,023 assertions, exit 0** (before and after).
 `make build` reproduces byte-identical integrations.
+
+---
+
+## Critical (1)
+
+### 0. `[bug]` `scripts/tools/graph-snapshot.sh:73` — the graph refresh silently refreshes nothing
+
+`graph-snapshot.sh` is the tool behind `/draft:graph`, documented as *"Initialize or
+**refresh** the knowledge-graph snapshot for a repository"*, and its own comment at :71
+claims the index call *"ensures the engine holds a **current** index of the repo so live
+queries resolve."* It obtains the index solely through `_lib.sh:memory_ensure_index`, which
+calls `index_repository` **only when the project is absent**:
+
+```bash
+proj="$(memory_project_for_repo "$repo_abs" …)"
+if [[ -z "$proj" ]]; then                    # ← the only path that indexes
+    proj="$(memory_index_bounded "$repo_abs" | jq -r '.project // empty' …)"
+fi
+```
+
+That is the right semantics for the `graph-*.sh` **query** wrappers, which call the same
+helper on every invocation and must stay cheap. It is wrong for the one tool whose job is
+the refresh. After the first index, every subsequent run is a no-op that still writes a
+gate marker with a **fresh `generated_at`** and prints `"Indexed <project>"`.
+
+**Failure (demonstrated):** add a new function to a tracked file, then run the documented
+refresh:
+
+```console
+$ graph-query.sh --repo . --cypher "MATCH (n) WHERE n.name='xreview_probe_symbol_alpha' …"
+[]                                                     # not indexed, as expected
+
+$ graph-snapshot.sh --repo .
+Indexed home-mayurpise-workspace-draft and wrote gate marker to …/schema.yaml
+  (nodes=8135 edges=10209, changed_files=1 impacted_symbols=0)   # ← it SAW the change
+
+$ graph-query.sh --repo . --cypher "MATCH (n) WHERE n.name='xreview_probe_symbol_alpha' …"
+[]                                                     # still absent. Nothing was indexed.
+```
+
+The engine is not at fault — an explicit `index_repository` on the **same existing**
+project updates it correctly (8135 → 8138 nodes, symbol resolvable). The wrapper simply
+never issues one.
+
+**Live evidence in this repo:** the committed marker read `engine_version: "0.8.1"`,
+`generated_at: 2026-06-15` with 6,959 nodes while the installed engine was 0.9.0. After a
+`delete_project` + rebuild the true figure was 8,135 nodes — and the index had been serving
+`md_numbered_headers` (deleted in this very commit) while missing `apply_dest_mode`, which
+has existed since the previous audit's fixes. Every graph-backed skill — `/draft:impact`,
+hotspot ranking, blast radius, `graph-callers.sh` — was answering from a frozen snapshot
+while the marker's timestamp asserted currency. This inverts the repo's own Guardrail 4:
+instead of an engine failure reading as absence, **stale data reads as current**, which is
+strictly worse because nothing surfaces it.
+
+**Fix:** `graph-snapshot.sh` now calls `memory_index_bounded` explicitly after
+`memory_ensure_index`. The query wrappers keep the cheap ensure-only path unchanged.
+**Regression test:** `test-tools-graph-snapshot.sh` drives a mock whose `list_projects`
+already knows the repo — so the "absent" branch cannot fire — and asserts
+`index_repository` is still invoked. Verified to fail without the fix.
 
 ---
 
@@ -204,6 +264,26 @@ tree (mechanically verified).
 
 ---
 
+## Observations for whoever owns the new markdownlint gate
+
+Not fixed here — `fda278e` landed the blocking gate while this audit was in flight and a
+sibling worktree is still sweeping markdown; editing the same surface would collide.
+
+- **The gate does not scan `.github/`.** `scripts/lint.sh:35` passes `"**/*.md"`, and
+  markdownlint's glob does not match dot-directories by default. One tracked file is
+  currently in violation and invisible to CI:
+  `.github/pull_request_template.md:29` — MD040, a fenced block with no language.
+- **`make lint` fails locally in any real working checkout even when CI is green.** The
+  markdownlint invocation excludes `node_modules`, `draft.tmp`, `draft/tracks`, and
+  `integrations`, but not the other gitignored trees a developer actually has on disk —
+  `AGENTS.md` (the `draft install codex` artifact), `docs/internal/`, `draft/`, and
+  `worktrees-wt/`. All four are gitignored, so CI's clean checkout never sees them; a
+  contributor running `make lint` sees ~100 failures in files that are not part of the
+  repo. Linting `git ls-files '*.md'` instead of a filesystem glob would make local and
+  CI agree by construction.
+
+---
+
 ## Investigated and deliberately left alone
 
 **`scripts/lint.sh:20` blanket-disables `SC2034`** (shellcheck's unused-variable check).
@@ -299,11 +379,15 @@ dimension ran instead.
 
 ## Resolution (2026-08-18)
 
-All 7 Important findings and all 10 suggestions applied on branch `xreview-audit`.
-`make test` green (80 suites, 1,023 assertions); `make build` byte-identical.
+1 Critical, 7 Important, and all 10 suggestions applied on branch `xreview-audit`.
+`make test` green; `make build` byte-identical. The repo's own knowledge graph was
+rebuilt from scratch afterwards (`delete_project` + re-index): engine 0.8.1 → 0.9.0,
+6,959 → 8,136 nodes, 8,485 → 10,209 edges, verified against ground truth (symbols added
+in this commit resolve; the symbol deleted in it does not).
 
 | # | Finding | Fix | Regression test |
 |---|---------|-----|-----------------|
+| 0 | graph refresh was a no-op | explicit `memory_index_bounded` in `graph-snapshot.sh` | `test-tools-graph-snapshot.sh` — already-indexed repo still calls `index_repository` (fails without the fix) |
 | 1 | viewer script injection | whole data block filtered, not just `md` | `test-tools-okf-render-views.sh` — hostile title, no raw `</script>` survives |
 | 2 | `${VAR}` blocks promotion | `template_scan_text`/`template_scan_body` strip fences + mask `${VAR}` | `test-tools-okf-validate.sh`, `test-tools-okf-validate-quality.sh` — `${HOME}` passes, `{SECTION_TITLE}` still fails |
 | 3 | underscore slugs | `gsub(/[^a-z0-9_-]/…)` | `test-tools-verify-doc-anchors.sh` — `#draft_init-modes` resolves; absent anchor still fails |
