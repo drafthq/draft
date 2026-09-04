@@ -8,7 +8,7 @@ You have a codebase. Maybe it's a React app with 200 components. Maybe it's a Go
 
 ## Installation
 
-Draft installs with a single command. No API keys, no accounts, no hosted services.
+Draft installs with a single command. No API keys, no accounts, no hosted services. Hosts are `claude-code`, `cursor`, `codex`, and `opencode` (`npx @drafthq/draft install <host>`). `--global` is the default for claude-code and cursor; `--project` is the default for codex and opencode. Copilot and Gemini are not install hosts — copy `.github/copilot-instructions.md` or `.gemini.md` from the repo.
 
 ### Claude Code (Recommended)
 

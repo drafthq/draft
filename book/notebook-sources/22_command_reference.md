@@ -40,7 +40,7 @@ Specialists are dispatched by routers or can be called directly for targeted wor
 | Command | Purpose |
 |---------|---------|
 | `/draft:draft` | Overview and intent map — shows all 33 commands with natural language triggers. |
-| `/draft:graph` | Query the live knowledge graph (codebase-memory-mcp). Supports hotspot analysis, impact tracing, and module dependency queries. |
+| `/draft:graph` | Query the live knowledge graph (codebase-memory-mcp). Supports hotspot analysis, impact tracing, and module dependency queries. Wrappers fail loud: shapeless `{}` is unavailable, not a measured empty result. |
 | `/draft:decompose` | Break down a large feature or system into independently deliverable tracks with dependencies mapped. |
 | `/draft:coverage` | Measure test coverage gaps against the active track's plan and acceptance criteria. |
 | `/draft:deploy-checklist` | Generate an environment-aware pre-deployment checklist for the active track. |
@@ -72,5 +72,5 @@ Specialists are dispatched by routers or can be called directly for targeted wor
 | Cursor | `/draft:init` | `npx @drafthq/draft install cursor` |
 | Codex | `/draft:init` | `npx @drafthq/draft install codex` |
 | OpenCode | `/draft:init` | `npx @drafthq/draft install opencode` |
-| GitHub Copilot | `draft init` | `npx @drafthq/draft install copilot` (copies `.github/copilot-instructions.md`) |
-| Gemini | `draft init` | `npx @drafthq/draft install gemini` (creates `.gemini.md`) |
+| GitHub Copilot | `draft init` | Copy `.github/copilot-instructions.md` from the repo (not a `draft install` host) |
+| Gemini | `draft init` | Copy `.gemini.md` from the repo (not a `draft install` host) |

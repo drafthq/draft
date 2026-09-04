@@ -305,7 +305,7 @@
             </tr>
             <tr id="cmd-graph">
                 <td><code>/draft:graph</code></td>
-                <td>Build or refresh the knowledge-graph snapshot (codebase-memory-mcp). Reports engine, counts, hotspots, and cycles. Does not generate architecture docs.</td>
+                <td>Build or refresh the knowledge-graph snapshot (codebase-memory-mcp). Reports engine, counts, hotspots, and cycles. Does not generate architecture docs. Live query wrappers fail loud: shapeless <code>{}</code> is unavailable, not a measured empty result.</td>
                 <td><code>[path]</code> &mdash; repo root to index (default: <code>.</code>)</td>
                 <td>None (fetches the engine on first use)</td>
                 <td>&mdash;</td>
@@ -570,6 +570,9 @@
         <div class="callout-title">Full Intent List</div>
         <p>Run <code>/draft</code> (the overview command) to see the complete intent mapping table with the 4 primary commands, 5 routers (recommended interface), and all specialists.</p>
     </div>
+
+    <h2>Deterministic helpers</h2>
+    <p>Beneath the 33 commands sit 53 shell helpers in <code>scripts/tools/</code>. Graph wrappers (<code>graph-callers.sh</code>, <code>graph-impact.sh</code>, <code>hotspot-rank.sh</code>, <code>cycle-detect.sh</code>, <code>mermaid-from-graph.sh</code>) fail loud: <code>gq_run</code> requires a <code>.rows</code> array, so shapeless <code>{}</code> is <code>source:"unavailable"</code> with a non-zero exit &mdash; not &ldquo;no callers / no cycles / no edges&rdquo;.</p>
 </div>
 
             <nav class="chapter-nav">

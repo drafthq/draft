@@ -90,6 +90,8 @@ scripts/tools/hotspot-rank.sh --repo .                            # fan-in ranki
 scripts/tools/cycle-detect.sh --repo .                            # dependency cycles
 ```
 
+Graph wrappers fail loud. `gq_run` requires a `.rows` array; a shapeless `{}` is `source:"unavailable"` with a non-zero exit, not a measured empty result. Do not read an empty object as "no callers / no cycles / no edges".
+
 ## Further reading
 
 - [Methodology](../core/methodology.md) — the full Context-Driven Development specification

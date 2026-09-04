@@ -68,12 +68,12 @@ Each host installs the way that host actually loads extensions — no manual ste
 
 | Host | `draft install …` | What it does |
 |------|-------------------|--------------|
-| **Claude Code** | `claude-code` | Registers the plugin via `claude plugin marketplace add` + `claude plugin install` (user scope). Restart Claude Code. |
-| **Cursor** | `cursor` | Copies the plugin into `~/.cursor/plugins/local/draft/`, writes `.cursor-plugin/plugin.json`, registers `draft@draft-plugins` in Cursor's plugin registry, and enables it. Restart Cursor (or Developer: Reload Window). Existing installs upgrade with `draft install cursor --force`. |
-| **Codex** | `codex` | Writes `./AGENTS.md`, which Codex reads automatically. |
-| **opencode** | `opencode` | Writes `./AGENTS.md` + `~/.agents/skills/draft/`, both auto-discovered. |
+| **Claude Code** | `claude-code` | Registers the plugin via `claude plugin marketplace add` + `claude plugin install` (default `--global` / user scope). Restart Claude Code. |
+| **Cursor** | `cursor` | Default `--global`. Copies the plugin into `~/.cursor/plugins/local/draft/`, writes `.cursor-plugin/plugin.json`, registers `draft@draft-plugins` in Cursor's plugin registry, and enables it. Restart Cursor (or Developer: Reload Window). Existing installs upgrade with `draft install cursor --force`. |
+| **Codex** | `codex` | Default `--project`. Writes `./AGENTS.md`, which Codex reads automatically. |
+| **opencode** | `opencode` | Default `--project`. Writes `./AGENTS.md` + `~/.agents/skills/draft/`, both auto-discovered. |
 
-Flags: `--global` / `--project` to pick scope, `--dry-run` to preview, `--force` to overwrite, `--no-graph` to skip the graph-engine fetch.
+Flags: `--global` / `--project` to pick scope (`--global` is the default for `claude-code` and `cursor`; `--project` is the default for `codex` and `opencode`), `--dry-run` to preview, `--force` to overwrite, `--no-graph` to skip the graph-engine fetch.
 
 Then, in Claude Code (after restarting):
 
@@ -164,7 +164,7 @@ The graph powers `/draft:graph` and `/draft:impact`, enriches `/draft:bughunt` a
 
 ### Deterministic helper tools
 
-Skills also call into **shell helpers** under `scripts/tools/` for mechanical work — git metadata, file classification, test-framework detection, hotspot ranking, freshness checks, ADR indexing, and live graph queries (`graph-callers.sh`, `graph-impact.sh`, `hotspot-rank.sh`, `cycle-detect.sh`, `mermaid-from-graph.sh`). All emit JSON or markdown, follow a uniform exit-code contract, and degrade gracefully when their input source is unavailable.
+Skills also call into **shell helpers** under `scripts/tools/` for mechanical work — git metadata, file classification, test-framework detection, hotspot ranking, freshness checks, ADR indexing, and live graph queries (`graph-callers.sh`, `graph-impact.sh`, `hotspot-rank.sh`, `cycle-detect.sh`, `mermaid-from-graph.sh`). All emit JSON or markdown and follow a uniform exit-code contract. Graph wrappers fail loud: shapeless `{}` (no `.rows` array) is `source:"unavailable"` with a non-zero exit, not a measured empty result.
 
 ---
 

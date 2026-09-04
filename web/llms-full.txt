@@ -11,6 +11,8 @@ Created and maintained by Mayur Pise (https://github.com/mayurpise). Draft works
 One npm command installs Draft into any supported host:
 ```
 npx @drafthq/draft install <host>     # claude-code | cursor | codex | opencode
+# --global default: claude-code, cursor
+# --project default: codex, opencode
 # or: npm install -g @drafthq/draft && draft install <host>
 draft list                            # show every host + where it installs
 ```
@@ -27,19 +29,19 @@ Alternative (native marketplace): `/plugin marketplace add drafthq/draft` then `
 ```
 npx @drafthq/draft install cursor
 ```
-Installs the plugin tree to `~/.cursor/plugins/local/draft`, writes `.cursor-plugin/plugin.json`, and registers + enables `draft@draft-plugins` in Cursor's plugin registry. Restart Cursor (or Developer: Reload Window) to load the commands.
+Default `--global`. Installs the plugin tree to `~/.cursor/plugins/local/draft`, writes `.cursor-plugin/plugin.json`, and registers + enables `draft@draft-plugins` in Cursor's plugin registry. Restart Cursor (or Developer: Reload Window) to load the commands.
 
 ### Codex
 ```
 npx @drafthq/draft install codex
 ```
-Writes `AGENTS.md` to the repo root, which Codex reads automatically.
+Default `--project`. Writes `AGENTS.md` to the repo root, which Codex reads automatically.
 
 ### opencode
 ```
 npx @drafthq/draft install opencode
 ```
-Writes `AGENTS.md` and bundles skills under `~/.agents/skills/draft`.
+Default `--project`. Writes `AGENTS.md` and bundles skills under `~/.agents/skills/draft`.
 
 ### GitHub Copilot & Gemini
 Not `draft install` hosts — copy the committed instructions file directly:
@@ -237,6 +239,8 @@ scripts/tools/mermaid-from-graph.sh --diagram module-deps  # Architecture diagra
 
 Call edges carry confidence signals (resolved vs. inferred); skills weight findings accordingly.
 
+Graph wrappers fail loud. `gq_run` requires a `.rows` array; a shapeless `{}` is `source:"unavailable"` with a non-zero exit, not a measured empty result. Do not treat an empty object as "no callers / no cycles / no edges".
+
 ## Deterministic Helper Tools
 
 Skills delegate mechanical work to 53 shell helpers under `scripts/tools/`, including:
@@ -255,7 +259,7 @@ Skills delegate mechanical work to 53 shell helpers under `scripts/tools/`, incl
 - `detect-test-framework.sh` — auto-detect Jest, Vitest, pytest, go test, etc.
 - `run-coverage.sh` — language-aware coverage runner
 
-All emit JSON, follow uniform exit-code contract (0 = success, 1 = invocation error, 2 = upstream-data missing), degrade gracefully.
+All emit JSON and follow a uniform exit-code contract (0 = success, 1 = invocation error, 2 = upstream-data missing). Graph wrappers fail loud on shapeless engine JSON rather than reporting a clean empty result.
 
 ## Key Differentiators
 

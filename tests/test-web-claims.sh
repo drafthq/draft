@@ -121,6 +121,10 @@ assert "newest release on the changelog page is the shipped version ($site_lates
     "$([[ "$site_latest" == "$pkg_version" ]] && echo true || echo false)"
 assert "exactly one entry is tagged latest/in-progress" \
     "$([[ "$(grep -c 'changelog-tag changelog-tag--latest' web/changelog/index.html)" -eq 1 ]] && echo true || echo false)"
+assert "Unreleased changelog entry is not tagged latest" \
+    "$(awk '/<!-- Unreleased -->/,/<\/article>/' web/changelog/index.html | grep -q 'changelog-tag--latest' && echo false || echo true)"
+assert "Unreleased changelog entry does not use a vN.N.N version token" \
+    "$(awk '/<!-- Unreleased -->/,/<\/article>/' web/changelog/index.html | grep -qE 'changelog-version">v[0-9]' && echo false || echo true)"
 
 echo ""
 echo "## Cited artifacts still exist"

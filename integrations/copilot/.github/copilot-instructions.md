@@ -18204,7 +18204,7 @@ DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}
 |---|---|---|
 | `bash "$DRAFT_TOOLS/hotspot-rank.sh" [--top N]` | complexity-weighted hotspots | Emits `{hotspots:[],source:"unavailable"}` and exits 2 |
 | `bash "$DRAFT_TOOLS/cycle-detect.sh"` | call cycles | Emits `{cycles:[],source:"unavailable"}` and exits 2 |
-| `bash "$DRAFT_TOOLS/mermaid-from-graph.sh" [--diagram module-deps\|co-change\|proto-map]` | diagram text | Emits an empty mermaid block and exits 2 |
+| `bash "$DRAFT_TOOLS/mermaid-from-graph.sh" [--diagram module-deps\|co-change\|proto-map]` | diagram text | Unavailable stub (`graph not built`) vs empty-graph stub (`no edges`); both exit 2 |
 | `bash "$DRAFT_TOOLS/graph-callers.sh" --symbol N [--transitive[=N]] [--prod-only] [--qualified]` | callers | `{callers:[],status:"unavailable",source:"unavailable"}`, exit 2 |
 | `bash "$DRAFT_TOOLS/graph-snippet.sh" --qualified N` | verified source + caller/callee counts | `{status:"unavailable",source:"unavailable"}`, exit 2 |
 | `bash "$DRAFT_TOOLS/graph-search.sh" --query "STR" [--limit N]` | semantic/ranked search | `{results:[],source:"unavailable"}`, exit 2 |
@@ -18234,7 +18234,9 @@ bare `[]` as a confirmed true negative:
 | `ok` | node found, edges returned |
 | `no-edges` | node exists but has no matching edge (a *real* negative) |
 | `no-match` | the named symbol was not found at all (check the name / try `--qualified`) |
-| `unavailable` | engine could not be resolved (exit 2) |
+| `unavailable` | engine could not be resolved, or engine returned shapeless/non-row JSON (exit 2) |
+
+**Shapeless JSON is unavailable.** `gq_run` requires `has("rows") and (.rows|type=="array")`. A bare `{}` (or any object without a `.rows` array) is not a measured empty result — wrappers emit `source:"unavailable"` and a non-zero exit. Do not read `{}` as "no callers / no cycles / no edges". `graph-impact`, `graph-callers`, and `mermaid-from-graph` also require their tool-shaped object; a failed snapshot refresh does not rewrite `schema.yaml`.
 
 **Verified engine param shapes** (engine v0.8.x — the runtime source of truth is
 `get_graph_schema`; do not hardcode a property set):
@@ -18305,7 +18307,7 @@ The engine uses a **unified, language-agnostic** node model — `Function`, `Met
 
 ## Query Tools
 
-Live queries go through the shell tools under `scripts/tools/`, which drive the engine and shape results into stable JSON. Each tool resolves the engine (see Finding the Engine), indexes the repo on demand, and emits `source: "memory-graph"` on success or `source: "unavailable"` (non-zero exit) when the engine cannot be resolved. Set `DRAFT_MEMORY_DISABLE=1` to force the engine off; all tools then degrade gracefully.
+Live queries go through the shell tools under `scripts/tools/`, which drive the engine and shape results into stable JSON. Each tool resolves the engine (see Finding the Engine), indexes the repo on demand, and emits `source: "memory-graph"` on success or `source: "unavailable"` (non-zero exit) when the engine cannot be resolved **or returns shapeless JSON** (missing `.rows` array). Set `DRAFT_MEMORY_DISABLE=1` to force the engine off; all tools then degrade to `unavailable` rather than inventing empty results.
 
 ### Callers — who calls this function?
 
@@ -18472,7 +18474,7 @@ The engine indexes C/C++, Go, Python, TypeScript/JS, and more (tree-sitter, 159 
 | Scenario | Behavior |
 |----------|----------|
 | No engine resolvable (or `DRAFT_MEMORY_DISABLE=1`) | Skip graph indexing in init; all skills proceed without graph data; tools emit `source: unavailable` |
-| Engine present but a query fails | Warn and proceed; skills work without graph data |
+| Engine present but a query fails, or returns shapeless `{}` | Treat as unavailable — never as a true-negative empty result; skills proceed without graph data |
 | `draft/graph/schema.yaml` exists | Engine is wired — use live query tools as needed during the run |
 | Engine index out of date | The engine indexes incrementally (content-based, git-aware) on each query, so it self-freshens. Re-run `graph-snapshot.sh` (or init) to force a reindex and refresh the marker. |
 

@@ -36,15 +36,17 @@ This file is produced by the build pipeline (scripts/build-integrations.sh) and 
 * Intent mapping for natural language triggers
 Two key syntax transformations apply:
 
-Installation copies the generated file into the project:
+Copilot is not a `draft install` host — copy the generated file:
 
-`npx @drafthq/draft install copilot`
+`curl -o .github/copilot-instructions.md https://raw.githubusercontent.com/drafthq/draft/main/integrations/copilot/.github/copilot-instructions.md`
 
 ## Gemini
 
 Gemini uses a.gemini.mdbootstrap file that instructs Gemini where to find Draft's skill files. Rather than inlining all content (as Copilot requires), the bootstrap points to the skills directory and lets Gemini read files as needed.
 
-`npx @drafthq/draft install gemini`
+Gemini is not a `draft install` host — copy the bootstrap file:
+
+`curl -o .gemini.md https://raw.githubusercontent.com/drafthq/draft/main/integrations/gemini/.gemini.md`
 
 ## OpenCode
 

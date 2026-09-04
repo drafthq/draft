@@ -831,7 +831,7 @@
                         <span class="bento-tag">53 helpers</span>
                     </div>
                     <h3>Deterministic Helpers</h3>
-                    <p>Skills delegate mechanical work to 53 shell tools under <code>scripts/tools/</code> &mdash; git metadata, file classification, hotspot ranking, cycle detection, freshness checks, ADR indexing, test-framework detection, and more. Uniform JSON output and exit-code contract; graceful degradation when input is missing.</p>
+                    <p>Skills delegate mechanical work to 53 shell tools under <code>scripts/tools/</code> &mdash; git metadata, file classification, hotspot ranking, cycle detection, freshness checks, ADR indexing, test-framework detection, and more. Uniform JSON output and exit-code contract. Graph wrappers fail loud on shapeless engine JSON rather than reporting a clean empty result.</p>
                     <div class="bento-stats">
                         <span>JSON contract</span><span>Reproducible</span>
                     </div>
@@ -1078,7 +1078,7 @@
 <span class="c-cmd">/draft:init</span>
 <span class="c-cmd">/draft:review</span>  <span class="c-comment"># same command, now with blast radius + hotspots</span></code></pre>
                     </div>
-                    <p class="install-note">Runs <code>claude plugin marketplace add</code> + <code>install</code> for you, then restart Claude Code. <code>/draft:review</code> works on an un-indexed repo and tells you which structural checks it had to skip &mdash; indexing is the upgrade, not the entry fee. <strong>Requires the <code>claude</code> CLI on your PATH.</strong> Using the Claude Code app without the CLI? Run <code>/plugin marketplace add drafthq/draft</code> then <code>/plugin install draft</code> inside a session instead.</p>
+                    <p class="install-note">Runs <code>claude plugin marketplace add</code> + <code>install</code> for you (default scope <code>--global</code>), then restart Claude Code. <code>/draft:review</code> works on an un-indexed repo and tells you which structural checks it had to skip &mdash; indexing is the upgrade, not the entry fee. <strong>Requires the <code>claude</code> CLI on your PATH.</strong> Using the Claude Code app without the CLI? Run <code>/plugin marketplace add drafthq/draft</code> then <code>/plugin install draft</code> inside a session instead.</p>
                 </div>
                 <div class="install-panel" id="panel-cursor">
                     <div class="code-block glass-card">
@@ -1089,7 +1089,7 @@
                         <pre><code><span class="c-comment"># Install Draft into Cursor</span>
 <span class="c-cmd">npx</span> <span class="c-str">@drafthq/draft</span> install <span class="c-flag">cursor</span></code></pre>
                     </div>
-                    <p class="install-note">Installs to <code>~/.cursor/plugins/local/draft</code>, writes <code>.cursor-plugin/plugin.json</code>, and registers + enables <code>draft@draft-plugins</code> in Cursor's plugin registry. Restart Cursor (or Developer: Reload Window) to load <code>/draft:*</code> commands.</p>
+                    <p class="install-note">Default scope <code>--global</code>. Installs to <code>~/.cursor/plugins/local/draft</code>, writes <code>.cursor-plugin/plugin.json</code>, and registers + enables <code>draft@draft-plugins</code> in Cursor's plugin registry. Restart Cursor (or Developer: Reload Window) to load <code>/draft:*</code> commands.</p>
                 </div>
                 <div class="install-panel" id="panel-codex">
                     <div class="code-block glass-card">
@@ -1100,7 +1100,7 @@
                         <pre><code><span class="c-comment"># Install Draft into Codex</span>
 <span class="c-cmd">npx</span> <span class="c-str">@drafthq/draft</span> install <span class="c-flag">codex</span></code></pre>
                     </div>
-                    <p class="install-note">Writes <code>AGENTS.md</code> to your repo root — Codex reads it automatically.</p>
+                    <p class="install-note">Default scope <code>--project</code>. Writes <code>AGENTS.md</code> to your repo root &mdash; Codex reads it automatically. Pass <code>--global</code> to install outside the current project.</p>
                 </div>
                 <div class="install-panel" id="panel-opencode">
                     <div class="code-block glass-card">
@@ -1111,7 +1111,7 @@
                         <pre><code><span class="c-comment"># Install Draft into opencode</span>
 <span class="c-cmd">npx</span> <span class="c-str">@drafthq/draft</span> install <span class="c-flag">opencode</span></code></pre>
                     </div>
-                    <p class="install-note">Writes <code>AGENTS.md</code> + bundles skills under <code>~/.agents/skills/draft</code>.</p>
+                    <p class="install-note">Default scope <code>--project</code>. Writes <code>AGENTS.md</code> + bundles skills under <code>~/.agents/skills/draft</code>. Pass <code>--global</code> to install outside the current project.</p>
                 </div>
                 <div class="install-panel" id="panel-more">
                     <div class="code-block glass-card">
@@ -1131,7 +1131,7 @@
                 </div>
             </div>
 
-            <p class="install-note install-note--global">Prefer a persistent command? Install once with <code>npm install -g @drafthq/draft</code>, then run <code>draft install &lt;host&gt;</code>. Use <code>draft list</code> to see every host.</p>
+            <p class="install-note install-note--global">Prefer a persistent command? Install once with <code>npm install -g @drafthq/draft</code>, then run <code>draft install &lt;host&gt;</code>. Use <code>draft list</code> to see every host and its default scope (<code>--global</code> for Claude Code and Cursor, <code>--project</code> for Codex and opencode).</p>
 
             <div class="callout">
                 <strong>No vendor lock-in.</strong> Your specs, plans, and architecture docs are plain markdown files in your repo. Switch tools any time — your project knowledge stays with you.

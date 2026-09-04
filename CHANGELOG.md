@@ -39,6 +39,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   3.7.2 (was 3.3.1). Book command reference, multi-IDE chapter, and
   getting-started match zero-setup review, Codex/opencode, and OKF
   output modes.
+- **Public copy tracks Unreleased audit fixes.** Website changelog lists
+  the in-progress graph fail-loud, HTTPS fetch pin, OKF XSS, installer
+  default-scope, and packaging fixes without bumping 3.7.2. CLAUDE.md
+  test-suite count is 81. Graph-query docs record that shapeless `{}` is
+  unavailable. Installer copy names host default scopes (`--global` for
+  claude-code/cursor, `--project` for codex/opencode).
 
 ## [3.7.2] - 2026-08-19
 

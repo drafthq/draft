@@ -17,7 +17,7 @@ This installs the binary to the **Draft-managed location**:
 ~/.cache/draft/bin/codebase-memory-mcp
 ```
 
-The fetch script picks the right release archive for the host OS/arch, verifies its SHA-256 against the published `checksums.txt`, extracts it, and installs it there. `draft install claude-code` / `draft install cursor` run this automatically (best-effort, network-gated); skip it with `--no-graph`.
+The fetch script picks the right release archive for the host OS/arch, verifies its SHA-256 against the published `checksums.txt`, extracts it, and installs it there. Downloads pin `curl --proto '=https' --proto-redir '=https'` so a compromised redirect cannot downgrade to HTTP. `draft install claude-code` / `draft install cursor` run this automatically (best-effort, network-gated); skip it with `--no-graph`.
 
 ## Resolution order
 

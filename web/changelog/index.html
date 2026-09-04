@@ -216,6 +216,29 @@
         <!-- Unreleased -->
         <article class="changelog-entry">
             <div class="changelog-entry-header">
+                <span class="changelog-version">Unreleased</span>
+                <span class="changelog-date">in progress</span>
+                <span class="changelog-tag">Graph</span>
+                <span class="changelog-tag">Security</span>
+                <span class="changelog-tag">Docs</span>
+            </div>
+            <div class="changelog-category">Fixed</div>
+            <ul class="changelog-changes">
+                <li><strong>Graph wrappers no longer treat shapeless <code>{}</code> as a measured empty result.</strong> Queries now require a <code>.rows</code> array; impact, callers, and diagram tools require their tool-shaped object. A failed snapshot refresh no longer rewrites <code>schema.yaml</code>.</li>
+                <li><strong>Engine fetch pins curl redirects to HTTPS.</strong> A compromised redirect cannot downgrade the download to HTTP.</li>
+                <li><strong>OKF viewer XSS.</strong> Table cells are escaped; <code>javascript:</code> markdown links are dropped. Catalog concept IDs and path-index values cannot escape the bundle.</li>
+                <li><strong><code>draft install</code> help matches host default scopes.</strong> <code>--global</code> for Claude Code and Cursor; <code>--project</code> for Codex and opencode. Missing-binary detection treats Windows status 127 as absent.</li>
+                <li><strong>Hygiene and packaging.</strong> Marker scans parse paths that contain <code>:</code>; <code>package.sh</code> refuses <code>--out /</code> and versions with <code>..</code>; chapter pages are written atomically; architecture render no longer swallows link-fix failures.</li>
+            </ul>
+            <div class="changelog-category">Changed</div>
+            <ul class="changelog-changes">
+                <li><strong>Docs, website, and book stay aligned with the tree.</strong> Test-suite count is 81. Graph-query docs record that shapeless JSON is unavailable. Installer copy names host default scopes. Public counts remain 53 helpers, ~25,300 Copilot lines, 66 core files, 7 tech-debt dimensions, REV 3.7.2.</li>
+            </ul>
+        </article>
+
+        <!-- v3.7.2 -->
+        <article class="changelog-entry">
+            <div class="changelog-entry-header">
                 <span class="changelog-version">v3.7.2</span>
                 <span class="changelog-date">2026-08-19</span>
                 <span class="changelog-tag changelog-tag--latest">Latest</span>

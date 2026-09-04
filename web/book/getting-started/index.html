@@ -245,7 +245,7 @@
     <p>Draft installs with a single npm command. No API keys, no accounts, no hosted services.</p>
 
     <pre class="terminal"><code>$ npx @drafthq/draft install &lt;host&gt;   # claude-code | cursor | codex | opencode</code></pre>
-    <p>Prefer a persistent CLI? <code>npm install -g @drafthq/draft</code>, then <code>draft install &lt;host&gt;</code>. Run <code>draft list</code> to see every host and where it installs.</p>
+    <p>Prefer a persistent CLI? <code>npm install -g @drafthq/draft</code>, then <code>draft install &lt;host&gt;</code>. Run <code>draft list</code> to see every host and where it installs. Scope defaults: <code>--global</code> for <code>claude-code</code> and <code>cursor</code>, <code>--project</code> for <code>codex</code> and <code>opencode</code>. Pass the other flag to override.</p>
 
     <h3>Claude Code (Recommended)</h3>
     <pre class="terminal"><code>$ npx @drafthq/draft install claude-code</code></pre>

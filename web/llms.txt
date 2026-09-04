@@ -11,7 +11,9 @@ Draft is created and maintained by Mayur Pise (https://github.com/mayurpise). It
 Install with the npm CLI (host = claude-code | cursor | codex | opencode):
 
 ```
-npx @drafthq/draft install <host>
+npx @drafthq/draft install <host>          # claude-code | cursor | codex | opencode
+# --global default: claude-code, cursor
+# --project default: codex, opencode
 # or: npm install -g @drafthq/draft && draft install <host>
 ```
 
@@ -35,7 +37,8 @@ For Claude Code you can alternatively use the native marketplace (`/plugin marke
 - **Init Output Modes:** `/draft:init` is tier-gated (`DRAFT_INIT_MODE`). `monolith` (small repos) keeps a single graph-primary architecture.md; `okf` (larger repos) emits an OKF concept taxonomy under `draft/wiki/` as the source of truth, with .ai-context.md as the index root and a generated architecture.md view.
 - **Knowledge Graph Engine:** codebase-memory-mcp: tree-sitter + LSP, 159 languages, 100% local. Query tools: callers, callees, impact, cycles, hotspots, mermaid. Incremental, git-aware indexing.
 - **Zero-Setup Review:** `/draft:review` does not require `/draft:init`. With no `draft/` directory it resolves scope from git, runs automated validation plus the four code-quality dimensions, renders the report inline without writing to the repo, and names the checks it could not run (blast radius, callers, cycles, module boundaries). Indexing is an upgrade, not a prerequisite.
-- **Deterministic Tools:** 53 shell helpers under `scripts/tools/` for mechanical work — git metadata, file classification, hotspot ranking, freshness checks, ADR indexing, citation verification.
+- **Deterministic Tools:** 53 shell helpers under `scripts/tools/` for mechanical work — git metadata, file classification, hotspot ranking, freshness checks, ADR indexing, citation verification. Graph wrappers fail loud: shapeless `{}` is `unavailable`, not a measured empty result.
+- **Installer scopes:** `draft install` defaults to `--global` for claude-code and cursor, `--project` for codex and opencode.
 
 ## Graph Engine
 
