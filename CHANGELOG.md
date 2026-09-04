@@ -7,19 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.0.0] - 2026-09-03
+
+### Changed
+
+- **Graph wrappers fail loud on shapeless JSON.** `gq_run` requires a
+  `.rows` array; `graph-impact` / `graph-callers` / `mermaid-from-graph`
+  require the tool-shaped object. A bare `{}` is `source:"unavailable"`
+  with a non-zero exit, not a measured empty result. Callers that treated
+  empty objects as "no callers / no cycles / no edges" must handle
+  `unavailable` / exit 2 instead. A failed snapshot refresh no longer
+  rewrites `schema.yaml`.
+- **`draft install` help matches host `defaultScope`.** `--global` is the
+  default for claude-code and cursor; `--project` is the default for
+  codex and opencode. `hasBinary` treats Windows status 127 as missing.
+  Graph fetch uses the install timeout. Cursor registry maps that are
+  arrays are replaced, not silently dropped.
+- **Docs, website, and book aligned.** Public copy names Mayur Pise as
+  author. Counts: 53 helpers, Copilot integration ~25,300 lines, 66 core
+  files, tech-debt 7 dimensions, 81 test suites, hero/book REV 4.0.0.
+  Graph-query docs record that shapeless `{}` is unavailable. Installer
+  copy names host default scopes.
+
 ### Fixed
 
-- **Graph wrappers no longer treat shapeless `{}` as a measured empty result.**
-  `gq_run` requires a `.rows` array; `graph-impact` / `graph-callers` /
-  `mermaid-from-graph` require the tool-shaped object. A failed snapshot
-  refresh no longer rewrites `schema.yaml`.
 - **`fetch-memory-engine.sh` pins `curl` redirects to HTTPS.**
 - **OKF viewer XSS:** table cells are escaped; `javascript:` markdown links
   are dropped. Catalog `concept_id` and path-index values cannot escape the
   bundle.
-- **`draft install` help matches host `defaultScope`.** `hasBinary` treats
-  Windows status 127 as missing. Graph fetch uses the install timeout.
-  Cursor registry maps that are arrays are replaced, not silently dropped.
 - **`resolve-tools.sh` falls through** on an unreadable marker or malformed
   `installed_plugins.json`. Copilot syntax transform no longer rewrites
   emails like `user@ops.example`.
@@ -28,23 +43,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `--out /` and `--version` with `..`; chapter pages are written atomically;
   the Release workflow treats `release-notes.sh` exit 2 as a hard failure;
   architecture render no longer swallows `okf-fix-links` failures.
-
-### Changed
-
-- **Docs, website, and book aligned to 3.7.2.** Public copy now names
-  Mayur Pise as author (package/plugin manifests, README, LICENSE,
-  SECURITY.md, site JSON-LD, book byline). Stale counts corrected: 53
-  helpers (was 45), Copilot integration ~25,300 lines (was ~23,600), 66
-  core files (was 62), tech-debt 7 dimensions (was 6), hero/book REV
-  3.7.2 (was 3.3.1). Book command reference, multi-IDE chapter, and
-  getting-started match zero-setup review, Codex/opencode, and OKF
-  output modes.
-- **Public copy tracks Unreleased audit fixes.** Website changelog lists
-  the in-progress graph fail-loud, HTTPS fetch pin, OKF XSS, installer
-  default-scope, and packaging fixes without bumping 3.7.2. CLAUDE.md
-  test-suite count is 81. Graph-query docs record that shapeless `{}` is
-  unavailable. Installer copy names host default scopes (`--global` for
-  claude-code/cursor, `--project` for codex/opencode).
 
 ## [3.7.2] - 2026-08-19
 
