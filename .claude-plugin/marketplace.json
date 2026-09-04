@@ -13,7 +13,7 @@
       "name": "draft",
       "source": "./",
       "description": "Context-Driven Development: draft specs and plans before implementation. Structured workflows for features and fixes.",
-      "version": "3.7.2",
+      "version": "4.0.0",
       "author": {
         "name": "Mayur Pise",
         "email": "mayur@getdraft.dev",
