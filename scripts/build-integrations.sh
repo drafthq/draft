@@ -44,8 +44,8 @@ transform_copilot_syntax() {
         -e 's#(^|[^[:alnum:]_.-])@draft$#\1draft#g' \
         -e 's#`@draft`#`draft`#g' \
         -e 's#`@draft #`draft #g' \
-        -e 's#@(architect|debugger|planner|rca|reviewer|ops|writer)([^[:alnum:]_-])#@workspace\2#g' \
-        -e 's#@(architect|debugger|planner|rca|reviewer|ops|writer)$#@workspace#g'
+        -e 's#(^|[^[:alnum:]_.-])@(architect|debugger|planner|rca|reviewer|ops|writer)([^[:alnum:]_-])#\1@workspace\3#g' \
+        -e 's#(^|[^[:alnum:]_.-])@(architect|debugger|planner|rca|reviewer|ops|writer)$#\1@workspace#g'
 }
 
 # Cross-host AGENTS.md transform: same `/draft:` → `draft` and `@draft` → `draft`

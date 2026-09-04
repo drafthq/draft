@@ -81,7 +81,8 @@ TEST_SCRIPTS = \
 	./tests/test-tools-install-smoke-test.sh \
 	./tests/test-tools-check-graph-usage-report.sh \
 	./tests/test-tools-check-template-noop.sh \
-	./tests/test-tools-emit-skill-metrics.sh
+	./tests/test-tools-emit-skill-metrics.sh \
+	./tests/test-package.sh
 
 # Phase 0 Foundations hygiene/verification tool tests (per manifest §2.2) — see above
 

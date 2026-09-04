@@ -78,7 +78,7 @@ function registerCursorPlugin(opts) {
   // --- installed_plugins.json: merge our key, preserve installedAt on upgrade. ---
   const ip = readJson(paths.ipPath, { version: 2, plugins: {} });
   if (typeof ip.version !== 'number') ip.version = 2;
-  if (!ip.plugins || typeof ip.plugins !== 'object') ip.plugins = {};
+  if (!ip.plugins || typeof ip.plugins !== 'object' || Array.isArray(ip.plugins)) ip.plugins = {};
   const existing = Array.isArray(ip.plugins[PLUGIN_KEY]) ? ip.plugins[PLUGIN_KEY][0] : null;
   const installedAt = existing && existing.installedAt ? existing.installedAt : now;
   ip.plugins[PLUGIN_KEY] = [
@@ -93,7 +93,7 @@ function registerCursorPlugin(opts) {
 
   // --- settings.json: flip our enabledPlugins flag, preserve everything else. ---
   const settings = readJson(paths.settingsPath, {});
-  if (!settings.enabledPlugins || typeof settings.enabledPlugins !== 'object') {
+  if (!settings.enabledPlugins || typeof settings.enabledPlugins !== 'object' || Array.isArray(settings.enabledPlugins)) {
     settings.enabledPlugins = {};
   }
   settings.enabledPlugins[PLUGIN_KEY] = true;

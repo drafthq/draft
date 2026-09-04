@@ -80,7 +80,11 @@ PROJECT="$(memory_ensure_index "$REPO_ABS" || true)"
 # one never appeared, and nothing in the output said so. Refreshing is this tool's
 # entire job. The engine indexes incrementally, so the repeat call is cheap.
 REFRESHED="$(memory_index_bounded "$REPO_ABS" 2>/dev/null | jq -r '.project // empty' 2>/dev/null || true)"
-[[ -n "$REFRESHED" ]] && PROJECT="$REFRESHED"
+if [[ -z "$REFRESHED" ]]; then
+    echo "index refresh failed — nothing written" >&2
+    exit 2
+fi
+PROJECT="$REFRESHED"
 
 mkdir -p "$OUT"
 

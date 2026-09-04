@@ -78,7 +78,15 @@ emit_array() {
     local first=true
     printf '['
     while IFS= read -r _ln; do
-        path="${_ln%%:*}"; rest="${_ln#*:}"; linenum="${rest%%:*}"; rest="${rest#*:}"
+        # Path may contain colons (e.g. src/foo:bar.js). The line number is the
+        # last :<digits>: separator git-grep/rg -n emit.
+        if [[ "$_ln" =~ ^(.+):([0-9]+):(.*)$ ]]; then
+            path="${BASH_REMATCH[1]}"
+            linenum="${BASH_REMATCH[2]}"
+            rest="${BASH_REMATCH[3]}"
+        else
+            continue
+        fi
         [[ -z "$path" || -z "$linenum" ]] && continue
         # Skip binaries or tool's own output directory.
         [[ "$path" == */.git/* ]] && continue

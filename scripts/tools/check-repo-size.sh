@@ -109,7 +109,11 @@ else
         # `head` lets head close the pipe early, which under `pipefail` surfaces
         # sort's SIGPIPE as a hard failure — non-deterministically, depending on
         # whether the output fit in the pipe buffer.
-        largest="$(awk '$4 ~ /^[0-9]+$/ { printf "  %8.2f MB  %s\n", $4 / 1048576, $5 }' <<< "$listing" | sort -rn)"
+        # git ls-tree -l: "mode type sha size<TAB>path" — path may contain spaces.
+        largest="$(awk -F '\t' '$1 ~ / [0-9]+$/ {
+            n = split($1, a, " ")
+            printf "  %8.2f MB  %s\n", a[n] / 1048576, $2
+        }' <<< "$listing" | sort -rn)"
         head -n "$TOP" <<< "$largest"
     fi
 fi

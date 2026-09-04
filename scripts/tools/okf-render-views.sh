@@ -226,7 +226,7 @@ render_architecture() {
     if [[ -x "$SCRIPT_DIR/okf-fix-links.sh" ]]; then
         draft_dir="$(cd "$(dirname "$out")" && pwd)"
         if [[ -d "$draft_dir/wiki" || "$(basename "$BUNDLE")" == "wiki" ]]; then
-            "$SCRIPT_DIR/okf-fix-links.sh" --file "$out" --wiki "$BUNDLE" --fix >/dev/null 2>&1 || true
+            "$SCRIPT_DIR/okf-fix-links.sh" --file "$out" --wiki "$BUNDLE" --fix >/dev/null 2>&1 || exit 1
         fi
     fi
     echo "rendered architecture view → $out ($(ordered_pages | grep -c . ) pages)"
@@ -411,13 +411,15 @@ function resolve(base, href){
     if(p==='..') out.pop(); else if(p!=='.'&&p!=='') out.push(p); }
   return out.join('/');
 }
+function escAttr(s){return esc(s).replace(/"/g,'&quot;');}
 function inline(s, base){
   s = s.replace(/`([^`]+)`/g, function(m,c){return '<code>'+esc(c)+'</code>';});
   s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, function(m,t,u){
-    if(/^[a-z]+:\/\//.test(u)) return '<a href="'+u+'" target="_blank" rel="noopener">'+t+'</a>';
+    if(/^(https?|mailto):/i.test(u)) return '<a href="'+escAttr(u)+'" target="_blank" rel="noopener">'+t+'</a>';
+    if(/^[a-z][a-z0-9+.-]*:/i.test(u)) return t;
     var key=resolve(base,u);
     if(PAGES[key]) return '<a href="#'+key+'" data-nav="'+key+'">'+t+'</a>';
-    return '<span title="'+esc(u)+'">'+t+'</span>';
+    return '<span title="'+escAttr(u)+'">'+t+'</span>';
   });
   s = s.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
   s = s.replace(/(^|[^*])\*([^*\n]+)\*/g,'$1<em>$2</em>');
@@ -438,7 +440,7 @@ function render(md, base){
     out+='<table>';
     rows.forEach(function(r,ri){
       var cells=r.replace(/^\||\|$/g,'').split('|');
-      out+='<tr>'+cells.map(function(c){var t=ri===0?'th':'td';return '<'+t+'>'+inline(c.trim(),base)+'</'+t+'>';}).join('')+'</tr>';
+      out+='<tr>'+cells.map(function(c){var t=ri===0?'th':'td';return '<'+t+'>'+inline(esc(c.trim()),base)+'</'+t+'>';}).join('')+'</tr>';
     });
     out+='</table>'; tbl=[];
   }

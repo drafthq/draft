@@ -71,6 +71,31 @@ BROKENMOCK
         "$(echo "$out3" | jq -e '.source == "unavailable"' >/dev/null 2>&1 && echo true || echo false)"
     assert "A failed cycle query never claims source=memory-graph" \
         "$(echo "$out3" | jq -e '.source == "memory-graph"' >/dev/null 2>&1 && echo false || echo true)"
+
+    # Shapeless JSON (`{}`) is the remaining 3.7.x hole: parseable, no .rows.
+    EMPTY="$FIXTURE/emptybin/codebase-memory-mcp"
+    mkdir -p "$FIXTURE/emptybin"
+    cat > "$EMPTY" <<'EMPTYMOCK'
+#!/usr/bin/env bash
+if [[ "$1" == "--version" ]]; then echo "codebase-memory-mcp 0.0.0-mock"; exit 0; fi
+[[ "$1" == "cli" ]] || { echo '{}'; exit 0; }
+case "$2" in
+  list_projects)    echo '{"projects":[]}' ;;
+  index_repository) echo '{"project":"mock","status":"indexed"}' ;;
+  query_graph)      echo '{}' ;;
+  *)                echo '{}' ;;
+esac
+exit 0
+EMPTYMOCK
+    chmod +x "$EMPTY"
+    set +e
+    out4="$(DRAFT_MEMORY_BIN="$EMPTY" "$TOOL" --repo "$FIXTURE")"
+    rc4=$?
+    set -e
+    assert "Shapeless {} from query_graph exits 2, not a clean memory-graph result" \
+        "$([[ "$rc4" == "2" ]] && echo true || echo false)"
+    assert "Shapeless {} reports source=unavailable" \
+        "$(echo "$out4" | jq -e '.source == "unavailable"' >/dev/null 2>&1 && echo true || echo false)"
 fi
 
 

@@ -33,5 +33,15 @@ assert "alpha has x-grounded-paths" "$(grep -q 'x-grounded-paths' "$B/systems/al
 run --plan "$FIXTURE/plan.json" --bundle "$B" --repo "$FIXTURE/repo"
 assert "second run skips" "$(echo "$OUT" | grep -q 'skipped_existing=2' && echo true || echo false)"
 
+cat > "$FIXTURE/evil-plan.json" <<'EOF'
+{"version":1,"expected":[
+ {"concept_id":"../outside.md","type":"Module","resource":"crates/alpha","fan_in":0,"required":true,"reason_if_deferred":null}
+]}
+EOF
+run --plan "$FIXTURE/evil-plan.json" --bundle "$B" --repo "$FIXTURE/repo"
+assert "escaping concept_id → exit 1" "$([[ "$RC" == "1" ]] && echo true || echo false)"
+assert "escaping concept_id does not write outside the bundle" \
+    "$([[ ! -f "$FIXTURE/outside.md" ]] && echo true || echo false)"
+
 echo "=== Results: $PASS passed, $FAIL failed ==="
 exit "$FAIL"

@@ -75,6 +75,20 @@ else
     assert "Emits 7-char blame sha" "false"
 fi
 
+# Path containing a colon still parses as one path + a numeric line.
+(
+    cd "$FIXTURE"
+    mkdir -p src
+    printf 'function x() {\n    // TODO: colon path\n}\n' > "src/foo:bar.js"
+    git add "src/foo:bar.js"
+    git commit -q -m "colon path"
+)
+colon_out="$("$TOOL" --root "$FIXTURE")"
+assert "colon in path still emits valid JSON" \
+    "$(echo "$colon_out" | jq . >/dev/null 2>&1 && echo true || echo false)"
+assert "colon in path is kept in the path field" \
+    "$(echo "$colon_out" | jq -e '.[] | select(.path | test("foo:bar"))' >/dev/null 2>&1 && echo true || echo false)"
+
 # age_days is a non-negative integer
 if echo "$out" | grep -qE '"age_days":[0-9]+'; then
     assert "age_days is non-negative integer" "true"

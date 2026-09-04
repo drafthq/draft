@@ -61,14 +61,21 @@ jobs:
           VERSION: ${{ steps.meta.outputs.version }}
           REPO: ${{ github.repository }}
         run: |
-          if bash scripts/release-notes.sh "$VERSION" > release-notes.md; then
+          set +e
+          bash scripts/release-notes.sh "$VERSION" > release-notes.md
+          rc=$?
+          set -e
+          if [ "$rc" -eq 0 ]; then
             echo "Extracted $(wc -l < release-notes.md) lines of notes."
-          else
+          elif [ "$rc" -eq 1 ]; then
             # A missing changelog section should not block the Release — an
             # empty release history is the problem this workflow exists to fix.
             echo "::warning::no changelog section for $VERSION; falling back to a stub"
             printf 'See [CHANGELOG.md](https://github.com/%s/blob/main/CHANGELOG.md) for details.\n' \
               "$REPO" > release-notes.md
+          else
+            echo "::error::release-notes.sh failed (exit $rc)"
+            exit "$rc"
           fi
 
       - name: Publish the Release

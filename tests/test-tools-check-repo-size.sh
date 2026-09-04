@@ -71,7 +71,7 @@ trap 'rm -rf "$tmp"' EXIT
     git init -q .
     git config user.email t@t.t
     git config user.name t
-    head -c 2097152 /dev/zero > big.bin
+    head -c 2097152 /dev/zero > "big asset.bin"
     echo hi > small.txt
     git add -A
     git commit -qm "oversized asset"
@@ -81,8 +81,8 @@ tmp_out="$("$TOOL" --repo "$tmp" --max-mb 1 2>&1)"
 tmp_rc=$?
 set -e
 assert "synthetic 2 MB blob breaches a 1 MB cap" "$([[ "$tmp_rc" -eq 1 ]] && echo true || echo false)"
-assert "synthetic breach names big.bin" \
-    "$(grep -q 'big.bin' <<< "$tmp_out" && echo true || echo false)"
+assert "synthetic breach names the spaced blob path" \
+    "$(grep -q 'big asset.bin' <<< "$tmp_out" && echo true || echo false)"
 if "$TOOL" --repo "$tmp" --max-mb 8 >/dev/null 2>&1; then
     assert "same repo passes an 8 MB cap" "true"
 else

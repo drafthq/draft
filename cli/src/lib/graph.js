@@ -14,7 +14,8 @@ function fetchGraph() {
     return;
   }
   log.note('Fetching knowledge-graph engine (best-effort)...');
-  const result = spawnSync('bash', [script], { stdio: 'inherit' });
+  const timeout = Number(process.env.DRAFT_INSTALL_TIMEOUT_MS) || 300000;
+  const result = spawnSync('bash', [script], { stdio: 'inherit', timeout });
   if (result.status !== 0) {
     log.warn('Graph engine fetch skipped (offline or unsupported platform) — features degrade gracefully.');
   }

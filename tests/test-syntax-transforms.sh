@@ -155,6 +155,11 @@ assert_transform "Should NOT transform email addresses" \
     "email@example.com" \
     "email@example.com"
 
+assert_transform "Should NOT rewrite emails whose local-part is an agent name" \
+    transform_copilot_syntax \
+    "user@ops.example" \
+    "user@ops.example"
+
 # --- Summary ---
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="

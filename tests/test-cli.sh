@@ -43,6 +43,15 @@ assert "--version prints package version" \
 
 if node "$CLI" --help >/dev/null 2>&1; then HELP_OK=true; else HELP_OK=false; fi
 assert "--help exits 0" "$HELP_OK"
+HELP_TEXT="$(node "$CLI" --help 2>/dev/null)"
+assert "--help says --global is default for claude-code" \
+    "$(echo "$HELP_TEXT" | grep -q 'default for claude-code, cursor' && echo true || echo false)"
+assert "--help says --project is default for codex, opencode" \
+    "$(echo "$HELP_TEXT" | grep -q 'default for codex, opencode' && echo true || echo false)"
+assert "hasBinary reports a missing CLI as absent" \
+    "$(node -e "const {hasBinary}=require('$ROOT_DIR/cli/src/installer'); process.exit(hasBinary('definitely-not-on-path-xyz')?1:0)" && echo true || echo false)"
+assert "graph fetch spawnSync sets a timeout" \
+    "$(grep -q 'timeout' "$ROOT_DIR/cli/src/lib/graph.js" && echo true || echo false)"
 
 LIST_OUT="$(node "$CLI" list 2>/dev/null)"
 for host in claude-code cursor codex opencode; do
@@ -180,6 +189,35 @@ CUR_DRY_FILES=$(find "$CUR_DRY_HOME" "$CUR_DRY_CWD" -type f | wc -l | tr -d ' ')
 assert "cursor --dry-run writes zero files" \
     "$([[ "$CUR_DRY_FILES" -eq 0 ]] && echo true || echo false)"
 rm -rf "$CUR_DRY_HOME" "$CUR_DRY_CWD"
+
+# Array-shaped registry maps must be replaced, not written as named keys on [].
+echo ""
+echo "## cursor install repairs array-shaped registry maps"
+CUR_ARR_HOME="$(mktemp -d)"
+CUR_ARR_CWD="$(mktemp -d)"
+mkdir -p "$CUR_ARR_HOME/.claude/plugins"
+printf '{"version":2,"plugins":[]}\n' > "$CUR_ARR_HOME/.claude/plugins/installed_plugins.json"
+printf '{"enabledPlugins":[]}\n' > "$CUR_ARR_HOME/.claude/settings.json"
+( cd "$CUR_ARR_CWD" && HOME="$CUR_ARR_HOME" node "$CLI" install cursor --no-graph >/dev/null 2>&1 )
+assert "array plugins map is replaced and draft is registered" \
+    "$(node -e "const j=require('$CUR_ARR_HOME/.claude/plugins/installed_plugins.json'); process.exit(j.plugins && !Array.isArray(j.plugins) && j.plugins['draft@draft-plugins'] ? 0 : 1)" && echo true || echo false)"
+assert "array enabledPlugins is replaced and draft is enabled" \
+    "$(node -e "const j=require('$CUR_ARR_HOME/.claude/settings.json'); process.exit(j.enabledPlugins && !Array.isArray(j.enabledPlugins) && j.enabledPlugins['draft@draft-plugins']===true ? 0 : 1)" && echo true || echo false)"
+rm -rf "$CUR_ARR_HOME" "$CUR_ARR_CWD"
+
+echo ""
+echo "## opencode --dry-run"
+OC_DRY_HOME="$(mktemp -d)"
+OC_DRY_CWD="$(mktemp -d)"
+OC_DRY_PLAN="$( cd "$OC_DRY_CWD" && HOME="$OC_DRY_HOME" node "$CLI" install opencode --dry-run --no-graph 2>&1 )"
+assert "opencode --dry-run names AGENTS.md" \
+    "$(echo "$OC_DRY_PLAN" | grep -q 'AGENTS.md' && echo true || echo false)"
+assert "opencode --dry-run names skills dest" \
+    "$(echo "$OC_DRY_PLAN" | grep -q '.agents/skills/draft' && echo true || echo false)"
+OC_DRY_FILES=$(find "$OC_DRY_HOME" "$OC_DRY_CWD" -type f | wc -l | tr -d ' ')
+assert "opencode --dry-run writes zero files" \
+    "$([[ "$OC_DRY_FILES" -eq 0 ]] && echo true || echo false)"
+rm -rf "$OC_DRY_HOME" "$OC_DRY_CWD"
 
 # --- claude-code install drives the `claude plugin` CLI (no file copy) ---
 echo ""

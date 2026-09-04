@@ -83,7 +83,9 @@ gq_run() {
     payload="$(jq -n --arg p "$project" --arg q "$query" '{project:$p, query:$q}')" || return 3
     res="$(memory_cli query_graph "$payload" 2>/dev/null || true)"
     [[ -n "$res" ]] || return 3
-    printf '%s' "$res" | jq -e . >/dev/null 2>&1 || return 3
+    # Shapeless JSON (`{}`) is not an empty result — it is a failed query.
+    # Callers must not treat it as a measured true-negative.
+    printf '%s' "$res" | jq -e 'has("rows") and (.rows | type == "array")' >/dev/null 2>&1 || return 3
     printf '%s' "$res"
 }
 

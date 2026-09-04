@@ -53,8 +53,10 @@ resolve() {
   # 2. Install marker written by `draft install` (authoritative).
   local marker="$HOME/.cache/draft/plugin-root"
   if [ -f "$marker" ]; then
-    d="$(cat "$marker" 2>/dev/null)/scripts/tools"
-    [ -d "$d" ] && { printf '%s' "$d"; return 0; }
+    local root
+    root="$(cat "$marker" 2>/dev/null || true)"
+    d="${root}/scripts/tools"
+    [ -n "$root" ] && [ -d "$d" ] && { printf '%s' "$d"; return 0; }
   fi
 
   # 3. ${CLAUDE_PLUGIN_ROOT} — set in hook/MCP contexts; harmless to probe.
@@ -66,7 +68,7 @@ resolve() {
   if command -v jq >/dev/null 2>&1 && [ -f "$reg" ]; then
     local ip
     ip="$(jq -r '.plugins | to_entries[] | select(.key|startswith("draft@")) | .value[0].installPath' \
-          "$reg" 2>/dev/null | head -1)"
+          "$reg" 2>/dev/null | head -1 || true)"
     [ -n "$ip" ] && [ -d "$ip/scripts/tools" ] && { printf '%s' "$ip/scripts/tools"; return 0; }
   fi
 

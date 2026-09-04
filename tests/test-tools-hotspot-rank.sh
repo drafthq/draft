@@ -75,6 +75,26 @@ BROKENMOCK
         "$(echo "$bad" | jq -e '(.hotspots | length) >= 1' >/dev/null 2>&1 && echo true || echo false)"
     assert "Unmeasured complexity is omitted, never reported as 0" \
         "$(echo "$bad" | jq -e '.hotspots[0] | has("complexity")' >/dev/null 2>&1 && echo false || echo true)"
+
+    SHAPE="$FIXTURE/shapebin/codebase-memory-mcp"
+    mkdir -p "$FIXTURE/shapebin"
+    cat > "$SHAPE" <<'SHAPEMOCK'
+#!/usr/bin/env bash
+if [[ "$1" == "--version" ]]; then echo "codebase-memory-mcp 0.0.0-mock"; exit 0; fi
+[[ "$1" == "cli" ]] || { echo '{}'; exit 0; }
+case "$2" in
+  list_projects)    echo '{"projects":[]}' ;;
+  index_repository) echo '{"project":"mock","status":"indexed"}' ;;
+  get_architecture) echo '{"hotspots":[{"name":"foo","qualified_name":"mock.foo","fan_in":5}],"routes":[]}' ;;
+  query_graph)      echo '{}' ;;
+  *)                echo '{}' ;;
+esac
+exit 0
+SHAPEMOCK
+    chmod +x "$SHAPE"
+    shapeless="$(DRAFT_MEMORY_BIN="$SHAPE" "$TOOL" --repo "$FIXTURE")"
+    assert "Shapeless {} props query is enrichment=unavailable, not ok" \
+        "$(echo "$shapeless" | jq -e '.enrichment == "unavailable"' >/dev/null 2>&1 && echo true || echo false)"
 fi
 
 echo ""

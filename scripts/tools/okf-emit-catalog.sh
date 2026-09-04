@@ -82,6 +82,9 @@ sniff_desc() {
 
 write_page() {
     local cid="$1" ctype="$2" resource="$3" fan_in="$4"
+    case "$cid" in
+        ''|/*|*..*) echo "ERROR: concept_id escapes bundle: $cid" >&2; return 1 ;;
+    esac
     local out="$BUNDLE/$cid"
     mkdir -p "$(dirname "$out")"
     if [[ -f "$out" && $FORCE -eq 0 ]]; then

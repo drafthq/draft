@@ -252,6 +252,11 @@ if [[ -n "$PATH_INDEX" ]]; then
         # span lines and a line-oriented match would silently skip them.
         while IFS= read -r ref; do
             [[ -z "$ref" ]] && continue
+            case "$ref" in
+                /*|*..*)
+                    add_error "path-index escapes the bundle: $ref"
+                    continue ;;
+            esac
             if [[ ! -f "$BUNDLE/$ref" ]]; then
                 add_error "path-index references missing concept page: $ref"
             fi

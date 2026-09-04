@@ -15,9 +15,11 @@ const CHECK_TIMEOUT_MS = 10000;
 const USE_SHELL = process.platform === 'win32';
 
 function hasBinary(name) {
-  // ENOENT on the error means the binary is not on PATH.
+  // Windows `.cmd` shims (shell: true) report a missing binary as status 127
+  // with no `error`. Treat any spawn error or non-zero status as absent.
   const r = spawnSync(name, ['--version'], { stdio: 'ignore', timeout: CHECK_TIMEOUT_MS, shell: USE_SHELL });
-  return !(r.error && r.error.code === 'ENOENT');
+  if (r.error) return false;
+  return r.status === 0;
 }
 
 // Per-step ceiling so a stalled network op (e.g. the `git clone` behind

@@ -77,7 +77,8 @@ if [[ -n "$SYMBOL" ]]; then
     PAYLOAD="$(jq -n --arg p "$PROJECT" --arg f "$SYMBOL" --argjson d "$DEPTH" \
         '{project:$p, function_name:$f, depth:$d, direction:"both"}')"
     RES="$(memory_cli trace_path "$PAYLOAD" 2>/dev/null || true)"
-    echo "$RES" | jq -e . >/dev/null 2>&1 || unavailable "$TARGET" "$KIND"
+    echo "$RES" | jq -e 'has("callers") and (.callers | type == "array")' >/dev/null 2>&1 \
+        || unavailable "$TARGET" "$KIND"
     echo "$RES" | jq --arg t "$TARGET" '
         {target:$t, kind:"symbol",
          impacted: [ (.callers // [])[] | {name:.name, file:(.file_path // ""), qualified:(.qualified_name // ""), hop:(.hop // 1)} ],
@@ -86,7 +87,8 @@ else
     # File impact: detect_changes maps the working-tree diff to impacted symbols.
     PAYLOAD="$(jq -n --arg p "$PROJECT" '{project:$p}')"
     RES="$(memory_cli detect_changes "$PAYLOAD" 2>/dev/null || true)"
-    echo "$RES" | jq -e . >/dev/null 2>&1 || unavailable "$TARGET" "$KIND"
+    echo "$RES" | jq -e 'has("impacted_symbols") and (.impacted_symbols | type == "array")' >/dev/null 2>&1 \
+        || unavailable "$TARGET" "$KIND"
     echo "$RES" | jq --arg t "$TARGET" '
         {target:$t, kind:"file",
          impacted: [ (.impacted_symbols // [])[]

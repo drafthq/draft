@@ -51,6 +51,8 @@ plain_rc=$?
 CMM_DOWNLOAD_URL="file:///tmp" "$FETCH" --dest "$(mktemp -d)" --force >/dev/null 2>&1
 file_rc=$?
 set -e
+assert "curl binds redirects to HTTPS" \
+    "$(grep -q -- "--proto-redir '=https'" "$FETCH" && echo true || echo false)"
 assert "plain http:// base URL refused (exit $plain_rc)" \
     "$([[ "$plain_rc" -eq 2 ]] && echo true || echo false)"
 assert "file:// base URL refused (exit $file_rc)" \

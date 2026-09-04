@@ -108,7 +108,7 @@ render_co_change() {
 render_proto_map() {
     local res; res="$(memory_cli get_architecture \
         "$(jq -n --arg p "$PROJECT" '{project:$p, aspects:["routes"]}')" || true)"
-    [[ -n "$res" ]] && echo "$res" | jq -e . >/dev/null 2>&1 || return 2
+    [[ -n "$res" ]] && echo "$res" | jq -e 'has("routes") and (.routes | type == "array")' >/dev/null 2>&1 || return 2
     local edges; edges="$(echo "$res" | jq -r '(.routes // [])[] | "    \"" + ((.method // "")|tostring) + " " + ((.path // "")|tostring) + "\" --> \"" + ((.handler // "?")|tostring) + "\""' 2>/dev/null || true)"
     if [[ -z "$edges" ]]; then return 1; fi
     printf '```mermaid\nflowchart LR\n%s\n```\n' "$edges"

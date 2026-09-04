@@ -80,7 +80,7 @@ TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
 
 echo "Fetching ${ARCHIVE} (${VERSION})..."
-if ! curl -fSL --max-time 300 -o "$TMP/$ARCHIVE" "$BASE/$ARCHIVE"; then
+if ! curl -fSL --proto '=https' --proto-redir '=https' --max-time 300 -o "$TMP/$ARCHIVE" "$BASE/$ARCHIVE"; then
   echo "error: download failed: $BASE/$ARCHIVE" >&2
   exit 2
 fi
@@ -98,7 +98,7 @@ unverified() {
   echo "  warning: $1 — skipping verification (set DRAFT_STRICT_VERIFY=1 to make this fatal)" >&2
 }
 
-if curl -fsSL --max-time 60 -o "$TMP/checksums.txt" "$BASE/checksums.txt" 2>/dev/null; then
+if curl -fsSL --proto '=https' --proto-redir '=https' --max-time 60 -o "$TMP/checksums.txt" "$BASE/checksums.txt" 2>/dev/null; then
   expected="$(grep "  $ARCHIVE\$" "$TMP/checksums.txt" 2>/dev/null | awk '{print $1}' | head -1 || true)"
   if [[ -n "$expected" ]]; then
     if command -v sha256sum >/dev/null 2>&1; then

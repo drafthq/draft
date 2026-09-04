@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Graph wrappers no longer treat shapeless `{}` as a measured empty result.**
+  `gq_run` requires a `.rows` array; `graph-impact` / `graph-callers` /
+  `mermaid-from-graph` require the tool-shaped object. A failed snapshot
+  refresh no longer rewrites `schema.yaml`.
+- **`fetch-memory-engine.sh` pins `curl` redirects to HTTPS.**
+- **OKF viewer XSS:** table cells are escaped; `javascript:` markdown links
+  are dropped. Catalog `concept_id` and path-index values cannot escape the
+  bundle.
+- **`draft install` help matches host `defaultScope`.** `hasBinary` treats
+  Windows status 127 as missing. Graph fetch uses the install timeout.
+  Cursor registry maps that are arrays are replaced, not silently dropped.
+- **`resolve-tools.sh` falls through** on an unreadable marker or malformed
+  `installed_plugins.json`. Copilot syntax transform no longer rewrites
+  emails like `user@ops.example`.
+- **Hygiene / packaging:** `scan-markers.sh` parses paths that contain `:`;
+  `check-repo-size.sh` prints spaced blob paths whole; `package.sh` refuses
+  `--out /` and `--version` with `..`; chapter pages are written atomically;
+  the Release workflow treats `release-notes.sh` exit 2 as a hard failure;
+  architecture render no longer swallows `okf-fix-links` failures.
+
 ### Changed
 
 - **Docs, website, and book aligned to 3.7.2.** Public copy now names

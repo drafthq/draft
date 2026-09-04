@@ -265,8 +265,11 @@ generate_chapter_page() {
 
     local output_dir="$BOOK_DIR/$id"
     mkdir -p "$output_dir"
+    local _out="$output_dir/index.html"
+    local _tmp
+    _tmp="$(mktemp "${_out}.XXXXXX")"
 
-    cat > "$output_dir/index.html" <<HEREDOC
+    cat > "$_tmp" <<HEREDOC
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -377,6 +380,8 @@ ${chapter_content}
 </body>
 </html>
 HEREDOC
+    apply_dest_mode "$_tmp" "$_out"
+    mv -f "$_tmp" "$_out"
 }
 
 # ============================================================

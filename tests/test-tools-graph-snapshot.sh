@@ -88,6 +88,34 @@ MOCK
     assert "already-indexed repo is re-indexed (index_repository invoked)" \
         "$(grep -qx 'index_repository' "$CALLS" && echo true || echo false)"
     rm -rf "$REIDX_DIR"
+
+    FAIL_DIR="$(mktemp -d)"
+    FAIL_MOCK="$FAIL_DIR/codebase-memory-mcp"
+    cat > "$FAIL_MOCK" <<'FAILMOCK'
+#!/usr/bin/env bash
+if [[ "$1" == "--version" ]]; then echo "codebase-memory-mcp 0.0.0-mock"; exit 0; fi
+[[ "$1" == "cli" ]] || { echo '{}'; exit 0; }
+case "$2" in
+  list_projects)    printf '{"projects":[{"name":"already","root_path":"%s"}]}\n' "${REPO_UNDER_TEST:-}" ;;
+  index_repository) echo 'index failed'; exit 1 ;;
+  *) echo '{}' ;;
+esac
+FAILMOCK
+    chmod +x "$FAIL_MOCK"
+    FAIL_REPO="$FAIL_DIR/repo"
+    mkdir -p "$FAIL_REPO/graph"
+    echo "engine: codebase-memory-mcp" > "$FAIL_REPO/graph/schema.yaml"
+    before="$(cat "$FAIL_REPO/graph/schema.yaml")"
+    set +e
+    REPO_UNDER_TEST="$FAIL_REPO" DRAFT_MEMORY_BIN="$FAIL_MOCK" \
+        "$TOOL" --repo "$FAIL_REPO" --out "$FAIL_REPO/graph" >/dev/null 2>&1
+    fail_rc=$?
+    set -e
+    after="$(cat "$FAIL_REPO/graph/schema.yaml")"
+    assert "failed refresh → exit 2" "$([[ "$fail_rc" == "2" ]] && echo true || echo false)"
+    assert "failed refresh does not rewrite schema.yaml" \
+        "$([[ "$before" == "$after" ]] && echo true || echo false)"
+    rm -rf "$FAIL_DIR"
 fi
 
 echo ""

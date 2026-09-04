@@ -135,6 +135,17 @@ EOF
 run "$FIXTURE/wiki" --path-index "$FIXTURE/path-to-concept.json"
 assert "Valid path-index → exit 0" "$([[ "$RC" == "0" ]] && echo true || echo false)"
 
+touch "$FIXTURE/external.md"
+cat > "$FIXTURE/path-to-concept.json" <<'EOF'
+{
+  "src/auth/login.go": ["../external.md"]
+}
+EOF
+run "$FIXTURE/wiki" --path-index "$FIXTURE/path-to-concept.json"
+assert "path-index ../ escape → exit 1" "$([[ "$RC" == "1" ]] && echo true || echo false)"
+assert "path-index ../ escape is named" \
+    "$(echo "$OUT" | grep -q 'escapes the bundle' && echo true || echo false)"
+
 # --- path-index referencing a missing page → exit 1 ---
 cat > "$FIXTURE/path-to-concept.json" <<'EOF'
 {

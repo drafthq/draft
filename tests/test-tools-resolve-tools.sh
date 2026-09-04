@@ -80,6 +80,13 @@ out="$(resolve "$H")"
 assert "Step 2: install marker resolves" \
     "$([[ "$out" == "$MARKED/scripts/tools" ]] && echo true || echo false)"
 
+H="$SANDBOX/h-empty-marker"; mkdir -p "$H/.cache/draft"
+: > "$H/.cache/draft/plugin-root"
+mkdir -p "$H/.claude/plugins/cache/mkt/draft/1.0.0/scripts/tools"
+out="$(resolve "$H")"
+assert "empty install marker falls through to a later step" \
+    "$([[ "$out" == "$H/.claude/plugins/cache/mkt/draft/1.0.0/scripts/tools" ]] && echo true || echo false)"
+
 # --- Step 3: CLAUDE_PLUGIN_ROOT (hook/MCP contexts) ---
 H="$SANDBOX/h-env"; mkdir -p "$H"
 ENVROOT="$(make_install "$SANDBOX/envroot")"
@@ -98,6 +105,17 @@ if command -v jq >/dev/null 2>&1; then
     out="$(resolve "$H")"
     assert "Step 4: installed_plugins.json registry resolves" \
         "$([[ "$out" == "$REG/scripts/tools" ]] && echo true || echo false)"
+
+    H="$SANDBOX/h-badjson"; mkdir -p "$H/.claude/plugins" \
+        "$H/.claude/plugins/cache/mkt/draft/2.0.0/scripts/tools"
+    printf 'not-json\n' > "$H/.claude/plugins/installed_plugins.json"
+    set +e
+    out="$(resolve "$H")"; badjson_rc=$?
+    set -e
+    assert "malformed installed_plugins.json does not abort the resolver" \
+        "$([[ "$badjson_rc" == "0" ]] && echo true || echo false)"
+    assert "malformed registry falls through to cache glob" \
+        "$([[ "$out" == "$H/.claude/plugins/cache/mkt/draft/2.0.0/scripts/tools" ]] && echo true || echo false)"
 fi
 
 # --- Step 5: newest versioned dir under the plugin cache (version sort) ---

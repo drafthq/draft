@@ -57,8 +57,18 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+if [[ "$VERSION" == *"/"* || "$VERSION" == *".."* ]]; then
+  echo "error: --version must not contain / or .." >&2
+  exit 2
+fi
+
 if [[ -z "$OUT_DIR" ]]; then
   OUT_DIR="$DRAFT_ROOT/dist/draft-$VERSION"
+fi
+
+if [[ "$OUT_DIR" == "/" || "$OUT_DIR" == "$HOME" ]]; then
+  echo "error: refusing --out $OUT_DIR" >&2
+  exit 2
 fi
 
 echo "Draft packaging (skeleton)"

@@ -88,7 +88,7 @@ if [[ "$TRANSITIVE" -eq 1 ]]; then
     PAYLOAD="$(jq -n --arg p "$PROJECT" --arg f "$SYMBOL" --argjson d "$DEPTH" \
         '{project:$p, function_name:$f, depth:$d, direction:"both"}')"
     RES="$(memory_cli trace_path "$PAYLOAD" 2>/dev/null || true)"
-    echo "$RES" | jq -e . >/dev/null 2>&1 || unavailable
+    echo "$RES" | jq -e 'has("callers") and (.callers | type == "array")' >/dev/null 2>&1 || unavailable
     N="$(echo "$RES" | jq -r '(.callers // []) | length' 2>/dev/null || echo 0)"
     if [[ "$N" -gt 0 ]]; then STATUS="ok"; else
         STATUS="$(gq_symbol_status "$PROJECT" "$SYM_ESC" '{"rows":[]}')"

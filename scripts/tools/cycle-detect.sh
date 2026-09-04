@@ -64,8 +64,8 @@ graph_bootstrap "$REPO" || unavailable
 # derived from a query that never ran, which is exactly the true-negative
 # confusion Guardrail 4 exists to prevent, and the one failure mode a caller
 # cannot detect. Both queries must land for the sample to mean anything, so
-# either failure routes to `unavailable`. gq_run only ever echoes validated
-# JSON, so nothing downstream needs a second shape guard.
+# either failure routes to `unavailable`. gq_run requires a `.rows` array, so
+# shapeless JSON (`{}`) is unavailable, not an empty sample.
 R2="$(gq_run "$PROJECT" "$(gq_q_cycles2)")" || unavailable
 R3="$(gq_run "$PROJECT" "$(gq_q_cycles3)")" || unavailable
 

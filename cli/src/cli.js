@@ -47,8 +47,8 @@ Usage:
 Hosts: ${hosts.map((h) => h.id).join(', ')}
 
 Flags:
-  --global        Install to the user-level location (default for cursor)
-  --project       Install into the current project (default for claude-code, codex, opencode)
+  --global        Install to the user-level location (default for claude-code, cursor)
+  --project       Install into the current project (default for codex, opencode)
   --dry-run       Print planned writes without touching disk
   --no-graph      Skip the knowledge-graph engine fetch
   --force         Overwrite an existing target

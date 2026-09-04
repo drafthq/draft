@@ -118,6 +118,10 @@ assert "embedded </script> neutralized to <\\/script>" \
     "$(grep -Fq '<\/script>' "$FIXTURE/index.html" && echo true || echo false)"
 assert "no raw unescaped </script> leaked into inlined data" \
     "$([[ "$(grep -Fc '</script>' "$FIXTURE/index.html")" -le 1 ]] && echo true || echo false)"
+assert "viewer esc()s table cells before inline" \
+    "$(grep -q 'inline(esc(c.trim())' "$FIXTURE/index.html" && echo true || echo false)"
+assert "viewer allowlists only http(s)/mailto autolinks" \
+    "$(grep -q 'https?|mailto' "$FIXTURE/index.html" && echo true || echo false)"
 
 # --- regenerate section indexes from real pages ---
 # Seed systems/index.md with a STALE, DANGLING hand-authored link; --section-indexes
