@@ -42,7 +42,7 @@ Tests use a custom bash framework (`tests/test-helpers.sh`) with `assert()`, `pa
 ```text
 skills/<name>/SKILL.md  ──┐
 core/methodology.md       ├──→  scripts/build-integrations.sh  ──→  integrations/copilot/.github/copilot-instructions.md
-core/shared/*.md          │                                          (~23,600 lines, auto-generated)
+core/shared/*.md          │                                          (~25,300 lines, auto-generated)
 core/templates/*.md       ├──→  (Gemini uses bootstrap .gemini.md — no longer generated)
 core/agents/*.md          ──┘
 ```

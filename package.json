@@ -37,7 +37,11 @@
     "url": "https://github.com/drafthq/draft/issues"
   },
   "license": "MIT",
-  "author": "mayurpise",
+  "author": {
+    "name": "Mayur Pise",
+    "email": "mayur@getdraft.dev",
+    "url": "https://github.com/mayurpise"
+  },
   "publishConfig": {
     "access": "public"
   },

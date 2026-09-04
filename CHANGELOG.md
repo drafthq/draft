@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Docs, website, and book aligned to 3.7.2.** Public copy now names
+  Mayur Pise as author (package/plugin manifests, README, LICENSE,
+  SECURITY.md, site JSON-LD, book byline). Stale counts corrected: 53
+  helpers (was 45), Copilot integration ~25,300 lines (was ~23,600), 66
+  core files (was 62), tech-debt 7 dimensions (was 6), hero/book REV
+  3.7.2 (was 3.3.1). Book command reference, multi-IDE chapter, and
+  getting-started match zero-setup review, Codex/opencode, and OKF
+  output modes.
+
 ## [3.7.2] - 2026-08-19
 
 ### Fixed

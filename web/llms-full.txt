@@ -4,7 +4,7 @@
 
 Draft is a plugin that adds three things to AI coding agents: a knowledge graph engine that maps your repo, spec-driven planning that produces git-tracked specs and phased plans, and a three-stage review pipeline that validates work against the plan. Together, they force AI to execute pre-approved work — grounded in real codebase understanding — instead of guessing.
 
-Draft works with Claude Code, Cursor, Codex, OpenCode, GitHub Copilot, and Google Gemini. 4 primary workflow commands + 5 routers + 24 specialist commands (still directly callable), 7 specialized agents, 14-dimension bug hunting, ACID-style module audits, knowledge graph with query tools, 45 deterministic shell helpers. MIT license, no telemetry, no paid tiers.
+Created and maintained by Mayur Pise (https://github.com/mayurpise). Draft works with Claude Code, Cursor, Codex, OpenCode, GitHub Copilot, and Google Gemini. 4 primary workflow commands + 5 routers + 24 specialist commands (still directly callable), 7 specialized agents, 14-dimension bug hunting, ACID-style module audits, knowledge graph with query tools, 53 deterministic shell helpers. MIT license, no telemetry, no paid tiers.
 
 ## Installation
 
@@ -68,7 +68,7 @@ For better discoverability, use the consolidated router commands instead of the 
 - **`/draft:plan`** — Planning & architecture router (new-track, decompose, adr, tech-debt, change)
 - **`/draft:ops`** — Operations & lifecycle router (deploy-checklist, incident-response, standup, status, revert)
 - **`/draft:docs`** — Authoring router (documentation)
-- **`/draft:discover`** — Investigation & quality router (debug, bughunt, quick/deep-review, coverage, testing-strategy, learn, index, tour, impact, assist-review)
+- **`/draft:discover`** — Investigation & quality router (debug, bughunt, quick/deep-review, coverage, testing-strategy, learn, tour, impact, assist-review)
 - **`/draft:jira`** — Unified Jira integration (preview, create, review <ID>)
 
 All specialist commands remain directly callable for compatibility.
@@ -86,7 +86,7 @@ All specialist commands remain directly callable for compatibility.
 - `/draft:plan` — Planning & architecture router (new-track, decompose, adr, tech-debt, change)
 - `/draft:ops` — Operations & lifecycle router (deploy-checklist, incident-response, standup, status, revert)
 - `/draft:docs` — Authoring router (documentation)
-- `/draft:discover` — Investigation & quality router (debug, bughunt, quick/deep-review, coverage, testing-strategy, learn, index, tour, impact, assist-review)
+- `/draft:discover` — Investigation & quality router (debug, bughunt, quick/deep-review, coverage, testing-strategy, learn, tour, impact, assist-review)
 - `/draft:integrations` — External exports & syncs router (Jira)
 
 ### Quality
@@ -95,7 +95,7 @@ All specialist commands remain directly callable for compatibility.
 - `/draft:quick-review` — Lightweight 4-dimension code review
 - `/draft:coverage` — Code coverage report (target 95%+)
 - `/draft:testing-strategy` — Test plan design with coverage targets
-- `/draft:tech-debt` — Technical debt analysis across 6 dimensions
+- `/draft:tech-debt` — Technical debt analysis across 7 dimensions
 
 ### Architecture & Planning
 - `/draft:graph` — Build or refresh the knowledge-graph snapshot (codebase-memory-mcp)
@@ -266,7 +266,7 @@ All emit JSON, follow uniform exit-code contract (0 = success, 1 = invocation er
 - **Platform-agnostic:** Same methodology across Claude Code, Cursor, Codex, opencode, Copilot, and Gemini
 - **TDD enforcement:** RED → GREEN → REFACTOR cycle with verification
 - **14-dimension bug hunting:** Exhaustive defect discovery beyond simple linting
-- **Built-in code intelligence:** Knowledge graph engine + 45 deterministic helpers — no external services required
+- **Built-in code intelligence:** Knowledge graph engine + 53 deterministic helpers — no external services required
 - **Track impact memory:** Each completed track records its blast radius; new tracks get overlap warnings during context load
 - **ACID compliance audits:** Enterprise-grade module lifecycle reviews
 - **7 specialized agents:** Purpose-built behaviors for architecture, debugging, planning, review, RCA, operations, and documentation
@@ -319,6 +319,10 @@ Draft's knowledge graph is powered by [codebase-memory-mcp](https://github.com/D
 - Methodology: https://github.com/drafthq/draft/blob/main/core/methodology.md
 - Concise LLM context: https://getdraft.dev/llms.txt
 
+## Author
+
+Mayur Pise — https://github.com/mayurpise · https://www.linkedin.com/in/mayurpise/ · mayur@getdraft.dev
+
 ## License
 
-MIT License. Free forever.
+MIT License. Free forever. Copyright (c) 2025-2026 Mayur Pise.

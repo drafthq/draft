@@ -270,7 +270,7 @@ Each layer narrows the solution space. By the time AI writes code, decisions are
 
 ---
 
-<p align="center">MIT License &middot; Graph engine: <a href="https://github.com/DeusData/codebase-memory-mcp" target="_blank" rel="noopener noreferrer">codebase-memory-mcp</a> by <a href="https://github.com/DeusData" target="_blank" rel="noopener noreferrer">DeusData</a></p>
+<p align="center">MIT License &middot; Created &amp; maintained by <a href="https://www.linkedin.com/in/mayurpise/" target="_blank" rel="noopener noreferrer">Mayur Pise</a> &middot; Graph engine: <a href="https://github.com/DeusData/codebase-memory-mcp" target="_blank" rel="noopener noreferrer">codebase-memory-mcp</a> by <a href="https://github.com/DeusData" target="_blank" rel="noopener noreferrer">DeusData</a></p>
 
 <p align="center">
   <strong>Credits:</strong> Inspired by <a href="https://github.com/gemini-cli-extensions/conductor">gemini-cli-extensions/conductor</a>

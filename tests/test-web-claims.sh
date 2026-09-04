@@ -78,9 +78,45 @@ assert "JSON-LD FAQ carries the same answer" \
     "$(grep -c 'Do I have to run /draft:init before I get anything?' "$LANDING" | grep -q '^1$' && echo true || echo false)"
 
 echo ""
+echo "## Author attribution"
+pkg_version="$(node -p "require('./package.json').version")"
+assert "landing meta author is Mayur Pise" \
+    "$(grep -q '<meta name="author" content="Mayur Pise">' "$LANDING" && echo true || echo false)"
+assert "SoftwareApplication JSON-LD names Mayur Pise" \
+    "$(grep -A 30 '"@type": "SoftwareApplication"' "$LANDING" | grep -q '"name": "Mayur Pise"' && echo true || echo false)"
+assert "footer credits Mayur Pise" \
+    "$(grep -q 'Mayur Pise' "$LANDING" && echo true || echo false)"
+assert "book landing names Mayur Pise as author" \
+    "$(grep -q 'Mayur Pise' web/book/index.html && echo true || echo false)"
+assert "package.json author is Mayur Pise" \
+    "$(node -p "require('./package.json').author.name" | grep -qx 'Mayur Pise' && echo true || echo false)"
+assert "plugin.json author is Mayur Pise" \
+    "$(node -p "require('./.claude-plugin/plugin.json').author.name" | grep -qx 'Mayur Pise' && echo true || echo false)"
+
+echo ""
+echo "## Public counts match the repo"
+helper_count="$(python3 - <<'PY'
+import re
+text=open("scripts/lib.sh").read()
+m=re.search(r'^TOOLS=\((.*?)^\)', text, re.M|re.S)
+print(sum(1 for ln in m.group(1).splitlines() if ln.strip() and not ln.strip().startswith('#') and '"' in ln))
+PY
+)"
+assert "TOOLS array is 53 ($helper_count)" \
+    "$([[ "$helper_count" == "53" ]] && echo true || echo false)"
+assert "landing page says 53 helpers, not 45" \
+    "$(grep -q '53 helpers' "$LANDING" && ! grep -q '45 helpers' "$LANDING" && echo true || echo false)"
+assert "hero REV matches package.json ($pkg_version)" \
+    "$(grep -q "REV ${pkg_version}" "$LANDING" && echo true || echo false)"
+assert "command-reference rows keep homepage deep-link ids" \
+    "$(grep -q 'id="cmd-review"' web/book/command-reference/index.html \
+       && grep -q 'id="cmd-init"' web/book/command-reference/index.html \
+       && grep -q 'id="cmd-jira"' web/book/command-reference/index.html \
+       && echo true || echo false)"
+
+echo ""
 echo "## Changelog page is not stale"
 site_latest="$(grep -oE 'changelog-version">v[0-9]+\.[0-9]+\.[0-9]+' web/changelog/index.html | head -n 1 | sed 's/.*">v//')"
-pkg_version="$(node -p "require('./package.json').version")"
 assert "newest release on the changelog page is the shipped version ($site_latest vs $pkg_version)" \
     "$([[ "$site_latest" == "$pkg_version" ]] && echo true || echo false)"
 assert "exactly one entry is tagged latest/in-progress" \

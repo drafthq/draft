@@ -14,14 +14,12 @@
     <meta property="og:description" content="What Draft is, what it is not, who it is for, and what you get — 33 commands and 7 specialized agents for structured AI development.">
     <meta property="og:type" content="article">
     <meta property="og:url" content="https://getdraft.dev/book/what-is-draft/">
-    <meta property="og:image" content="https://getdraft.dev/social-preview.png?v=331">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
+    <meta property="og:image" content="https://getdraft.dev/social-preview.png">
     <meta property="og:image:alt" content="What is Draft? — Draft Book">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="What is Draft? — Draft Book">
     <meta name="twitter:description" content="What Draft is, what it is not, who it is for, and what you get — 33 commands and 7 specialized agents for structured AI development.">
-    <meta name="twitter:image" content="https://getdraft.dev/social-preview.png?v=331">
+    <meta name="twitter:image" content="https://getdraft.dev/social-preview.png">
     <meta name="twitter:image:alt" content="What is Draft? — Draft Book">
     <link rel="canonical" href="https://getdraft.dev/book/what-is-draft/">
 
@@ -33,7 +31,7 @@
       "description": "What Draft is, what it is not, who it is for, and what you get — 33 commands and 7 specialized agents for structured AI development.",
       "url": "https://getdraft.dev/book/what-is-draft/",
       "isPartOf": { "@type": "Book", "name": "The Draft Book", "url": "https://getdraft.dev/book/" },
-      "author": { "@type": "Person", "name": "Mayur Pise", "url": "https://github.com/mayurpise" },
+      "author": { "@type": "Person", "name": "Mayur Pise", "url": "https://www.linkedin.com/in/mayurpise/", "sameAs": ["https://github.com/mayurpise"] },
       "publisher": { "@type": "Organization", "name": "Draft", "url": "https://getdraft.dev" },
       "position": 1,
       "inLanguage": "en"
@@ -280,8 +278,8 @@
         <li><strong>Execution</strong> &mdash; <code>/draft:implement</code> builds features task-by-task with TDD cycles and architecture checkpoints</li>
         <li><strong>Debugging</strong> &mdash; <code>/draft:debug</code> provides structured debugging: reproduce, isolate, diagnose, fix</li>
         <li><strong>Quality</strong> &mdash; <code>/draft:review</code> runs 3-stage pipeline. <code>/draft:deep-review</code>, <code>/draft:bughunt</code>, <code>/draft:quick-review</code>, <code>/draft:impact</code>, <code>/draft:assist-review</code>, and <code>/draft:testing-strategy</code> for specialized quality workflows</li>
-        <li><strong>Operations</strong> &mdash; <code>/draft:ops</code> orchestrates operational workflows: <code>/draft:deploy-checklist</code>, <code>/draft:incident-response</code>, <code>/draft:standup</code>, <code>/draft:status</code>, <code>/draft:revert</code>, <code>/draft:change</code>, <code>/draft:coverage</code></li>
-        <li><strong>Strategy</strong> &mdash; <code>/draft:tech-debt</code> for technical debt analysis across 6 dimensions with prioritization</li>
+        <li><strong>Operations</strong> &mdash; <code>/draft:ops</code> orchestrates operational workflows: <code>/draft:deploy-checklist</code>, <code>/draft:incident-response</code>, <code>/draft:standup</code>, <code>/draft:status</code>, <code>/draft:revert</code></li>
+        <li><strong>Strategy</strong> &mdash; <code>/draft:tech-debt</code> for technical debt analysis across 7 dimensions with prioritization</li>
         <li><strong>Documentation</strong> &mdash; <code>/draft:docs</code> orchestrates doc generation: readme, runbook, api, onboarding via <code>/draft:documentation</code></li>
         <li><strong>Knowledge &amp; Governance</strong> &mdash; <code>/draft:adr</code>, <code>/draft:learn</code>, <code>/draft:decompose</code>, <code>/draft:graph</code></li>
         <li><strong>Integration</strong> &mdash; <code>/draft:jira preview</code>, <code>/draft:jira create</code>, <code>/draft:jira review &lt;JIRA-ID&gt;</code></li>
@@ -381,7 +379,7 @@
     <p>Draft works with the AI coding tools you already use:</p>
     <ul>
         <li><strong>Claude Code</strong> &mdash; Native plugin installation via <code>/plugin install</code></li>
-        <li><strong>Cursor</strong> &mdash; Native support for the <code>.claude-plugin/</code> structure</li>
+        <li><strong>Cursor</strong> &mdash; Plugin install via <code>draft install cursor</code> (<code>.cursor-plugin/</code> + registry)</li>
         <li><strong>Codex</strong> &mdash; Via an <code>AGENTS.md</code> file that Codex reads automatically</li>
         <li><strong>opencode</strong> &mdash; Via <code>AGENTS.md</code> plus a global <code>skills/</code> directory, both auto-discovered</li>
         <li><strong>GitHub Copilot</strong> &mdash; Via <code>.github/copilot-instructions.md</code></li>

@@ -1,5 +1,7 @@
 # Contributing to Draft
 
+Draft is created and maintained by [Mayur Pise](https://github.com/mayurpise). Bug reports, feature requests, and pull requests are welcome.
+
 ## Development Setup
 
 ```bash

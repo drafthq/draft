@@ -3,7 +3,7 @@
     <p class="chapter-meta"><span class="part-name">Part I: Foundation</span> &middot; Chapter 3</p>
     <p class="read-time">8 min read</p>
 
-    <p class="chapter-intro">You have a codebase. Maybe it's a React app with 200 components. Maybe it's a Go microservice with 50 endpoints. Maybe it's a Python ML pipeline that three people understand and two of them left. In five minutes, Draft will analyze that codebase, generate comprehensive architecture documentation, and create the context files that turn your AI assistant into a developer who actually knows your project.</p>
+    <p class="chapter-intro">You have a codebase. Maybe it's a React app with 200 components. Maybe it's a Go microservice with 50 endpoints. Maybe it's a Python ML pipeline that three people understand and two of them left. Start with <code>/draft:review</code> &mdash; no indexing, no setup. It reviews your current diff and names the structural checks it skipped. Then, when you are ready, <code>/draft:init</code> analyzes the codebase, generates architecture documentation, and creates the context files that turn your AI assistant into a developer who actually knows your project.</p>
 
     <div class="figure">
         <div class="figure-content">
@@ -30,7 +30,7 @@
                 <text x="240" y="257" fill="#718096" font-size="11">freshness.json  signals.json  run-memory.json  facts.json</text>
             </svg>
         </div>
-        <div class="figure-caption">The draft/ directory structure created by /draft:init. Every file serves a specific role in the context hierarchy.</div>
+        <div class="figure-caption">The draft/ directory structure created by /draft:init. Every file serves a specific role in the context hierarchy. Init also writes <code>draft/graph/schema.yaml</code> (the live-engine gate marker). On larger repos, OKF mode adds <code>draft/wiki/</code> as the architecture source of truth &mdash; see output modes below.</div>
     </div>
 
     <h2>Installation</h2>
@@ -62,7 +62,7 @@ $ curl -o .gemini.md https://raw.githubusercontent.com/drafthq/draft/main/integr
 
     <div class="callout callout-tip">
         <div class="callout-title">Cross-Platform</div>
-        <p>Draft's methodology is the same regardless of which AI tool you use. The commands and syntax differ slightly, but the workflow &mdash; init, spec, plan, implement, review &mdash; is identical.</p>
+        <p>Draft's methodology is the same regardless of which AI tool you use. The commands and syntax differ slightly, but the workflow &mdash; review (zero setup), init, spec, plan, implement, review again with the graph &mdash; is identical.</p>
     </div>
 
     <div class="callout callout-tip">
@@ -272,6 +272,9 @@ $ curl -o .gemini.md https://raw.githubusercontent.com/drafthq/draft/main/integr
 &boxvr;&boxh; guardrails.md        # Hard guardrails, learned patterns
 &boxvr;&boxh; tracks.md            # Master list of all tracks
 &boxvr;&boxh; tracks/              # Individual track directories
+&boxvr;&boxh; graph/
+&boxvr;    &boxur;&boxh; schema.yaml     # Live-engine gate marker (no committed graph data)
+&boxvr;&boxh; wiki/                # OKF concept taxonomy (tier 3+ / DRAFT_INIT_MODE=okf)
 &boxur;&boxh; .state/
     &boxvr;&boxh; freshness.json   # File hashes for incremental refresh
     &boxvr;&boxh; signals.json     # Signal classification baseline

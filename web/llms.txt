@@ -4,7 +4,7 @@
 
 Draft is a plugin that adds a knowledge graph engine, spec-driven planning, and a three-stage review pipeline to AI coding agents — so they stop guessing and start executing pre-approved work, grounded in real understanding of your codebase.
 
-Draft works with Claude Code, Cursor, Codex, opencode, GitHub Copilot, and Google Gemini. It provides 33 slash commands, 7 specialized agents, 14-dimension bug hunting, ACID-style module audits, and a built-in **knowledge graph engine** (codebase-memory-mcp: tree-sitter + LSP, 159 languages, 100% local) with query tools — callers, impact, hotspots, modules, cycles, mermaid.
+Draft is created and maintained by Mayur Pise (https://github.com/mayurpise). It works with Claude Code, Cursor, Codex, opencode, GitHub Copilot, and Google Gemini. It provides 33 slash commands, 7 specialized agents, 14-dimension bug hunting, ACID-style module audits, and a built-in **knowledge graph engine** (codebase-memory-mcp: tree-sitter + LSP, 159 languages, 100% local) with query tools — callers, impact, hotspots, modules, cycles, mermaid.
 
 ## Installation
 
@@ -52,6 +52,10 @@ Draft's knowledge graph is powered by [codebase-memory-mcp](https://github.com/D
 - Methodology: https://github.com/drafthq/draft/blob/main/core/methodology.md
 - Full LLM context: https://getdraft.dev/llms-full.txt
 
+## Author
+
+Mayur Pise — https://github.com/mayurpise · https://www.linkedin.com/in/mayurpise/ · mayur@getdraft.dev
+
 ## License
 
-MIT License. Free forever.
+MIT License. Free forever. Copyright (c) 2025-2026 Mayur Pise.

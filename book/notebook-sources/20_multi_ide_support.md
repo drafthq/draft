@@ -26,12 +26,12 @@ Commands use/draft:*syntax:/draft:init,/draft:new-track,/draft:implement. The sa
 
 ## GitHub Copilot
 
-Copilot does not have a plugin system that can read skill files at runtime. Instead, Draft uses a.github/copilot-instructions.mdfile — a single, large generated file (~23,600 lines) that encodes the entire Draft methodology inline.
+Copilot does not have a plugin system that can read skill files at runtime. Instead, Draft uses a.github/copilot-instructions.mdfile — a single, large generated file (~25,300 lines) that encodes the entire Draft methodology inline.
 
 This file is produced by the build pipeline (scripts/build-integrations.sh) and includes:
 
 * All 33 skill definitions (minus frontmatter, plus syntax transforms)
-* All 62 core reference files (methodology, knowledge base, shared procedures, templates, agent definitions)
+* All 66 core reference files (methodology, knowledge base, shared procedures, templates, agent definitions)
 * Quality disciplines, communication style, and proactive behaviors
 * Intent mapping for natural language triggers
 Two key syntax transformations apply:
@@ -68,7 +68,7 @@ The pipeline works as follows:
 * Frontmatter extraction— Each skill's YAML frontmatter (name:anddescription:) is validated. The body is extracted viaextract_body(), which strips the frontmatter delimiters.
 * Body format validation— The body must follow a strict format: blank line,# Titleheading, blank line, then content. The build skips the first 3 body lines when inlining (the title is replaced by the integration's section header).
 * Syntax transformation— Platform-specific transforms are applied:/draft:commandbecomesdraft commandfor Copilot, agent references become@workspace.
-* Core file inlining— 62 core reference files (methodology, shared procedures, templates, agents) are inlined into the output, each wrapped in<core-file>tags.
+* Core file inlining— 66 core reference files (methodology, shared procedures, templates, agents) are inlined into the output, each wrapped in<core-file>tags.
 * Verification—verify_output()checks minimum line count (>1000), completeness sentinel (DRAFT_BUILD_COMPLETE), and that no untransformed syntax remains.
 The build is atomic: output is written to a temporary file, verified, then moved to the final location. A failed verification deletes the temp file and exits with an error, leaving the previous output intact.
 

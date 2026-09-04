@@ -6,7 +6,9 @@
   "skills": "./skills/",
   "agents": "./core/agents/",
   "author": {
-    "name": "mayurpise"
+    "name": "Mayur Pise",
+    "email": "mayur@getdraft.dev",
+    "url": "https://github.com/mayurpise"
   },
   "homepage": "https://github.com/drafthq/draft",
   "license": "MIT",

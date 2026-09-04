@@ -14,7 +14,7 @@
 Instead, please report vulnerabilities via one of:
 
 1. **GitHub Security Advisories:** [Report a vulnerability](https://github.com/drafthq/draft/security/advisories/new)
-2. **Email:** Send details to the repository maintainer (see GitHub profile)
+2. **Email:** Mayur Pise ([mayur@getdraft.dev](mailto:mayur@getdraft.dev))
 
 ### What to Include
 

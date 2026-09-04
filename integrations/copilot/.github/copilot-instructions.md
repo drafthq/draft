@@ -9604,7 +9604,7 @@ Prefer `draft docs` going forward for all authoring requests. The legacy direct 
 
 ## Discover Router
 
-When user says "discover debug" or "draft discover <intent>" (debug, bughunt, reviews, coverage, learn, index, etc.):
+When user says "discover debug" or "draft discover <intent>" (debug, bughunt, reviews, coverage, learn, tour, impact, etc.):
 
 `draft discover` is the single front door for all investigation, auditing, pattern learning, and quality exploration activities.
 

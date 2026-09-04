@@ -1,7 +1,8 @@
 {
   "name": "draft-plugins",
   "owner": {
-    "name": "mayurpise",
+    "name": "Mayur Pise",
+    "email": "mayur@getdraft.dev",
     "url": "https://github.com/mayurpise"
   },
   "metadata": {
@@ -14,7 +15,9 @@
       "description": "Context-Driven Development: draft specs and plans before implementation. Structured workflows for features and fixes.",
       "version": "3.7.2",
       "author": {
-        "name": "mayurpise"
+        "name": "Mayur Pise",
+        "email": "mayur@getdraft.dev",
+        "url": "https://github.com/mayurpise"
       },
       "homepage": "https://github.com/drafthq/draft",
       "license": "MIT",

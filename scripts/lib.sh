@@ -84,7 +84,7 @@ SKILL_META=(
     'plan|Plan Router|"plan feature" or "draft plan <intent>" (new-track, decompose, adr, tech-debt, change)'
     'ops|Ops Router|"ops deploy" or "draft ops <intent>" (deploy-checklist, incident, standup, status, revert)'
     'docs|Docs Router|"write docs" or "draft docs <intent>" (documentation)'
-    'discover|Discover Router|"discover debug" or "draft discover <intent>" (debug, bughunt, reviews, coverage, learn, index, etc.)'
+    'discover|Discover Router|"discover debug" or "draft discover <intent>" (debug, bughunt, reviews, coverage, learn, tour, impact, etc.)'
     'jira|Jira Router|"jira preview", "jira create", or "jira review <ID>"'
     'integrations|Integrations Router|"integrations", "integrations jira-preview", or "integrations jira-create"'
     'quick-review|Quick Review Command|"quick review" or "draft quick-review [file|pr <number>]"'

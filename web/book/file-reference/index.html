@@ -14,14 +14,12 @@
     <meta property="og:description" content="Complete reference for all Draft-generated files — architecture.md, .ai-context.md, .ai-profile.md, specs, plans, and state files.">
     <meta property="og:type" content="article">
     <meta property="og:url" content="https://getdraft.dev/book/file-reference/">
-    <meta property="og:image" content="https://getdraft.dev/social-preview.png?v=331">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
+    <meta property="og:image" content="https://getdraft.dev/social-preview.png">
     <meta property="og:image:alt" content="File Reference — Draft Book">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="File Reference — Draft Book">
     <meta name="twitter:description" content="Complete reference for all Draft-generated files — architecture.md, .ai-context.md, .ai-profile.md, specs, plans, and state files.">
-    <meta name="twitter:image" content="https://getdraft.dev/social-preview.png?v=331">
+    <meta name="twitter:image" content="https://getdraft.dev/social-preview.png">
     <meta name="twitter:image:alt" content="File Reference — Draft Book">
     <link rel="canonical" href="https://getdraft.dev/book/file-reference/">
 
@@ -33,7 +31,7 @@
       "description": "Complete reference for all Draft-generated files — architecture.md, .ai-context.md, .ai-profile.md, specs, plans, and state files.",
       "url": "https://getdraft.dev/book/file-reference/",
       "isPartOf": { "@type": "Book", "name": "The Draft Book", "url": "https://getdraft.dev/book/" },
-      "author": { "@type": "Person", "name": "Mayur Pise", "url": "https://github.com/mayurpise" },
+      "author": { "@type": "Person", "name": "Mayur Pise", "url": "https://www.linkedin.com/in/mayurpise/", "sameAs": ["https://github.com/mayurpise"] },
       "publisher": { "@type": "Organization", "name": "Draft", "url": "https://getdraft.dev" },
       "position": 24,
       "inLanguage": "en"
@@ -377,6 +375,68 @@
                 <td>Human &amp; AI</td>
                 <td><code>/draft:new-track</code></td>
                 <td><code>/draft:new-track</code>, <code>/draft:implement</code>, <code>/draft:revert</code></td>
+            </tr>
+            <tr>
+                <td><code>index.md</code></td>
+                <td>Plain docs index listing the prose context files and tracks. Notes that the graph is engine-only.</td>
+                <td>20-40 lines</td>
+                <td>Human</td>
+                <td><code>/draft:init</code></td>
+                <td><code>/draft:init refresh</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>draft/graph/</h2>
+    <p>The knowledge graph is served live by the <code>codebase-memory-mcp</code> engine. The only committed file is a gate marker &mdash; no structural graph data is checked in.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>File</th>
+                <th>Purpose</th>
+                <th>Size</th>
+                <th>Audience</th>
+                <th>Created</th>
+                <th>Updated</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>schema.yaml</code></td>
+                <td>Gate marker: engine + project metadata and point-of-index counts. Presence signals the engine is wired. All callers, impact, hotspots, and cycles are queried live.</td>
+                <td>~20-40 lines</td>
+                <td>AI (internal)</td>
+                <td><code>/draft:init</code>, <code>/draft:graph</code></td>
+                <td><code>/draft:init refresh</code>, <code>/draft:graph</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>draft/wiki/ (OKF mode)</h2>
+    <p>On larger repos (tiers 3+, or <code>DRAFT_INIT_MODE=okf</code>), architecture context is packaged as an OKF concept taxonomy instead of a single <code>architecture.md</code>. One concept per file; cross-links form the graph. <code>.ai-context.md</code> becomes the index root; <code>architecture.md</code> is a generated rendered view.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Path</th>
+                <th>Purpose</th>
+                <th>Audience</th>
+                <th>Created</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>wiki/</code></td>
+                <td>OKF concept pages (overview / systems / features / reference / entrypoints)</td>
+                <td>Human &amp; AI</td>
+                <td><code>/draft:init</code> in OKF mode</td>
+            </tr>
+            <tr>
+                <td><code>wiki/web/</code></td>
+                <td>Optional self-contained offline HTML viewer</td>
+                <td>Human</td>
+                <td><code>/draft:init</code> in OKF mode</td>
             </tr>
         </tbody>
     </table>

@@ -14,6 +14,7 @@ BOOK_DIR="$ROOT/web/book"
 CHAPTERS_DIR="$BOOK_DIR/chapters"
 SITEMAP_FILE="$ROOT/web/sitemap.xml"
 TODAY="$(date +%Y-%m-%d)"
+VERSION="$(node -p "require('$ROOT/package.json').version")"
 
 # ============================================================
 # CHAPTER MANIFEST — parallel arrays (order matters)
@@ -122,7 +123,7 @@ CHAPTER_DESCRIPTIONS=(
     "How Draft detects codebase patterns, records them to guardrails, and applies learned conventions to future work."
     "Context federation across monorepo services — scope-aware /draft:init builds per-module snapshots and writes root-link.json for cross-module knowledge graph access."
     "Mapping Draft tracks to Jira issues — preview before creation, epic/story/sub-task mapping, and bidirectional sync."
-    "How Draft works across Claude Code, Copilot, Cursor, Gemini, and Antigravity IDE — platform-specific syntax transforms."
+    "How Draft works across Claude Code, Cursor, Codex, opencode, Copilot, and Gemini — platform-specific syntax transforms."
     "The philosophical foundations of Context-Driven Development — structured development, quality gates, incremental refinement."
     "Complete reference for all 33 Draft commands — usage, options, examples, and output for each slash command."
     "Complete reference for all Draft-generated files — architecture.md, .ai-context.md, .ai-profile.md, specs, plans, and state files."
@@ -150,7 +151,7 @@ CHAPTER_KEYWORDS=(
     "pattern learning, codebase conventions, guardrails, convention detection, pattern recognition"
     "monorepo federation, multi-service context, service aggregation, monorepo management, shared context"
     "jira integration, draft to jira, ticket creation, epic mapping, project management integration"
-    "multi-ide support, claude code, github copilot, cursor ai, gemini ai, antigravity ide"
+    "multi-ide support, claude code, cursor, codex, opencode, github copilot, gemini"
     "software development philosophy, quality gates, incremental refinement, development principles"
     "draft commands, slash commands, command reference, draft cli, command documentation"
     "draft file reference, architecture.md, ai-context.md, ai-profile.md, draft directory structure"
@@ -299,7 +300,7 @@ generate_chapter_page() {
       "description": "${json_desc}",
       "url": "https://getdraft.dev/book/${id}/",
       "isPartOf": { "@type": "Book", "name": "The Draft Book", "url": "https://getdraft.dev/book/" },
-      "author": { "@type": "Person", "name": "Mayur Pise", "url": "https://github.com/mayurpise" },
+      "author": { "@type": "Person", "name": "Mayur Pise", "url": "https://www.linkedin.com/in/mayurpise/", "sameAs": ["https://github.com/mayurpise"] },
       "publisher": { "@type": "Organization", "name": "Draft", "url": "https://getdraft.dev" },
       "position": $((idx + 1)),
       "inLanguage": "en"
@@ -396,21 +397,21 @@ generate_landing_page() {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Draft Book — Context-Driven Development Deep Dive</title>
-    <meta name="description" content="A comprehensive guide to Draft's Context-Driven Development methodology. 24 chapters covering specs, plans, TDD, code review, bug hunting, ACID audits, and more.">
+    <meta name="description" content="A comprehensive guide to Draft's Context-Driven Development methodology by Mayur Pise. 22 chapters and 2 appendices covering specs, plans, TDD, code review, bug hunting, ACID audits, and more.">
     <meta name="author" content="Mayur Pise">
     <meta name="theme-color" content="#2563eb">
     <meta name="keywords" content="context-driven development book, ai coding methodology, claude code guide, spec driven development, ai code review, tdd enforcement, ai architecture discovery, bug hunting methodology, copilot best practices, ai development workflow">
     <meta name="robots" content="index, follow">
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
     <meta property="og:title" content="The Draft Book — Context-Driven Development Deep Dive">
-    <meta property="og:description" content="24 chapters covering Draft's methodology, features, and philosophy. From context tiering to 14-dimension bug hunting.">
+    <meta property="og:description" content="22 chapters and 2 appendices covering Draft's methodology, features, and philosophy. From context tiering to 14-dimension bug hunting. By Mayur Pise.">
     <meta property="og:type" content="book">
     <meta property="og:url" content="https://getdraft.dev/book/">
     <meta property="og:image" content="https://getdraft.dev/social-preview.png">
     <meta property="og:image:alt" content="The Draft Book — Context-Driven Development Deep Dive">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="The Draft Book — Context-Driven Development Deep Dive">
-    <meta name="twitter:description" content="24 chapters covering specs, plans, TDD enforcement, 3-stage code review, 14-dimension bug hunting, and ACID audits for AI coding agents.">
+    <meta name="twitter:description" content="22 chapters and 2 appendices covering specs, plans, TDD enforcement, 3-stage code review, 14-dimension bug hunting, and ACID audits for AI coding agents. By Mayur Pise.">
     <meta name="twitter:image" content="https://getdraft.dev/social-preview.png">
     <meta name="twitter:image:alt" content="The Draft Book — Context-Driven Development Deep Dive">
     <link rel="canonical" href="https://getdraft.dev/book/">
@@ -421,7 +422,7 @@ generate_landing_page() {
       "@type": "Book",
       "name": "The Draft Book",
       "alternateName": "Context-Driven Development Deep Dive",
-      "description": "A comprehensive guide to Draft's Context-Driven Development methodology. 24 chapters covering specs, plans, TDD, code review, bug hunting, ACID audits, and more.",
+      "description": "A comprehensive guide to Draft's Context-Driven Development methodology by Mayur Pise. 22 chapters and 2 appendices covering specs, plans, TDD, code review, bug hunting, ACID audits, and more.",
       "url": "https://getdraft.dev/book/",
       "author": {
         "@type": "Person",
@@ -521,9 +522,21 @@ LANDING_REDIRECT_END
 
         <main class="book-content">
             <div class="chapter-wrapper">
-                <div class="book-landing">
-                    <h1><span class="gradient-text">The Draft Book</span></h1>
-                    <p class="book-landing-subtitle">A comprehensive guide to Context-Driven Development — from first principles to enterprise deployment.</p>
+                <div class="book-landing book-landing--draft">
+                    <div class="book-grid-overlay" aria-hidden="true"></div>
+                    <div class="book-eyebrow">
+                        <span class="book-eyebrow-label">The Draft Book</span>
+                        <span class="book-rev">REV_PLACEHOLDER · MIT</span>
+                    </div>
+                    <h1>Read the <span class="book-mark">draft</span><br>behind the method.</h1>
+                    <p class="book-landing-subtitle">Context-Driven Development, from first principles to enterprise deployment — specs and plans, TDD enforcement, three-stage review, 14-dimension bug hunting, and the knowledge-graph engine that maps your codebase underneath it all.</p>
+                    <p class="book-author">by <a href="https://www.linkedin.com/in/mayurpise/" target="_blank" rel="noopener noreferrer">Mayur Pise</a></p>
+                    <div class="book-titleblock">
+                        <div class="tb-cell"><span class="tb-key">Chapters</span><span class="tb-val">22</span></div>
+                        <div class="tb-cell"><span class="tb-key">Parts</span><span class="tb-val">6</span></div>
+                        <div class="tb-cell"><span class="tb-key">Appendices</span><span class="tb-val">2</span></div>
+                        <div class="tb-cell tb-cell--accent"><span class="tb-key">License</span><span class="tb-val">MIT</span></div>
+                    </div>
                 </div>
 
                 <div class="book-toc">
@@ -564,7 +577,7 @@ LANDING_MAIN_START
                 </div>
 
                 <div class="book-footer">
-                    <p>The Draft Book is part of the <a href="https://getdraft.dev">Draft</a> project. <a href="https://github.com/drafthq/draft" target="_blank" rel="noopener noreferrer">View on GitHub</a>.</p>
+                    <p>The Draft Book is written by <a href="https://www.linkedin.com/in/mayurpise/" target="_blank" rel="noopener noreferrer">Mayur Pise</a> as part of the <a href="https://getdraft.dev">Draft</a> project. <a href="https://github.com/drafthq/draft" target="_blank" rel="noopener noreferrer">View on GitHub</a>.</p>
                 </div>
             </div>
         </main>
@@ -576,6 +589,7 @@ LANDING_MAIN_START
 </html>
 LANDING_FOOTER
     apply_dest_mode "$_tmp" "$_out"   # mktemp is 0600; mv would strip the dest's mode
+    sed -i.bak -e "s/REV_PLACEHOLDER/REV ${VERSION}/" "$_tmp" && rm -f "${_tmp}.bak"
     mv -f "$_tmp" "$_out"
 }
 

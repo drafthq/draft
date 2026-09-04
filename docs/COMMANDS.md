@@ -93,5 +93,5 @@ scripts/tools/cycle-detect.sh --repo .                            # dependency c
 ## Further reading
 
 - [Methodology](../core/methodology.md) — the full Context-Driven Development specification
-- [The Draft Book](https://getdraft.dev/book/) — 22 chapters on the methodology and its rationale
+- [The Draft Book](https://getdraft.dev/book/) — 22 chapters and 2 appendices on the methodology and its rationale, by Mayur Pise
 - [CONTRIBUTING.md](../CONTRIBUTING.md) — build, test, and skill-authoring conventions

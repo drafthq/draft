@@ -27,7 +27,7 @@ Draft commands can be invoked using natural language. If you describe your goal 
 | "debug this issue", "investigate test failure", "fix crash" | `/draft:debug` | Structured 4-stage debugging workflow |
 | "deploy checklist", "release checks", "pre-flight checks" | `/draft:deploy-checklist` | Pre-deployment verification checklist |
 | "test strategy", "design test suite", "testing targets" | `/draft:testing-strategy` | Design standard testing plan |
-| "tech debt analysis", "catalog debt", "code debt" | `/draft:tech-debt` | Technical debt audit across 6 dimensions |
+| "tech debt analysis", "catalog debt", "code debt" | `/draft:tech-debt` | Technical debt audit across 7 dimensions |
 | "weekly standup", "what did I do today", "activity summary" | `/draft:standup` | Summarize recent Git and file contributions |
 | "incident", "production outage", "mitigate bug" | `/draft:incident-response` | Triage, mitigation, and postmortem incident flow |
 | "write docs", "create readme", "api documentation" | `/draft:documentation` | Generate professional, structured docs |
