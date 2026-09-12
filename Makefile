@@ -61,6 +61,9 @@ TEST_SCRIPTS = \
 	./tests/test-tools-check-scope-conflicts.sh \
 	./tests/test-tools-check-skill-line-caps.sh \
 	./tests/test-tools-check-track-hygiene.sh \
+	./tests/test-tools-mission-state.sh \
+	./tests/test-tools-record-evidence.sh \
+	./tests/test-tools-gate-check.sh \
 	./tests/test-tools-diff-templates-vs-tracks.sh \
 	./tests/test-tools-migrate-track-frontmatter.sh \
 	./tests/test-tools-render-track.sh \

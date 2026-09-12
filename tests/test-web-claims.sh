@@ -102,10 +102,10 @@ m=re.search(r'^TOOLS=\((.*?)^\)', text, re.M|re.S)
 print(sum(1 for ln in m.group(1).splitlines() if ln.strip() and not ln.strip().startswith('#') and '"' in ln))
 PY
 )"
-assert "TOOLS array is 53 ($helper_count)" \
-    "$([[ "$helper_count" == "53" ]] && echo true || echo false)"
-assert "landing page says 53 helpers, not 45" \
-    "$(grep -q '53 helpers' "$LANDING" && ! grep -q '45 helpers' "$LANDING" && echo true || echo false)"
+assert "TOOLS array is 56 ($helper_count)" \
+    "$([[ "$helper_count" == "56" ]] && echo true || echo false)"
+assert "landing page says 56 helpers, not 45" \
+    "$(grep -q '56 helpers' "$LANDING" && ! grep -q '45 helpers' "$LANDING" && echo true || echo false)"
 assert "hero REV matches package.json ($pkg_version)" \
     "$(grep -q "REV ${pkg_version}" "$LANDING" && echo true || echo false)"
 assert "command-reference rows keep homepage deep-link ids" \

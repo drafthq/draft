@@ -81,7 +81,7 @@ Four review commands with different costs and scopes. `/draft:review` escalates 
 
 ## Deterministic helpers
 
-Beneath the skills sit 53 shell helpers in [`scripts/tools/`](../scripts/tools/) that do the mechanical work markdown cannot — graph queries, git metadata extraction, coverage runs, validators. Skills call them; you can too.
+Beneath the skills sit 56 shell helpers in [`scripts/tools/`](../scripts/tools/) that do the mechanical work markdown cannot — graph queries, git metadata extraction, coverage runs, validators. Skills call them; you can too.
 
 ```bash
 scripts/tools/graph-impact.sh --repo . --file src/auth/login.go   # blast radius
@@ -91,6 +91,16 @@ scripts/tools/cycle-detect.sh --repo .                            # dependency c
 ```
 
 Graph wrappers fail loud. `gq_run` requires a `.rows` array; a shapeless `{}` is `source:"unavailable"` with a non-zero exit, not a measured empty result. Do not read an empty object as "no callers / no cycles / no edges".
+
+Three of the helpers exist for unattended runs — they hold the run's position and refuse to advance it on an unverified claim:
+
+```bash
+scripts/tools/mission-state.sh init --source jira:ENG-4412       # externalize the run's position
+scripts/tools/record-evidence.sh --phase build --label tests -- npm test
+scripts/tools/gate-check.sh --phase build                        # exit 1 unless the evidence is fresh and green
+```
+
+Evidence is pinned to the commit it was recorded against, so a green captured before the last commit does not clear the gate.
 
 ## Further reading
 
