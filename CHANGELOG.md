@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Autonomous-run enforcement tools.** Three deterministic helpers that let a
+  Draft run advance without a human in the loop, without letting it advance on
+  its own say-so:
+  - `scripts/tools/mission-state.sh` — external mission state at
+    `draft/.state/mission.json`, so a run survives context compaction or a lost
+    session. Every write is atomic (temp file → JSON validation → `.bak` →
+    rename) and schema-checked; an unknown field is a violation, not a silent
+    no-op.
+  - `scripts/tools/record-evidence.sh` — runs a verification command and records
+    its command line, full output, real exit code, and the commit it ran
+    against. A green the agent reports about itself is not evidence; this is.
+  - `scripts/tools/gate-check.sh` — phase gate (`--phase build|ship`) that exits
+    non-zero unless mission state is valid and every required check has fresh,
+    passing, corroborated evidence. Evidence recorded before the current HEAD is
+    stale and does not clear the gate.
+
 ## [4.0.0] - 2026-09-03
 
 ### Changed
