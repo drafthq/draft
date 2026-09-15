@@ -9,7 +9,7 @@
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     
     <link rel="stylesheet" href="../css/book.css">
     <link rel="stylesheet" href="../css/audio-player.css">
@@ -42,7 +42,7 @@
         .audio-page-cover-wrapper {
             position: sticky;
             top: 100px;
-            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            background: linear-gradient(135deg, #2b5bd7, #5b8def);
             border-radius: 32px;
             display: flex;
             flex-direction: column;
@@ -137,7 +137,7 @@
             font-size: 0.9rem;
         }
 
-        .audio-instructions h4 { color: var(--audio-page-accent); margin-bottom: 0.5rem; }
+        .audio-instructions h4 { color: #fff; margin-bottom: 0.5rem; }
         .audio-instructions ul { padding-left: 1.2rem; margin-top: 0.5rem; color: rgba(255,255,255,0.6); }
 
         /* Override Player for this page — dark theme text */
@@ -160,7 +160,7 @@
         }
     </style>
     <script>
-    (function(){try{var t=localStorage.getItem('draft-theme');if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
+    (function(){try{var t=localStorage.getItem('draft-theme');if(t!=='light')document.documentElement.setAttribute('data-theme','dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();
     </script>
 </head>
 <body class="audio-player-page">

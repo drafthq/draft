@@ -14,13 +14,13 @@
     <meta property="og:description" content="Draft gives your AI agent a spec, a plan, a live code graph, and a three-stage review — turning a fast guesser into a disciplined engineer. Free, local, open source.">
     <meta property="og:type" content="article">
     <meta property="og:url" content="https://getdraft.dev/blog/vibe-coding-doesnt-scale/">
-    <meta property="og:image" content="https://getdraft.dev/social-preview.png?v=331">
+    <meta property="og:image" content="https://getdraft.dev/social-preview.png?v=400">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Vibe-Coding Doesn't Scale. Context-Driven Development Does.">
     <meta name="twitter:description" content="Draft turns a fast guesser into a disciplined engineer: spec, plan, live code graph, three-stage review. Free, local, open source.">
-    <meta name="twitter:image" content="https://getdraft.dev/social-preview.png?v=331">
+    <meta name="twitter:image" content="https://getdraft.dev/social-preview.png?v=400">
     <link rel="canonical" href="https://getdraft.dev/blog/vibe-coding-doesnt-scale/">
 
     <script type="application/ld+json">
@@ -50,10 +50,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" as="style"
-        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap"
         onload="this.onload=null;this.rel='stylesheet'">
     <noscript>
-        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     </noscript>
 
     <link rel="stylesheet" href="../../css/base.css">
@@ -63,29 +63,39 @@
     <link rel="stylesheet" href="../../css/redesign-v24.css">
     <link rel="stylesheet" href="../blog.css">
     <script>
-    (function(){try{var t=localStorage.getItem('draft-theme');if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
+    (function(){try{var t=localStorage.getItem('draft-theme');if(t!=='light')document.documentElement.setAttribute('data-theme','dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();
     </script>
 </head>
 <body>
     <div id="cursor-glow" aria-hidden="true"></div>
 
-    <nav class="top-nav" id="top-nav">
-        <a href="../../" class="nav-logo">Draft</a>
+    <nav class="top-nav" id="top-nav" aria-label="Primary">
+        <a href="../../" class="nav-logo" aria-label="Draft home">
+            <svg class="logo-mark" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+                <path class="lm-edge" d="M6 19L13 7L20 19M6 19H20" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle class="lm-node" cx="6" cy="19" r="2.6"/>
+                <circle class="lm-node" cx="20" cy="19" r="2.6"/>
+                <circle class="lm-hot" cx="13" cy="7" r="3"/>
+            </svg>
+            Draft
+        </a>
         <div class="nav-links">
-            <a href="../../#features">Features</a>
-            <a href="../../#commands">Commands</a>
+            <a href="../../#playground">Engine</a>
+            <a href="../../#commands">Workflow</a>
+            <a href="../../#features">Capabilities</a>
             <a href="../../#install">Install</a>
-            <a href="../../#audience">Who It's For</a>
             <a href="../../book/">Book</a>
-            <a href="../" class="active">Blog</a>
+            <a href="../../blog/" class="active">Blog</a>
         </div>
         <div class="nav-actions">
+            <a href="../../changelog/" class="nav-version" title="Release notes">v4.0.0</a>
             <a href="https://github.com/drafthq/draft" target="_blank" rel="noopener noreferrer" class="nav-github">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
                 Star on GitHub
+                <span class="gh-stars" id="gh-stars"></span>
             </a>
         </div>
-        <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+        <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
             <span></span><span></span><span></span>
         </button>
     </nav>

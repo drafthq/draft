@@ -1,69 +1,15 @@
 /* ============================================================
-   REFRESH v4 — "The Drafting Table"
-   Draft as an engineering draft of your codebase: hairline
-   blueprint grid, monospace drawing labels, a title-block
-   signature, the brand word annotated like a redline.
-   Layers on top of the existing token system so light + dark
-   both keep working.
+   HERO — Copy, install chip, title block, Impact Console,
+   platform band. Index page only.
+   ------------------------------------------------------------
+   The console is the thesis: a live codebase graph where one
+   changed file's blast radius ripples outward, depth by depth,
+   with the ledger a real graph-impact result would print.
    ============================================================ */
 
-/* ---- Global: drawing labels (every section eyebrow) ------ */
-.section-label {
-    position: relative;
-    padding-left: 1.7rem;
-    font-size: 0.72rem;
-    letter-spacing: 0.16em;
-}
+.hero-draft { position: relative; isolation: isolate; overflow: hidden; }
 
-.section-label::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 0.5em;
-    width: 1.2rem;
-    height: 1px;
-    background: currentColor;
-}
-
-/* Drafting-precise cards: tighter radius, calmer glass */
-.glass-card {
-    border-radius: 10px;
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-}
-
-/* Defect mark on problem cards — a redline annotation, not a step number */
-.card-icon--defect {
-    border-radius: 6px;
-    background: var(--glow-rose, rgba(225, 29, 72, 0.08));
-    color: var(--accent-rose);
-    border: 1px solid var(--accent-rose);
-    font-size: 1rem;
-    font-weight: 700;
-}
-
-/* "anytime" marker on the pipeline bug-hunt step (not a numbered step) */
-.pipeline-tag {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.6rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--accent-violet);
-    border: 1px solid var(--accent-violet);
-    border-radius: 999px;
-    padding: 0.1rem 0.5rem;
-    vertical-align: middle;
-    margin-left: 0.4rem;
-}
-
-/* ---- Hero: drafting sheet -------------------------------- */
-.hero-draft {
-    position: relative;
-    isolation: isolate;
-}
-
-/* Hairline blueprint grid — the drafting paper under everything */
+/* Blueprint hairlines, fading out from the console corner */
 .hero-grid-overlay {
     position: absolute;
     inset: 0;
@@ -72,154 +18,372 @@
     background-image:
         linear-gradient(to right, var(--border-subtle) 1px, transparent 1px),
         linear-gradient(to bottom, var(--border-subtle) 1px, transparent 1px);
-    background-size: 48px 48px;
-    -webkit-mask-image: radial-gradient(ellipse 80% 70% at 50% 35%, #000 30%, transparent 75%);
-    mask-image: radial-gradient(ellipse 80% 70% at 50% 35%, #000 30%, transparent 75%);
+    background-size: 56px 56px;
+    -webkit-mask-image: radial-gradient(ellipse 60% 70% at 78% 30%, #000 20%, transparent 75%);
+    mask-image: radial-gradient(ellipse 60% 70% at 78% 30%, #000 20%, transparent 75%);
 }
 
-[data-theme="dark"] .hero-grid-overlay {
-    background-image:
-        linear-gradient(to right, rgba(120, 160, 220, 0.10) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(120, 160, 220, 0.10) 1px, transparent 1px);
+.hero-glow {
+    position: absolute;
+    z-index: -1;
+    pointer-events: none;
+    inset: -20% -10% auto;
+    height: 90%;
+    background:
+        radial-gradient(ellipse 40% 45% at 72% 35%, rgba(var(--accent-rgb), 0.16) 0%, transparent 70%),
+        radial-gradient(ellipse 30% 30% at 20% 20%, rgba(var(--accent-2-rgb), 0.08) 0%, transparent 70%);
 }
 
-/* Tone the legacy particle canvas down so the grid reads as the surface */
-.hero-draft #hero-canvas { opacity: 0.35; }
-
-/* Drawing label (eyebrow) — reads like a callout on a blueprint */
-.hero-eyebrow {
-    display: inline-flex;
+.hero-content {
+    display: grid;
+    grid-template-columns: minmax(0, 1.02fr) minmax(0, 1fr);
+    gap: 3rem 4rem;
     align-items: center;
-    gap: 0.65rem;
-    margin-bottom: 1.75rem;
+}
+
+/* ---- Copy column ----------------------------------------- */
+.hero-eyebrow {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
     flex-wrap: wrap;
 }
-
-.hero-eyebrow-label {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.74rem;
-    font-weight: 600;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    color: var(--accent-cyan);
-    position: relative;
-    padding-left: 1.6rem;
-}
-
-/* leader tick before the label, like a dimension line */
-.hero-eyebrow-label::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 50%;
-    width: 1.1rem;
-    height: 1px;
-    background: var(--accent-cyan);
-}
+.hero-eyebrow-label { margin-bottom: 0; }
 
 .hero-rev {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.68rem;
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
     font-weight: 600;
-    letter-spacing: 0.08em;
-    color: var(--accent-rose);
-    border: 1px solid var(--accent-rose);
-    border-radius: 4px;
-    padding: 0.15rem 0.5rem;
+    letter-spacing: 0.1em;
+    color: var(--accent-amber);
+    border: 1px solid rgba(var(--accent-2-rgb), 0.55);
+    background: var(--glow-amber);
+    border-radius: 6px;
+    padding: 0.2rem 0.5rem;
 }
 
-/* Headline — editorial, with the brand word annotated */
 .hero-h1 {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: clamp(2.6rem, 6.5vw, 5rem);
-    line-height: 1.02;
-    letter-spacing: -0.03em;
+    font-size: clamp(2.7rem, 5vw, 4.4rem);
+    line-height: 1.0;
+    letter-spacing: -0.038em;
     font-weight: 700;
     margin-bottom: 1.5rem;
+    max-width: 12ch;
 }
 
-/* "Draft" drawn as a redlined edit — the signature word */
+/* "Draft" — the word, redlined: blue ink with an amber underline stroke */
 .hero-mark {
-    position: relative;
     color: var(--accent-cyan);
     white-space: nowrap;
+    text-decoration: underline;
+    text-decoration-color: var(--accent-amber);
+    text-decoration-thickness: 0.055em;
+    text-underline-offset: 0.1em;
+    text-decoration-skip-ink: none;
 }
 
-.hero-mark::after {
-    content: "";
-    position: absolute;
-    left: -0.04em;
-    right: -0.04em;
-    bottom: 0.06em;
-    height: 0.5em;
-    background: var(--glow-cyan);
-    z-index: -1;
-    transform: skewX(-9deg);
+.hero-content .tagline { margin: 0; }
+
+.hero-actions { margin: 2rem 0 1.1rem; }
+
+/* Install chip — the one command, ready to copy */
+.hero-install {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    max-width: 100%;
+    padding: 0.5rem 0.5rem 0.5rem 1rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-family: var(--font-mono);
+    font-size: 0.86rem;
+    color: var(--text-primary);
+    box-shadow: var(--shadow-sm);
 }
-
-.hero-platforms {
-    font-size: 0.95rem;
-    color: var(--text-muted);
-    margin: 1.25rem 0 0.5rem;
+.hero-install-prompt { color: var(--accent-emerald); font-weight: 700; user-select: none; }
+.hero-install code {
+    color: var(--text-primary);
+    background: none;
+    border: 0;
+    padding: 0;
+    font-size: inherit;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
+.hero-install code .hl { color: var(--accent-cyan); }
 
-.hero-platforms strong { color: var(--text-secondary); font-weight: 600; }
+.copy-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    height: 32px;
+    padding: 0 0.7rem;
+    font-family: var(--font-body);
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.copy-btn:hover { color: var(--text-primary); border-color: var(--border-strong); }
+.copy-btn svg { width: 13px; height: 13px; }
+.copy-btn.copied { color: var(--accent-emerald); border-color: rgba(62, 207, 142, 0.5); }
 
-/* ---- Title block — the signature, carrying real spec ----- */
+/* Title block — the drawing's signature strip, carrying real spec */
 .hero-titleblock {
-    margin-top: 2.5rem;
+    margin-top: 1.75rem;
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    border: 1.5px solid var(--border);
-    border-radius: 8px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
     overflow: hidden;
     background: var(--bg-secondary);
-    max-width: 760px;
-    margin-inline: auto;
+    max-width: 640px;
 }
-
-.tb-cell {
-    padding: 0.85rem 1rem;
-    border-right: 1px solid var(--border);
-    text-align: left;
-}
-
+.tb-cell { padding: 0.7rem 0.9rem; border-right: 1px solid var(--border); }
 .tb-cell:last-child { border-right: none; }
-
 .tb-key {
     display: block;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.6rem;
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
     font-weight: 600;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.14em;
     text-transform: uppercase;
     color: var(--text-muted);
-    margin-bottom: 0.3rem;
+    margin-bottom: 0.25rem;
 }
-
 .tb-val {
     display: block;
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 1.45rem;
+    font-family: var(--font-display);
+    font-size: 1.25rem;
     font-weight: 700;
+    letter-spacing: -0.02em;
     line-height: 1;
     color: var(--text-primary);
 }
-
 .tb-val .tb-sub { font-size: 0.6em; color: var(--text-muted); font-weight: 600; }
-
 .tb-cell--accent .tb-val { color: var(--accent-cyan); }
 
-@media (max-width: 680px) {
-    .hero-titleblock { grid-template-columns: repeat(2, 1fr); }
-    .tb-cell:nth-child(2n) { border-right: none; }
-    .tb-cell { border-bottom: 1px solid var(--border); }
+/* ---- Impact Console -------------------------------------- */
+.hero-console {
+    position: relative;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    background: var(--bg-pane);
+    box-shadow: var(--shadow-lg), 0 0 0 6px rgba(var(--accent-rgb), 0.05);
+    overflow: hidden;
+    color: var(--pane-text);
 }
 
-/* ---- Footer credit: professional, with a quiet engine line - */
-.footer-credit-sub {
-    margin-top: 0.4rem;
-    font-size: 0.8rem;
+.console-head {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.7rem 1rem;
+    border-bottom: 1px solid var(--pane-line);
+    background: rgba(146, 164, 204, 0.05);
+}
+.console-cmd {
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    color: var(--pane-text);
+    background: none;
+    border: 0;
+    padding: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+}
+.console-prompt { color: #3ecf8e; font-weight: 700; }
+.console-cmd b { color: #fff; font-weight: 500; }
+
+.console-live {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #3ecf8e;
+    white-space: nowrap;
+}
+.console-live-dot {
+    position: relative;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #3ecf8e;
+}
+.console-live-dot::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: #3ecf8e;
+    animation: livePing 1.8s ease-out infinite;
+}
+
+.console-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+    min-height: 400px;
+}
+.console-graph { position: relative; min-height: 400px; }
+.console-graph canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+.console-ledger {
+    border-left: 1px solid var(--pane-line);
+    padding: 1rem 1rem 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    font-family: var(--font-mono);
+    background: rgba(146, 164, 204, 0.03);
+}
+.ledger-row {
+    opacity: 0.32;
+    transition: opacity 0.45s var(--ease-out);
+}
+.ledger-row.is-on { opacity: 1; }
+.ledger-key {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--pane-muted);
+    margin-bottom: 0.35rem;
+}
+.ledger-key b {
+    font-weight: 600;
+    color: var(--pane-text);
+    background: rgba(146, 164, 204, 0.12);
+    border-radius: 4px;
+    padding: 0.05rem 0.35rem;
+}
+.ledger-key::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--ledger-dot, var(--pane-muted));
+    flex: none;
+}
+.ledger-row--target { --ledger-dot: #f2b33d; }
+.ledger-row[data-depth="1"] { --ledger-dot: #5b8def; }
+.ledger-row[data-depth="2"] { --ledger-dot: rgba(91, 141, 239, 0.7); }
+.ledger-row[data-depth="3"] { --ledger-dot: rgba(91, 141, 239, 0.42); }
+.ledger-file {
+    display: block;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: #fff;
+    word-break: break-all;
+}
+.ledger-row ul { list-style: none; display: flex; flex-direction: column; gap: 0.15rem; }
+.ledger-row li {
+    font-size: 0.68rem;
+    color: var(--pane-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.ledger-row li.more { color: var(--pane-muted); }
+
+.console-foot {
+    display: flex;
+    align-items: center;
+    gap: 1.1rem;
+    flex-wrap: wrap;
+    padding: 0.65rem 1rem;
+    border-top: 1px solid var(--pane-line);
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--pane-muted);
+    background: rgba(146, 164, 204, 0.05);
+}
+.console-foot b { color: #fff; font-weight: 600; }
+.cf-cats { margin-left: auto; }
+
+/* ---- Platform band --------------------------------------- */
+.platform-band {
+    margin-top: clamp(3rem, 7vh, 5rem);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-secondary);
+    background: color-mix(in srgb, var(--bg-secondary) 55%, transparent);
+    position: relative;
+    z-index: 1;
+}
+.platform-band-inner {
+    max-width: var(--container);
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem 2.5rem;
+    flex-wrap: wrap;
+    padding: 1rem 0;
+}
+.platform-label {
+    font-family: var(--font-mono);
+    font-size: 0.64rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
     color: var(--text-muted);
-    opacity: 0.85;
+}
+.platform-list {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem 2rem;
+    flex-wrap: wrap;
+    list-style: none;
+}
+.platform-list li {
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: var(--text-secondary);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: color 0.2s;
+}
+.platform-list li:hover { color: var(--text-primary); }
+.platform-list li svg { width: 16px; height: 16px; opacity: 0.8; }
+.platform-band .hero-extras { margin-left: auto; }
+
+
+/* ---- Responsive ------------------------------------------ */
+@media (max-width: 1100px) {
+    .hero-content { grid-template-columns: 1fr; gap: 2.5rem; }
+    .hero-h1 { max-width: none; }
+    .hero-console { max-width: 900px; }
+    .platform-band .hero-extras { margin-left: 0; }
+}
+@media (max-width: 720px) {
+    .console-body { grid-template-columns: 1fr; min-height: 0; }
+    .console-graph { min-height: 280px; }
+    .console-ledger { border-left: 0; border-top: 1px solid var(--pane-line); }
+    .hero-titleblock { grid-template-columns: repeat(3, 1fr); }
+    .tb-cell:nth-child(3n) { border-right: none; }
+    .tb-cell { border-bottom: 1px solid var(--border); }
+    .hero-install { width: 100%; }
+    .console-live span { display: none; }
+    .cf-cats { margin-left: 0; }
 }

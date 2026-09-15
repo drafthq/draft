@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Website redesigned around the graph.** getdraft.dev ships dark by
+  default (light theme retained via the toggle) with a new type system
+  (Schibsted Grotesk / Inter / JetBrains Mono), blueprint-blue + redline-
+  amber tokens shared by the landing page, blog, changelog, book, and
+  404. The hero is a live Impact Console: a codebase graph where one
+  file's blast radius ripples out by depth with the ledger `graph-impact`
+  would print. Personas and audience cards merged into one role
+  switcher; `/draft:init` deep dive and architecture sections merged;
+  unified nav (live star count, version pill) and footer on every page;
+  new social preview.
+
 ## [4.0.0] - 2026-09-03
 
 ### Changed

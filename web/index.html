@@ -6,7 +6,8 @@
     <title>Draft — Draft It Before Your Agent Builds It</title>
     <meta name="description" content="Draft maps your repo into a local knowledge graph and turns your ideas into reviewable specs — so your AI agent ships from a plan, not a guess. Spec-first planning, three-stage review, and a 14-dimension bug hunt, in one plugin for Claude Code, Cursor, Codex, opencode, Copilot, and Gemini. Free forever, MIT.">
     <meta name="author" content="Mayur Pise">
-    <meta name="theme-color" content="#7c3aed">
+    <meta name="theme-color" content="#06080e">
+    <meta name="color-scheme" content="dark light">
     <meta name="keywords" content="claude code plugin, code intelligence, knowledge graph, knowledge graph engine, codebase-memory-mcp, ai code review, ai tdd, context-driven development, spec-driven development, tree-sitter, callers, blast radius, hotspots, ai bug hunting, github copilot plugin, gemini plugin, cursor ai plugin, antigravity ide, ai coding agent, ACID audit, open source developer tools, MIT licensed">
     <meta name="robots" content="index, follow">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -14,14 +15,14 @@
     <meta property="og:description" content="Draft maps your repo into a local knowledge graph and turns your ideas into reviewable specs — so your AI agent ships from a plan, not a guess. Free forever.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://getdraft.dev">
-    <meta property="og:image" content="https://getdraft.dev/social-preview.png?v=331">
+    <meta property="og:image" content="https://getdraft.dev/social-preview.png?v=400">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:image:alt" content="Draft — draft it before your agent builds it: 33 commands, a 159-language knowledge graph, and three-stage review">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Draft — draft it before your agent builds it">
     <meta name="twitter:description" content="Map your repo into a local knowledge graph, turn ideas into reviewable specs, and ship from a plan — not a guess. One plugin. Free forever.">
-    <meta name="twitter:image" content="https://getdraft.dev/social-preview.png?v=331">
+    <meta name="twitter:image" content="https://getdraft.dev/social-preview.png?v=400">
     <meta name="twitter:image:alt" content="Draft — draft it before your agent builds it: 33 commands, a 159-language knowledge graph, and three-stage review">
     <link rel="canonical" href="https://getdraft.dev">
     <link rel="alternate" hreflang="en" href="https://getdraft.dev/">
@@ -205,10 +206,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" as="style"
-        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap"
         onload="this.onload=null;this.rel='stylesheet'">
     <noscript>
-        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     </noscript>
 
     <link rel="stylesheet" href="css/base.css">
@@ -218,9 +219,9 @@
     <link rel="stylesheet" href="css/redesign-v24.css">
     <link rel="stylesheet" href="css/refresh-v4.css">
 
-    <!-- Theme: apply early to prevent flash of wrong theme -->
+    <!-- Theme: dark by default, light if the visitor chose it. Applied early to prevent a flash. -->
     <script>
-    (function(){try{var t=localStorage.getItem('draft-theme');if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
+    (function(){try{var t=localStorage.getItem('draft-theme');if(t!=='light')document.documentElement.setAttribute('data-theme','dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();
     </script>
 </head>
 <body>
@@ -228,116 +229,195 @@
     <div id="cursor-glow" aria-hidden="true"></div>
 
     <!-- Top navigation -->
-    <nav class="top-nav" id="top-nav">
-        <a href="#hero" class="nav-logo">Draft</a>
+    <nav class="top-nav" id="top-nav" aria-label="Primary">
+        <a href="#hero" class="nav-logo" aria-label="Draft home">
+            <svg class="logo-mark" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+                <path class="lm-edge" d="M6 19L13 7L20 19M6 19H20" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle class="lm-node" cx="6" cy="19" r="2.6"/>
+                <circle class="lm-node" cx="20" cy="19" r="2.6"/>
+                <circle class="lm-hot" cx="13" cy="7" r="3"/>
+            </svg>
+            Draft
+        </a>
         <div class="nav-links">
-            <a href="#features">Features</a>
-            <a href="#commands">Surface</a>
+            <a href="#playground">Engine</a>
+            <a href="#commands">Workflow</a>
+            <a href="#features">Capabilities</a>
             <a href="#install">Install</a>
-            <a href="#audience">Who It's For</a>
             <a href="book/">Book</a>
             <a href="blog/">Blog</a>
         </div>
         <div class="nav-actions">
+            <a href="changelog/" class="nav-version" title="Release notes">v4.0.0</a>
             <a href="https://github.com/drafthq/draft" target="_blank" rel="noopener noreferrer" class="nav-github">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
                 Star on GitHub
+                <span class="gh-stars" id="gh-stars"></span>
             </a>
         </div>
-        <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation">
+        <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
             <span></span><span></span><span></span>
         </button>
     </nav>
 
-    <!-- Side navigation dots -->
+    <!-- Side navigation ticks -->
     <nav class="side-nav" id="side-nav" aria-label="Section navigation">
-        <a href="#hero" class="side-dot active" data-label="Home"><span></span></a>
+        <a href="#hero" class="side-dot active" data-label="Top"><span></span></a>
         <a href="#problem" class="side-dot" data-label="Problem"><span></span></a>
-        <a href="#how-it-works" class="side-dot" data-label="Workflow"><span></span></a>
-        <a href="#features" class="side-dot" data-label="Features"><span></span></a>
-        <a href="#commands" class="side-dot" data-label="Surface"><span></span></a>
-        <a href="#team" class="side-dot" data-label="Team"><span></span></a>
+        <a href="#playground" class="side-dot" data-label="Engine"><span></span></a>
+        <a href="#commands" class="side-dot" data-label="Workflow"><span></span></a>
+        <a href="#features" class="side-dot" data-label="Capabilities"><span></span></a>
+        <a href="#how-it-works" class="side-dot" data-label="Foundation"><span></span></a>
+        <a href="#vs" class="side-dot" data-label="Compare"><span></span></a>
+        <a href="#roles" class="side-dot" data-label="Roles"><span></span></a>
         <a href="#install" class="side-dot" data-label="Install"><span></span></a>
-        <a href="#architecture" class="side-dot" data-label="Research"><span></span></a>
-        <a href="#audience" class="side-dot" data-label="Audience"><span></span></a>
-        <a href="#industry" class="side-dot" data-label="Standards"><span></span></a>
+        <a href="#industry" class="side-dot" data-label="Evidence"><span></span></a>
         <a href="#faq" class="side-dot" data-label="FAQ"><span></span></a>
     </nav>
 
     <!-- ============================================================ -->
-    <!-- SECTION 1: HERO                                              -->
+    <!-- HERO                                                         -->
     <!-- ============================================================ -->
     <section id="hero" class="section hero-section hero-draft">
-        <canvas id="hero-canvas" aria-hidden="true"></canvas>
         <div class="hero-grid-overlay" aria-hidden="true"></div>
+        <div class="hero-glow" aria-hidden="true"></div>
+
         <div class="hero-content">
-            <div class="hero-eyebrow">
-                <span class="hero-eyebrow-label">Context-Driven Development</span>
-                <span class="hero-rev">REV 4.0.0 &middot; MIT</span>
+            <div class="hero-copy">
+                <div class="hero-eyebrow">
+                    <span class="eyebrow hero-eyebrow-label">Context-Driven Development</span>
+                    <span class="hero-rev">REV 4.0.0 &middot; MIT</span>
+                </div>
+                <h1 class="hero-h1"><span class="hero-mark">Draft</span> it before your agent builds it.</h1>
+                <p class="tagline">Draft maps your repo into a local knowledge graph and turns your ideas into reviewable specs &mdash; so your AI agent ships from a <strong>plan, not a guess</strong>. Spec-first planning, a three-stage review, and a 14-dimension bug hunt, in one plugin. <strong>Free forever.</strong></p>
+
+                <div class="hero-actions">
+                    <a href="#install" class="btn btn-primary">Install in 30 seconds</a>
+                    <a href="#playground" class="btn btn-secondary">See the engine</a>
+                    <a href="https://github.com/drafthq/draft" target="_blank" rel="noopener noreferrer" class="btn btn-tertiary">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                        Star
+                    </a>
+                </div>
+
+                <div class="hero-install">
+                    <span class="hero-install-prompt" aria-hidden="true">$</span>
+                    <code>npx <span class="hl">@drafthq/draft</span> install claude-code</code>
+                    <button type="button" class="copy-btn" data-copy="npx @drafthq/draft install claude-code" aria-label="Copy install command">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        <span>Copy</span>
+                    </button>
+                </div>
+
+                <!-- Title block: the drawing's signature strip, carrying the real spec -->
+                <div class="hero-titleblock" aria-label="Key figures">
+                    <div class="tb-cell tb-cell--accent">
+                        <span class="tb-key">Commands</span>
+                        <span class="tb-val">4<span class="tb-sub">/33</span></span>
+                    </div>
+                    <div class="tb-cell">
+                        <span class="tb-key">Languages</span>
+                        <span class="tb-val">159</span>
+                    </div>
+                    <div class="tb-cell">
+                        <span class="tb-key">Graph modes</span>
+                        <span class="tb-val">6</span>
+                    </div>
+                    <div class="tb-cell">
+                        <span class="tb-key">Platforms</span>
+                        <span class="tb-val">6</span>
+                    </div>
+                    <div class="tb-cell">
+                        <span class="tb-key">License</span>
+                        <span class="tb-val">MIT</span>
+                    </div>
+                </div>
             </div>
-            <h1 class="hero-h1"><span class="hero-mark">Draft</span> it before<br>your agent builds it.</h1>
-            <p class="tagline">Draft maps your repo into a local knowledge graph and turns your ideas into reviewable specs &mdash; so your AI agent ships from a <strong>plan, not a guess</strong>. Spec-first planning, a three-stage review, and a 14-dimension bug hunt, in one plugin. <strong>Free forever.</strong></p>
-            <p class="hero-platforms">Works in <strong>Claude Code &middot; Cursor &middot; Codex &middot; opencode &middot; Copilot &middot; Gemini</strong></p>
-            <div class="hero-actions">
-                <a href="#install" class="btn btn-primary">Install in 30 seconds</a>
-                <a href="#playground" class="btn btn-secondary">See it in 60 seconds</a>
-                <a href="https://github.com/drafthq/draft" target="_blank" rel="noopener noreferrer" class="btn btn-tertiary">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-                    Star
-                </a>
-            </div>
-            <div class="hero-extras">
-                <a href="book/" class="hero-extra-link">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-                    Read the book
-                </a>
-                <span class="hero-extra-divider"></span>
-                <a href="book/audio/" class="hero-extra-link">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1v-7h3v5z"/><path d="M3 19a2 2 0 0 0 2 2h1v-7H3v5z"/></svg>
-                    Listen instead
-                    <span class="hero-extra-tag">~8h</span>
-                </a>
-            </div>
-            <!-- Title block — drawing-sheet signature carrying the real spec -->
-            <div class="hero-titleblock">
-                <div class="tb-cell tb-cell--accent">
-                    <span class="tb-key">Commands</span>
-                    <span class="tb-val">4<span class="tb-sub">/33</span></span>
+
+            <!-- Impact Console: a live blast-radius query on a codebase graph -->
+            <div class="hero-console" id="hero-console" role="img" aria-label="Animated demo: a change to one file ripples through the codebase graph, and the ledger lists every affected file by depth">
+                <div class="console-head">
+                    <div class="terminal-dots" aria-hidden="true"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+                    <code class="console-cmd"><span class="console-prompt">$</span> <span id="console-cmd">graph-impact --file <b>src/auth/login.ts</b></span></code>
+                    <span class="console-live"><span class="console-live-dot"></span><span>live graph</span></span>
                 </div>
-                <div class="tb-cell">
-                    <span class="tb-key">Languages</span>
-                    <span class="tb-val">159</span>
+                <div class="console-body">
+                    <div class="console-graph" id="console-graph">
+                        <canvas id="hero-canvas" aria-hidden="true"></canvas>
+                    </div>
+                    <div class="console-ledger" id="console-ledger">
+                        <div class="ledger-row ledger-row--target is-on">
+                            <span class="ledger-key">target</span>
+                            <span class="ledger-file" id="ledger-target">src/auth/login.ts</span>
+                        </div>
+                        <div class="ledger-row" data-depth="1" id="ledger-d1">
+                            <span class="ledger-key">depth 1 <b id="ledger-n1">5</b></span>
+                            <ul id="ledger-l1">
+                                <li>api/session/route.ts</li>
+                                <li>api/auth/[...nextauth]/route.ts</li>
+                                <li>pages/login.tsx</li>
+                                <li>tests/auth/login.spec.ts</li>
+                                <li class="more">+1 more</li>
+                            </ul>
+                        </div>
+                        <div class="ledger-row" data-depth="2" id="ledger-d2">
+                            <span class="ledger-key">depth 2 <b id="ledger-n2">1</b></span>
+                            <ul id="ledger-l2"><li>tests/api/session.spec.ts</li></ul>
+                        </div>
+                        <div class="ledger-row" data-depth="3" id="ledger-d3">
+                            <span class="ledger-key">depth 3 <b id="ledger-n3">0</b></span>
+                            <ul id="ledger-l3"></ul>
+                        </div>
+                    </div>
                 </div>
-                <div class="tb-cell">
-                    <span class="tb-key">Graph modes</span>
-                    <span class="tb-val">6</span>
-                </div>
-                <div class="tb-cell">
-                    <span class="tb-key">Platforms</span>
-                    <span class="tb-val">6</span>
-                </div>
-                <div class="tb-cell">
-                    <span class="tb-key">License</span>
-                    <span class="tb-val">MIT</span>
+                <div class="console-foot">
+                    <span><b id="cf-files">6</b> files</span>
+                    <span><b id="cf-modules">4</b> modules</span>
+                    <span class="cf-cats">code <b id="cf-code">3</b> &middot; test <b id="cf-test">2</b> &middot; doc <b id="cf-doc">1</b> &middot; config <b id="cf-config">0</b></span>
                 </div>
             </div>
-            <p class="hero-powered-by">Graph engine: <a href="https://github.com/DeusData/codebase-memory-mcp" target="_blank" rel="noopener noreferrer">codebase-memory-mcp</a> by <a href="https://github.com/DeusData" target="_blank" rel="noopener noreferrer">DeusData</a> &mdash; tree-sitter + LSP, 159 languages, 100% local</p>
         </div>
-        <div class="scroll-indicator">
-            <div class="scroll-arrow"></div>
-            <span>Explore</span>
+
+        <div class="platform-band">
+            <div class="platform-band-inner">
+                <span class="platform-label">Works in</span>
+                <ul class="platform-list" aria-label="Supported platforms">
+                    <li>Claude Code</li>
+                    <li>Cursor</li>
+                    <li>Codex</li>
+                    <li>opencode</li>
+                    <li>GitHub Copilot</li>
+                    <li>Gemini</li>
+                </ul>
+                <div class="hero-extras">
+                    <a href="book/" class="hero-extra-link">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                        Read the book
+                    </a>
+                    <span class="hero-extra-divider" aria-hidden="true"></span>
+                    <a href="book/audio/" class="hero-extra-link">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1v-7h3v5z"/><path d="M3 19a2 2 0 0 0 2 2h1v-7H3v5z"/></svg>
+                        Listen instead
+                        <span class="hero-extra-tag">~8h</span>
+                    </a>
+                </div>
+            </div>
         </div>
     </section>
 
     <!-- ============================================================ -->
-    <!-- SECTION 2: PROBLEM                                           -->
+    <!-- PROBLEM                                                      -->
     <!-- ============================================================ -->
     <section id="problem" class="section">
         <div class="section-glow section-glow--rose"></div>
         <div class="section-inner">
-            <span class="section-label">The Problem</span>
-            <h2>AI ships fast.<br>Without a plan, it ships <span class="text-rose">chaos</span>.</h2>
-            <p class="section-subtitle">Hand an agent a vague prompt and it guesses. It invents requirements, picks approaches that don't match your stack, and calls it done without proof. Here's what that looks like &mdash; flagged like defects on a draft.</p>
+            <div class="section-head">
+                <div>
+                    <span class="section-label">The problem</span>
+                    <h2>AI ships fast. Without a plan, it ships <span class="text-rose">chaos</span>.</h2>
+                </div>
+                <p class="section-subtitle">Hand an agent a vague prompt and it guesses. It invents requirements, picks approaches that don't match your stack, and calls it done without proof. Here is what that looks like &mdash; flagged like defects on a drawing.</p>
+            </div>
 
             <div class="problem-grid">
                 <div class="glass-card problem-card">
@@ -362,14 +442,13 @@
                 </div>
             </div>
 
-            <!-- Before/After comparison -->
             <div class="comparison">
                 <div class="comparison-col comparison-col--before">
                     <h4>Without Draft</h4>
                     <ul>
                         <li>Context in ephemeral chat</li>
                         <li>No version history for decisions</li>
-                        <li>Loads entire project every session</li>
+                        <li>Loads the entire project every session</li>
                         <li>Unsearchable conversations</li>
                         <li>Invisible to teammates</li>
                     </ul>
@@ -389,14 +468,18 @@
     </section>
 
     <!-- ============================================================ -->
-    <!-- INTERACTIVE PLAYGROUND — Knowledge Graph Demo                -->
+    <!-- ENGINE PLAYGROUND                                            -->
     <!-- ============================================================ -->
     <section id="playground" class="section section-playground">
-        <div class="section-glow section-glow--violet"></div>
+        <div class="section-glow section-glow--cyan"></div>
         <div class="section-inner">
-            <span class="section-label">Local engine &middot; Built-in</span>
-            <h2>Your repo, <span class="text-violet">queryable.</span></h2>
-            <p class="section-subtitle">Draft installs a local knowledge-graph engine that maps every module, call, dependency, and hotspot in your codebase. No daemon. No external service. No code leaves your machine. Try the queries below &mdash; illustrative results from a typical codebase, in the engine's real output schema.</p>
+            <div class="section-head">
+                <div>
+                    <span class="section-label">Local engine &middot; built in</span>
+                    <h2>Your repo, <span class="text-cyan">queryable</span>.</h2>
+                </div>
+                <p class="section-subtitle">Draft installs a local knowledge-graph engine that maps every module, call, dependency, and hotspot in your codebase. No daemon. No external service. No code leaves your machine. Try the queries below &mdash; illustrative results from a typical codebase, in the engine's real output schema.</p>
+            </div>
 
             <div class="playground">
                 <div class="playground-tabs" role="tablist" aria-label="Graph query modes">
@@ -445,14 +528,424 @@
     </section>
 
     <!-- ============================================================ -->
-    <!-- COMPARISON TABLE                                             -->
+    <!-- WORKFLOW — the commands you'll actually type                 -->
+    <!-- ============================================================ -->
+    <section id="commands" class="section">
+        <div class="section-glow section-glow--cyan"></div>
+        <div class="section-inner">
+            <div class="section-head">
+                <div>
+                    <span class="section-label">The commands you'll actually type</span>
+                    <h2>Four you run. <span class="text-cyan">Twenty-nine</span> that route themselves.</h2>
+                </div>
+                <p class="section-subtitle">The whole workflow comes down to four commands. Everything else &mdash; bug hunts, coverage, debugging, ADRs, deploy checklists, Jira &mdash; is a specialist the routers reach for on their own. Each one is still there to call by name the moment you want it.</p>
+            </div>
+
+            <!-- Interactive terminal -->
+            <div class="terminal glass-card">
+                <div class="terminal-header">
+                    <div class="terminal-dots" aria-hidden="true">
+                        <span class="dot-red"></span>
+                        <span class="dot-yellow"></span>
+                        <span class="dot-green"></span>
+                    </div>
+                    <span class="terminal-title">draft &mdash; zsh</span>
+                </div>
+                <div class="terminal-body" id="terminal-body">
+                    <div class="terminal-line">
+                        <span class="terminal-prompt">$</span>
+                        <span class="terminal-cmd" id="terminal-cmd"></span>
+                        <span class="terminal-cursor">|</span>
+                    </div>
+                    <div class="terminal-output" id="terminal-output"></div>
+                </div>
+            </div>
+
+            <!-- Primary commands — a real order, so the steps are numbered -->
+            <div class="cmd-primary-grid cmd-primary-grid--four">
+                <article class="cmd-primary" data-term="review">
+                    <span class="cmd-primary-step">01</span>
+                    <a class="cmd-primary-name" href="book/command-reference/#cmd-review">/draft:review</a>
+                    <p class="cmd-primary-desc">Three stages on your branch. <strong>Runs with zero setup</strong> &mdash; start here, before indexing anything.</p>
+                </article>
+                <article class="cmd-primary" data-term="init">
+                    <span class="cmd-primary-step">02</span>
+                    <a class="cmd-primary-name" href="book/command-reference/#cmd-init">/draft:init</a>
+                    <p class="cmd-primary-desc">Map the codebase once. Adds blast radius, caller lookup, and cycle detection to every later review.</p>
+                </article>
+                <article class="cmd-primary" data-term="plan">
+                    <span class="cmd-primary-step">03</span>
+                    <a class="cmd-primary-name" href="book/command-reference/#cmd-new-track">/draft:new-track</a>
+                    <p class="cmd-primary-desc">Turn an idea into a reviewable spec and a phased plan before any code.</p>
+                </article>
+                <article class="cmd-primary" data-term="implement">
+                    <span class="cmd-primary-step">04</span>
+                    <a class="cmd-primary-name" href="book/command-reference/#cmd-implement">/draft:implement</a>
+                    <p class="cmd-primary-desc">Build the plan task by task, test-first, with verification gates between steps.</p>
+                </article>
+            </div>
+
+            <!-- Routing diagram: one prompt, the right specialist -->
+            <div class="routing-block">
+                <p class="routing-lead">You don't pick the specialist. <span>Draft routes intent to it</span> &mdash; and you can still call it by name.</p>
+                <div class="routing-diagram">
+                    <div class="routing-prompt"><span class="routing-prompt-cmd">draft</span> "fix the flaky login test"</div>
+                    <span class="routing-conn" aria-hidden="true"></span>
+                    <div class="routing-hub">
+                        <span class="routing-hub-title">intent router</span>
+                        <span class="routing-hub-sub">reads what you mean</span>
+                    </div>
+                    <span class="routing-conn routing-conn--fan" aria-hidden="true"></span>
+                    <div class="routing-fan">
+                        <span class="routing-leaf">/draft:debug</span>
+                        <span class="routing-leaf routing-leaf--lit">/draft:testing-strategy</span>
+                        <span class="routing-leaf">/draft:bughunt</span>
+                        <span class="routing-leaf">/draft:coverage</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Routed specialists: quiet, on demand -->
+            <details class="cmd-routed">
+                <summary class="cmd-routed-summary">
+                    <span class="cmd-routed-toggle" aria-hidden="true"></span>
+                    <span class="cmd-routed-count">29 specialists</span>
+                    <span class="cmd-routed-hint">routed for you &mdash; or call any of them by name</span>
+                </summary>
+                <div class="cmd-routed-body">
+                    <div class="router-group">
+                        <a class="router-name" href="book/command-reference/#cmd-plan">/draft:plan</a>
+                        <div class="router-chips">
+                            <a class="chip" href="book/command-reference/#cmd-decompose">decompose</a>
+                            <a class="chip" href="book/command-reference/#cmd-adr">adr</a>
+                            <a class="chip" href="book/command-reference/#cmd-tech-debt">tech-debt</a>
+                            <a class="chip" href="book/command-reference/#cmd-change">change</a>
+                        </div>
+                    </div>
+                    <div class="router-group">
+                        <a class="router-name" href="book/command-reference/#cmd-discover">/draft:discover</a>
+                        <div class="router-chips">
+                            <a class="chip" href="book/command-reference/#cmd-bughunt">bughunt</a>
+                            <a class="chip" href="book/command-reference/#cmd-debug">debug</a>
+                            <a class="chip" href="book/command-reference/#cmd-quick-review">quick-review</a>
+                            <a class="chip" href="book/command-reference/#cmd-deep-review">deep-review</a>
+                            <a class="chip" href="book/command-reference/#cmd-coverage">coverage</a>
+                            <a class="chip" href="book/command-reference/#cmd-testing-strategy">testing-strategy</a>
+                            <a class="chip" href="book/command-reference/#cmd-learn">learn</a>
+                            <a class="chip" href="book/command-reference/#cmd-tour">tour</a>
+                            <a class="chip" href="book/command-reference/#cmd-impact">impact</a>
+                            <a class="chip" href="book/command-reference/#cmd-assist-review">assist-review</a>
+                        </div>
+                    </div>
+                    <div class="router-group">
+                        <a class="router-name" href="book/command-reference/#cmd-ops">/draft:ops</a>
+                        <div class="router-chips">
+                            <a class="chip" href="book/command-reference/#cmd-status">status</a>
+                            <a class="chip" href="book/command-reference/#cmd-revert">revert</a>
+                            <a class="chip" href="book/command-reference/#cmd-deploy-checklist">deploy-checklist</a>
+                            <a class="chip" href="book/command-reference/#cmd-incident-response">incident-response</a>
+                            <a class="chip" href="book/command-reference/#cmd-standup">standup</a>
+                        </div>
+                    </div>
+                    <div class="router-group">
+                        <a class="router-name" href="book/command-reference/#cmd-docs">/draft:docs</a>
+                        <div class="router-chips">
+                            <a class="chip" href="book/command-reference/#cmd-documentation">documentation</a>
+                        </div>
+                    </div>
+                    <div class="router-group">
+                        <a class="router-name" href="book/command-reference/#cmd-jira">/draft:jira</a>
+                        <div class="router-chips">
+                            <a class="chip" href="book/command-reference/#cmd-jira">preview</a>
+                            <a class="chip" href="book/command-reference/#cmd-jira">create</a>
+                            <a class="chip" href="book/command-reference/#cmd-jira">review</a>
+                            <a class="chip" href="book/command-reference/#cmd-integrations">integrations</a>
+                            <a class="chip" href="book/command-reference/#cmd-upload">upload</a>
+                        </div>
+                    </div>
+                    <div class="router-group">
+                        <span class="router-name">direct</span>
+                        <div class="router-chips">
+                            <a class="chip" href="book/command-reference/#cmd-draft">draft</a>
+                            <a class="chip" href="book/command-reference/#cmd-graph">graph</a>
+                        </div>
+                    </div>
+                    <a class="cmd-routed-more" href="book/command-reference/">Full command reference &mdash; every flag and mode &rarr;</a>
+                </div>
+            </details>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- CAPABILITIES (bento)                                         -->
+    <!-- ============================================================ -->
+    <section id="features" class="section">
+        <div class="section-glow section-glow--cyan"></div>
+        <div class="section-inner">
+            <div class="section-head">
+                <div>
+                    <span class="section-label">Capabilities</span>
+                    <h2>Enterprise-grade methodology, <span class="text-cyan">zero cost</span>.</h2>
+                </div>
+                <p class="section-subtitle">Every capability below reads the same context files and the same graph, so the answers agree with each other. Nothing here needs an account, a key, or a network call.</p>
+            </div>
+
+            <div class="bento-grid">
+                <div class="glass-card bento-card bento-wide">
+                    <div class="bento-header">
+                        <div class="bento-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+                        </div>
+                        <span class="bento-tag">5-phase analysis</span>
+                    </div>
+                    <h3>Architecture discovery</h3>
+                    <p>Graph-primary deep analysis producing a focused, high-signal engineering reference (Graph Health Dashboard + 9 other critical sections with provenance and fidelity tags). Derives the 200-400 line .ai-context.md. Strong emphasis on honest coverage gaps and relationship to any pre-existing high-quality agent documentation.</p>
+                    <div class="bento-stats">
+                        <span>Graph-primary</span><span>Fidelity + provenance</span><span>Incremental refresh</span>
+                    </div>
+                </div>
+
+                <div class="glass-card bento-card">
+                    <div class="bento-header">
+                        <div class="bento-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                        </div>
+                    </div>
+                    <h3>TDD enforcement</h3>
+                    <p>RED &rarr; GREEN &rarr; REFACTOR cycle. Production robustness patterns enforced: atomicity, isolation, durability, idempotency, fail-closed, resilience. Property-based testing, observability prompts, contract testing at service boundaries.</p>
+                    <div class="bento-stats"><span>95%+ target</span><span>7 robustness patterns</span></div>
+                </div>
+
+                <div class="glass-card bento-card">
+                    <div class="bento-header">
+                        <div class="bento-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                        </div>
+                    </div>
+                    <h3>Three-stage code review</h3>
+                    <p>Automated validation + spec compliance + code quality. STRIDE threat modeling for new endpoints. Context-specific checks (crypto, DB, API, config, UI). SAST tool integration. Adversarial pass on zero findings.</p>
+                    <div class="bento-stats"><span>3 stages</span><span>STRIDE</span><span>SAST</span></div>
+                </div>
+
+                <div class="glass-card bento-card">
+                    <div class="bento-header">
+                        <div class="bento-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                        </div>
+                    </div>
+                    <h3>Collaborative intake</h3>
+                    <p>AI as expert partner &mdash; asks one question at a time, contributes patterns, risks, trade-offs. Builds the spec progressively with citations from DDD, Clean Architecture, OWASP.</p>
+                    <div class="bento-stats"><span>AI as partner</span></div>
+                </div>
+
+                <div class="glass-card bento-card bento-wide">
+                    <div class="bento-header">
+                        <div class="bento-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                        </div>
+                        <span class="bento-tag">Exhaustive sweep</span>
+                    </div>
+                    <h3>14-dimension bug hunt</h3>
+                    <p>Systematic defect discovery across 14 dimensions: correctness, reliability, security, performance, UI responsiveness, concurrency, state management, API contracts, accessibility, configuration, tests, dependency/supply chain security, algorithmic complexity, and i18n/l10n. Severity-ranked with file:line locations. Only HIGH/CONFIRMED confidence &mdash; false-positive elimination and taint tracking built in.</p>
+                    <div class="bento-stats">
+                        <span>14 dimensions</span><span>Taint tracking</span><span>Confidence filtering</span><span>Regression tests</span>
+                    </div>
+                </div>
+
+                <div class="glass-card bento-card">
+                    <div class="bento-header">
+                        <div class="bento-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                        </div>
+                    </div>
+                    <h3>ACID deep review</h3>
+                    <p>Module lifecycle audit evaluating atomicity, isolation, durability, fail-closed behavior, and idempotency. Enterprise-grade production pattern enforcement.</p>
+                    <div class="bento-stats"><span>ACID compliant</span></div>
+                </div>
+
+                <div class="glass-card bento-card">
+                    <div class="bento-header">
+                        <div class="bento-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                        </div>
+                    </div>
+                    <h3>Pattern learning</h3>
+                    <p>Scans your codebase for recurring patterns (3+ occurrences). Discovers conventions to skip and anti-patterns to always flag. Every quality command updates <code>guardrails.md</code> after each run &mdash; your codebase teaches Draft what to enforce, and false positives disappear over time.</p>
+                    <div class="bento-stats"><span>Auto-learning</span><span>Temporal analysis</span><span>guardrails.md</span></div>
+                </div>
+
+                <div class="glass-card bento-card bento-wide">
+                    <div class="bento-header">
+                        <div class="bento-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="9" y1="6" x2="15" y2="6"/><line x1="6" y1="9" x2="6" y2="15"/><line x1="18" y1="9" x2="18" y2="15"/><line x1="9" y1="18" x2="15" y2="18"/></svg>
+                        </div>
+                        <span class="bento-tag">Built in</span>
+                    </div>
+                    <h3>Knowledge graph engine</h3>
+                    <p>Tree-sitter + LSP-grade resolution across 159 languages, 100% local. Query tools &mdash; <strong>callers</strong>, <strong>callees</strong>, <strong>impact</strong>, <strong>cycles</strong>, <strong>hotspots</strong>, <strong>mermaid</strong>. Incremental, git-aware indexing. Impact queries break results down by code/test/doc/config. Powers <code>/draft:impact</code>, enriches <code>/draft:bughunt</code> and <code>/draft:review</code>.</p>
+                    <p class="bento-credit">Built on <a href="https://github.com/DeusData/codebase-memory-mcp" target="_blank" rel="noopener noreferrer">codebase-memory-mcp</a> &mdash; 159 languages, 100% local, no API key</p>
+                    <div class="bento-stats">
+                        <span>159 languages</span><span>Query tools</span><span>Incremental</span><span>100% local</span>
+                    </div>
+                </div>
+
+                <div class="glass-card bento-card">
+                    <div class="bento-header">
+                        <div class="bento-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                        </div>
+                        <span class="bento-tag">Track memory</span>
+                    </div>
+                    <h3>Track impact memory</h3>
+                    <p>Each completed track records its blast radius in <code>metadata.json</code> &mdash; files touched, modules affected, downstream count, by-category breakdown. <code>/draft:plan</code> reads recent tracks' impact during context load and surfaces overlap warnings before you even write a spec.</p>
+                    <div class="bento-stats">
+                        <span>Auto-recorded</span><span>Overlap detection</span>
+                    </div>
+                </div>
+
+                <div class="glass-card bento-card">
+                    <div class="bento-header">
+                        <div class="bento-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                        </div>
+                        <span class="bento-tag">53 helpers</span>
+                    </div>
+                    <h3>Deterministic helpers</h3>
+                    <p>Skills delegate mechanical work to 53 shell tools under <code>scripts/tools/</code> &mdash; git metadata, file classification, hotspot ranking, cycle detection, freshness checks, ADR indexing, test-framework detection, and more. Uniform JSON output and exit-code contract. Graph wrappers fail loud on shapeless engine JSON rather than reporting a clean empty result.</p>
+                    <div class="bento-stats">
+                        <span>JSON contract</span><span>Reproducible</span>
+                    </div>
+                </div>
+
+                <div class="glass-card bento-card bento-wide">
+                    <div class="bento-header">
+                        <div class="bento-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                        </div>
+                        <span class="bento-tag">Enterprise</span>
+                    </div>
+                    <h3>Enterprise ready</h3>
+                    <p>Monorepo federation with service discovery and dependency graphs. Unified Jira router &mdash; <code>preview</code>, <code>create</code> (Track &rarr; Epic, Phase &rarr; Story, Task &rarr; Sub-task), and <code>review &lt;JIRA-ID&gt;</code> that qualifies a ticket with deep-review + bug hunt + coverage + test-gap analysis. Architecture Decision Records with full lifecycle. Git-aware task/phase/track-level revert. Mid-track change management with impact analysis.</p>
+                    <div class="bento-stats">
+                        <span>Monorepo</span><span>Jira preview / create / review</span><span>ADRs</span><span>Revert</span><span>Change mgmt</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- FOUNDATION — /draft:init deep dive                           -->
+    <!-- ============================================================ -->
+    <section id="how-it-works" class="section">
+        <div class="section-glow section-glow--cyan"></div>
+        <div class="section-inner">
+            <div class="section-head">
+                <div>
+                    <span class="section-label">The foundation</span>
+                    <h2><code>/draft:init</code> &mdash; your codebase, <span class="text-cyan">fully mapped</span>.</h2>
+                </div>
+                <p class="section-subtitle">One command performs a 5-phase deep analysis of your entire codebase &mdash; not a diagram of intent, a map of reality. Every future interaction is grounded in this understanding, and you pay the cost once.</p>
+            </div>
+
+            <div class="init-phases">
+                <div class="glass-card init-phase">
+                    <div class="init-phase-num init-phase-num--cyan">0</div>
+                    <h3>Graph build</h3>
+                    <p>Builds a tree-sitter knowledge graph mapping module boundaries, dependencies, call paths, and hotspots. This powers precise impact analysis and accelerates every later phase.</p>
+                </div>
+                <div class="glass-card init-phase">
+                    <div class="init-phase-num init-phase-num--amber">1</div>
+                    <h3>Discovery</h3>
+                    <p>Directory structure, build files, API definitions, interface and type files. <strong>Signal classification</strong> sorts every source file into 11 categories (routes, services, auth, models, state, jobs, persistence, tests, config&hellip;) to drive adaptive analysis depth.</p>
+                </div>
+                <div class="glass-card init-phase">
+                    <div class="init-phase-num init-phase-num--rose">2</div>
+                    <h3>Wiring</h3>
+                    <p>Entry points, orchestrator initialization, registry and registration code, dependency injection, module system, import graph. Maps how components find and connect to each other.</p>
+                </div>
+                <div class="glass-card init-phase">
+                    <div class="init-phase-num init-phase-num--emerald">3</div>
+                    <h3>Depth</h3>
+                    <p>End-to-end data flows, core module implementations, concurrency model, safety checks. Traces invariants, validation, auth gates. Identifies state machines and consistency boundaries.</p>
+                </div>
+                <div class="glass-card init-phase">
+                    <div class="init-phase-num init-phase-num--violet">4</div>
+                    <h3>Periphery</h3>
+                    <p>External dependencies, test infrastructure, configuration mechanisms, existing documentation. Maps the full operational envelope of your system.</p>
+                </div>
+                <div class="glass-card init-phase">
+                    <div class="init-phase-num init-phase-num--cyan">5</div>
+                    <h3>Synthesis</h3>
+                    <p>Graph-first synthesis with explicit fidelity declarations and provenance. Tier-gated output (<code>DRAFT_INIT_MODE</code>): small repos get the graph-primary <strong>architecture.md</strong>; larger repos get an <strong>OKF concept taxonomy</strong> under <code>draft/wiki/</code> with <code>architecture.md</code> as a generated view. Either way, <strong>.ai-context.md</strong> (200-400 lines, token-optimized) is the AI index root.</p>
+                </div>
+            </div>
+
+            <!-- What init writes -->
+            <div class="dual-output">
+                <div class="glass-card dual-card">
+                    <h4>.ai-context.md</h4>
+                    <p class="dual-meta">Machine-optimized &middot; 200-400 lines</p>
+                    <p>Dense tables, YAML frontmatter, flat sections. Token-efficient &mdash; minimal prose, maximum signal. Consumed by all Draft commands and external AI tools.</p>
+                </div>
+                <div class="glass-card dual-card">
+                    <h4>architecture.md</h4>
+                    <p class="dual-meta">Graph-primary &middot; explicit fidelity</p>
+                    <p>Prose, annotated Mermaid diagrams, onboarding framing. The source of truth &mdash; all mutations happen here. For engineers, leads, and PR reviewers.</p>
+                    <ul>
+                        <li>System map with file:line refs</li>
+                        <li>Data lifecycle &amp; state machines</li>
+                        <li>Critical paths &amp; recovery matrix</li>
+                        <li>Invariants &amp; constraints</li>
+                        <li>Extension cookbooks</li>
+                        <li>Graph health dashboard</li>
+                    </ul>
+                </div>
+                <div class="glass-card dual-card">
+                    <h4>guardrails.md</h4>
+                    <p class="dual-meta">Auto-learning &middot; rules + patterns</p>
+                    <p>Human-defined constraints plus auto-discovered conventions and anti-patterns. Quality commands read this file, skip known patterns, flag violations &mdash; then update it after every run. Your codebase teaches Draft what to enforce.</p>
+                </div>
+            </div>
+
+            <!-- State persistence -->
+            <div class="init-state glass-card">
+                <h4>State persistence <span>&mdash; pay the analysis cost once</span></h4>
+                <div class="init-state-grid">
+                    <div class="init-state-item">
+                        <span class="init-state-file">freshness.json</span>
+                        <p>SHA-256 hashes of every analyzed file. <code>/draft:init refresh</code> only re-analyzes files with changed hashes &mdash; no full re-scan.</p>
+                    </div>
+                    <div class="init-state-item">
+                        <span class="init-state-file">signals.json</span>
+                        <p>11-category signal classification. Detects structural drift on refresh (for example, auth files added for the first time).</p>
+                    </div>
+                    <div class="init-state-item">
+                        <span class="init-state-file">run-memory.json</span>
+                        <p>Phases completed, unresolved questions, resumable checkpoints. Interrupted runs resume where they left off.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="callout">
+                <strong>Each layer narrows the solution space.</strong> By the time AI writes code, most decisions are already made: product.md &rarr; tech-stack.md &rarr; .ai-context.md &rarr; spec.md &rarr; plan.md. <strong>Seven specialized agents</strong> (Planner, Architect, Reviewer, Debugger, RCA, Ops, Writer) enforce this at every step &mdash; and because the AI <em>knows</em> your system, it writes code that fits it.
+            </div>
+        </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- COMPARISON                                                   -->
     <!-- ============================================================ -->
     <section id="vs" class="section section-vs">
         <div class="section-glow section-glow--cyan"></div>
         <div class="section-inner">
-            <span class="section-label">Positioning</span>
-            <h2>The only one with <span class="text-violet">all three.</span></h2>
-            <p class="section-subtitle">Most tools cover one corner of AI-assisted development. Draft brings methodology, codebase intelligence, and verification together in one plugin.</p>
+            <div class="section-head">
+                <div>
+                    <span class="section-label">Positioning</span>
+                    <h2>The only one with <span class="text-cyan">all three</span>.</h2>
+                </div>
+                <p class="section-subtitle">Most tools cover one corner of AI-assisted development. Draft brings methodology, codebase intelligence, and verification together in one plugin.</p>
+            </div>
 
             <div class="vs-table-wrap">
                 <table class="vs-table" aria-label="Feature comparison">
@@ -525,329 +1018,169 @@
                     </tbody>
                 </table>
             </div>
-            <p class="vs-foot-note">Comparison reflects Draft 3.7 vs. publicly-documented features of named alternatives as of June 2026. Draft is the open-source plugin you install once and own forever.</p>
+            <p class="vs-foot-note">Comparison reflects Draft 4.0 vs. publicly documented features of the named alternatives as of September 2026. Draft is the open-source plugin you install once and own forever.</p>
         </div>
     </section>
 
     <!-- ============================================================ -->
-    <!-- PERSONA CARDS                                                -->
+    <!-- ROLES — one component for every seat at the table            -->
     <!-- ============================================================ -->
-    <section id="personas" class="section section-personas">
-        <div class="section-glow section-glow--emerald"></div>
-        <div class="section-inner">
-            <span class="section-label">Who it's for</span>
-            <h2>Three jobs. <span class="text-emerald">One plugin.</span></h2>
-
-            <div class="persona-grid">
-                <a href="book/getting-started/" class="persona-card persona-card--cyan">
-                    <div class="persona-card-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-14L4 7m8 4v10m0-10L4 7m0 0v10l8 4"/></svg></div>
-                    <h3>Solo developers</h3>
-                    <p class="persona-claim">Stop re-explaining your codebase to AI.</p>
-                    <p class="persona-detail"><code>/draft:init</code> generates an architecture reference once. Every subsequent agent interaction starts with full context. New tracks load only what's relevant.</p>
-                    <ul class="persona-bullets">
-                        <li>5-phase codebase analysis</li>
-                        <li>Token-optimized AI context</li>
-                        <li>Incremental refresh on file change</li>
-                    </ul>
-                    <span class="persona-card-link">Start here &rarr;</span>
-                </a>
-
-                <a href="book/deep-review/" class="persona-card persona-card--violet">
-                    <div class="persona-card-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
-                    <h3>Team leads</h3>
-                    <p class="persona-claim">Spec-driven planning + ACID-grade audits.</p>
-                    <p class="persona-detail">Every track ships with a reviewable spec, a phased plan, and three-stage code review. Module audits enforce atomicity, consistency, isolation, and durability.</p>
-                    <ul class="persona-bullets">
-                        <li>Three-stage review pipeline</li>
-                        <li>Module lifecycle deep-review</li>
-                        <li>Pattern learning &amp; guardrails</li>
-                    </ul>
-                    <span class="persona-card-link">See the review pipeline &rarr;</span>
-                </a>
-
-                <a href="book/multi-ide-support/" class="persona-card persona-card--amber">
-                    <div class="persona-card-icon"><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="9" y1="6" x2="15" y2="6"/><line x1="6" y1="9" x2="6" y2="15"/><line x1="18" y1="9" x2="18" y2="15"/><line x1="9" y1="18" x2="15" y2="18"/></svg></div>
-                    <h3>Platform engineers</h3>
-                    <p class="persona-claim">Knowledge graph + 53 deterministic helpers.</p>
-                    <p class="persona-detail">Tree-sitter + LSP across 159 languages. Incremental, git-aware indexing. 100% local — no API key, no code leaves your machine. Track-level impact memory. Skills delegate mechanical work to JSON-emitting shell tools.</p>
-                    <ul class="persona-bullets">
-                        <li>Six graph query modes</li>
-                        <li>Per-module SHA-256 hashing</li>
-                        <li>Uniform exit-code contract</li>
-                    </ul>
-                    <span class="persona-card-link">Read the architecture &rarr;</span>
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================================ -->
-    <!-- SECTION 3: HOW IT WORKS — /draft:init Deep Dive              -->
-    <!-- ============================================================ -->
-    <section id="how-it-works" class="section">
+    <section id="roles" class="section">
         <div class="section-glow section-glow--cyan"></div>
         <div class="section-inner">
-            <span class="section-label">The Foundation</span>
-            <h2><code>/draft:init</code> — your codebase, <span class="text-cyan">fully mapped</span></h2>
-            <p class="section-subtitle">One command performs a 5-phase deep analysis of your entire codebase. Every future interaction is grounded in this understanding.</p>
-
-            <!-- Init phases showcase -->
-            <div class="init-phases">
-                <div class="glass-card init-phase">
-                    <div class="init-phase-num init-phase-num--cyan">0</div>
-                    <h3>Graph Build</h3>
-                    <p>Builds a tree-sitter knowledge graph mapping module boundaries, dependencies, call paths, and hotspots. This powers precise impact analysis and accelerates subsequent phases.</p>
+            <div class="section-head">
+                <div>
+                    <span class="section-label">Who it's for</span>
+                    <h2>Built for every seat <span class="text-cyan">at the table</span>.</h2>
                 </div>
-                <div class="glass-card init-phase">
-                    <div class="init-phase-num init-phase-num--amber">1</div>
-                    <h3>Discovery</h3>
-                    <p>Directory structure, build files, API definitions, interface/type files. <strong>Signal classification</strong> categorizes every source file into 11 categories (routes, services, auth, models, state, jobs, persistence, tests, config...) to drive adaptive analysis depth.</p>
-                </div>
-                <div class="glass-card init-phase">
-                    <div class="init-phase-num init-phase-num--rose">2</div>
-                    <h3>Wiring</h3>
-                    <p>Entry points, orchestrator initialization, registry/registration code, dependency injection, module system, import graph. Maps how components find and connect to each other.</p>
-                </div>
-                <div class="glass-card init-phase">
-                    <div class="init-phase-num init-phase-num--emerald">3</div>
-                    <h3>Depth</h3>
-                    <p>End-to-end data flows, core module implementations, concurrency model, safety checks. Traces invariants, validation, auth gates. Identifies state machines and consistency boundaries.</p>
-                </div>
-                <div class="glass-card init-phase">
-                    <div class="init-phase-num init-phase-num--violet">4</div>
-                    <h3>Periphery</h3>
-                    <p>External dependencies, test infrastructure, configuration mechanisms, existing documentation. Maps the full operational envelope of your system.</p>
-                </div>
-                <div class="glass-card init-phase">
-                    <div class="init-phase-num init-phase-num--cyan">5</div>
-                    <h3>Synthesis</h3>
-                    <p>Graph-first synthesis with explicit fidelity declarations and provenance. Tier-gated output (<code>DRAFT_INIT_MODE</code>): small repos get the graph-primary <strong>architecture.md</strong> (focused high-signal sections + Graph Health Dashboard); larger repos get an <strong>OKF concept taxonomy</strong> under <code>draft/wiki/</code> (one concept per file, cross-links form the graph) with <code>architecture.md</code> as a generated view. Either way, <strong>.ai-context.md</strong> (200-400 lines, token-optimized) is the AI index root.</p>
-                </div>
+                <p class="section-subtitle">Draft speaks a different language to each role, but the artifacts are the same files &mdash; so the value compounds across the whole organization.</p>
             </div>
 
-            <!-- State persistence callout -->
-            <div class="init-state glass-card">
-                <h4>State Persistence &mdash; Pay the cost once</h4>
-                <div class="init-state-grid">
-                    <div class="init-state-item">
-                        <span class="init-state-file">freshness.json</span>
-                        <p>SHA-256 hashes of every analyzed file. <code>/draft:init refresh</code> only re-analyzes files with changed hashes — no full re-scan.</p>
-                    </div>
-                    <div class="init-state-item">
-                        <span class="init-state-file">signals.json</span>
-                        <p>11-category signal classification. Detects structural drift on refresh (e.g., auth files added for the first time).</p>
-                    </div>
-                    <div class="init-state-item">
-                        <span class="init-state-file">run-memory.json</span>
-                        <p>Phases completed, unresolved questions, resumable checkpoints. Interrupted runs resume where they left off.</p>
-                    </div>
+            <div class="roles">
+                <div class="role-tabs" role="tablist" aria-label="Roles">
+                    <button type="button" class="role-tab" role="tab" data-role="engineers" id="tab-engineers" aria-controls="role-engineers" aria-selected="true" tabindex="0">
+                        <span class="role-tab-name">Engineers</span>
+                        <span class="role-tab-sub">IC &middot; Senior &middot; Staff</span>
+                    </button>
+                    <button type="button" class="role-tab" role="tab" data-role="leads" id="tab-leads" aria-controls="role-leads" aria-selected="false" tabindex="-1">
+                        <span class="role-tab-name">Team leads</span>
+                        <span class="role-tab-sub">Lead &middot; EM &middot; Director</span>
+                    </button>
+                    <button type="button" class="role-tab" role="tab" data-role="platform" id="tab-platform" aria-controls="role-platform" aria-selected="false" tabindex="-1">
+                        <span class="role-tab-name">Platform</span>
+                        <span class="role-tab-sub">Platform &middot; DevEx</span>
+                    </button>
+                    <button type="button" class="role-tab" role="tab" data-role="product" id="tab-product" aria-controls="role-product" aria-selected="false" tabindex="-1">
+                        <span class="role-tab-name">Product</span>
+                        <span class="role-tab-sub">PM &middot; TPM</span>
+                    </button>
+                    <button type="button" class="role-tab" role="tab" data-role="leadership" id="tab-leadership" aria-controls="role-leadership" aria-selected="false" tabindex="-1">
+                        <span class="role-tab-name">Leadership</span>
+                        <span class="role-tab-sub">CTO &middot; VP Eng &middot; CISO</span>
+                    </button>
+                    <button type="button" class="role-tab" role="tab" data-role="oss" id="tab-oss" aria-controls="role-oss" aria-selected="false" tabindex="-1">
+                        <span class="role-tab-name">Open source</span>
+                        <span class="role-tab-sub">Maintainer &middot; Indie</span>
+                    </button>
                 </div>
-            </div>
 
-            <!-- Pipeline (remaining steps compressed) -->
-            <h3 class="pipeline-heading">Then: Spec &rarr; Implement &rarr; Verify</h3>
-            <div class="pipeline">
-                <div class="pipeline-step" data-step="2">
-                    <div class="pipeline-icon pipeline-icon--amber">
-                        <span>02</span>
+                <div class="role-panel active" id="role-engineers" role="tabpanel" aria-labelledby="tab-engineers">
+                    <div>
+                        <p class="role-claim">Stop re-explaining your codebase to AI.</p>
+                        <p class="role-detail"><code>/draft:init</code> generates an architecture reference once. Every later agent interaction starts with full context, and each track loads only what's relevant. Write code that fits your system because Draft <em>knows</em> your system.</p>
+                        <ul class="role-bullets">
+                            <li>5-phase codebase analysis with incremental refresh</li>
+                            <li>TDD enforcement and a 14-dimension bug hunt</li>
+                            <li>Token-optimized AI context, 200-400 lines</li>
+                        </ul>
                     </div>
-                    <div class="pipeline-connector"></div>
-                    <h3>Spec &amp; Plan</h3>
-                    <p class="pipeline-cmd">/draft:new-track</p>
-                    <p>Collaborative intake — AI asks one question at a time, contributes expertise, surfaces risks. Builds spec progressively with citations from DDD, Clean Architecture, OWASP.</p>
-                </div>
-                <div class="pipeline-step" data-step="3">
-                    <div class="pipeline-icon pipeline-icon--rose">
-                        <span>03</span>
-                    </div>
-                    <div class="pipeline-connector"></div>
-                    <h3>Implement</h3>
-                    <p class="pipeline-cmd">/draft:implement</p>
-                    <p>RED &rarr; GREEN &rarr; REFACTOR. Production robustness patterns enforced (atomicity, isolation, durability, idempotency, fail-closed, resilience). Property-based testing, observability prompts, contract testing at service boundaries.</p>
-                </div>
-                <div class="pipeline-step" data-step="4">
-                    <div class="pipeline-icon pipeline-icon--emerald">
-                        <span>04</span>
-                    </div>
-                    <div class="pipeline-connector"></div>
-                    <h3>Review</h3>
-                    <p class="pipeline-cmd">/draft:review</p>
-                    <p>3-stage review with STRIDE threat modeling, SAST tool integration, breaking change detection, context-specific checks (crypto, DB, API, config, UI).</p>
-                </div>
-                <div class="pipeline-step pipeline-step--anytime" data-step="5">
-                    <div class="pipeline-icon pipeline-icon--violet">
-                        <span>&#8635;</span>
-                    </div>
-                    <h3>Bug Hunt <span class="pipeline-tag">anytime</span></h3>
-                    <p class="pipeline-cmd">/draft:bughunt</p>
-                    <p>Not a step in the line &mdash; an on-demand audit <code>/draft:review</code> escalates to. 14-dimension sweep with taint tracking, supply-chain checks, and complexity analysis. Only HIGH/CONFIRMED confidence reported.</p>
-                </div>
-            </div>
-
-            <div class="callout">
-                <strong>Each layer narrows the solution space.</strong> By the time AI writes code, most decisions are already made. product.md &rarr; tech-stack.md &rarr; .ai-context.md &rarr; spec.md &rarr; plan.md. <strong>7 specialized agents</strong> (Planner, Architect, Reviewer, Debugger, RCA, Ops, Writer) enforce this at every step.
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================================ -->
-    <!-- SECTION 4: FEATURES (Bento Grid)                             -->
-    <!-- ============================================================ -->
-    <section id="features" class="section">
-        <div class="section-glow section-glow--violet"></div>
-        <div class="section-inner">
-            <span class="section-label">Capabilities</span>
-            <h2>Enterprise-grade methodology,<br><span class="text-violet">zero cost</span></h2>
-
-            <div class="bento-grid">
-                <!-- Card 1: Architecture Discovery (wide) -->
-                <div class="glass-card bento-card bento-wide" data-accent="cyan">
-                    <div class="bento-header">
-                        <div class="bento-icon bento-icon--cyan">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+                    <div class="role-aside">
+                        <span class="role-aside-label">Start with</span>
+                        <div class="role-cmds">
+                            <span class="role-cmd">/draft:review <small>no setup</small></span>
+                            <span class="role-cmd">/draft:init <small>then index</small></span>
                         </div>
-                        <span class="bento-tag">5-Phase Analysis</span>
-                    </div>
-                    <h3>Architecture Discovery</h3>
-                    <p>Graph-primary deep analysis producing a focused, high-signal engineering reference (Graph Health Dashboard + 9 other critical sections with provenance and fidelity tags). Derives the 200-400 line .ai-context.md. Strong emphasis on honest coverage gaps and relationship to any pre-existing high-quality agent documentation.</p>
-                    <div class="bento-stats">
-                        <span>Graph-primary</span><span>Fidelity + provenance</span><span>Incremental refresh</span>
+                        <a href="book/getting-started/" class="role-link">Getting started guide &rarr;</a>
                     </div>
                 </div>
 
-                <!-- Card 2: TDD Enforcement -->
-                <div class="glass-card bento-card" data-accent="emerald">
-                    <div class="bento-header">
-                        <div class="bento-icon bento-icon--emerald">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-                        </div>
+                <div class="role-panel" id="role-leads" role="tabpanel" aria-labelledby="tab-leads">
+                    <div>
+                        <p class="role-claim">Review specs before code exists.</p>
+                        <p class="role-detail">Every track ships with a reviewable spec, a phased plan, and a three-stage code review. Team alignment happens in documents, not meetings, and quality gates sit at every phase boundary. Module audits enforce atomicity, consistency, isolation, and durability.</p>
+                        <ul class="role-bullets">
+                            <li>PR-reviewable planning artifacts</li>
+                            <li>Three-stage review pipeline with spec compliance</li>
+                            <li>Module lifecycle deep-review and pattern learning</li>
+                        </ul>
                     </div>
-                    <h3>TDD Enforcement</h3>
-                    <p>RED &rarr; GREEN &rarr; REFACTOR cycle. Production robustness patterns enforced: atomicity, isolation, durability, idempotency, fail-closed, resilience. Property-based testing, observability prompts, contract testing at service boundaries.</p>
-                    <div class="bento-stats"><span>95%+ target</span><span>7 robustness patterns</span></div>
-                </div>
-
-                <!-- Card 3: 3-Stage Code Review -->
-                <div class="glass-card bento-card" data-accent="rose">
-                    <div class="bento-header">
-                        <div class="bento-icon bento-icon--rose">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                    <div class="role-aside">
+                        <span class="role-aside-label">Start with</span>
+                        <div class="role-cmds">
+                            <span class="role-cmd">/draft:new-track <small>spec + plan</small></span>
+                            <span class="role-cmd">/draft:review <small>three stages</small></span>
                         </div>
-                    </div>
-                    <h3>3-Stage Code Review</h3>
-                    <p>Automated validation + spec compliance + code quality. STRIDE threat modeling for new endpoints. Context-specific checks (crypto, DB, API, config, UI). SAST tool integration. Adversarial pass on zero findings.</p>
-                    <div class="bento-stats"><span>3 stages</span><span>STRIDE</span><span>SAST</span></div>
-                </div>
-
-                <!-- Card 4: Collaborative Intake -->
-                <div class="glass-card bento-card" data-accent="amber">
-                    <div class="bento-header">
-                        <div class="bento-icon bento-icon--amber">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                        </div>
-                    </div>
-                    <h3>Collaborative Intake</h3>
-                    <p>AI as expert partner — asks one question at a time, contributes patterns, risks, trade-offs. Builds spec progressively with citations from DDD, Clean Architecture, OWASP.</p>
-                    <div class="bento-stats"><span>AI as partner</span></div>
-                </div>
-
-                <!-- Card 5: Bug Hunt (wide) -->
-                <div class="glass-card bento-card bento-wide" data-accent="violet">
-                    <div class="bento-header">
-                        <div class="bento-icon bento-icon--violet">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-                        </div>
-                        <span class="bento-tag">Exhaustive Sweep</span>
-                    </div>
-                    <h3>14-Dimension Bug Hunt</h3>
-                    <p>Systematic defect discovery across 14 dimensions: correctness, reliability, security, performance, UI responsiveness, concurrency, state management, API contracts, accessibility, configuration, tests, dependency/supply chain security, algorithmic complexity, and i18n/l10n. Severity-ranked with file:line locations. Only HIGH/CONFIRMED confidence — false-positive elimination and taint tracking built in.</p>
-                    <div class="bento-stats">
-                        <span>14 dimensions</span><span>Taint tracking</span><span>Confidence filtering</span><span>Regression tests</span>
+                        <a href="book/review-pipeline/" class="role-link">See the review pipeline &rarr;</a>
                     </div>
                 </div>
 
-                <!-- Card 6: ACID Deep Review -->
-                <div class="glass-card bento-card" data-accent="emerald">
-                    <div class="bento-header">
-                        <div class="bento-icon bento-icon--emerald">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-                        </div>
+                <div class="role-panel" id="role-platform" role="tabpanel" aria-labelledby="tab-platform">
+                    <div>
+                        <p class="role-claim">A knowledge graph and 53 deterministic helpers.</p>
+                        <p class="role-detail">Tree-sitter + LSP across 159 languages. Incremental, git-aware indexing. 100% local &mdash; no API key, no code leaves your machine. Skills delegate mechanical work to JSON-emitting shell tools with a uniform exit-code contract, so every result is reproducible.</p>
+                        <ul class="role-bullets">
+                            <li>Six graph query modes: callers, callees, impact, cycles, hotspots, mermaid</li>
+                            <li>Per-module SHA-256 freshness hashing</li>
+                            <li>Scope-aware init for monorepos, module graphs linked to root</li>
+                        </ul>
                     </div>
-                    <h3>ACID Deep Review</h3>
-                    <p>Module lifecycle audit evaluating atomicity, isolation, durability, fail-closed behavior, and idempotency. Enterprise-grade production pattern enforcement.</p>
-                    <div class="bento-stats"><span>ACID compliant</span></div>
-                </div>
-
-                <!-- Card 7: Pattern Learning -->
-                <div class="glass-card bento-card" data-accent="amber">
-                    <div class="bento-header">
-                        <div class="bento-icon bento-icon--amber">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                    <div class="role-aside">
+                        <span class="role-aside-label">Start with</span>
+                        <div class="role-cmds">
+                            <span class="role-cmd">/draft:graph <small>build the index</small></span>
+                            <span class="role-cmd">/draft:impact <small>blast radius</small></span>
                         </div>
-                    </div>
-                    <h3>Pattern Learning</h3>
-                    <p>Scans your codebase for recurring patterns (3+ occurrences). Discovers conventions to skip and anti-patterns to always flag. Every quality command updates <code>guardrails.md</code> after each run — your codebase teaches Draft what to enforce, and false positives disappear over time.</p>
-                    <div class="bento-stats"><span>Auto-learning</span><span>Temporal analysis</span><span>guardrails.md</span></div>
-                </div>
-
-                <!-- Card 8: Enterprise Ready (full-width) -->
-                <!-- Card: Knowledge Graph Engine (wide) -->
-                <div class="glass-card bento-card bento-wide" data-accent="violet">
-                    <div class="bento-header">
-                        <div class="bento-icon bento-icon--violet">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="9" y1="6" x2="15" y2="6"/><line x1="6" y1="9" x2="6" y2="15"/><line x1="18" y1="9" x2="18" y2="15"/><line x1="9" y1="18" x2="15" y2="18"/></svg>
-                        </div>
-                        <span class="bento-tag">Built-in</span>
-                    </div>
-                    <h3>Knowledge Graph Engine</h3>
-                    <p>Tree-sitter + LSP-grade resolution across 159 languages, 100% local. Query tools &mdash; <strong>callers</strong>, <strong>callees</strong>, <strong>impact</strong>, <strong>cycles</strong>, <strong>hotspots</strong>, <strong>mermaid</strong>. Incremental, git-aware indexing. Impact queries break results down by code/test/doc/config. Powers <code>/draft:impact</code>, enriches <code>/draft:bughunt</code> and <code>/draft:review</code>.</p>
-                    <p class="bento-credit">Built on <a href="https://github.com/DeusData/codebase-memory-mcp" target="_blank" rel="noopener noreferrer">codebase-memory-mcp</a> &mdash; 159 languages, 100% local, no API key</p>
-                    <div class="bento-stats">
-                        <span>159 languages</span><span>Query tools</span><span>Incremental</span><span>100% local</span>
+                        <a href="book/incremental-refresh/" class="role-link">How the graph stays fresh &rarr;</a>
                     </div>
                 </div>
 
-                <!-- Card: Track Impact Memory -->
-                <div class="glass-card bento-card" data-accent="amber">
-                    <div class="bento-header">
-                        <div class="bento-icon bento-icon--amber">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                        </div>
-                        <span class="bento-tag">Track memory</span>
+                <div class="role-panel" id="role-product" role="tabpanel" aria-labelledby="tab-product">
+                    <div>
+                        <p class="role-claim">Know what's being built before it's built.</p>
+                        <p class="role-detail">Specs anyone can read and review. Jira export with story points, tracks mapped to epics, phases to stories, tasks to sub-tasks. Status tracking across every track in the repo, straight from the files engineers already keep current.</p>
+                        <ul class="role-bullets">
+                            <li>Readable spec.md and plan.md per track</li>
+                            <li>Jira preview, create, and ticket qualification</li>
+                            <li>Progress and blockers from <code>/draft:status</code></li>
+                        </ul>
                     </div>
-                    <h3>Track Impact Memory</h3>
-                    <p>Each completed track records its blast radius in <code>metadata.json</code> &mdash; files touched, modules affected, downstream count, by-category breakdown. <code>/draft:plan</code> reads recent tracks' impact during context load and surfaces overlap warnings before you even write a spec.</p>
-                    <div class="bento-stats">
-                        <span>Auto-recorded</span><span>Overlap detection</span>
+                    <div class="role-aside">
+                        <span class="role-aside-label">Start with</span>
+                        <div class="role-cmds">
+                            <span class="role-cmd">/draft:jira preview <small>see the export</small></span>
+                            <span class="role-cmd">/draft:status <small>where things stand</small></span>
+                        </div>
+                        <a href="book/jira-integration/" class="role-link">Jira integration &rarr;</a>
                     </div>
                 </div>
 
-                <!-- Card: Deterministic Tools -->
-                <div class="glass-card bento-card" data-accent="emerald">
-                    <div class="bento-header">
-                        <div class="bento-icon bento-icon--emerald">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
-                        </div>
-                        <span class="bento-tag">53 helpers</span>
+                <div class="role-panel" id="role-leadership" role="tabpanel" aria-labelledby="tab-leadership">
+                    <div>
+                        <p class="role-claim">Deterministic quality gates you can audit, at zero cost.</p>
+                        <p class="role-detail">ACID compliance audits, Architecture Decision Records, monorepo federation. Every review cites the file, the line, and the graph query behind it. MIT licensed, no telemetry, no vendor lock-in &mdash; the specs and architecture docs are plain markdown in your own repo.</p>
+                        <ul class="role-bullets">
+                            <li>Auditable gates: specs before code, TDD, blast radius, ADRs</li>
+                            <li>100% local engine &mdash; no code leaves the machine</li>
+                            <li>Enterprise-grade methodology, free forever</li>
+                        </ul>
                     </div>
-                    <h3>Deterministic Helpers</h3>
-                    <p>Skills delegate mechanical work to 53 shell tools under <code>scripts/tools/</code> &mdash; git metadata, file classification, hotspot ranking, cycle detection, freshness checks, ADR indexing, test-framework detection, and more. Uniform JSON output and exit-code contract. Graph wrappers fail loud on shapeless engine JSON rather than reporting a clean empty result.</p>
-                    <div class="bento-stats">
-                        <span>JSON contract</span><span>Reproducible</span>
+                    <div class="role-aside">
+                        <span class="role-aside-label">Start with</span>
+                        <div class="role-cmds">
+                            <span class="role-cmd">/draft:deep-review <small>ACID audit</small></span>
+                            <span class="role-cmd">/draft:adr <small>decision records</small></span>
+                        </div>
+                        <a href="book/deep-review/" class="role-link">Deep review, explained &rarr;</a>
                     </div>
                 </div>
 
-                <div class="glass-card bento-card bento-full" data-accent="cyan">
-                    <div class="bento-header">
-                        <div class="bento-icon bento-icon--cyan">
-                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-                        </div>
-                        <span class="bento-tag">Enterprise</span>
+                <div class="role-panel" id="role-oss" role="tabpanel" aria-labelledby="tab-oss">
+                    <div>
+                        <p class="role-claim">Turn any project into a documented system.</p>
+                        <p class="role-detail">Architecture discovery writes the reference you never had time to. Bug hunting catches what you'd never find by hand. Free, open source, MIT &mdash; the only costs are the host tools you already use.</p>
+                        <ul class="role-bullets">
+                            <li>Architecture docs with Mermaid diagrams, generated from the graph</li>
+                            <li>14-dimension bug hunt with regression tests</li>
+                            <li>Works on brownfield and greenfield repos alike</li>
+                        </ul>
                     </div>
-                    <h3>Enterprise Ready</h3>
-                    <p>Monorepo federation with service discovery and dependency graphs. Unified Jira router &mdash; <code>preview</code>, <code>create</code> (Track &rarr; Epic, Phase &rarr; Story, Task &rarr; Sub-task), and <code>review &lt;JIRA-ID&gt;</code> that qualifies a ticket with deep-review + bug hunt + coverage + test-gap analysis. Architecture Decision Records with full lifecycle. Git-aware task/phase/track-level revert. Mid-track change management with impact analysis.</p>
-                    <div class="bento-stats">
-                        <span>Monorepo</span><span>Jira preview / create / review</span><span>ADRs</span><span>Revert</span><span>Change mgmt</span>
+                    <div class="role-aside">
+                        <span class="role-aside-label">Start with</span>
+                        <div class="role-cmds">
+                            <span class="role-cmd">/draft:init <small>map the repo</small></span>
+                            <span class="role-cmd">/draft:bughunt <small>find defects</small></span>
+                        </div>
+                        <a href="book/bug-hunt/" class="role-link">The bug hunt chapter &rarr;</a>
                     </div>
                 </div>
             </div>
@@ -855,159 +1188,18 @@
     </section>
 
     <!-- ============================================================ -->
-    <!-- SECTION 5: COMMANDS                                          -->
-    <!-- ============================================================ -->
-    <section id="commands" class="section">
-        <div class="section-glow section-glow--emerald"></div>
-        <div class="section-inner">
-            <span class="section-label">The commands you'll actually type</span>
-            <h2>Four you run. <span class="text-emerald">Twenty-nine</span> that route themselves.</h2>
-            <p class="section-subtitle">The whole workflow comes down to four commands. Everything else &mdash; bug hunts, coverage, debugging, ADRs, deploy checklists, Jira &mdash; is a specialist the routers reach for on their own. Each one is still there to call by name the moment you want it.</p>
-
-            <!-- Interactive terminal -->
-            <div class="terminal glass-card">
-                <div class="terminal-header">
-                    <div class="terminal-dots">
-                        <span class="dot-red"></span>
-                        <span class="dot-yellow"></span>
-                        <span class="dot-green"></span>
-                    </div>
-                    <span class="terminal-title">draft-terminal</span>
-                </div>
-                <div class="terminal-body" id="terminal-body">
-                    <div class="terminal-line">
-                        <span class="terminal-prompt">$</span>
-                        <span class="terminal-cmd" id="terminal-cmd"></span>
-                        <span class="terminal-cursor">|</span>
-                    </div>
-                    <div class="terminal-output" id="terminal-output"></div>
-                </div>
-            </div>
-
-            <!-- Primary commands — the four-command workflow -->
-            <div class="cmd-primary-grid cmd-primary-grid--four">
-                <article class="cmd-primary" data-term="review">
-                    <span class="cmd-primary-step">01</span>
-                    <a class="cmd-primary-name" href="book/command-reference/#cmd-review">/draft:review</a>
-                    <p class="cmd-primary-desc">Three stages on your branch. <strong>Runs with zero setup</strong> &mdash; start here, before indexing anything.</p>
-                </article>
-                <article class="cmd-primary" data-term="init">
-                    <span class="cmd-primary-step">02</span>
-                    <a class="cmd-primary-name" href="book/command-reference/#cmd-init">/draft:init</a>
-                    <p class="cmd-primary-desc">Map the codebase once. Adds blast radius, caller lookup, and cycle detection to every later review.</p>
-                </article>
-                <article class="cmd-primary" data-term="plan">
-                    <span class="cmd-primary-step">03</span>
-                    <a class="cmd-primary-name" href="book/command-reference/#cmd-new-track">/draft:new-track</a>
-                    <p class="cmd-primary-desc">Turn an idea into a reviewable spec and a phased plan before any code.</p>
-                </article>
-                <article class="cmd-primary" data-term="implement">
-                    <span class="cmd-primary-step">04</span>
-                    <a class="cmd-primary-name" href="book/command-reference/#cmd-implement">/draft:implement</a>
-                    <p class="cmd-primary-desc">Build the plan task by task, test-first, with verification gates between steps.</p>
-                </article>
-            </div>
-
-            <!-- Routing diagram — the signature: one prompt, the right specialist -->
-            <div class="routing-block">
-                <p class="routing-lead">You don't pick the specialist. <span>Draft routes intent to it</span> &mdash; and you can still call it by name.</p>
-                <div class="routing-diagram">
-                    <div class="routing-prompt"><span class="routing-prompt-cmd">draft</span> "fix the flaky login test"</div>
-                    <span class="routing-conn" aria-hidden="true"></span>
-                    <div class="routing-hub">
-                        <span class="routing-hub-title">intent router</span>
-                        <span class="routing-hub-sub">reads what you mean</span>
-                    </div>
-                    <span class="routing-conn routing-conn--fan" aria-hidden="true"></span>
-                    <div class="routing-fan">
-                        <span class="routing-leaf">/draft:debug</span>
-                        <span class="routing-leaf routing-leaf--lit">/draft:testing-strategy</span>
-                        <span class="routing-leaf">/draft:bughunt</span>
-                        <span class="routing-leaf">/draft:coverage</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Routed specialists — quiet, on demand -->
-            <details class="cmd-routed">
-                <summary class="cmd-routed-summary">
-                    <span class="cmd-routed-toggle" aria-hidden="true"></span>
-                    <span class="cmd-routed-count">29 specialists</span>
-                    <span class="cmd-routed-hint">routed for you &mdash; or call any of them by name</span>
-                </summary>
-                <div class="cmd-routed-body">
-                    <div class="router-group">
-                        <a class="router-name" href="book/command-reference/#cmd-plan">/draft:plan</a>
-                        <div class="router-chips">
-                            <a class="chip" href="book/command-reference/#cmd-decompose">decompose</a>
-                            <a class="chip" href="book/command-reference/#cmd-adr">adr</a>
-                            <a class="chip" href="book/command-reference/#cmd-tech-debt">tech-debt</a>
-                            <a class="chip" href="book/command-reference/#cmd-change">change</a>
-                        </div>
-                    </div>
-                    <div class="router-group">
-                        <a class="router-name" href="book/command-reference/#cmd-discover">/draft:discover</a>
-                        <div class="router-chips">
-                            <a class="chip" href="book/command-reference/#cmd-bughunt">bughunt</a>
-                            <a class="chip" href="book/command-reference/#cmd-debug">debug</a>
-                            <a class="chip" href="book/command-reference/#cmd-quick-review">quick-review</a>
-                            <a class="chip" href="book/command-reference/#cmd-deep-review">deep-review</a>
-                            <a class="chip" href="book/command-reference/#cmd-coverage">coverage</a>
-                            <a class="chip" href="book/command-reference/#cmd-testing-strategy">testing-strategy</a>
-                            <a class="chip" href="book/command-reference/#cmd-learn">learn</a>
-                            <a class="chip" href="book/command-reference/#cmd-tour">tour</a>
-                            <a class="chip" href="book/command-reference/#cmd-impact">impact</a>
-                            <a class="chip" href="book/command-reference/#cmd-assist-review">assist-review</a>
-                        </div>
-                    </div>
-                    <div class="router-group">
-                        <a class="router-name" href="book/command-reference/#cmd-ops">/draft:ops</a>
-                        <div class="router-chips">
-                            <a class="chip" href="book/command-reference/#cmd-status">status</a>
-                            <a class="chip" href="book/command-reference/#cmd-revert">revert</a>
-                            <a class="chip" href="book/command-reference/#cmd-deploy-checklist">deploy-checklist</a>
-                            <a class="chip" href="book/command-reference/#cmd-incident-response">incident-response</a>
-                            <a class="chip" href="book/command-reference/#cmd-standup">standup</a>
-                        </div>
-                    </div>
-                    <div class="router-group">
-                        <a class="router-name" href="book/command-reference/#cmd-docs">/draft:docs</a>
-                        <div class="router-chips">
-                            <a class="chip" href="book/command-reference/#cmd-documentation">documentation</a>
-                        </div>
-                    </div>
-                    <div class="router-group">
-                        <a class="router-name" href="book/command-reference/#cmd-jira">/draft:jira</a>
-                        <div class="router-chips">
-                            <a class="chip" href="book/command-reference/#cmd-jira">preview</a>
-                            <a class="chip" href="book/command-reference/#cmd-jira">create</a>
-                            <a class="chip" href="book/command-reference/#cmd-jira">review</a>
-                            <a class="chip" href="book/command-reference/#cmd-integrations">integrations</a>
-                            <a class="chip" href="book/command-reference/#cmd-upload">upload</a>
-                        </div>
-                    </div>
-                    <div class="router-group">
-                        <span class="router-name">direct</span>
-                        <div class="router-chips">
-                            <a class="chip" href="book/command-reference/#cmd-draft">draft</a>
-                            <a class="chip" href="book/command-reference/#cmd-graph">graph</a>
-                        </div>
-                    </div>
-                    <a class="cmd-routed-more" href="book/command-reference/">Full command reference &mdash; every flag and mode &rarr;</a>
-                </div>
-            </details>
-        </div>
-    </section>
-
-    <!-- ============================================================ -->
-    <!-- SECTION 6: TEAM COLLABORATION                                -->
+    <!-- TEAM COLLABORATION                                           -->
     <!-- ============================================================ -->
     <section id="team" class="section">
         <div class="section-glow section-glow--amber"></div>
         <div class="section-inner">
-            <span class="section-label">Collaboration</span>
-            <h2>Review specs, <span class="text-amber">not surprises</span></h2>
-            <p class="section-subtitle">Every markdown file goes through commit &rarr; review &rarr; merge before a single line of code is written. By the time implementation starts, the entire team has already agreed on what to build.</p>
+            <div class="section-head">
+                <div>
+                    <span class="section-label">Collaboration</span>
+                    <h2>Review specs, <span class="text-amber">not surprises</span>.</h2>
+                </div>
+                <p class="section-subtitle">Every markdown file goes through commit &rarr; review &rarr; merge before a single line of code is written. By the time implementation starts, the entire team has already agreed on what to build.</p>
+            </div>
 
             <div class="team-flow">
                 <div class="team-step glass-card">
@@ -1017,7 +1209,7 @@
                 </div>
                 <div class="team-step glass-card">
                     <div class="team-num">2</div>
-                    <h3>Spec &amp; Plan</h3>
+                    <h3>Spec &amp; plan</h3>
                     <p>Lead runs <code>/draft:plan</code>. Team reviews requirements and task breakdown via PR.</p>
                 </div>
                 <div class="team-step glass-card">
@@ -1044,28 +1236,32 @@
     </section>
 
     <!-- ============================================================ -->
-    <!-- SECTION 7: INSTALL                                           -->
+    <!-- INSTALL                                                      -->
     <!-- ============================================================ -->
     <section id="install" class="section">
         <div class="section-glow section-glow--cyan"></div>
         <div class="section-inner">
-            <span class="section-label">Get Started</span>
-            <h2>Install in <span class="text-cyan">30 seconds</span></h2>
-            <p class="section-subtitle">Works with your existing tools. Zero switching cost.</p>
+            <div class="section-head">
+                <div>
+                    <span class="section-label">Get started</span>
+                    <h2>Install in <span class="text-cyan">30 seconds</span>.</h2>
+                </div>
+                <p class="section-subtitle">Works with your existing tools. Zero switching cost. Run the review first &mdash; it needs no setup &mdash; and index the repo once you've seen what it catches.</p>
+            </div>
 
-            <div class="install-tabs">
-                <button class="install-tab active" data-target="claude-code">Claude Code</button>
-                <button class="install-tab" data-target="cursor">Cursor</button>
-                <button class="install-tab" data-target="codex">Codex</button>
-                <button class="install-tab" data-target="opencode">opencode</button>
-                <button class="install-tab" data-target="more">Copilot / Gemini</button>
+            <div class="install-tabs" role="tablist" aria-label="Install target">
+                <button class="install-tab active" data-target="claude-code" role="tab" aria-selected="true">Claude Code</button>
+                <button class="install-tab" data-target="cursor" role="tab" aria-selected="false">Cursor</button>
+                <button class="install-tab" data-target="codex" role="tab" aria-selected="false">Codex</button>
+                <button class="install-tab" data-target="opencode" role="tab" aria-selected="false">opencode</button>
+                <button class="install-tab" data-target="more" role="tab" aria-selected="false">Copilot / Gemini</button>
             </div>
 
             <div class="install-panels">
                 <div class="install-panel active" id="panel-claude-code">
                     <div class="code-block glass-card">
                         <div class="code-header">
-                            <div class="terminal-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+                            <div class="terminal-dots" aria-hidden="true"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
                             <span class="code-filename">Claude Code CLI</span>
                         </div>
                         <pre><code><span class="c-comment"># Install Draft with one command</span>
@@ -1083,7 +1279,7 @@
                 <div class="install-panel" id="panel-cursor">
                     <div class="code-block glass-card">
                         <div class="code-header">
-                            <div class="terminal-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+                            <div class="terminal-dots" aria-hidden="true"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
                             <span class="code-filename">Cursor</span>
                         </div>
                         <pre><code><span class="c-comment"># Install Draft into Cursor</span>
@@ -1094,7 +1290,7 @@
                 <div class="install-panel" id="panel-codex">
                     <div class="code-block glass-card">
                         <div class="code-header">
-                            <div class="terminal-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+                            <div class="terminal-dots" aria-hidden="true"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
                             <span class="code-filename">OpenAI Codex</span>
                         </div>
                         <pre><code><span class="c-comment"># Install Draft into Codex</span>
@@ -1105,7 +1301,7 @@
                 <div class="install-panel" id="panel-opencode">
                     <div class="code-block glass-card">
                         <div class="code-header">
-                            <div class="terminal-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+                            <div class="terminal-dots" aria-hidden="true"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
                             <span class="code-filename">opencode</span>
                         </div>
                         <pre><code><span class="c-comment"># Install Draft into opencode</span>
@@ -1116,7 +1312,7 @@
                 <div class="install-panel" id="panel-more">
                     <div class="code-block glass-card">
                         <div class="code-header">
-                            <div class="terminal-dots"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
+                            <div class="terminal-dots" aria-hidden="true"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
                             <span class="code-filename">GitHub Copilot / Gemini</span>
                         </div>
                         <pre><code><span class="c-comment"># GitHub Copilot — copy the instructions file</span>
@@ -1127,161 +1323,31 @@
 <span class="c-cmd">curl</span> -o <span class="c-str">.gemini.md</span> \
   <span class="c-str">https://raw.githubusercontent.com/drafthq/draft/main/integrations/gemini/.gemini.md</span></code></pre>
                     </div>
-                    <p class="install-note">Copilot &amp; Gemini read a committed instructions file — copy it directly (not a <code>draft install</code> host).</p>
+                    <p class="install-note">Copilot &amp; Gemini read a committed instructions file &mdash; copy it directly (not a <code>draft install</code> host).</p>
                 </div>
             </div>
 
             <p class="install-note install-note--global">Prefer a persistent command? Install once with <code>npm install -g @drafthq/draft</code>, then run <code>draft install &lt;host&gt;</code>. Use <code>draft list</code> to see every host and its default scope (<code>--global</code> for Claude Code and Cursor, <code>--project</code> for Codex and opencode).</p>
 
             <div class="callout">
-                <strong>No vendor lock-in.</strong> Your specs, plans, and architecture docs are plain markdown files in your repo. Switch tools any time — your project knowledge stays with you.
+                <strong>No vendor lock-in.</strong> Your specs, plans, and architecture docs are plain markdown files in your repo. Switch tools any time &mdash; your project knowledge stays with you.
             </div>
         </div>
     </section>
 
     <!-- ============================================================ -->
-    <!-- SECTION 8: CODEBASE RESEARCH / ARCHITECTURE                  -->
-    <!-- ============================================================ -->
-    <section id="architecture" class="section">
-        <div class="section-glow section-glow--violet"></div>
-        <div class="section-inner">
-            <span class="section-label">Deep Analysis</span>
-            <h2>Your codebase, <span class="text-violet">fully understood</span></h2>
-            <p class="section-subtitle">/draft:init performs a 5-phase codebase analysis — not a diagram of intent, a map of reality.</p>
-
-            <div class="arch-grid">
-                <div class="glass-card arch-card">
-                    <div class="arch-num">1</div>
-                    <h3>System Map</h3>
-                    <p>Directory structure, entry points, request/response flows with actual file:line references.</p>
-                </div>
-                <div class="glass-card arch-card">
-                    <div class="arch-num">2</div>
-                    <h3>Data Lifecycle</h3>
-                    <p>State machines per domain object. Storage topology across cache, DB, event log, archive.</p>
-                </div>
-                <div class="glass-card arch-card">
-                    <div class="arch-num">3</div>
-                    <h3>Critical Paths</h3>
-                    <p>End-to-end write/read paths with consistency boundaries and failure recovery matrix.</p>
-                </div>
-                <div class="glass-card arch-card">
-                    <div class="arch-num">4</div>
-                    <h3>System Constraints</h3>
-                    <p>Critical invariants: data safety, security, concurrency, ordering, idempotency.</p>
-                </div>
-                <div class="glass-card arch-card">
-                    <div class="arch-num">5</div>
-                    <h3>Extension Cookbooks</h3>
-                    <p>Step-by-step guides: "Add a new endpoint", "Add a new model" — file-by-file instructions.</p>
-                </div>
-                <div class="glass-card arch-card">
-                    <div class="arch-num">S</div>
-                    <h3>State Persistence</h3>
-                    <p>SHA-256 freshness hashes, 11-category signal classification, resumable run memory. Incremental refresh only re-analyzes what changed.</p>
-                </div>
-            </div>
-
-            <!-- Triple output comparison -->
-            <div class="dual-output">
-                <div class="glass-card dual-card">
-                    <h4>.ai-context.md</h4>
-                    <p class="dual-meta">Machine-optimized &middot; 200-400 lines</p>
-                    <p>Dense tables, YAML frontmatter, flat sections. Token-efficient — minimal prose, maximum signal. Consumed by all Draft commands and external AI tools.</p>
-                </div>
-                <div class="dual-divider"></div>
-                <div class="glass-card dual-card">
-                    <h4>architecture.md</h4>
-                    <p class="dual-meta">Graph-primary &middot; High-signal with explicit fidelity</p>
-                    <p>Prose paragraphs, annotated Mermaid diagrams, onboarding framing. Source of truth — all mutations happen here. For engineers, leads, and PR reviewers.</p>
-                </div>
-                <div class="dual-divider"></div>
-                <div class="glass-card dual-card">
-                    <h4>guardrails.md</h4>
-                    <p class="dual-meta">Auto-learning &middot; Hard rules + discovered patterns</p>
-                    <p>Human-defined constraints plus auto-discovered conventions and anti-patterns. Quality commands read this file, skip known patterns, and flag violations — then update it after every run. Your codebase teaches Draft what to enforce.</p>
-                </div>
-            </div>
-
-            <div class="callout">
-                <strong>Pay the analysis cost once, benefit on every interaction.</strong> Reduces token cost, eliminates hallucinations, improves accuracy. The AI writes code that fits your system because it <em>knows</em> your system — and guardrails ensure it respects your rules.
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================================ -->
-    <!-- SECTION 9: WHO IT'S FOR                                      -->
-    <!-- ============================================================ -->
-    <section id="audience" class="section">
-        <div class="section-glow section-glow--cyan"></div>
-        <div class="section-inner">
-            <span class="section-label">Built For Your Role</span>
-            <h2>Who it's <span class="text-cyan">for</span></h2>
-            <p class="section-subtitle">Draft speaks different languages to different roles — but the value compounds across your entire organization.</p>
-
-            <div class="audience-grid">
-                <div class="glass-card audience-card" data-accent="cyan">
-                    <div class="audience-icon audience-icon--cyan">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-                    </div>
-                    <h3>Engineers</h3>
-                    <p class="audience-role">IC / Senior / Staff</p>
-                    <p>TDD enforcement, 14-dimension bug hunting, architecture discovery with Mermaid diagrams, pattern learning. Write code that fits your system because Draft <em>knows</em> your system.</p>
-                    <div class="audience-cta">/draft:implement + /draft:bughunt</div>
-                </div>
-
-                <div class="glass-card audience-card" data-accent="amber">
-                    <div class="audience-icon audience-icon--amber">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                    </div>
-                    <h3>Engineering Managers</h3>
-                    <p class="audience-role">EM / Director</p>
-                    <p>Review specs before code exists. PR-reviewable planning artifacts. Team alignment through documents, not meetings. Quality gates at every phase boundary.</p>
-                    <div class="audience-cta">Specs are 10x cheaper to change than code</div>
-                </div>
-
-                <div class="glass-card audience-card" data-accent="violet">
-                    <div class="audience-icon audience-icon--violet">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
-                    </div>
-                    <h3>Product Managers</h3>
-                    <p class="audience-role">PM / TPM</p>
-                    <p>Readable specs anyone can review. Jira integration with auto story points. Status tracking across tracks. Know what's being built before it's built.</p>
-                    <div class="audience-cta">/draft:jira (preview/create) + /draft:status</div>
-                </div>
-
-                <div class="glass-card audience-card" data-accent="emerald">
-                    <div class="audience-icon audience-icon--emerald">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-                    </div>
-                    <h3>CXOs &amp; VPs</h3>
-                    <p class="audience-role">CTO / VP Eng / CISO</p>
-                    <p>Deterministic quality gates you can audit, at zero cost. ACID compliance audits, Architecture Decision Records, monorepo federation. Every review cites the file, the line, and the graph query behind it. MIT licensed, no vendor lock-in.</p>
-                    <div class="audience-cta">Enterprise-grade methodology, free forever</div>
-                </div>
-
-                <div class="glass-card audience-card" data-accent="rose">
-                    <div class="audience-icon audience-icon--rose">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    </div>
-                    <h3>Open Source &amp; Enthusiasts</h3>
-                    <p class="audience-role">Hobbyist / Indie / Student</p>
-                    <p>Architecture discovery turns any project into a documented system. Bug hunting catches what you'd never find manually. Free, open source, MIT license.</p>
-                    <div class="audience-cta">/draft:init + /draft:bughunt = instant quality</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ============================================================ -->
-    <!-- SECTION 10: INDUSTRY STANDARDS                               -->
+    <!-- EVIDENCE — the gates, the price, the proof                   -->
     <!-- ============================================================ -->
     <section id="industry" class="section">
         <div class="section-glow section-glow--emerald"></div>
         <div class="section-inner">
-            <span class="section-label">Enterprise Grade</span>
-            <h2>The gates a <span class="text-emerald">senior reviewer</span> would ask for, automated</h2>
-            <p class="section-subtitle">Specs before code, TDD gates, blast-radius analysis, ADRs, ACID audits &mdash; enforced by the tool instead of remembered by the reviewer.</p>
+            <div class="section-head">
+                <div>
+                    <span class="section-label">Enterprise grade</span>
+                    <h2>The gates a <span class="text-emerald">senior reviewer</span> would ask for, automated.</h2>
+                </div>
+                <p class="section-subtitle">Specs before code, TDD gates, blast-radius analysis, ADRs, ACID audits &mdash; enforced by the tool instead of remembered by the reviewer.</p>
+            </div>
 
             <div class="industry-table-wrap glass-card">
                 <table class="industry-table">
@@ -1289,66 +1355,65 @@
                         <tr>
                             <th>Rank</th>
                             <th>Practice</th>
-                            <th>Draft Implementation</th>
-                            <th>Industry Equivalent</th>
+                            <th>Draft implementation</th>
+                            <th>Industry equivalent</th>
                             <th>Companies</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td><strong>1</strong></td>
-                            <td>Design-First Engineering</td>
+                            <td>1</td>
+                            <td>Design-first engineering</td>
                             <td>spec.md &amp; plan.md per track</td>
-                            <td>Amazon PR/FAQ, Google Design Docs</td>
+                            <td>Amazon PR/FAQ, Google design docs</td>
                             <td>Google, Amazon, Stripe, Uber</td>
                         </tr>
                         <tr>
-                            <td><strong>1</strong></td>
-                            <td>Monorepo / Shared Context</td>
-                            <td>/draft:init (scope-aware, run per module root)</td>
+                            <td>1</td>
+                            <td>Monorepo / shared context</td>
+                            <td>/draft:init (scope-aware, per module root)</td>
                             <td>Unified codebase, dependency graphing</td>
                             <td>Google, Meta, Twitter</td>
                         </tr>
                         <tr>
-                            <td><strong>2</strong></td>
-                            <td>Test-Driven Development</td>
+                            <td>2</td>
+                            <td>Test-driven development</td>
                             <td>/draft:implement RED-GREEN-REFACTOR</td>
-                            <td>TDD / CI Gates</td>
+                            <td>TDD / CI gates</td>
                             <td>Netflix, Pivotal</td>
                         </tr>
                         <tr>
-                            <td><strong>3</strong></td>
-                            <td>Structured Code Review</td>
+                            <td>3</td>
+                            <td>Structured code review</td>
                             <td>/draft:review 3-stage</td>
                             <td>Google Critique system</td>
                             <td>Google, Meta</td>
                         </tr>
                         <tr>
-                            <td><strong>3</strong></td>
+                            <td>3</td>
                             <td>Architecture Decision Records</td>
                             <td>/draft:adr + architecture.md</td>
                             <td>Immutable ADRs</td>
                             <td>Spotify, AWS, GitHub</td>
                         </tr>
                         <tr>
-                            <td><strong>4</strong></td>
-                            <td>Bug Bashes</td>
+                            <td>4</td>
+                            <td>Bug bashes</td>
                             <td>/draft:bughunt 14 dimensions</td>
                             <td>Scheduled team testing sessions</td>
-                            <td>Microsoft, Game Studios</td>
+                            <td>Microsoft, game studios</td>
                         </tr>
                         <tr>
-                            <td><strong>5</strong></td>
-                            <td>Service Catalog</td>
+                            <td>5</td>
+                            <td>Service catalog</td>
                             <td>product.md + tech-stack.md</td>
-                            <td>Internal Developer Platform</td>
+                            <td>Internal developer platform</td>
                             <td>Spotify, Lyft</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
-            <!-- Pricing comparison -->
             <div class="pricing-comparison">
                 <div class="glass-card pricing-card pricing-card--highlight">
                     <h4>Draft</h4>
@@ -1376,8 +1441,11 @@
             <!-- Evidence, not adjectives: real output from Draft's own repo. -->
             <div class="proof">
                 <div class="proof-head">
-                    <h3>What that actually buys you</h3>
-                    <p>Three defects <code>/draft:review</code> found in Draft's own codebase, shipped as fixes in v3.6.0 &mdash; and the graph query that scopes each one.</p>
+                    <div>
+                        <h3>What that actually buys you</h3>
+                        <p>Three defects <code>/draft:review</code> found in Draft's own codebase, shipped as fixes in v3.6.0 &mdash; and the graph query that scopes each one.</p>
+                    </div>
+                    <span class="proof-head-tag">Reproducible</span>
                 </div>
 
                 <div class="proof-findings">
@@ -1424,13 +1492,18 @@
     </section>
 
     <!-- ============================================================ -->
-    <!-- SECTION 11: FAQ                                              -->
+    <!-- FAQ                                                          -->
     <!-- ============================================================ -->
     <section id="faq" class="section">
-        <div class="section-glow section-glow--amber"></div>
+        <div class="section-glow section-glow--cyan"></div>
         <div class="section-inner">
-            <span class="section-label">Questions &amp; Answers</span>
-            <h2>Frequently asked <span class="text-amber">questions</span></h2>
+            <div class="section-head">
+                <div>
+                    <span class="section-label">Questions &amp; answers</span>
+                    <h2>Frequently asked <span class="text-cyan">questions</span>.</h2>
+                </div>
+                <p class="section-subtitle">Short answers to the things engineers ask before they install. The book covers everything else in depth.</p>
+            </div>
 
             <div class="faq-list">
                 <details class="faq-item glass-card">
@@ -1450,7 +1523,7 @@
                 <details class="faq-item glass-card">
                     <summary class="faq-question">What AI coding agents does Draft support?</summary>
                     <div class="faq-answer">
-                        <p>Draft supports Claude Code, Cursor, Codex, opencode, GitHub Copilot, and Gemini. It integrates natively with each platform using their respective configuration formats — slash commands for Claude Code and Cursor, an AGENTS.md file for Codex and opencode, copilot-instructions.md for Copilot, and .gemini.md for Gemini (including the Antigravity IDE).</p>
+                        <p>Draft supports Claude Code, Cursor, Codex, opencode, GitHub Copilot, and Gemini. It integrates natively with each platform using their respective configuration formats &mdash; slash commands for Claude Code and Cursor, an AGENTS.md file for Codex and opencode, copilot-instructions.md for Copilot, and .gemini.md for Gemini (including the Antigravity IDE).</p>
                     </div>
                 </details>
 
@@ -1478,14 +1551,14 @@
                 <details class="faq-item glass-card">
                     <summary class="faq-question">Does Draft work with my existing project?</summary>
                     <div class="faq-answer">
-                        <p>Yes. Running <code>/draft:init</code> performs a 5-phase analysis of your existing codebase, generating architecture documentation, AI context files, and signal classifications. It works with any language, framework, or project structure — brownfield or greenfield.</p>
+                        <p>Yes. Running <code>/draft:init</code> performs a multi-phase analysis of your existing codebase, generating architecture documentation, AI context files, and signal classifications. It works with any language, framework, or project structure &mdash; brownfield or greenfield.</p>
                     </div>
                 </details>
 
                 <details class="faq-item glass-card">
                     <summary class="faq-question">How is Draft different from other AI coding tools?</summary>
                     <div class="faq-answer">
-                        <p>Draft is not an AI coding tool — it is a methodology layer that runs on top of existing AI agents. While tools like Cursor or Copilot generate code, Draft ensures that code follows approved specifications, passes TDD gates, and fits your architecture. It adds structure and quality gates, not another AI model.</p>
+                        <p>Draft is not an AI coding tool &mdash; it is a methodology layer that runs on top of existing AI agents. While tools like Cursor or Copilot generate code, Draft ensures that code follows approved specifications, passes TDD gates, and fits your architecture. It adds structure and quality gates, not another AI model.</p>
                     </div>
                 </details>
 
@@ -1499,7 +1572,7 @@
                 <details class="faq-item glass-card">
                     <summary class="faq-question">Can Draft work with monorepos?</summary>
                     <div class="faq-answer">
-                        <p>Yes. Run <code>/draft:init</code> at each module root — it is scope-aware and links each module graph to the root graph for full cross-module understanding.</p>
+                        <p>Yes. Run <code>/draft:init</code> at each module root &mdash; it is scope-aware and links each module graph to the root graph for full cross-module understanding.</p>
                     </div>
                 </details>
 
@@ -1519,38 +1592,69 @@
     <footer id="footer" class="footer">
         <div class="footer-inner">
             <div class="footer-brand">
-                <span class="footer-logo">Draft</span>
-                <p>Context-Driven Development for AI-powered software engineering.</p>
+                <span class="footer-logo">
+                    <svg class="logo-mark" width="22" height="22" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+                        <path d="M6 19L13 7L20 19M6 19H20" stroke="var(--accent-cyan)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle cx="6" cy="19" r="2.6" fill="var(--accent-cyan)"/>
+                        <circle cx="20" cy="19" r="2.6" fill="var(--accent-cyan)"/>
+                        <circle cx="13" cy="7" r="3" fill="var(--accent-amber)"/>
+                    </svg>
+                    Draft
+                </span>
+                <p>Context-Driven Development for AI-powered software engineering. Draft it before your agent builds it.</p>
+                <div class="footer-social">
+                    <span class="footer-social-label">Share</span>
+                    <a href="https://api.whatsapp.com/send?text=Draft%3A%20code%20intelligence%20for%20your%20AI%20coding%20agent%20%E2%80%94%20powered%20by%20codebase-memory-mcp%2C%20a%20159-language%20local%20knowledge-graph%20engine.%20Free%2C%20open-source%2C%20MIT.%20https%3A%2F%2Fgetdraft.dev" target="_blank" rel="noopener noreferrer" class="social-btn" title="WhatsApp" aria-label="Share on WhatsApp">
+                        <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    </a>
+                    <a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fgetdraft.dev" target="_blank" rel="noopener noreferrer" class="social-btn" title="LinkedIn" aria-label="Share on LinkedIn">
+                        <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+                    </a>
+                    <a href="https://news.ycombinator.com/submitlink?u=https%3A%2F%2Fgetdraft.dev&t=Draft%3A%20code%20intelligence%20for%20your%20AI%20coding%20agent%20%E2%80%94%20powered%20by%20codebase-memory-mcp%2C%20a%20159-language%20local%20knowledge-graph%20engine.%20Free%2C%20open-source%2C%20MIT." target="_blank" rel="noopener noreferrer" class="social-btn" title="Hacker News" aria-label="Share on Hacker News">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M0 24V0h24v24H0zM6.951 5.896l4.047 7.61V22h2.004v-8.494l4.047-7.61h-2.19l-2.859 5.83-2.859-5.83H6.951z"/></svg>
+                    </a>
+                    <a href="https://reddit.com/submit?url=https%3A%2F%2Fgetdraft.dev&title=Draft%3A%20code%20intelligence%20for%20your%20AI%20coding%20agent%20%E2%80%94%20powered%20by%20codebase-memory-mcp%2C%20a%20159-language%20local%20knowledge-graph%20engine.%20Free%2C%20open-source%2C%20MIT." target="_blank" rel="noopener noreferrer" class="social-btn" title="Reddit" aria-label="Share on Reddit">
+                        <svg viewBox="0 0 24 24"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
+                    </a>
+                    <a href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fgetdraft.dev&text=Draft%3A%20code%20intelligence%20for%20your%20AI%20coding%20agent%20%E2%80%94%20powered%20by%20codebase-memory-mcp%2C%20a%20159-language%20local%20knowledge-graph%20engine.%20Free%2C%20open-source%2C%20MIT." target="_blank" rel="noopener noreferrer" class="social-btn" title="X" aria-label="Share on X">
+                        <svg viewBox="0 0 24 24"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>
+                    </a>
+                </div>
             </div>
-            <div class="footer-links">
-                <a href="book/">Read the Book</a>
-                <a href="book/command-reference/">Command Reference</a>
-                <a href="blog/">Blog</a>
-                <a href="changelog/">Changelog</a>
-                <a href="https://github.com/drafthq/draft" target="_blank" rel="noopener noreferrer">GitHub</a>
+            <div class="footer-col">
+                <h5>Product</h5>
+                <ul>
+                    <li><a href="#playground">Graph engine</a></li>
+                    <li><a href="#commands">Workflow</a></li>
+                    <li><a href="#features">Capabilities</a></li>
+                    <li><a href="#install">Install</a></li>
+                    <li><a href="changelog/">Changelog</a></li>
+                </ul>
             </div>
-            <div class="footer-social">
-                <span class="footer-social-label">Share</span>
-                <a href="https://api.whatsapp.com/send?text=Draft%3A%20code%20intelligence%20for%20your%20AI%20coding%20agent%20%E2%80%94%20powered%20by%20codebase-memory-mcp%2C%20a%20159-language%20local%20knowledge-graph%20engine.%20Free%2C%20open-source%2C%20MIT.%20https%3A%2F%2Fgetdraft.dev" target="_blank" rel="noopener noreferrer" class="social-btn" title="WhatsApp">
-                    <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                </a>
-                <a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Fgetdraft.dev" target="_blank" rel="noopener noreferrer" class="social-btn" title="LinkedIn">
-                    <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-                </a>
-                <a href="https://news.ycombinator.com/submitlink?u=https%3A%2F%2Fgetdraft.dev&t=Draft%3A%20code%20intelligence%20for%20your%20AI%20coding%20agent%20%E2%80%94%20powered%20by%20codebase-memory-mcp%2C%20a%20159-language%20local%20knowledge-graph%20engine.%20Free%2C%20open-source%2C%20MIT." target="_blank" rel="noopener noreferrer" class="social-btn" title="Hacker News">
-                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M0 24V0h24v24H0zM6.951 5.896l4.047 7.61V22h2.004v-8.494l4.047-7.61h-2.19l-2.859 5.83-2.859-5.83H6.951z"/></svg>
-                </a>
-                <a href="https://reddit.com/submit?url=https%3A%2F%2Fgetdraft.dev&title=Draft%3A%20code%20intelligence%20for%20your%20AI%20coding%20agent%20%E2%80%94%20powered%20by%20codebase-memory-mcp%2C%20a%20159-language%20local%20knowledge-graph%20engine.%20Free%2C%20open-source%2C%20MIT." target="_blank" rel="noopener noreferrer" class="social-btn" title="Reddit">
-                    <svg viewBox="0 0 24 24"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.01 4.744c.688 0 1.25.561 1.25 1.249a1.25 1.25 0 0 1-2.498.056l-2.597-.547-.8 3.747c1.824.07 3.48.632 4.674 1.488.308-.309.73-.491 1.207-.491.968 0 1.754.786 1.754 1.754 0 .716-.435 1.333-1.01 1.614a3.111 3.111 0 0 1 .042.52c0 2.694-3.13 4.87-7.004 4.87-3.874 0-7.004-2.176-7.004-4.87 0-.183.015-.366.043-.534A1.748 1.748 0 0 1 4.028 12c0-.968.786-1.754 1.754-1.754.463 0 .898.196 1.207.49 1.207-.883 2.878-1.43 4.744-1.487l.885-4.182a.342.342 0 0 1 .14-.197.35.35 0 0 1 .238-.042l2.906.617a1.214 1.214 0 0 1 1.108-.701zM9.25 12C8.561 12 8 12.562 8 13.25c0 .687.561 1.248 1.25 1.248.687 0 1.248-.561 1.248-1.249 0-.688-.561-1.249-1.249-1.249zm5.5 0c-.687 0-1.248.561-1.248 1.25 0 .687.561 1.248 1.249 1.248.688 0 1.249-.561 1.249-1.249 0-.687-.562-1.249-1.25-1.249zm-5.466 3.99a.327.327 0 0 0-.231.094.33.33 0 0 0 0 .463c.842.842 2.484.913 2.961.913.477 0 2.105-.056 2.961-.913a.361.361 0 0 0 .029-.463.33.33 0 0 0-.464 0c-.547.533-1.684.73-2.512.73-.828 0-1.979-.196-2.512-.73a.326.326 0 0 0-.232-.095z"/></svg>
-                </a>
-                <a href="https://twitter.com/intent/tweet?url=https%3A%2F%2Fgetdraft.dev&text=Draft%3A%20code%20intelligence%20for%20your%20AI%20coding%20agent%20%E2%80%94%20powered%20by%20codebase-memory-mcp%2C%20a%20159-language%20local%20knowledge-graph%20engine.%20Free%2C%20open-source%2C%20MIT." target="_blank" rel="noopener noreferrer" class="social-btn" title="X">
-                    <svg viewBox="0 0 24 24"><path d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z"/></svg>
-                </a>
+            <div class="footer-col">
+                <h5>Learn</h5>
+                <ul>
+                    <li><a href="what-is-draft/">What is Draft?</a></li>
+                    <li><a href="book/">The Draft Book</a></li>
+                    <li><a href="book/audio/">Audiobook</a></li>
+                    <li><a href="book/command-reference/">Command reference</a></li>
+                    <li><a href="blog/">Blog</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h5>Community</h5>
+                <ul>
+                    <li><a href="https://github.com/drafthq/draft" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+                    <li><a href="https://github.com/drafthq/draft/issues" target="_blank" rel="noopener noreferrer">Issues</a></li>
+                    <li><a href="https://www.npmjs.com/package/@drafthq/draft" target="_blank" rel="noopener noreferrer">npm package</a></li>
+                    <li><a href="https://github.com/DeusData/codebase-memory-mcp" target="_blank" rel="noopener noreferrer">codebase-memory-mcp</a></li>
+                    <li><a href="feed.xml">RSS feed</a></li>
+                </ul>
             </div>
         </div>
         <div class="footer-bottom">
             <p>&copy; 2026 <a href="https://github.com/drafthq" target="_blank" rel="noopener noreferrer">DraftHQ</a> &middot; Open source under the <a href="https://github.com/drafthq/draft/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">MIT License</a> &middot; Created &amp; maintained by <a href="https://www.linkedin.com/in/mayurpise/" target="_blank" rel="noopener noreferrer">Mayur Pise</a></p>
-            <p class="footer-credit-sub">Graph engine: <a href="https://github.com/DeusData/codebase-memory-mcp" target="_blank" rel="noopener noreferrer">codebase-memory-mcp</a> by <a href="https://github.com/DeusData" target="_blank" rel="noopener noreferrer">DeusData</a></p>
+            <p class="footer-credit-sub">Graph engine: <a href="https://github.com/DeusData/codebase-memory-mcp" target="_blank" rel="noopener noreferrer">codebase-memory-mcp</a> by <a href="https://github.com/DeusData" target="_blank" rel="noopener noreferrer">DeusData</a> &mdash; tree-sitter + LSP, 159 languages, 100% local</p>
         </div>
     </footer>
 

@@ -1,71 +1,150 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%"  stop-color="#0a0d12"/>
-      <stop offset="100%" stop-color="#11161d"/>
-    </linearGradient>
     <radialGradient id="glow" cx="50%" cy="50%" r="60%">
-      <stop offset="0%"   stop-color="#58a6ff" stop-opacity="0.16"/>
-      <stop offset="100%" stop-color="#58a6ff" stop-opacity="0"/>
+      <stop offset="0%" stop-color="#5b8def" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#5b8def" stop-opacity="0"/>
     </radialGradient>
-    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1b2531" stroke-width="1"/>
+    <radialGradient id="glow2" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#f2b33d" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#f2b33d" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="dots" width="26" height="26" patternUnits="userSpaceOnUse">
+      <circle cx="1" cy="1" r="1" fill="#92a4cc" fill-opacity="0.16"/>
     </pattern>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff"/>
+      <stop offset="1" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
+    <mask id="dotmask"><rect width="1200" height="630" fill="url(#fade)"/></mask>
   </defs>
 
-  <!-- Drafting sheet -->
-  <rect width="1200" height="630" fill="url(#bg)"/>
-  <rect width="1200" height="630" fill="url(#grid)"/>
-  <ellipse cx="930" cy="300" rx="380" ry="280" fill="url(#glow)"/>
-  <!-- sheet border, like a title-block frame -->
-  <rect x="24" y="24" width="1152" height="582" fill="none" stroke="#21262d" stroke-width="1.5" rx="6"/>
+  <!-- Graphite surface -->
+  <rect width="1200" height="630" fill="#06080e"/>
+  <rect width="1200" height="630" fill="url(#dots)" mask="url(#dotmask)"/>
+  <ellipse cx="900" cy="290" rx="420" ry="300" fill="url(#glow)"/>
+  <ellipse cx="180" cy="120" rx="300" ry="220" fill="url(#glow2)"/>
 
-  <!-- Eyebrow: drawing label + revision badge -->
-  <g transform="translate(80, 86)">
-    <rect x="0" y="-9" width="20" height="2" fill="#58a6ff"/>
-    <text x="34" y="0" font-family="JetBrains Mono, monospace" font-size="19" font-weight="600" fill="#58a6ff" letter-spacing="4">CONTEXT-DRIVEN DEVELOPMENT</text>
-    <g transform="translate(508, -22)">
-      <rect x="0" y="0" width="158" height="30" rx="5" fill="none" stroke="#f85149" stroke-width="1.5"/>
-      <text x="79" y="21" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="15" font-weight="600" fill="#f85149" letter-spacing="2">REV 3.3.1 · MIT</text>
+  <!-- Wordmark -->
+  <g transform="translate(72, 60)">
+    <path d="M7 24L16 8L25 24M7 24H25" fill="none" stroke="#5b8def" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="7" cy="24" r="3.4" fill="#5b8def"/>
+    <circle cx="25" cy="24" r="3.4" fill="#5b8def"/>
+    <circle cx="16" cy="8" r="3.8" fill="#f2b33d"/>
+    <text x="42" y="26" font-family="Schibsted Grotesk, Inter, sans-serif" font-size="27" font-weight="700" fill="#eef1f7" letter-spacing="-1">Draft</text>
+  </g>
+
+  <!-- Eyebrow + revision -->
+  <g transform="translate(72, 150)">
+    <rect x="0" y="-6" width="18" height="1.5" fill="#5b8def"/>
+    <text x="30" y="0" font-family="JetBrains Mono, monospace" font-size="15" font-weight="600" fill="#5b8def" letter-spacing="3.2">CONTEXT-DRIVEN DEVELOPMENT</text>
+    <g transform="translate(372, -19)">
+      <rect x="0" y="0" width="150" height="27" rx="5" fill="#f2b33d" fill-opacity="0.12" stroke="#f2b33d" stroke-opacity="0.6" stroke-width="1"/>
+      <text x="75" y="18.5" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12.5" font-weight="600" fill="#f2b33d" letter-spacing="1.5">REV 4.0.0 · MIT</text>
     </g>
   </g>
 
-  <!-- Headline: the brand word annotated like a redline edit -->
-  <g transform="translate(80, 232)">
-    <rect x="-4" y="-58" width="200" height="74" rx="5" fill="#58a6ff" opacity="0.16" transform="skewX(-9)"/>
-    <text font-family="Space Grotesk, sans-serif" font-size="74" font-weight="700" letter-spacing="-2">
-      <tspan x="0" y="0"><tspan fill="#58a6ff">Draft</tspan><tspan fill="#e6edf3"> it before</tspan></tspan>
-      <tspan x="0" y="86" fill="#e6edf3">your agent builds it.</tspan>
-    </text>
+  <!-- Headline -->
+  <g font-family="Schibsted Grotesk, Inter, sans-serif" font-weight="700" font-size="70" letter-spacing="-2.8" fill="#eef1f7">
+    <text x="70" y="252"><tspan fill="#5b8def">Draft</tspan> it before</text>
+    <text x="70" y="330">your agent builds it.</text>
   </g>
+  <rect x="72" y="262" width="176" height="4" fill="#f2b33d"/>
 
-  <!-- Subtitle -->
-  <g transform="translate(80, 408)" font-family="DM Sans, sans-serif" font-size="25" fill="#b1bac4" letter-spacing="-0.3">
-    <text x="0" y="0">Context-Driven Development for AI coding agents —</text>
-    <text x="0" y="36">a local knowledge graph, spec-driven plans, three-stage review.</text>
-  </g>
+  <!-- Sub -->
+  <text x="72" y="388" font-family="Inter, sans-serif" font-size="21" fill="#a8b1c4">Map your repo into a local knowledge graph. Turn ideas into</text>
+  <text x="72" y="418" font-family="Inter, sans-serif" font-size="21" fill="#a8b1c4">reviewable specs. Ship from a <tspan fill="#eef1f7" font-weight="600">plan, not a guess.</tspan></text>
 
-  <!-- Title block: the signature, carrying real spec -->
-  <g transform="translate(80, 478)">
-    <rect x="0" y="0" width="760" height="92" rx="8" fill="#11161d" stroke="#30363d" stroke-width="1.5"/>
-    <line x1="190" y1="0" x2="190" y2="92" stroke="#21262d" stroke-width="1"/>
-    <line x1="380" y1="0" x2="380" y2="92" stroke="#21262d" stroke-width="1"/>
-    <line x1="570" y1="0" x2="570" y2="92" stroke="#21262d" stroke-width="1"/>
-    <g font-family="JetBrains Mono, monospace" font-size="13" fill="#768390" letter-spacing="1.5">
-      <text x="24"  y="34">COMMANDS</text>
-      <text x="214" y="34">LANGUAGES</text>
-      <text x="404" y="34">GRAPH MODES</text>
-      <text x="594" y="34">PLATFORMS</text>
+  <!-- Title block -->
+  <g transform="translate(72, 470)" font-family="JetBrains Mono, monospace">
+    <rect x="0" y="0" width="560" height="78" rx="10" fill="#0b0e16" stroke="#92a4cc" stroke-opacity="0.2"/>
+    <line x1="140" y1="0" x2="140" y2="78" stroke="#92a4cc" stroke-opacity="0.2"/>
+    <line x1="280" y1="0" x2="280" y2="78" stroke="#92a4cc" stroke-opacity="0.2"/>
+    <line x1="420" y1="0" x2="420" y2="78" stroke="#92a4cc" stroke-opacity="0.2"/>
+    <g fill="#6f7a93" font-size="10.5" font-weight="600" letter-spacing="1.6">
+      <text x="18" y="27">COMMANDS</text>
+      <text x="158" y="27">LANGUAGES</text>
+      <text x="298" y="27">REVIEW</text>
+      <text x="438" y="27">LICENSE</text>
     </g>
-    <g font-family="Space Grotesk, sans-serif" font-size="40" font-weight="700">
-      <text x="24"  y="74" fill="#e6edf3">33</text>
-      <text x="214" y="74" fill="#58a6ff">159</text>
-      <text x="404" y="74" fill="#e6edf3">6</text>
-      <text x="594" y="74" fill="#e6edf3">6</text>
+    <g font-family="Schibsted Grotesk, Inter, sans-serif" font-size="26" font-weight="700" fill="#eef1f7" letter-spacing="-0.8">
+      <text x="18" y="58" fill="#5b8def">4<tspan font-size="15" fill="#6f7a93">/33</tspan></text>
+      <text x="158" y="58">159</text>
+      <text x="298" y="58">3-stage</text>
+      <text x="438" y="58">MIT</text>
     </g>
   </g>
 
-  <!-- Footer -->
-  <text x="80" y="600" font-family="JetBrains Mono, monospace" font-size="15" fill="#58a6ff" letter-spacing="1">getdraft.dev</text>
-  <text x="1120" y="600" text-anchor="end" font-family="DM Sans, sans-serif" font-size="16" font-weight="500" fill="#768390">Claude Code · Cursor · Codex · opencode · Copilot · Gemini</text>
+  <!-- Impact console -->
+  <g transform="translate(700, 110)">
+    <rect x="0" y="0" width="440" height="438" rx="16" fill="#080a11" stroke="#92a4cc" stroke-opacity="0.28"/>
+    <rect x="0" y="0" width="440" height="44" rx="16" fill="#92a4cc" fill-opacity="0.05"/>
+    <rect x="0" y="30" width="440" height="14" fill="#92a4cc" fill-opacity="0.05"/>
+    <line x1="0" y1="44" x2="440" y2="44" stroke="#92a4cc" stroke-opacity="0.16"/>
+    <circle cx="20" cy="22" r="5" fill="#ff5f57"/><circle cx="36" cy="22" r="5" fill="#febc2e"/><circle cx="52" cy="22" r="5" fill="#28c840"/>
+    <text x="70" y="27" font-family="JetBrains Mono, monospace" font-size="12.5" fill="#d5dbe8"><tspan fill="#3ecf8e" font-weight="700">$</tspan> graph-impact --file <tspan fill="#fff" font-weight="500">src/auth/login.ts</tspan></text>
+    <circle cx="376" cy="22" r="3" fill="#3ecf8e"/>
+    <text x="386" y="26" font-family="JetBrains Mono, monospace" font-size="9.5" font-weight="600" fill="#3ecf8e" letter-spacing="1.4">LIVE</text>
+
+    <!-- module labels -->
+    <g font-family="JetBrains Mono, monospace" font-size="10" font-weight="600" fill="#92a4cc" fill-opacity="0.6" letter-spacing="1">
+      <text x="48" y="82">API</text>
+      <text x="196" y="70">AUTH</text>
+      <text x="356" y="90">LIB</text>
+      <text x="44" y="262">PAGES</text>
+      <text x="176" y="292">COMPONENTS</text>
+      <text x="340" y="262">TESTS</text>
+    </g>
+
+    <!-- base edges -->
+    <g stroke="#92a4cc" stroke-opacity="0.16" stroke-width="1">
+      <path d="M70 110 L96 140 M96 140 L60 160 M70 110 L112 96 M112 96 L140 128 M140 128 L96 140"/>
+      <path d="M214 96 L246 116 M246 116 L232 150 M232 150 L200 130 M200 130 L214 96 M246 116 L282 100"/>
+      <path d="M356 122 L388 140 M388 140 L372 176 M372 176 L340 150 M340 150 L356 122 M388 140 L410 118 M372 176 L400 200"/>
+      <path d="M62 300 L90 322 M90 322 L70 356 M70 356 L44 330 M44 330 L62 300 M90 322 L120 336"/>
+      <path d="M200 320 L232 344 M232 344 L214 380 M214 380 L182 352 M182 352 L200 320 M232 344 L262 330"/>
+      <path d="M356 300 L386 322 M386 322 L366 358 M366 358 L340 330 M340 330 L356 300 M386 322 L410 300"/>
+      <path d="M140 128 L200 130 M232 150 L340 150 M112 96 L214 96 M90 322 L182 352 M262 330 L340 330 M120 336 L200 320 M232 150 L232 344 M282 100 L356 122 M60 160 L62 300 M400 200 L386 322"/>
+    </g>
+
+    <!-- lit edges from target -->
+    <g stroke="#5b8def" stroke-width="1.8" stroke-opacity="0.95">
+      <path d="M246 116 L140 128 M246 116 L96 140 M246 116 L70 356 M246 116 L366 358"/>
+    </g>
+    <g stroke="#5b8def" stroke-width="1.3" stroke-opacity="0.5">
+      <path d="M140 128 L112 96 M366 358 L386 322"/>
+    </g>
+
+    <!-- ripple -->
+    <circle cx="246" cy="116" r="46" fill="none" stroke="#f2b33d" stroke-opacity="0.25"/>
+    <circle cx="246" cy="116" r="86" fill="none" stroke="#f2b33d" stroke-opacity="0.12"/>
+
+    <!-- nodes -->
+    <g fill="#92a4cc" fill-opacity="0.45">
+      <circle cx="70" cy="110" r="3.2"/><circle cx="60" cy="160" r="3.2"/><circle cx="214" cy="96" r="3.2"/><circle cx="232" cy="150" r="3.2"/><circle cx="200" cy="130" r="3.2"/><circle cx="282" cy="100" r="3.2"/>
+      <circle cx="356" cy="122" r="3.2"/><circle cx="388" cy="140" r="3.2"/><circle cx="372" cy="176" r="3.2"/><circle cx="340" cy="150" r="3.2"/><circle cx="410" cy="118" r="3.2"/><circle cx="400" cy="200" r="3.2"/>
+      <circle cx="62" cy="300" r="3.2"/><circle cx="90" cy="322" r="3.2"/><circle cx="44" cy="330" r="3.2"/><circle cx="120" cy="336" r="3.2"/>
+      <circle cx="200" cy="320" r="3.2"/><circle cx="232" cy="344" r="3.2"/><circle cx="214" cy="380" r="3.2"/><circle cx="182" cy="352" r="3.2"/><circle cx="262" cy="330" r="3.2"/>
+      <circle cx="356" cy="300" r="3.2"/><circle cx="340" cy="330" r="3.2"/><circle cx="410" cy="300" r="3.2"/>
+    </g>
+    <g fill="#5b8def">
+      <circle cx="140" cy="128" r="5"/><circle cx="96" cy="140" r="5"/><circle cx="70" cy="356" r="5"/><circle cx="366" cy="358" r="5"/>
+    </g>
+    <g fill="#5b8def" fill-opacity="0.6">
+      <circle cx="112" cy="96" r="4.2"/><circle cx="386" cy="322" r="4.2"/>
+    </g>
+    <circle cx="246" cy="116" r="11" fill="none" stroke="#f2b33d" stroke-opacity="0.6" stroke-width="1.2"/>
+    <circle cx="246" cy="116" r="6" fill="#f2b33d"/>
+    <text x="262" y="104" font-family="JetBrains Mono, monospace" font-size="10.5" font-weight="600" fill="#f2b33d">auth/login.ts</text>
+
+    <!-- console footer -->
+    <line x1="0" y1="398" x2="440" y2="398" stroke="#92a4cc" stroke-opacity="0.16"/>
+    <rect x="0" y="398" width="440" height="40" rx="0" fill="#92a4cc" fill-opacity="0.04"/>
+    <g font-family="JetBrains Mono, monospace" font-size="11" fill="#6f7a93">
+      <text x="18" y="423"><tspan fill="#fff" font-weight="600">6</tspan> files   <tspan fill="#fff" font-weight="600">4</tspan> modules</text>
+      <text x="422" y="423" text-anchor="end">code <tspan fill="#fff" font-weight="600">3</tspan> · test <tspan fill="#fff" font-weight="600">2</tspan> · doc <tspan fill="#fff" font-weight="600">1</tspan></text>
+    </g>
+  </g>
+
+  <!-- Domain -->
+  <text x="1128" y="588" text-anchor="end" font-family="JetBrains Mono, monospace" font-size="14" fill="#6f7a93" letter-spacing="1.5">getdraft.dev</text>
 </svg>

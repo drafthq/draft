@@ -1,181 +1,94 @@
 /* ============================================================
-   ANIMATIONS — Scroll triggers, transitions, keyframes
+   ANIMATIONS — Scroll reveals and keyframes
+   Reveals are short and low-travel: content arrives, it does
+   not perform. The hero owns the one orchestrated sequence.
    ============================================================ */
 
-/* ============================================================
-   SCROLL-TRIGGERED ANIMATIONS
-   ============================================================ */
-
-/* Elements start hidden, animate in when visible */
-.reveal {
+.reveal,
+.reveal-left,
+.reveal-right,
+.reveal-scale {
     opacity: 0;
-    transform: translateY(30px);
-    transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
+    transition: opacity 0.7s var(--ease-out), transform 0.7s var(--ease-out);
+    will-change: opacity, transform;
 }
+.reveal { transform: translateY(14px); }
+.reveal-left { transform: translateX(-18px); }
+.reveal-right { transform: translateX(18px); }
+.reveal-scale { transform: scale(0.98); }
 
-.reveal.visible {
+.reveal.visible,
+.reveal-left.visible,
+.reveal-right.visible,
+.reveal-scale.visible {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
 }
 
 /* Staggered children */
 .reveal-stagger > * {
     opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.6s var(--ease-out), transform 0.6s var(--ease-out);
+    transform: translateY(12px);
+    transition: opacity 0.55s var(--ease-out), transform 0.55s var(--ease-out);
 }
-
+.reveal-stagger.visible > * { opacity: 1; transform: none; }
 .reveal-stagger.visible > *:nth-child(1) { transition-delay: 0ms; }
-.reveal-stagger.visible > *:nth-child(2) { transition-delay: 80ms; }
-.reveal-stagger.visible > *:nth-child(3) { transition-delay: 160ms; }
-.reveal-stagger.visible > *:nth-child(4) { transition-delay: 240ms; }
-.reveal-stagger.visible > *:nth-child(5) { transition-delay: 320ms; }
-.reveal-stagger.visible > *:nth-child(6) { transition-delay: 400ms; }
-.reveal-stagger.visible > *:nth-child(7) { transition-delay: 480ms; }
-.reveal-stagger.visible > *:nth-child(8) { transition-delay: 560ms; }
-
-.reveal-stagger.visible > * {
-    opacity: 1;
-    transform: translateY(0);
-}
-
-/* Slide from left */
-.reveal-left {
-    opacity: 0;
-    transform: translateX(-40px);
-    transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
-}
-
-.reveal-left.visible {
-    opacity: 1;
-    transform: translateX(0);
-}
-
-/* Slide from right */
-.reveal-right {
-    opacity: 0;
-    transform: translateX(40px);
-    transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
-}
-
-.reveal-right.visible {
-    opacity: 1;
-    transform: translateX(0);
-}
-
-/* Scale in */
-.reveal-scale {
-    opacity: 0;
-    transform: scale(0.95);
-    transition: opacity 0.8s var(--ease-out), transform 0.8s var(--ease-out);
-}
-
-.reveal-scale.visible {
-    opacity: 1;
-    transform: scale(1);
-}
+.reveal-stagger.visible > *:nth-child(2) { transition-delay: 60ms; }
+.reveal-stagger.visible > *:nth-child(3) { transition-delay: 120ms; }
+.reveal-stagger.visible > *:nth-child(4) { transition-delay: 180ms; }
+.reveal-stagger.visible > *:nth-child(5) { transition-delay: 240ms; }
+.reveal-stagger.visible > *:nth-child(6) { transition-delay: 300ms; }
+.reveal-stagger.visible > *:nth-child(7) { transition-delay: 360ms; }
+.reveal-stagger.visible > *:nth-child(8) { transition-delay: 420ms; }
+.reveal-stagger.visible > *:nth-child(9) { transition-delay: 480ms; }
+.reveal-stagger.visible > *:nth-child(10) { transition-delay: 540ms; }
 
 /* ============================================================
-   HERO ENTRANCE ANIMATIONS
+   HERO ENTRANCE — one orchestrated sequence
    ============================================================ */
-.hero-content .badge {
-    animation: fadeInUp 0.8s var(--ease-out) both;
+@keyframes riseIn {
+    from { opacity: 0; transform: translateY(18px); }
+    to { opacity: 1; transform: translateY(0); }
 }
-
-.hero-content h1 {
-    animation: fadeInUp 0.8s var(--ease-out) 0.1s both;
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
-
-.hero-content .tagline {
-    animation: fadeInUp 0.8s var(--ease-out) 0.2s both;
-}
-
-.hero-content .hero-actions {
-    animation: fadeInUp 0.8s var(--ease-out) 0.3s both;
-}
-
-.hero-content .hero-stats {
-    animation: fadeInUp 0.8s var(--ease-out) 0.4s both;
-}
-
-.hero-content .hero-sub {
-    animation: fadeInUp 0.8s var(--ease-out) 0.5s both;
-}
-
-/* Counter animation on hero stats */
-.hero-stat-num {
-    animation: countFadeIn 0.6s var(--ease-out) 0.6s both;
-}
-
-@keyframes countFadeIn {
-    from { opacity: 0; transform: translateY(10px) scale(0.9); }
+@keyframes consoleIn {
+    from { opacity: 0; transform: translateY(22px) scale(0.985); }
     to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.scroll-indicator {
-    animation: fadeInUp 0.8s var(--ease-out) 0.8s both;
-}
+.hero-content .hero-eyebrow { animation: riseIn 0.7s var(--ease-out) 0.05s both; }
+.hero-content .hero-h1 { animation: riseIn 0.8s var(--ease-out) 0.15s both; }
+.hero-content .tagline { animation: riseIn 0.8s var(--ease-out) 0.28s both; }
+.hero-content .hero-actions { animation: riseIn 0.8s var(--ease-out) 0.38s both; }
+.hero-content .hero-install { animation: riseIn 0.8s var(--ease-out) 0.46s both; }
+.hero-content .hero-titleblock { animation: riseIn 0.8s var(--ease-out) 0.56s both; }
+.hero-console { animation: consoleIn 1s var(--ease-out) 0.35s both; }
+.platform-band { animation: fadeIn 0.8s var(--ease-out) 0.9s both; }
 
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(30px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+/* Utility keyframes */
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
 }
-
-/* ============================================================
-   PARALLAX TILT EFFECT (via JS)
-   ============================================================ */
-.tilt-card {
-    transition: transform 0.1s ease-out;
-    transform-style: preserve-3d;
-    perspective: 1000px;
+@keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.45; transform: scale(0.75); }
 }
-
-/* ============================================================
-   GLOW BORDER ANIMATION ON HOVER
-   ============================================================ */
-@keyframes glow-pulse {
-    0%, 100% { box-shadow: 0 4px 16px rgba(37, 99, 235, 0.06); }
-    50% { box-shadow: 0 4px 24px rgba(37, 99, 235, 0.12); }
+@keyframes livePing {
+    0% { transform: scale(1); opacity: 0.7; }
+    100% { transform: scale(2.6); opacity: 0; }
 }
-
-/* ============================================================
-   PIPELINE STEP ANIMATION
-   ============================================================ */
-.pipeline-step {
-    opacity: 0;
-    transform: translateY(20px);
-    transition: opacity 0.6s var(--ease-out), transform 0.6s var(--ease-out);
-}
-
-.pipeline.visible .pipeline-step:nth-child(1) { transition-delay: 0ms; opacity: 1; transform: translateY(0); }
-.pipeline.visible .pipeline-step:nth-child(2) { transition-delay: 150ms; opacity: 1; transform: translateY(0); }
-.pipeline.visible .pipeline-step:nth-child(3) { transition-delay: 300ms; opacity: 1; transform: translateY(0); }
-.pipeline.visible .pipeline-step:nth-child(4) { transition-delay: 450ms; opacity: 1; transform: translateY(0); }
-.pipeline.visible .pipeline-step:nth-child(5) { transition-delay: 600ms; opacity: 1; transform: translateY(0); }
 
 /* ============================================================
    REDUCED MOTION
    ============================================================ */
 @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-    }
-
-    .reveal,
-    .reveal-left,
-    .reveal-right,
-    .reveal-scale,
-    .reveal-stagger > *,
-    .pipeline-step {
-        opacity: 1;
-        transform: none;
+    .reveal, .reveal-left, .reveal-right, .reveal-scale,
+    .reveal-stagger > * {
+        opacity: 1 !important;
+        transform: none !important;
     }
 }

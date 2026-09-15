@@ -3,40 +3,127 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>404 — Page Not Found · Draft</title>
-    <meta name="robots" content="noindex, follow">
-    <meta name="theme-color" content="#0a0d12">
+    <title>Page not found — Draft</title>
+    <meta name="robots" content="noindex">
+    <meta name="theme-color" content="#06080e">
+    <meta name="color-scheme" content="dark light">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/base.css">
-    <link rel="stylesheet" href="/css/layout.css">
     <link rel="stylesheet" href="/css/components.css">
-    <link rel="stylesheet" href="/css/redesign-v24.css">
     <script>
-    (function(){try{var t=localStorage.getItem('draft-theme');if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
+    (function(){try{var t=localStorage.getItem('draft-theme');if(t!=='light')document.documentElement.setAttribute('data-theme','dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();
     </script>
     <style>
-        .nf-wrap { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; }
-        .nf-code { font-family: "JetBrains Mono", ui-monospace, monospace; font-size: clamp(4rem, 18vw, 9rem); font-weight: 700; line-height: 1; letter-spacing: -0.04em; background: linear-gradient(135deg, #38bdf8, #818cf8); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
-        .nf-title { font-size: 1.5rem; margin: 12px 0 4px; }
-        .nf-text { color: #94a3b8; max-width: 460px; margin: 0 0 28px; line-height: 1.6; }
-        .nf-links { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
-        .nf-links a { padding: 10px 18px; border-radius: 8px; text-decoration: none; font-weight: 600; }
-        .nf-primary { background: #38bdf8; color: #0a0d12; }
-        .nf-ghost { border: 1px solid rgba(148, 163, 184, 0.35); color: inherit; }
-        .nf-ghost:hover { border-color: #38bdf8; color: #38bdf8; }
+        .nf-wrap {
+            min-height: 100vh;
+            min-height: 100dvh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6rem var(--gutter) 4rem;
+            position: relative;
+            z-index: 1;
+        }
+        .nf-card {
+            width: 100%;
+            max-width: 560px;
+            padding: 2.5rem 2.25rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            text-align: center;
+        }
+        .nf-status {
+            font-family: var(--font-mono);
+            font-size: 0.72rem;
+            font-weight: 600;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--accent-amber);
+            border: 1px solid rgba(var(--accent-2-rgb), 0.5);
+            background: var(--glow-amber);
+            border-radius: 6px;
+            padding: 0.25rem 0.6rem;
+            display: inline-block;
+            margin-bottom: 1.25rem;
+        }
+        .nf-code {
+            font-family: var(--font-display);
+            font-size: clamp(4rem, 12vw, 6.5rem);
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            line-height: 0.95;
+            color: var(--accent-cyan);
+            margin-bottom: 0.75rem;
+        }
+        .nf-title { font-size: 1.35rem; margin-bottom: 0.5rem; }
+        .nf-text { color: var(--text-secondary); max-width: 40ch; margin: 0 auto 1.75rem; }
+        .nf-query {
+            display: block;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--pane-muted);
+            background: var(--bg-pane);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.75rem 1rem;
+            margin: 0 0 1.75rem;
+            text-align: left;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .nf-query b { color: var(--pane-text); font-weight: 500; }
+        .nf-query .ok { color: var(--accent-rose); }
+        .nf-links { display: flex; flex-wrap: wrap; gap: 0.6rem; justify-content: center; }
     </style>
 </head>
 <body>
+    <nav class="top-nav scrolled" id="top-nav" aria-label="Primary">
+        <a href="/" class="nav-logo" aria-label="Draft home">
+            <svg class="logo-mark" viewBox="0 0 26 26" fill="none" aria-hidden="true">
+                <path class="lm-edge" d="M6 19L13 7L20 19M6 19H20" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                <circle class="lm-node" cx="6" cy="19" r="2.6"/>
+                <circle class="lm-node" cx="20" cy="19" r="2.6"/>
+                <circle class="lm-hot" cx="13" cy="7" r="3"/>
+            </svg>
+            Draft
+        </a>
+        <div class="nav-links">
+            <a href="/#playground">Engine</a>
+            <a href="/#commands">Workflow</a>
+            <a href="/#install">Install</a>
+            <a href="/book/">Book</a>
+            <a href="/blog/">Blog</a>
+        </div>
+        <div class="nav-actions">
+            <a href="https://github.com/drafthq/draft" target="_blank" rel="noopener noreferrer" class="nav-github">Star on GitHub</a>
+        </div>
+    </nav>
+
     <main class="nf-wrap">
-        <div class="nf-code">404</div>
-        <h1 class="nf-title">Page not found</h1>
-        <p class="nf-text">That page doesn't exist or has moved. Let's get you back on track.</p>
-        <div class="nf-links">
-            <a class="nf-primary" href="/">Home</a>
-            <a class="nf-ghost" href="/blog/">Blog</a>
-            <a class="nf-ghost" href="/book/">The Book</a>
-            <a class="nf-ghost" href="https://github.com/drafthq/draft">GitHub</a>
+        <div class="nf-card">
+            <span class="nf-status">HTTP 404</span>
+            <div class="nf-code">404</div>
+            <h1 class="nf-title">Page not found</h1>
+            <p class="nf-text">That page doesn't exist or has moved. The graph has no node for it.</p>
+            <code class="nf-query" id="nf-query">$ graph-callers --symbol <b id="nf-path">this-page</b> <span class="ok">→ 0 results</span></code>
+            <div class="nf-links">
+                <a href="/" class="btn btn-primary">Home</a>
+                <a href="/book/" class="btn btn-secondary">The Book</a>
+                <a href="/blog/" class="btn btn-secondary">Blog</a>
+                <a href="https://github.com/drafthq/draft" target="_blank" rel="noopener noreferrer" class="btn btn-tertiary">GitHub</a>
+            </div>
         </div>
     </main>
+
+    <script>
+    (function(){var b=document.getElementById('nf-path');if(b){b.textContent=location.pathname.replace(/^\/+|\/+$/g,'')||'/';}})();
+    </script>
+    <script src="/js/theme-toggle.js"></script>
 </body>
 </html>
