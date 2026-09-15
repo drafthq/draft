@@ -5,6 +5,7 @@ TEST_SCRIPTS = \
 	./tests/test-skill-frontmatter.sh \
 	./tests/test-canonical-namespace.sh \
 	./tests/test-web-claims.sh \
+	./tests/test-web-consistency.sh \
 	./tests/test-zero-setup-review.sh \
 	./tests/test-release-notes.sh \
 	./tests/test-fetch-memory-engine.sh \

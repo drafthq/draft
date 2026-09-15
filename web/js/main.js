@@ -5,26 +5,6 @@
 (function () {
     'use strict';
 
-    /* ---- Cursor glow orb ------------------------------------ */
-    var orb = document.getElementById('cursor-glow');
-    if (orb && window.matchMedia('(hover: hover)').matches) {
-        var orbX = 0, orbY = 0, targetX = 0, targetY = 0, orbRaf;
-        document.addEventListener('mousemove', function (e) { targetX = e.clientX; targetY = e.clientY; });
-        var updateOrb = function () {
-            orbX += (targetX - orbX) * 0.08;
-            orbY += (targetY - orbY) * 0.08;
-            orb.style.left = orbX + 'px';
-            orb.style.top = orbY + 'px';
-            orbRaf = requestAnimationFrame(updateOrb);
-        };
-        document.addEventListener('visibilitychange', function () {
-            if (document.hidden) cancelAnimationFrame(orbRaf); else orbRaf = requestAnimationFrame(updateOrb);
-        });
-        updateOrb();
-    } else if (orb) {
-        orb.style.display = 'none';
-    }
-
     /* ---- Top nav: scrolled state ---------------------------- */
     var topNav = document.getElementById('top-nav');
     if (topNav) {
@@ -42,11 +22,15 @@
             var open = topNav.classList.toggle('open');
             navToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
         });
+        var closeNav = function () {
+            topNav.classList.remove('open');
+            navToggle.setAttribute('aria-expanded', 'false');
+        };
         topNav.querySelectorAll('.nav-links a, .nav-actions a').forEach(function (link) {
-            link.addEventListener('click', function () { topNav.classList.remove('open'); });
+            link.addEventListener('click', closeNav);
         });
         document.addEventListener('click', function (e) {
-            if (topNav.classList.contains('open') && !topNav.contains(e.target)) topNav.classList.remove('open');
+            if (topNav.classList.contains('open') && !topNav.contains(e.target)) closeNav();
         });
     }
 
@@ -81,62 +65,68 @@
         });
     });
 
-    /* ---- Install tabs --------------------------------------- */
-    var installTabs = document.querySelectorAll('.install-tab');
-    var installPanels = document.querySelectorAll('.install-panel');
-    installTabs.forEach(function (tab) {
-        tab.addEventListener('click', function () {
-            var target = this.getAttribute('data-target');
-            installTabs.forEach(function (t) { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
-            this.classList.add('active');
-            this.setAttribute('aria-selected', 'true');
-            installPanels.forEach(function (panel) { panel.classList.toggle('active', panel.id === 'panel-' + target); });
+    /* ---- Tab groups (ARIA tabs: roving focus, arrow keys) --- */
+    function tabGroup(tabs, panelIdOf, activeClass) {
+        if (!tabs.length) return;
+        function select(tab) {
+            tabs.forEach(function (t) {
+                var on = t === tab;
+                t.setAttribute('aria-selected', on ? 'true' : 'false');
+                t.setAttribute('tabindex', on ? '0' : '-1');
+                if (activeClass) t.classList.toggle(activeClass, on);
+                var panel = document.getElementById(panelIdOf(t));
+                if (panel) panel.classList.toggle('active', on);
+            });
+        }
+        tabs.forEach(function (tab, i) {
+            tab.addEventListener('click', function () { select(tab); });
+            tab.addEventListener('keydown', function (e) {
+                var next = e.key === 'ArrowRight' ? i + 1
+                    : e.key === 'ArrowLeft' ? i - 1
+                    : e.key === 'Home' ? 0
+                    : e.key === 'End' ? tabs.length - 1
+                    : null;
+                if (next === null) return;
+                e.preventDefault();
+                var t = tabs[(next + tabs.length) % tabs.length];
+                select(t);
+                t.focus();
+            });
         });
-    });
-
-    /* ---- Role switcher -------------------------------------- */
-    var roleTabs = Array.prototype.slice.call(document.querySelectorAll('.role-tab'));
-    var rolePanels = document.querySelectorAll('.role-panel');
-    function selectRole(tab) {
-        var target = tab.getAttribute('data-role');
-        roleTabs.forEach(function (t) {
-            var on = t === tab;
-            t.setAttribute('aria-selected', on ? 'true' : 'false');
-            t.setAttribute('tabindex', on ? '0' : '-1');
-        });
-        rolePanels.forEach(function (panel) { panel.classList.toggle('active', panel.id === 'role-' + target); });
     }
-    roleTabs.forEach(function (tab, i) {
-        tab.addEventListener('click', function () { selectRole(tab); });
-        tab.addEventListener('keydown', function (e) {
-            var next = e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowLeft' ? i - 1 : null;
-            if (next === null) return;
-            e.preventDefault();
-            var t = roleTabs[(next + roleTabs.length) % roleTabs.length];
-            selectRole(t);
-            t.focus();
-        });
-    });
+    tabGroup(Array.prototype.slice.call(document.querySelectorAll('.install-tab')),
+        function (t) { return 'panel-' + t.getAttribute('data-target'); }, 'active');
+    tabGroup(Array.prototype.slice.call(document.querySelectorAll('.role-tab')),
+        function (t) { return 'role-' + t.getAttribute('data-role'); }, null);
 
     /* ---- Copy buttons --------------------------------------- */
     document.querySelectorAll('[data-copy]').forEach(function (btn) {
         var label = btn.querySelector('span');
         var idle = label ? label.textContent : '';
+        var settle = function (text, cls) {
+            btn.classList.add(cls);
+            if (label) label.textContent = text;
+            setTimeout(function () { btn.classList.remove(cls); if (label) label.textContent = idle; }, 1600);
+        };
+        var done = function () { settle('Copied', 'copied'); };
+        var legacy = function () {
+            var ta = document.createElement('textarea');
+            ta.value = btn.getAttribute('data-copy');
+            ta.setAttribute('readonly', '');
+            ta.style.position = 'fixed';
+            ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            var ok = false;
+            try { ok = document.execCommand('copy'); } catch (_) { ok = false; }
+            document.body.removeChild(ta);
+            if (ok) done(); else settle('Copy failed', 'failed');
+        };
         btn.addEventListener('click', function () {
-            var text = btn.getAttribute('data-copy');
-            var done = function () {
-                btn.classList.add('copied');
-                if (label) label.textContent = 'Copied';
-                setTimeout(function () { btn.classList.remove('copied'); if (label) label.textContent = idle; }, 1600);
-            };
             if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(text).then(done, function () {});
+                navigator.clipboard.writeText(btn.getAttribute('data-copy')).then(done, legacy);
             } else {
-                var ta = document.createElement('textarea');
-                ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-                document.body.appendChild(ta); ta.select();
-                try { document.execCommand('copy'); done(); } catch (_) { /* no-op */ }
-                document.body.removeChild(ta);
+                legacy();
             }
         });
     });

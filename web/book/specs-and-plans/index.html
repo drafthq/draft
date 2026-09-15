@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -59,7 +59,7 @@
 
     <!-- Theme: apply early to prevent flash of wrong theme -->
     <script>
-    (function(){try{var t=localStorage.getItem('draft-theme');if(t!=='light')document.documentElement.setAttribute('data-theme','dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();
+    (function(){try{if(localStorage.getItem('draft-theme')==='light')document.documentElement.removeAttribute('data-theme');}catch(e){}})();
     </script>
 </head>
 <body data-chapter="specs-and-plans">

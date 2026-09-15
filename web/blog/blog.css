@@ -103,7 +103,7 @@
 }
 
 .post-card-title {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-display);
     font-size: 1.6rem;
     font-weight: 700;
     line-height: 1.25;
@@ -308,7 +308,7 @@
 }
 
 .post-body th {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-display);
     font-weight: 600;
     background: var(--bg-tertiary);
     color: var(--text-primary);
@@ -335,7 +335,7 @@
 }
 
 .chart-title {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-display);
     font-size: 0.95rem;
     font-weight: 600;
     color: var(--text-primary);

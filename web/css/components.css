@@ -49,9 +49,10 @@
     flex: none;
 }
 
-.nav-logo .logo-mark .lm-edge { stroke: var(--accent-cyan); }
-.nav-logo .logo-mark .lm-node { fill: var(--accent-cyan); }
-.nav-logo .logo-mark .lm-hot { fill: var(--accent-amber); }
+/* One brand mark, wherever it appears (nav, footer) */
+.logo-mark .lm-edge { stroke: var(--accent-cyan); }
+.logo-mark .lm-node { fill: var(--accent-cyan); }
+.logo-mark .lm-hot { fill: var(--accent-amber); }
 
 .nav-links {
     display: flex;
@@ -273,12 +274,12 @@
 .btn:active { transform: translateY(0); }
 
 .btn-primary {
-    background: var(--accent-cyan);
+    background: var(--accent-btn);
     color: #fff;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 .btn-primary:hover {
-    background: color-mix(in srgb, var(--accent-cyan) 88%, #fff);
+    background: color-mix(in srgb, var(--accent-btn) 90%, #000);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 10px 28px -10px rgba(var(--accent-rgb), 0.6);
 }
 
@@ -756,8 +757,8 @@ a.cmd-primary-name:hover { text-decoration: underline; text-underline-offset: 4p
 }
 .routing-leaf--lit {
     color: #fff;
-    background: var(--accent-cyan);
-    border-color: var(--accent-cyan);
+    background: var(--accent-btn);
+    border-color: var(--accent-btn);
     font-weight: 600;
     box-shadow: 0 8px 20px -10px rgba(var(--accent-rgb), 0.7);
 }
@@ -1278,7 +1279,7 @@ a.router-name:hover { text-decoration: underline; text-underline-offset: 3px; }
 }
 .footer-brand p { font-size: 0.9rem; color: var(--text-muted); max-width: 34ch; margin: 0 0 1.25rem; }
 
-.footer-col h5 {
+.footer-col h3 {
     font-family: var(--font-mono);
     font-size: 0.66rem;
     font-weight: 600;

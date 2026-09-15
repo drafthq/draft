@@ -15,7 +15,7 @@
         });
 
         inner.querySelectorAll(
-            '.problem-grid, .bento-grid, .commands-grid, .init-phases, .team-flow, ' +
+            '.problem-grid, .bento-grid, .init-phases, .team-flow, ' +
             '.pricing-comparison, .cmd-primary-grid, .dual-output'
         ).forEach(function (grid) { grid.classList.add('reveal-stagger'); });
 
@@ -50,10 +50,17 @@
     /* ---- Spotlight: cursor-tracked highlight on bento cards - */
     if (window.matchMedia('(hover: hover)').matches) {
         document.querySelectorAll('.bento-card').forEach(function (card) {
+            var x = 0, y = 0, raf = null;
             card.addEventListener('mousemove', function (e) {
-                var rect = card.getBoundingClientRect();
-                card.style.setProperty('--mx', (e.clientX - rect.left) + 'px');
-                card.style.setProperty('--my', (e.clientY - rect.top) + 'px');
+                x = e.clientX; y = e.clientY;
+                if (raf) return;
+                /* One style write per frame, not per pointer event */
+                raf = requestAnimationFrame(function () {
+                    raf = null;
+                    var rect = card.getBoundingClientRect();
+                    card.style.setProperty('--mx', (x - rect.left) + 'px');
+                    card.style.setProperty('--my', (y - rect.top) + 'px');
+                });
             });
         });
     }

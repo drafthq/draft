@@ -135,6 +135,8 @@
     ];
 
     /* ---- Build graph ---------------------------------------- */
+    /* Fixed seed on purpose: the layout must be identical on every load so
+       the static ledger in the HTML matches the first frame exactly. */
     var seed = 7;
     function rand() { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; }
 
@@ -153,7 +155,7 @@
             path: f[1], mod: m.id, cat: f[2] || 'code',
             ux: m.x + Math.cos(ang) * m.r * rad,
             uy: m.y + Math.sin(ang) * m.r * rad * 0.85,
-            x: 0, y: 0, lit: -1, litAt: 0
+            x: 0, y: 0, lit: -1
         };
         nodes.push(n);
         byPath[n.path] = n;
@@ -164,7 +166,7 @@
     Object.keys(DEPS).forEach(function (from) {
         DEPS[from].forEach(function (to) {
             if (!byPath[from] || !byPath[to]) return;
-            edges.push({ a: byPath[from], b: byPath[to], lit: -1, litAt: 0 });
+            edges.push({ a: byPath[from], b: byPath[to], lit: -1 });
             (dependents[to] = dependents[to] || []).push(from);
         });
     });
@@ -250,7 +252,7 @@
         current.target = target;
         cycleStart = now;
         stage = -1;
-        nodes.forEach(function (n) { n.lit = current.depth[n.path] === undefined ? -1 : current.depth[n.path]; n.litAt = 0; });
+        nodes.forEach(function (n) { n.lit = current.depth[n.path] === undefined ? -1 : current.depth[n.path]; });
         edges.forEach(function (e) {
             /* an edge lights when its dependency is lit and its dependent is one depth further */
             var db = current.depth[e.b.path], da = current.depth[e.a.path];
@@ -267,6 +269,7 @@
         W = wrap.clientWidth; H = wrap.clientHeight;
         canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
         ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        ctx.font = '600 10px "JetBrains Mono", monospace';   /* resizing resets context state */
         var pad = 26;
         nodes.forEach(function (n) {
             n.x = pad + n.ux * (W - pad * 2);
@@ -291,7 +294,6 @@
         ctx.clearRect(0, 0, W, H);
 
         /* Module labels */
-        ctx.font = '600 10px "JetBrains Mono", monospace';
         ctx.fillStyle = C.label;
         ctx.textAlign = 'center';
         MODULES.forEach(function (m) {
@@ -361,7 +363,6 @@
 
         /* Target label */
         if (fade > 0.05) {
-            ctx.font = '600 10px "JetBrains Mono", monospace';
             ctx.fillStyle = rgba(C.amber, fade);
             ctx.textAlign = target.ux > 0.6 ? 'right' : 'left';
             ctx.fillText(short(current.target), target.x + (target.ux > 0.6 ? -14 : 14), target.y - 12);

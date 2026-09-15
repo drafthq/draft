@@ -17,7 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   file's blast radius ripples out by depth with the ledger `graph-impact`
   would print. Personas and audience cards merged into one role
   switcher; `/draft:init` deep dive and architecture sections merged;
-  unified nav (live star count, version pill) and footer on every page;
+  unified nav (live star count, version pill) and four-column
+  footer on the landing page, blog, changelog, and what-is-draft pages
+  (the 404 gets the nav only; the book keeps its own reader chrome,
+  retokened);
   new social preview.
 
 ## [4.0.0] - 2026-09-03

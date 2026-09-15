@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -219,14 +219,15 @@
     <link rel="stylesheet" href="css/redesign-v24.css">
     <link rel="stylesheet" href="css/refresh-v4.css">
 
-    <!-- Theme: dark by default, light if the visitor chose it. Applied early to prevent a flash. -->
+    <!-- Theme: dark is the markup default; drop it early if the visitor chose light, so there is no flash. -->
     <script>
-    (function(){try{var t=localStorage.getItem('draft-theme');if(t!=='light')document.documentElement.setAttribute('data-theme','dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();
+    (function(){try{if(localStorage.getItem('draft-theme')==='light')document.documentElement.removeAttribute('data-theme');}catch(e){}})();
     </script>
 </head>
 <body>
-    <!-- Cursor glow orb -->
-    <div id="cursor-glow" aria-hidden="true"></div>
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+        <symbol id="icon-github" viewBox="0 0 24 24"><path fill="currentColor" d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></symbol>
+    </svg>
 
     <!-- Top navigation -->
     <nav class="top-nav" id="top-nav" aria-label="Primary">
@@ -239,7 +240,7 @@
             </svg>
             Draft
         </a>
-        <div class="nav-links">
+        <div class="nav-links" id="nav-links">
             <a href="#playground">Engine</a>
             <a href="#commands">Workflow</a>
             <a href="#features">Capabilities</a>
@@ -247,15 +248,15 @@
             <a href="book/">Book</a>
             <a href="blog/">Blog</a>
         </div>
-        <div class="nav-actions">
+        <div class="nav-actions" id="nav-actions">
             <a href="changelog/" class="nav-version" title="Release notes">v4.0.0</a>
             <a href="https://github.com/drafthq/draft" target="_blank" rel="noopener noreferrer" class="nav-github">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                <svg width="16" height="16" aria-hidden="true"><use href="#icon-github"/></svg>
                 Star on GitHub
                 <span class="gh-stars" id="gh-stars"></span>
             </a>
         </div>
-        <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+        <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-links nav-actions">
             <span></span><span></span><span></span>
         </button>
     </nav>
@@ -295,7 +296,7 @@
                     <a href="#install" class="btn btn-primary">Install in 30 seconds</a>
                     <a href="#playground" class="btn btn-secondary">See the engine</a>
                     <a href="https://github.com/drafthq/draft" target="_blank" rel="noopener noreferrer" class="btn btn-tertiary">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                        <svg width="16" height="16" aria-hidden="true"><use href="#icon-github"/></svg>
                         Star
                     </a>
                 </div>
@@ -335,7 +336,7 @@
             </div>
 
             <!-- Impact Console: a live blast-radius query on a codebase graph -->
-            <div class="hero-console" id="hero-console" role="img" aria-label="Animated demo: a change to one file ripples through the codebase graph, and the ledger lists every affected file by depth">
+            <div class="hero-console" id="hero-console" role="group" aria-label="Impact analysis demo: a change to one file ripples through the codebase graph, and the ledger lists every affected file by depth">
                 <div class="console-head">
                     <div class="terminal-dots" aria-hidden="true"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
                     <code class="console-cmd"><span class="console-prompt">$</span> <span id="console-cmd">graph-impact --file <b>src/auth/login.ts</b></span></code>
@@ -483,33 +484,33 @@
 
             <div class="playground">
                 <div class="playground-tabs" role="tablist" aria-label="Graph query modes">
-                    <button type="button" class="playground-tab is-active" data-tab="impact" role="tab" aria-selected="true">
+                    <button type="button" class="playground-tab is-active" id="tab-pg-impact" data-tab="impact" role="tab" aria-selected="true" aria-controls="playground-panel" tabindex="0">
                         <span class="playground-tab-label">impact</span>
                         <span class="playground-tab-hint">Blast radius</span>
                     </button>
-                    <button type="button" class="playground-tab" data-tab="callers" role="tab" aria-selected="false">
+                    <button type="button" class="playground-tab" id="tab-pg-callers" data-tab="callers" role="tab" aria-selected="false" aria-controls="playground-panel" tabindex="-1">
                         <span class="playground-tab-label">callers</span>
                         <span class="playground-tab-hint">Who depends</span>
                     </button>
-                    <button type="button" class="playground-tab" data-tab="hotspots" role="tab" aria-selected="false">
+                    <button type="button" class="playground-tab" id="tab-pg-hotspots" data-tab="hotspots" role="tab" aria-selected="false" aria-controls="playground-panel" tabindex="-1">
                         <span class="playground-tab-label">hotspots</span>
                         <span class="playground-tab-hint">Complexity rank</span>
                     </button>
-                    <button type="button" class="playground-tab" data-tab="cycles" role="tab" aria-selected="false">
+                    <button type="button" class="playground-tab" id="tab-pg-cycles" data-tab="cycles" role="tab" aria-selected="false" aria-controls="playground-panel" tabindex="-1">
                         <span class="playground-tab-label">cycles</span>
                         <span class="playground-tab-hint">Circular deps</span>
                     </button>
-                    <button type="button" class="playground-tab" data-tab="modules" role="tab" aria-selected="false">
+                    <button type="button" class="playground-tab" id="tab-pg-modules" data-tab="modules" role="tab" aria-selected="false" aria-controls="playground-panel" tabindex="-1">
                         <span class="playground-tab-label">modules</span>
                         <span class="playground-tab-hint">Topology</span>
                     </button>
-                    <button type="button" class="playground-tab" data-tab="mermaid" role="tab" aria-selected="false">
+                    <button type="button" class="playground-tab" id="tab-pg-mermaid" data-tab="mermaid" role="tab" aria-selected="false" aria-controls="playground-panel" tabindex="-1">
                         <span class="playground-tab-label">mermaid</span>
                         <span class="playground-tab-hint">Diagrams</span>
                     </button>
                 </div>
 
-                <div class="playground-pane">
+                <div class="playground-pane" role="tabpanel" id="playground-panel" aria-labelledby="tab-pg-impact">
                     <div class="playground-prompt">
                         <span class="playground-prompt-cursor">$</span>
                         <code class="playground-prompt-cmd" id="playground-cmd">graph-impact --file core/methodology.md</code>
@@ -694,7 +695,7 @@
                 <div class="glass-card bento-card bento-wide">
                     <div class="bento-header">
                         <div class="bento-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+                            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
                         </div>
                         <span class="bento-tag">5-phase analysis</span>
                     </div>
@@ -708,7 +709,7 @@
                 <div class="glass-card bento-card">
                     <div class="bento-header">
                         <div class="bento-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
                         </div>
                     </div>
                     <h3>TDD enforcement</h3>
@@ -719,7 +720,7 @@
                 <div class="glass-card bento-card">
                     <div class="bento-header">
                         <div class="bento-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+                            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
                         </div>
                     </div>
                     <h3>Three-stage code review</h3>
@@ -730,7 +731,7 @@
                 <div class="glass-card bento-card">
                     <div class="bento-header">
                         <div class="bento-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
                         </div>
                     </div>
                     <h3>Collaborative intake</h3>
@@ -741,7 +742,7 @@
                 <div class="glass-card bento-card bento-wide">
                     <div class="bento-header">
                         <div class="bento-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
                         </div>
                         <span class="bento-tag">Exhaustive sweep</span>
                     </div>
@@ -755,7 +756,7 @@
                 <div class="glass-card bento-card">
                     <div class="bento-header">
                         <div class="bento-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                         </div>
                     </div>
                     <h3>ACID deep review</h3>
@@ -766,7 +767,7 @@
                 <div class="glass-card bento-card">
                     <div class="bento-header">
                         <div class="bento-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
                         </div>
                     </div>
                     <h3>Pattern learning</h3>
@@ -777,7 +778,7 @@
                 <div class="glass-card bento-card bento-wide">
                     <div class="bento-header">
                         <div class="bento-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="9" y1="6" x2="15" y2="6"/><line x1="6" y1="9" x2="6" y2="15"/><line x1="18" y1="9" x2="18" y2="15"/><line x1="9" y1="18" x2="15" y2="18"/></svg>
+                            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="9" y1="6" x2="15" y2="6"/><line x1="6" y1="9" x2="6" y2="15"/><line x1="18" y1="9" x2="18" y2="15"/><line x1="9" y1="18" x2="15" y2="18"/></svg>
                         </div>
                         <span class="bento-tag">Built in</span>
                     </div>
@@ -792,7 +793,7 @@
                 <div class="glass-card bento-card">
                     <div class="bento-header">
                         <div class="bento-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                         </div>
                         <span class="bento-tag">Track memory</span>
                     </div>
@@ -806,7 +807,7 @@
                 <div class="glass-card bento-card">
                     <div class="bento-header">
                         <div class="bento-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+                            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
                         </div>
                         <span class="bento-tag">53 helpers</span>
                     </div>
@@ -820,7 +821,7 @@
                 <div class="glass-card bento-card bento-wide">
                     <div class="bento-header">
                         <div class="bento-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+                            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
                         </div>
                         <span class="bento-tag">Enterprise</span>
                     </div>
@@ -1250,15 +1251,15 @@
             </div>
 
             <div class="install-tabs" role="tablist" aria-label="Install target">
-                <button class="install-tab active" data-target="claude-code" role="tab" aria-selected="true">Claude Code</button>
-                <button class="install-tab" data-target="cursor" role="tab" aria-selected="false">Cursor</button>
-                <button class="install-tab" data-target="codex" role="tab" aria-selected="false">Codex</button>
-                <button class="install-tab" data-target="opencode" role="tab" aria-selected="false">opencode</button>
-                <button class="install-tab" data-target="more" role="tab" aria-selected="false">Copilot / Gemini</button>
+                <button type="button" class="install-tab active" id="tab-install-claude-code" data-target="claude-code" role="tab" aria-selected="true" aria-controls="panel-claude-code" tabindex="0">Claude Code</button>
+                <button type="button" class="install-tab" id="tab-install-cursor" data-target="cursor" role="tab" aria-selected="false" aria-controls="panel-cursor" tabindex="-1">Cursor</button>
+                <button type="button" class="install-tab" id="tab-install-codex" data-target="codex" role="tab" aria-selected="false" aria-controls="panel-codex" tabindex="-1">Codex</button>
+                <button type="button" class="install-tab" id="tab-install-opencode" data-target="opencode" role="tab" aria-selected="false" aria-controls="panel-opencode" tabindex="-1">opencode</button>
+                <button type="button" class="install-tab" id="tab-install-more" data-target="more" role="tab" aria-selected="false" aria-controls="panel-more" tabindex="-1">Copilot / Gemini</button>
             </div>
 
             <div class="install-panels">
-                <div class="install-panel active" id="panel-claude-code">
+                <div class="install-panel active" id="panel-claude-code" role="tabpanel" aria-labelledby="tab-install-claude-code">
                     <div class="code-block glass-card">
                         <div class="code-header">
                             <div class="terminal-dots" aria-hidden="true"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
@@ -1276,7 +1277,7 @@
                     </div>
                     <p class="install-note">Runs <code>claude plugin marketplace add</code> + <code>install</code> for you (default scope <code>--global</code>), then restart Claude Code. <code>/draft:review</code> works on an un-indexed repo and tells you which structural checks it had to skip &mdash; indexing is the upgrade, not the entry fee. <strong>Requires the <code>claude</code> CLI on your PATH.</strong> Using the Claude Code app without the CLI? Run <code>/plugin marketplace add drafthq/draft</code> then <code>/plugin install draft</code> inside a session instead.</p>
                 </div>
-                <div class="install-panel" id="panel-cursor">
+                <div class="install-panel" id="panel-cursor" role="tabpanel" aria-labelledby="tab-install-cursor">
                     <div class="code-block glass-card">
                         <div class="code-header">
                             <div class="terminal-dots" aria-hidden="true"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
@@ -1287,7 +1288,7 @@
                     </div>
                     <p class="install-note">Default scope <code>--global</code>. Installs to <code>~/.cursor/plugins/local/draft</code>, writes <code>.cursor-plugin/plugin.json</code>, and registers + enables <code>draft@draft-plugins</code> in Cursor's plugin registry. Restart Cursor (or Developer: Reload Window) to load <code>/draft:*</code> commands.</p>
                 </div>
-                <div class="install-panel" id="panel-codex">
+                <div class="install-panel" id="panel-codex" role="tabpanel" aria-labelledby="tab-install-codex">
                     <div class="code-block glass-card">
                         <div class="code-header">
                             <div class="terminal-dots" aria-hidden="true"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
@@ -1298,7 +1299,7 @@
                     </div>
                     <p class="install-note">Default scope <code>--project</code>. Writes <code>AGENTS.md</code> to your repo root &mdash; Codex reads it automatically. Pass <code>--global</code> to install outside the current project.</p>
                 </div>
-                <div class="install-panel" id="panel-opencode">
+                <div class="install-panel" id="panel-opencode" role="tabpanel" aria-labelledby="tab-install-opencode">
                     <div class="code-block glass-card">
                         <div class="code-header">
                             <div class="terminal-dots" aria-hidden="true"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
@@ -1309,7 +1310,7 @@
                     </div>
                     <p class="install-note">Default scope <code>--project</code>. Writes <code>AGENTS.md</code> + bundles skills under <code>~/.agents/skills/draft</code>. Pass <code>--global</code> to install outside the current project.</p>
                 </div>
-                <div class="install-panel" id="panel-more">
+                <div class="install-panel" id="panel-more" role="tabpanel" aria-labelledby="tab-install-more">
                     <div class="code-block glass-card">
                         <div class="code-header">
                             <div class="terminal-dots" aria-hidden="true"><span class="dot-red"></span><span class="dot-yellow"></span><span class="dot-green"></span></div>
@@ -1594,10 +1595,10 @@
             <div class="footer-brand">
                 <span class="footer-logo">
                     <svg class="logo-mark" width="22" height="22" viewBox="0 0 26 26" fill="none" aria-hidden="true">
-                        <path d="M6 19L13 7L20 19M6 19H20" stroke="var(--accent-cyan)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                        <circle cx="6" cy="19" r="2.6" fill="var(--accent-cyan)"/>
-                        <circle cx="20" cy="19" r="2.6" fill="var(--accent-cyan)"/>
-                        <circle cx="13" cy="7" r="3" fill="var(--accent-amber)"/>
+                        <path class="lm-edge" d="M6 19L13 7L20 19M6 19H20" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle class="lm-node" cx="6" cy="19" r="2.6"/>
+                        <circle class="lm-node" cx="20" cy="19" r="2.6"/>
+                        <circle class="lm-hot" cx="13" cy="7" r="3"/>
                     </svg>
                     Draft
                 </span>
@@ -1622,7 +1623,7 @@
                 </div>
             </div>
             <div class="footer-col">
-                <h5>Product</h5>
+                <h3>Product</h3>
                 <ul>
                     <li><a href="#playground">Graph engine</a></li>
                     <li><a href="#commands">Workflow</a></li>
@@ -1632,7 +1633,7 @@
                 </ul>
             </div>
             <div class="footer-col">
-                <h5>Learn</h5>
+                <h3>Learn</h3>
                 <ul>
                     <li><a href="what-is-draft/">What is Draft?</a></li>
                     <li><a href="book/">The Draft Book</a></li>
@@ -1642,7 +1643,7 @@
                 </ul>
             </div>
             <div class="footer-col">
-                <h5>Community</h5>
+                <h3>Community</h3>
                 <ul>
                     <li><a href="https://github.com/drafthq/draft" target="_blank" rel="noopener noreferrer">GitHub</a></li>
                     <li><a href="https://github.com/drafthq/draft/issues" target="_blank" rel="noopener noreferrer">Issues</a></li>

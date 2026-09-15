@@ -136,6 +136,7 @@
 .copy-btn:hover { color: var(--text-primary); border-color: var(--border-strong); }
 .copy-btn svg { width: 13px; height: 13px; }
 .copy-btn.copied { color: var(--accent-emerald); border-color: rgba(62, 207, 142, 0.5); }
+.copy-btn.failed { color: var(--accent-rose); border-color: rgba(244, 100, 125, 0.5); }
 
 /* Title block — the drawing's signature strip, carrying real spec */
 .hero-titleblock {

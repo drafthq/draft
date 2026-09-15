@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>What is Draft? — Context-Driven Development Plugin for AI Coding Agents</title>
     <meta name="description" content="Draft is a free, open-source plugin that maps your repo into a local knowledge graph (codebase-memory-mcp, 159 languages) and turns your ideas into reviewable specs — so your AI agent ships from a plan, not a guess. Spec-driven planning, three-stage review. Works with Claude Code, Cursor, Codex, opencode, Copilot, and Gemini. 33 commands, MIT licensed.">
     <meta name="author" content="Mayur Pise">
-    <meta name="theme-color" content="#7c3aed">
+    <meta name="theme-color" content="#06080e">
     <meta name="keywords" content="what is draft, draft ai, knowledge graph, code intelligence, context driven development, ai coding plugin, claude code plugin, github copilot plugin, gemini plugin, cursor plugin, antigravity ide, spec driven development, three stage review, ai bug hunting, open source developer tools, MIT licensed">
     <meta name="robots" content="index, follow">
     <link rel="icon" type="image/svg+xml" href="../favicon.svg">
@@ -491,11 +491,10 @@
         }
     </style>
     <script>
-    (function(){try{var t=localStorage.getItem('draft-theme');if(t!=='light')document.documentElement.setAttribute('data-theme','dark');}catch(e){document.documentElement.setAttribute('data-theme','dark');}})();
+    (function(){try{if(localStorage.getItem('draft-theme')==='light')document.documentElement.removeAttribute('data-theme');}catch(e){}})();
     </script>
 </head>
 <body>
-    <div id="cursor-glow" aria-hidden="true"></div>
 
     <!-- Top navigation -->
     <nav class="top-nav" id="top-nav" aria-label="Primary">
@@ -508,7 +507,7 @@
             </svg>
             Draft
         </a>
-        <div class="nav-links">
+        <div class="nav-links" id="nav-links">
             <a href="../#playground">Engine</a>
             <a href="../#commands">Workflow</a>
             <a href="../#features">Capabilities</a>
@@ -516,7 +515,7 @@
             <a href="../book/">Book</a>
             <a href="../blog/">Blog</a>
         </div>
-        <div class="nav-actions">
+        <div class="nav-actions" id="nav-actions">
             <a href="../changelog/" class="nav-version" title="Release notes">v4.0.0</a>
             <a href="https://github.com/drafthq/draft" target="_blank" rel="noopener noreferrer" class="nav-github">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
@@ -524,7 +523,7 @@
                 <span class="gh-stars" id="gh-stars"></span>
             </a>
         </div>
-        <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false">
+        <button type="button" class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-links nav-actions">
             <span></span><span></span><span></span>
         </button>
     </nav>
@@ -738,10 +737,10 @@
             <div class="footer-brand">
                 <span class="footer-logo">
                     <svg class="logo-mark" width="22" height="22" viewBox="0 0 26 26" fill="none" aria-hidden="true">
-                        <path d="M6 19L13 7L20 19M6 19H20" stroke="var(--accent-cyan)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-                        <circle cx="6" cy="19" r="2.6" fill="var(--accent-cyan)"/>
-                        <circle cx="20" cy="19" r="2.6" fill="var(--accent-cyan)"/>
-                        <circle cx="13" cy="7" r="3" fill="var(--accent-amber)"/>
+                        <path class="lm-edge" d="M6 19L13 7L20 19M6 19H20" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+                        <circle class="lm-node" cx="6" cy="19" r="2.6"/>
+                        <circle class="lm-node" cx="20" cy="19" r="2.6"/>
+                        <circle class="lm-hot" cx="13" cy="7" r="3"/>
                     </svg>
                     Draft
                 </span>
@@ -766,7 +765,7 @@
                 </div>
             </div>
             <div class="footer-col">
-                <h5>Product</h5>
+                <h3>Product</h3>
                 <ul>
                     <li><a href="../#playground">Graph engine</a></li>
                     <li><a href="../#commands">Workflow</a></li>
@@ -776,7 +775,7 @@
                 </ul>
             </div>
             <div class="footer-col">
-                <h5>Learn</h5>
+                <h3>Learn</h3>
                 <ul>
                     <li><a href="../what-is-draft/">What is Draft?</a></li>
                     <li><a href="../book/">The Draft Book</a></li>
@@ -786,7 +785,7 @@
                 </ul>
             </div>
             <div class="footer-col">
-                <h5>Community</h5>
+                <h3>Community</h3>
                 <ul>
                     <li><a href="https://github.com/drafthq/draft" target="_blank" rel="noopener noreferrer">GitHub</a></li>
                     <li><a href="https://github.com/drafthq/draft/issues" target="_blank" rel="noopener noreferrer">Issues</a></li>

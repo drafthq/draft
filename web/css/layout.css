@@ -107,13 +107,6 @@
 .bento-grid > * { grid-column: span 2; }
 .bento-grid > .bento-wide { grid-column: span 4; }
 
-.commands-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 0.75rem;
-    margin-top: 2rem;
-}
-
 .team-flow {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -233,5 +226,5 @@
 }
 
 @media (max-width: 480px) {
-    .pricing-comparison, .commands-grid { grid-template-columns: 1fr; }
+    .pricing-comparison { grid-template-columns: 1fr; }
 }
