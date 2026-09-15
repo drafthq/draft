@@ -74,8 +74,20 @@ assert "terminal demo opens on the zero-setup review" \
 assert "FAQ answers the init-prerequisite question" \
     "$(grep -q 'Do I have to run' "$LANDING" && echo true || echo false)"
 # JSON-LD mirrors the visible FAQ; a drifted copy is what search engines index.
+# Compare the answer text itself (tags stripped, entities decoded), not just
+# the question string.
 assert "JSON-LD FAQ carries the same answer" \
-    "$(grep -c 'Do I have to run /draft:init before I get anything?' "$LANDING" | grep -q '^1$' && echo true || echo false)"
+    "$(python3 - "$LANDING" <<'PY'
+import html, json, re, sys
+page = open(sys.argv[1]).read()
+question = "Do I have to run /draft:init before I get anything?"
+ld = re.search(r'"name": "%s",\s*"acceptedAnswer": \{\s*"@type": "Answer",\s*"text": "((?:[^"\\\\]|\\\\.)*)"' % re.escape(question), page)
+vis = re.search(r'<summary class="faq-question">Do I have to run <code>/draft:init</code> before I get anything\?</summary>\s*<div class="faq-answer">\s*<p>(.*?)</p>', page, re.S)
+norm = lambda t: re.sub(r'\s+', ' ', t).strip()
+ok = ld and vis and norm(json.loads('"' + ld.group(1) + '"')) == norm(html.unescape(re.sub(r'<[^>]+>', '', vis.group(1))))
+print('true' if ok else 'false')
+PY
+)"
 
 echo ""
 echo "## Author attribution"

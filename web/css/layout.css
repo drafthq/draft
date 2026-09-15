@@ -1,421 +1,230 @@
 /* ============================================================
-   LAYOUT — Sections, Grid Systems, Responsive
+   LAYOUT — Sections, containers, grids, responsive
    ============================================================ */
 
-/* Full-width sections */
 .section {
     position: relative;
     width: 100%;
-    padding: var(--section-padding) 2rem;
-    overflow: hidden;
+    padding: var(--section-padding) var(--gutter);
+    z-index: 1;
 }
 
+.section + .section {
+    border-top: 1px solid var(--border-subtle);
+}
+.hero-section + .section { border-top: 0; }
+
 .section-inner {
-    max-width: 1200px;
+    max-width: var(--container);
     margin: 0 auto;
     position: relative;
     z-index: 1;
 }
 
-/* Section glow backgrounds */
+/* Ambient glow behind a section head — one hue, never a rainbow */
 .section-glow {
     position: absolute;
-    top: -30%;
-    width: 100%;
-    height: 160%;
+    top: 0;
+    left: 50%;
+    width: min(1100px, 100%);
+    height: 60%;
+    transform: translateX(-50%);
     pointer-events: none;
     z-index: 0;
+    background: radial-gradient(ellipse 55% 50% at 50% 0%, var(--glow-cyan) 0%, transparent 70%);
 }
-
-.section-glow--cyan {
-    background: radial-gradient(ellipse at 30% 30%, var(--glow-cyan) 0%, transparent 60%);
-}
-.section-glow--rose {
-    background: radial-gradient(ellipse at 70% 30%, var(--glow-rose) 0%, transparent 60%);
-}
-.section-glow--violet {
-    background: radial-gradient(ellipse at 40% 40%, var(--glow-violet) 0%, transparent 60%);
-}
-.section-glow--amber {
-    background: radial-gradient(ellipse at 60% 30%, var(--glow-amber) 0%, transparent 60%);
-}
-.section-glow--emerald {
-    background: radial-gradient(ellipse at 50% 30%, var(--glow-emerald) 0%, transparent 60%);
-}
-
-/* Section labels */
-.section-label {
-    display: inline-block;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.8rem;
-    font-weight: 500;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--accent-cyan);
-    margin-bottom: 1rem;
-}
+.section-glow--rose { background: radial-gradient(ellipse 55% 50% at 50% 0%, var(--glow-rose) 0%, transparent 70%); }
+.section-glow--amber { background: radial-gradient(ellipse 55% 50% at 50% 0%, var(--glow-amber) 0%, transparent 70%); }
+.section-glow--emerald { background: radial-gradient(ellipse 55% 50% at 50% 0%, var(--glow-emerald) 0%, transparent 70%); }
+.section-glow--cyan { background: radial-gradient(ellipse 55% 50% at 50% 0%, var(--glow-cyan) 0%, transparent 70%); }
 
 .section-subtitle {
-    font-size: clamp(1rem, 2vw, 1.2rem);
+    font-size: clamp(1.05rem, 1.6vw, 1.2rem);
     color: var(--text-secondary);
-    max-width: 700px;
+    max-width: 68ch;
+    margin-bottom: 3rem;
+    text-wrap: pretty;
+}
+
+.section-head {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    gap: 2rem 4rem;
+    align-items: end;
     margin-bottom: 3rem;
 }
+.section-head h2 { margin-bottom: 0; max-width: 18ch; }
+.section-head .section-subtitle { margin-bottom: 0.25rem; }
 
 /* ============================================================
-   HERO LAYOUT
+   HERO (index only — module rules live in refresh-v4.css)
    ============================================================ */
 .hero-section {
-    min-height: 100vh;
-    min-height: 100dvh;
+    padding: calc(var(--nav-height) + clamp(3rem, 8vh, 6rem)) var(--gutter) 0;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    padding: 2rem;
-}
-
-.hero-section #hero-canvas {
-    position: absolute;
-    inset: 0;
-    z-index: 0;
+    align-items: stretch;
 }
 
 .hero-content {
     position: relative;
     z-index: 1;
-    max-width: 900px;
+    max-width: var(--container);
     width: 100%;
+    margin: 0 auto;
 }
 
 .hero-actions {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 1rem;
+    gap: 0.75rem;
     flex-wrap: wrap;
-    margin: 2rem 0 3rem;
-}
-
-/* Hero video removed — replaced by stats strip */
-
-.hero-sub {
-    font-size: 0.9rem;
-    color: var(--text-muted);
+    margin: 2rem 0 1.25rem;
 }
 
 /* ============================================================
-   PROBLEM SECTION LAYOUT
+   GRIDS
    ============================================================ */
 .problem-grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1.25rem;
-    margin: 3rem 0;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin: 0 0 2.5rem;
 }
 
-/* Comparison layout */
 .comparison {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.5rem;
-    margin: 3rem 0;
+    gap: 1rem;
 }
 
-/* ============================================================
-   PIPELINE LAYOUT
-   ============================================================ */
-.pipeline {
-    display: flex;
-    gap: 0;
-    margin: 3rem 0;
-    position: relative;
-}
-
-.pipeline-step {
-    flex: 1;
-    text-align: center;
-    padding: 1.5rem 1rem;
-    position: relative;
-}
-
-/* ============================================================
-   BENTO GRID
-   ============================================================ */
 .bento-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.5rem;
-    margin: 3rem 0;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 1rem;
     grid-auto-flow: dense;
 }
+.bento-grid > * { grid-column: span 2; }
+.bento-grid > .bento-wide { grid-column: span 4; }
 
-.bento-wide {
-    grid-column: span 2;
-}
-
-.bento-full {
-    grid-column: 1 / -1;
-}
-
-/* ============================================================
-   COMMANDS GRID
-   ============================================================ */
-.commands-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 0.75rem;
-    margin-top: 2rem;
-}
-
-/* ============================================================
-   TEAM FLOW
-   ============================================================ */
 .team-flow {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 1rem;
-    margin: 3rem 0;
+    margin: 0 0 2rem;
+    position: relative;
 }
 
-/* ============================================================
-   INSTALL LAYOUT
-   ============================================================ */
 .install-tabs {
-    display: flex;
-    gap: 0.5rem;
-    margin-bottom: 0;
+    display: inline-flex;
+    gap: 0.25rem;
+    padding: 0.25rem;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    margin-bottom: 1.25rem;
     flex-wrap: wrap;
 }
 
-.install-panels {
-    margin: 0 0 2rem;
+.install-panels { margin: 0 0 1.5rem; }
+.install-panel { display: none; }
+.install-panel.active { display: block; animation: panelIn 0.35s var(--ease-out); }
+
+@keyframes panelIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-.install-panel {
-    display: none;
-}
-
-.install-panel.active {
-    display: block;
-}
-
-/* ============================================================
-   ARCHITECTURE GRID
-   ============================================================ */
-.arch-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.25rem;
-    margin: 3rem 0;
-}
-
-/* Dual output */
 .dual-output {
-    display: flex;
-    gap: 0;
-    margin: 3rem 0;
-    border-radius: 16px;
-    overflow: hidden;
-    border: 1px solid var(--glass-border);
-}
-
-.dual-card {
-    flex: 1;
-    border-radius: 0;
-    border: none;
-}
-
-.dual-divider {
-    width: 1px;
-    background: var(--glass-border);
-}
-
-/* ============================================================
-   AUDIENCE GRID
-   ============================================================ */
-.audience-grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 1.5rem;
-    margin: 3rem 0;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1px;
+    margin: 0 0 2rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: var(--border);
 }
 
-/* First row: 3 cards spanning 2 cols each */
-.audience-card:nth-child(1),
-.audience-card:nth-child(2),
-.audience-card:nth-child(3) {
-    grid-column: span 2;
-}
-
-/* Second row: 2 cards centered (cols 2-3 and 4-5) */
-.audience-card:nth-child(4) {
-    grid-column: 2 / 4;
-}
-
-.audience-card:nth-child(5) {
-    grid-column: 4 / 6;
-}
-
-/* ============================================================
-   INDUSTRY TABLE
-   ============================================================ */
 .industry-table-wrap {
     overflow-x: auto;
-    margin: 3rem 0;
-    border-radius: 16px;
+    margin: 0 0 1.5rem;
+    border-radius: var(--radius-lg);
 }
 
-/* Pricing comparison */
 .pricing-comparison {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1.25rem;
-    margin: 3rem 0;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1rem;
+    margin: 0 0 1.5rem;
 }
 
 /* ============================================================
-   FOOTER LAYOUT
+   FOOTER
    ============================================================ */
 .footer {
+    position: relative;
+    z-index: 1;
     border-top: 1px solid var(--border);
-    padding: 4rem 2rem 2rem;
+    background: var(--bg-secondary);
+    padding: 4.5rem var(--gutter) 2rem;
 }
 
 .footer-inner {
-    max-width: 1200px;
+    max-width: var(--container);
     margin: 0 auto;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 3rem;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+    gap: 3rem 2.5rem;
 }
 
 .footer-bottom {
-    max-width: 1200px;
-    margin: 3rem auto 0;
-    padding-top: 2rem;
+    max-width: var(--container);
+    margin: 3.5rem auto 0;
+    padding-top: 1.5rem;
     border-top: 1px solid var(--border);
-    text-align: center;
-    font-size: 0.85rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    font-size: 0.82rem;
     color: var(--text-muted);
 }
-
-.footer-bottom a {
-    color: var(--accent-cyan);
-}
+.footer-bottom p { margin: 0; color: var(--text-muted); font-size: 0.82rem; }
+.footer-bottom a { color: var(--text-secondary); }
+.footer-bottom a:hover { color: var(--accent-cyan); }
 
 /* ============================================================
    RESPONSIVE
    ============================================================ */
-@media (max-width: 1024px) {
-    .problem-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .bento-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .bento-wide {
-        grid-column: span 2;
-    }
-    .bento-full {
-        grid-column: 1 / -1;
-    }
-    .team-flow {
-        grid-template-columns: repeat(3, 1fr);
-    }
-    .arch-grid {
-        grid-template-columns: repeat(2, 1fr);
-    }
-    .pricing-comparison {
-        grid-template-columns: repeat(2, 1fr);
-    }
+@media (max-width: 1100px) {
+    .bento-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .bento-grid > * { grid-column: span 3; }
+    .bento-grid > .bento-wide { grid-column: span 6; }
+    .pricing-comparison { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .team-flow { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .footer-inner { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 900px) {
+    .section-head { grid-template-columns: 1fr; gap: 1rem; }
+    .section-head h2 { max-width: none; }
+    .problem-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .dual-output { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 768px) {
-    .section {
-        padding: clamp(3rem, 6vw, 5rem) 1.25rem;
-    }
-    .hero-section {
-        min-height: calc(100vh - 60px);
-        min-height: calc(100dvh - 60px);
-        padding: 5rem 1.25rem 2rem;
-    }
-    .hero-content {
-        max-width: 100%;
-    }
-    .hero-actions {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.75rem;
-    }
-    .hero-actions .btn {
-        justify-content: center;
-    }
-    .problem-grid {
-        grid-template-columns: 1fr;
-    }
-    .comparison {
-        grid-template-columns: 1fr;
-    }
-    .pipeline {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-    .bento-grid {
-        grid-template-columns: 1fr;
-    }
-    .bento-wide,
-    .bento-full {
-        grid-column: span 1;
-    }
-    .team-flow {
-        grid-template-columns: 1fr;
-    }
-    .arch-grid {
-        grid-template-columns: 1fr;
-    }
-    .audience-grid {
-        grid-template-columns: 1fr;
-    }
-    .audience-card:nth-child(n) {
-        grid-column: span 1;
-    }
-    .dual-output {
-        flex-direction: column;
-    }
-    .dual-divider {
-        width: 100%;
-        height: 1px;
-    }
-    .pricing-comparison {
-        grid-template-columns: 1fr 1fr;
-    }
-    .footer-inner {
-        flex-direction: column;
-        gap: 2rem;
-    }
-    /* Ensure tables scroll horizontally */
-    .industry-table-wrap {
-        -webkit-overflow-scrolling: touch;
-    }
-
-    /* Hide side nav on mobile */
-    .side-nav {
-        display: none;
-    }
+    .section { padding: clamp(3.5rem, 8vw, 5rem) var(--gutter); }
+    .hero-section { padding-top: calc(var(--nav-height) + 2.5rem); }
+    .hero-actions { flex-direction: column; align-items: stretch; }
+    .hero-actions .btn { justify-content: center; }
+    .problem-grid, .comparison, .team-flow { grid-template-columns: 1fr; }
+    .bento-grid > *, .bento-grid > .bento-wide,     .side-nav { display: none; }
+    .footer-inner { grid-template-columns: 1fr; gap: 2rem; }
+    .footer-bottom { flex-direction: column; align-items: flex-start; }
 }
 
 @media (max-width: 480px) {
-    .pricing-comparison {
-        grid-template-columns: 1fr;
-    }
-    .commands-grid {
-        grid-template-columns: 1fr;
-    }
-    .audience-grid {
-        grid-template-columns: 1fr;
-    }
+    .pricing-comparison { grid-template-columns: 1fr; }
 }

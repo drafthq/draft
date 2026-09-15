@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Bug Hunt — Draft Book</title>
     <meta name="description" content="14-dimension bug hunting sweep — from null safety to concurrency, security to algorithmic complexity. Only HIGH/CONFIRMED confidence reported.">
     <meta name="author" content="Mayur Pise">
-    <meta name="theme-color" content="#2563eb">
+    <meta name="theme-color" content="#06080e">
     <meta name="keywords" content="bug hunting, 14-dimension sweep, concurrency bugs, security vulnerabilities, algorithmic complexity">
     <meta name="robots" content="index, follow">
     <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
@@ -49,17 +49,17 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" as="style"
-        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap"
         onload="this.onload=null;this.rel='stylesheet'">
     <noscript>
-        <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@500;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     </noscript>
 
     <link rel="stylesheet" href="../css/book.css">
 
     <!-- Theme: apply early to prevent flash of wrong theme -->
     <script>
-    (function(){try{var t=localStorage.getItem('draft-theme');if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';if(t==='dark')document.documentElement.setAttribute('data-theme','dark');}catch(e){}})();
+    (function(){try{if(localStorage.getItem('draft-theme')==='light')document.documentElement.removeAttribute('data-theme');}catch(e){}})();
     </script>
 </head>
 <body data-chapter="bug-hunt">

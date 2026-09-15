@@ -8,32 +8,33 @@
    ============================================================ */
 :root {
     /* Backgrounds */
-    --bg-primary: #ffffff;
-    --bg-secondary: #f8f9fa;
-    --bg-tertiary: #f1f3f5;
-    --bg-sidebar: #f8f9fa;
-    --bg-code: #f5f7f9;
+    --bg-primary: #f5f6fa;
+    --bg-secondary: #ffffff;
+    --bg-tertiary: #eceef4;
+    --bg-sidebar: #ffffff;
+    --bg-code: #eef0f5;
 
     /* Accents */
-    --accent-cyan: #2563eb;
-    --accent-amber: #d97706;
-    --accent-rose: #e11d48;
-    --accent-emerald: #059669;
-    --accent-violet: #7c3aed;
+    --accent-cyan: #2b5bd7;
+    --accent-amber: #8f5500;
+    --accent-rose: #b8264a;
+    --accent-emerald: #0a7550;
+    --accent-violet: #5a48d2;
+    --accent-rgb: 43, 91, 215;
 
     /* Text */
-    --text-primary: #111827;
-    --text-secondary: #334155;
-    --text-muted: #475569;
-    --text-reading: #1f2937;
+    --text-primary: #0b0e16;
+    --text-secondary: #414b5e;
+    --text-muted: #5b6579;
+    --text-reading: #1c2333;
 
     /* Borders */
-    --border: #e2e8f0;
-    --border-subtle: rgba(0, 0, 0, 0.06);
+    --border: rgba(15, 23, 42, 0.10);
+    --border-subtle: rgba(15, 23, 42, 0.06);
 
     /* Glass */
     --glass-bg: rgba(255, 255, 255, 0.85);
-    --glass-border: rgba(0, 0, 0, 0.06);
+    --glass-border: rgba(15, 23, 42, 0.10);
 
     /* Sidebar */
     --sidebar-width: 300px;
@@ -58,7 +59,7 @@ html {
 }
 
 body {
-    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--bg-primary);
     color: var(--text-primary);
     line-height: 1.7;
@@ -86,7 +87,7 @@ a { color: inherit; text-decoration: none; }
     left: 0;
     width: 0%;
     height: 3px;
-    background: linear-gradient(90deg, #2563eb, #7c3aed);
+    background: linear-gradient(90deg, var(--accent-cyan), #9ec1ff);
     z-index: 200;
     transition: width 0.15s ease-out;
 }
@@ -126,7 +127,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .book-topbar-logo {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Schibsted Grotesk', sans-serif;
     font-size: 1.25rem;
     font-weight: 700;
     color: var(--text-primary);
@@ -461,7 +462,7 @@ a { color: inherit; text-decoration: none; }
    CHAPTER TYPOGRAPHY
    ============================================================ */
 .chapter-wrapper h1 {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Schibsted Grotesk', sans-serif;
     font-size: clamp(2rem, 4vw, 2.75rem);
     font-weight: 700;
     letter-spacing: -0.03em;
@@ -498,7 +499,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .chapter-wrapper h2 {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Schibsted Grotesk', sans-serif;
     font-size: 1.5rem;
     font-weight: 700;
     letter-spacing: -0.02em;
@@ -510,7 +511,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .chapter-wrapper h3 {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Schibsted Grotesk', sans-serif;
     font-size: 1.2rem;
     font-weight: 600;
     color: var(--text-primary);
@@ -519,7 +520,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .chapter-wrapper h4 {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Schibsted Grotesk', sans-serif;
     font-size: 1rem;
     font-weight: 600;
     color: var(--text-primary);
@@ -605,7 +606,7 @@ a { color: inherit; text-decoration: none; }
     padding: 0.15rem 0.4rem;
     border-radius: 4px;
     font-size: 0.85em;
-    color: #b35900;
+    color: #8f5500;
     border: 1px solid var(--border);
 }
 
@@ -718,7 +719,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .callout-title {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Schibsted Grotesk', sans-serif;
     font-size: 0.85rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -799,7 +800,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .chapter-wrapper thead th {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Schibsted Grotesk', sans-serif;
     font-weight: 600;
     font-size: 0.8rem;
     text-transform: uppercase;
@@ -921,7 +922,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .related-chapters h3 {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Schibsted Grotesk', sans-serif;
     font-size: 1rem;
     font-weight: 600;
     color: var(--text-primary);
@@ -1009,7 +1010,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .chapter-nav-title {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Schibsted Grotesk', sans-serif;
     font-size: 0.8rem;
     font-weight: 500;
     color: inherit;
@@ -1082,7 +1083,7 @@ a { color: inherit; text-decoration: none; }
 }
 
 .book-landing .gradient-text {
-    background: linear-gradient(135deg, var(--accent-cyan), var(--accent-violet), var(--accent-rose), var(--accent-cyan));
+    background: linear-gradient(120deg, var(--accent-cyan), #8fb3ff);
     background-size: 300% 300%;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -1426,35 +1427,36 @@ a { color: inherit; text-decoration: none; }
    DARK MODE (matches site theme tokens)
    ============================================================ */
 [data-theme="dark"] {
-    --bg-primary: #0a0d12;
-    --bg-secondary: #11161d;
-    --bg-tertiary: #161b24;
-    --bg-sidebar: #0d1117;
-    --bg-code: #161b24;
+    --bg-primary: #06080e;
+    --bg-secondary: #0b0e16;
+    --bg-tertiary: #11151f;
+    --bg-sidebar: #090c14;
+    --bg-code: #080a11;
 
-    --text-primary: #e6edf3;
-    --text-secondary: #b1bac4;
-    --text-muted: #768390;
-    --text-reading: #c9d1d9;
+    --text-primary: #eef1f7;
+    --text-secondary: #a8b1c4;
+    --text-muted: #77829b;
+    --text-reading: #d5dbe8;
 
-    --border: #21262d;
-    --border-subtle: rgba(255, 255, 255, 0.05);
+    --border: rgba(146, 164, 204, 0.13);
+    --border-subtle: rgba(146, 164, 204, 0.07);
 
-    --glass-bg: rgba(22, 27, 36, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.08);
+    --glass-bg: rgba(14, 18, 27, 0.7);
+    --glass-border: rgba(146, 164, 204, 0.14);
 
-    --accent-cyan: #58a6ff;
-    --accent-amber: #d29922;
-    --accent-rose: #f85149;
-    --accent-emerald: #3fb950;
-    --accent-violet: #a371f7;
+    --accent-cyan: #5b8def;
+    --accent-amber: #f2b33d;
+    --accent-rose: #f4647d;
+    --accent-emerald: #3ecf8e;
+    --accent-violet: #9b8cff;
+    --accent-rgb: 91, 141, 239;
 }
 
 /* Override hardcoded white surfaces in dark mode */
 [data-theme="dark"] .header-bar,
 [data-theme="dark"] .top-nav-book,
 [data-theme="dark"] .book-topbar {
-    background: rgba(13, 17, 22, 0.92);
+    background: rgba(6, 8, 14, 0.85);
     border-bottom-color: var(--border);
 }
 [data-theme="dark"] .topbar-github {
@@ -1489,8 +1491,8 @@ a { color: inherit; text-decoration: none; }
     background: var(--bg-primary);
     color: var(--text-reading);
 }
-[data-theme="dark"] .chapter-wrapper a { color: var(--accent-violet); }
-[data-theme="dark"] .chapter-wrapper a:hover { color: var(--accent-cyan); }
+[data-theme="dark"] .chapter-wrapper a { color: var(--accent-cyan); }
+[data-theme="dark"] .chapter-wrapper a:hover { color: #9ec1ff; }
 [data-theme="dark"] .chapter-wrapper blockquote {
     background: var(--bg-secondary);
     border-left-color: var(--accent-violet);
@@ -1564,8 +1566,8 @@ a { color: inherit; text-decoration: none; }
     position: fixed;
     bottom: 1.25rem;
     right: 1.25rem;
-    width: 36px;
-    height: 36px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1579,11 +1581,11 @@ a { color: inherit; text-decoration: none; }
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.10);
 }
 .theme-toggle:hover {
-    transform: scale(1.05);
-    border-color: var(--accent-violet);
-    color: var(--accent-violet);
+    transform: translateY(-1px);
+    border-color: var(--accent-cyan);
+    color: var(--accent-cyan);
 }
-.theme-toggle svg { width: 16px; height: 16px; }
+.theme-toggle svg { width: 17px; height: 17px; }
 .theme-toggle .icon-sun  { display: none; }
 .theme-toggle .icon-moon { display: block; }
 [data-theme="dark"] .theme-toggle {
@@ -1662,7 +1664,7 @@ a { color: inherit; text-decoration: none; }
 
 /* ---- Reading progress: a redline drawn across the top ---- */
 .reading-progress {
-    background: linear-gradient(90deg, var(--accent-cyan), var(--accent-rose));
+    background: linear-gradient(90deg, var(--accent-cyan), #9ec1ff);
 }
 
 /* ---- Calmer, drafting-precise surfaces ------------------- */
@@ -1735,14 +1737,15 @@ a { color: inherit; text-decoration: none; }
     font-size: 0.66rem;
     font-weight: 500;
     letter-spacing: 0.08em;
-    color: var(--accent-rose);
-    border: 1px solid var(--accent-rose);
-    border-radius: 4px;
+    color: var(--accent-amber);
+    border: 1px solid var(--accent-amber);
+    background: rgba(242, 179, 61, 0.1);
+    border-radius: 6px;
     padding: 0.15rem 0.5rem;
 }
 
 .book-landing--draft h1 {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Schibsted Grotesk', sans-serif;
     font-size: clamp(2.3rem, 5.5vw, 3.6rem);
     line-height: 1.04;
     letter-spacing: -0.03em;
@@ -1838,7 +1841,7 @@ table.command-reference tr:target > td {
 
 .book-titleblock .tb-val {
     display: block;
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: 'Schibsted Grotesk', sans-serif;
     font-size: 1.5rem;
     font-weight: 700;
     line-height: 1;

@@ -1,95 +1,67 @@
 /* ============================================================
-   ANIMATIONS — IntersectionObserver, parallax tilt
+   ANIMATIONS — scroll reveals, card spotlight
    ============================================================ */
 
-(function() {
-    // ============================================================
-    // SCROLL REVEAL
-    // ============================================================
-    var revealElements = document.querySelectorAll(
-        '.reveal, .reveal-left, .reveal-right, .reveal-scale, .reveal-stagger, .pipeline'
-    );
+(function () {
+    'use strict';
 
-    var revealObserver = new IntersectionObserver(function(entries) {
-        entries.forEach(function(entry) {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('visible');
-            }
-        });
-    }, {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    });
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    if (revealElements.length > 0) {
-        revealElements.forEach(function(el) {
-            revealObserver.observe(el);
-        });
-    }
-
-    // ============================================================
-    // AUTO-ADD REVEAL CLASSES
-    // ============================================================
-    // Add reveal classes to section elements
-    document.querySelectorAll('.section-inner').forEach(function(inner) {
-        // Section label, h2, subtitle
-        var label = inner.querySelector('.section-label');
-        var h2 = inner.querySelector('h2');
-        var subtitle = inner.querySelector('.section-subtitle');
-
-        if (label) label.classList.add('reveal');
-        if (h2) h2.classList.add('reveal');
-        if (subtitle) subtitle.classList.add('reveal');
-
-        // Grids get staggered reveal
-        inner.querySelectorAll('.problem-grid, .bento-grid, .commands-grid, .arch-grid, .audience-grid, .team-flow, .pricing-comparison').forEach(function(grid) {
-            grid.classList.add('reveal-stagger');
+    /* ---- Auto-assign reveal classes ------------------------- */
+    document.querySelectorAll('.section-inner').forEach(function (inner) {
+        ['.section-label', 'h2', '.section-subtitle'].forEach(function (sel) {
+            var node = inner.querySelector(sel);
+            if (node) node.classList.add('reveal');
         });
 
-        // Comparisons and callouts
-        inner.querySelectorAll('.comparison, .callout, .dual-output, .industry-table-wrap').forEach(function(el) {
-            el.classList.add('reveal');
-        });
+        inner.querySelectorAll(
+            '.problem-grid, .bento-grid, .init-phases, .team-flow, ' +
+            '.pricing-comparison, .cmd-primary-grid, .dual-output'
+        ).forEach(function (grid) { grid.classList.add('reveal-stagger'); });
 
-        // Terminal
-        inner.querySelectorAll('.terminal').forEach(function(el) {
-            el.classList.add('reveal-scale');
+        inner.querySelectorAll(
+            '.comparison, .callout, .industry-table-wrap, .vs-table-wrap, .roles, ' +
+            '.routing-block, .cmd-routed, .init-state, .faq-list, .proof, .install-tabs, .install-panels'
+        ).forEach(function (node) { node.classList.add('reveal'); });
+
+        inner.querySelectorAll('.terminal, .playground').forEach(function (node) {
+            node.classList.add('reveal-scale');
         });
     });
 
-    // Re-observe the newly classed elements (reuse the single observer)
-    if (revealObserver) {
-        document.querySelectorAll(
-            '.reveal, .reveal-left, .reveal-right, .reveal-scale, .reveal-stagger, .pipeline'
-        ).forEach(function(el) {
-            if (!el.classList.contains('visible')) {
-                revealObserver.observe(el);
-            }
-        });
+    /* ---- Observe ------------------------------------------- */
+    var targets = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale, .reveal-stagger');
+
+    if (reduceMotion || !('IntersectionObserver' in window)) {
+        targets.forEach(function (node) { node.classList.add('visible'); });
+    } else {
+        var observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
+
+        targets.forEach(function (node) { observer.observe(node); });
     }
 
-    // ============================================================
-    // PARALLAX TILT ON BENTO CARDS
-    // ============================================================
+    /* ---- Spotlight: cursor-tracked highlight on bento cards - */
     if (window.matchMedia('(hover: hover)').matches) {
-        document.querySelectorAll('.bento-card').forEach(function(card) {
-            card.addEventListener('mousemove', function(e) {
-                var rect = card.getBoundingClientRect();
-                var x = e.clientX - rect.left;
-                var y = e.clientY - rect.top;
-                var centerX = rect.width / 2;
-                var centerY = rect.height / 2;
-                var rotateX = ((y - centerY) / centerY) * -3;
-                var rotateY = ((x - centerX) / centerX) * 3;
-
-                card.style.transform = 'perspective(800px) rotateX(' + rotateX + 'deg) rotateY(' + rotateY + 'deg) translateY(-3px)';
-            });
-
-            card.addEventListener('mouseleave', function() {
-                card.style.transform = '';
+        document.querySelectorAll('.bento-card').forEach(function (card) {
+            var x = 0, y = 0, raf = null;
+            card.addEventListener('mousemove', function (e) {
+                x = e.clientX; y = e.clientY;
+                if (raf) return;
+                /* One style write per frame, not per pointer event */
+                raf = requestAnimationFrame(function () {
+                    raf = null;
+                    var rect = card.getBoundingClientRect();
+                    card.style.setProperty('--mx', (x - rect.left) + 'px');
+                    card.style.setProperty('--my', (y - rect.top) + 'px');
+                });
             });
         });
     }
-
-    // Video player removed — videos section replaced with audience cards
 })();
