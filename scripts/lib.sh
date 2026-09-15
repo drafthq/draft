@@ -270,6 +270,10 @@ TOOLS=(
     "verify-doc-anchors.sh"
     "verify-graph-binary.sh"
     "resolve-tools.sh"
+    # Autonomous-run enforcement: external state, corroborated evidence, phase gate
+    "mission-state.sh"
+    "record-evidence.sh"
+    "gate-check.sh"
     # OKF taxonomy emitter (DRAFT_INIT_MODE=okf)
     "okf-validate.sh"
     "okf-render-views.sh"
