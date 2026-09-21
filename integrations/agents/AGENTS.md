@@ -17573,7 +17573,7 @@ Any skill that mutates `architecture.md` should execute this subroutine afterwar
 
 Compute tier from the live architecture view (the same metrics as `draft init` Step 1.4.5 — `schema.yaml` carries only counts, not these):
 
-  ARCH=$(scripts/tools/graph-arch.sh --repo .)
+  ARCH=$("$DRAFT_TOOLS/graph-arch.sh" --repo .)                       (DRAFT_TOOLS: resolver below)
   M = $ARCH | jq '.packages | length'                                                              (modules)
   F = $ARCH | jq '[.node_labels[] | select(.label=="Function" or .label=="Method") | .count] | add // 0'  (functions + methods)
   P = $ARCH | jq '.routes | length'                                                                (routes / RPCs)
