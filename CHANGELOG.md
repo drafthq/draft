@@ -81,6 +81,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   indexer's working-tree delta. Those are gone (the delta is still printed);
   the marker keeps the engine, its version, and the point-of-index counts.
   `root-link.json` drops the `root_project` it copied from there.
+- **The `.ai-context.md` tier formula read fields that no longer exist.**
+  `core/shared/condensation.md` computed the tier from `schema.yaml`
+  `stats.modules` / `stats.go_functions` / `stats.proto_rpcs`, a leftover of
+  the retired fat snapshot. It now uses the live `graph-arch.sh` metrics, the
+  same ones `/draft:init` Step 1.4.5 already used.
 - **Cypher dialect guidance described engine 0.8.x.** Re-verified against the
   pinned 0.9.0: `<>`/`!=`/`<=`/`>=`, `coalesce()`, variable-length patterns and
   `WITH` aggregation now work; path variables still fail; multi-pattern joins

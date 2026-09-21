@@ -23,3 +23,4 @@ Source: [docs/audit/codebase-memory-mcp-usage-2026-09-21.md](../audit/codebase-m
 - [ ] CMM-16 · L4 portable memory bound via CBM_MEM_BUDGET_MB · P2
 - [ ] CMM-17 · L5 keep machine-specific fields out of committed schema.yaml · P2
 - [ ] CMM-18 · L6 scope the "no outbound calls" claim to CLI mode · P2
+- [ ] CMM-19 · condensation tier reads `stats.*` fields schema.yaml never had (found during CMM-17) · P2
