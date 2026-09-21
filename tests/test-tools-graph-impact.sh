@@ -55,6 +55,8 @@ EMPTYMOCK
         "$(echo "$empty_out" | jq -e '.source == "unavailable"' >/dev/null 2>&1 && echo true || echo false)"
 
     # Graph mock: answers each Cypher (read from stdin) by its target and depth.
+    # Dependents are only returned for queries that exclude the target itself, so
+    # dropping that clause from a builder fails the assertions below.
     #   lib.py  ← app.main (hop 1 and 2), tests test_core (hop 1), cli.run (hop 2),
     #             imported by pkg/consts.py.   empty.py exists, has no dependents.
     #   core    ← app.main (hop 1), core itself (recursion — not a dependent).
@@ -73,12 +75,12 @@ esac
 q="$(jq -r .query)"
 rows() { printf '{"columns":[],"rows":%s,"total":0}\n' "$1"; }
 case "$q" in
-  *"*1..1"*"file_path = 'lib.py'"*)
+  *"*1..1"*"file_path = 'lib.py' AND a.file_path <> 'lib.py'"*)
     rows '[["m.app.main","main","app.py","false"],["m.tests.test_core","test_core","tests/test_lib.py","true"]]' ;;
-  *"*2..2"*"file_path = 'lib.py'"*)
+  *"*2..2"*"file_path = 'lib.py' AND a.file_path <> 'lib.py'"*)
     rows '[["m.cli.run","run","cli/run.py","false"],["m.app.main","main","app.py","false"]]' ;;
   *"IMPORTS"*"file_path = 'lib.py'"*) rows '[["pkg/consts.py"]]' ;;
-  *"*1..1"*"{name:'core'}"*) rows '[["m.app.main","main","app.py","false"]]' ;;
+  *"*1..1"*"{name:'core'}) WHERE a.name <> 'core'"*) rows '[["m.app.main","main","app.py","false"]]' ;;
   *"*1..1"*"{name:'many'}"*) rows "$(jq -nc '[range(250) | ["m.c\(.)", "c\(.)", "f\(.).py", "false"]]')" ;;
   *"*1..1"*"{name:'dup'}"*)  rows "$(jq -nc '[range(5000) | ["m.d\(. % 3)", "d\(. % 3)", "d.py", "false"]]')" ;;
   *"(f) WHERE f.file_path = 'empty.py'"*) rows '[["empty.py"]]' ;;
