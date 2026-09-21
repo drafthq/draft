@@ -17,6 +17,7 @@ Two other problems make regressions likely. The calling convention Draft uses ev
 ### High
 
 **H1. Stale index answers as if fresh.**
+
 - **Where:** `scripts/tools/_lib.sh:345-357`, `core/shared/graph-query.md:378`.
 - **What:** `memory_ensure_index` indexes only when the project is missing and never refreshes it. Only `graph-snapshot.sh` re-indexes. Meanwhile `review`, `implement` (post-edit blast radius, `skills/implement/SKILL.md:664-674`) and `debug` query after edits without refreshing. `graph-query.md:378` claims the engine "self-freshens on each query", which is false.
 - **Repro:**
@@ -30,6 +31,7 @@ Two other problems make regressions likely. The calling convention Draft uses ev
   - Delete the false "self-freshens" row.
 
 **H2. `graph-impact.sh --file` reports symbols inside the file instead of blast radius.**
+
 - **Where:** `scripts/tools/graph-impact.sh:86-97`.
 - **What:** it filters `detect_changes.impacted_symbols` to the target file.
   - Every symbol comes back **twice**, and the file node itself is included.
@@ -45,6 +47,7 @@ Two other problems make regressions likely. The calling convention Draft uses ev
   - When the file has no changes, return an explicit status instead of an empty success.
 
 **H3. Every engine call uses a calling convention that is deprecated upstream.**
+
 - **Where:** `_lib.sh:256,258,333,336`, plus the raw-CLI instructions in `graph-query.md`.
 - **What:** on 0.9.0, every call prints: *"passing raw JSON to 'cli \<tool\>' is deprecated and will be removed in a future release; use flags, --args-file, or piped stdin."* `memory_cli` sends stderr to `/dev/null`, so the warning is never seen.
 - **Risk:**
@@ -53,6 +56,7 @@ Two other problems make regressions likely. The calling convention Draft uses ev
 - **Fix:** pipe the JSON on stdin instead, e.g. `printf '%s' "$args" | "$MEMORY_BIN" cli "$tool"`. Verified to work with no warning. The change is confined to `memory_cli` and the two `systemd-run` call sites.
 
 **H4. No real-engine test coverage, and the tests pollute the user's engine cache.**
+
 - **Where:** `tests/test-helpers.sh:35-71`, `tests/test-tools-graph-query.sh:34-40`, `.github/workflows/ci.yml`.
 - **What:**
   - All 21 wrapper tests use a mock engine.
@@ -70,12 +74,14 @@ Two other problems make regressions likely. The calling convention Draft uses ev
 ### Medium
 
 **M1. Checksum verification only catches download corruption, not a compromised release.**
+
 - **Where:** `scripts/fetch-memory-engine.sh:101-119`.
 - **What:** `checksums.txt` comes from the same release as the archive. A replaced release asset, or a re-pointed tag, passes verification.
 - **Also:** strict mode is off by default. `bin/README.md` states this honestly, but the fix is cheap.
 - **Fix:** pin four per-platform SHA-256 values next to `DEFAULT_VERSION`. Treat a mismatch with the pinned values as fatal regardless of `DRAFT_STRICT_VERIFY`.
 
 **M2. The pinned engine version is never enforced.**
+
 - **Where:** `fetch-memory-engine.sh:47-50`, `_lib.sh:193-196`, `verify-graph-binary.sh:127-130`.
 - **What:**
   - The fetch script exits 0 if any binary exists at the destination, whatever its version. Bumping the pin never upgrades an existing install, and that path is untested because every test passes `--force`.
@@ -86,6 +92,7 @@ Two other problems make regressions likely. The calling convention Draft uses ev
   - Warn in `verify-graph-binary.sh` and `graph-preflight.sh` when the resolved version is off-pin.
 
 **M3. A repo reached through a symlink is re-indexed on every wrapper call.**
+
 - **Where:** `_lib.sh:238`, `graph-snapshot.sh:64`, `graph-init.sh`.
 - **What:** `REPO_ABS` comes from `pwd`, which keeps the symlink path. The engine stores the resolved real path. So the `list_projects` lookup misses and `index_repository` runs on every query. Confirmed with `DRAFT_MEMORY_DEBUG`.
 - **Hits:**
@@ -94,10 +101,12 @@ Two other problems make regressions likely. The calling convention Draft uses ev
 - **Fix:** use `pwd -P`.
 
 **M4. Two different repo paths can share one engine project.**
+
 - **What:** the engine derives project names by replacing `/` with `-`. `/x/a-b/c` and `/x/a/b-c` map to the same DB, and each call from one repo re-indexes over the other. Verified: after both were indexed, the DB held only whichever repo was indexed last.
 - **Fix:** pass `--name` (the engine supports it) using a hash of the path. Or check the returned project's `root_path` and fail loud on mismatch.
 
 **M5. `cycle-detect.sh` reports each 3-cycle three times and reports self-loops as 3-cycles.**
+
 - **Where:** `scripts/tools/cycle-detect.sh:74-83`.
 - **What:**
   - A single `fa→fb→fc→fa` cycle comes back as 3 rows, one per rotation.
@@ -105,12 +114,14 @@ Two other problems make regressions likely. The calling convention Draft uses ev
 - **Fix:** in jq, drop 3-rows that repeat a node, rotate each row to start at its smallest element, then `unique`.
 
 **M6. The docs contradict the code and each other.**
+
 - `bin/README.md:101` says "Skills never call the engine directly". But `core/shared/graph-query.md:118,196-202` tells agents to run raw `codebase-memory-mcp cli` for `search_graph`, `search_code` and `trace_path`.
   - `graph-query.sh --tool` already allow-lists all three.
   - Pointing the docs there removes the contradiction and the deprecated calling form, with no new code.
 - `graph-query.md:378` makes the false "self-freshens" claim (see H1).
 
 **M7. The documented Cypher restrictions are out of date.**
+
 - **Where:** `_graph_queries.sh:10-19`, `graph-query.sh:15-19`, `graph-query.md:140-159`, `graph-traces.sh:7,42`.
 - **What:** all of these say "v0.8.x" and forbid constructs that 0.9.0 handles correctly:
   - `<>` (filters correctly)
