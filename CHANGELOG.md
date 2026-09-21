@@ -92,6 +92,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   skipping engine resolution, the pre-query refresh, and the fail-loud
   contract. They now go through `graph-query.sh --tool`, which already
   allow-listed those tools; `graph-preflight.sh`'s next-step hint does too.
+- **`bin/README.md` overstated the engine's network silence.** "No outbound
+  calls" holds for the `cli` mode Draft uses (verified under `strace`), but the
+  binary embeds an update checker for its MCP-server mode. The claim is now
+  scoped, and the checker is disclosed.
 - **Cypher dialect guidance described engine 0.8.x.** Re-verified against the
   pinned 0.9.0: `<>`/`!=`/`<=`/`>=`, `coalesce()`, variable-length patterns and
   `WITH` aggregation now work; path variables still fail; multi-pattern joins

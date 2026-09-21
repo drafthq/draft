@@ -80,8 +80,9 @@ Be explicit about the residual risk: a pinned checksum proves the download match
 ### What the engine does at runtime
 
 - Reads the repository you point it at and writes a SQLite graph under its own cache.
-- Runs entirely locally. No API key, no telemetry endpoint, no outbound calls during indexing or querying.
-- Network is used exactly once, by `fetch-memory-engine.sh`, to download the release archive.
+- Runs entirely locally as Draft invokes it (`cli` mode). No API key, no telemetry endpoint, no outbound calls during indexing or querying — verified under `strace` for `index_repository` and queries on 0.9.0 (zero `connect()` calls, no spawned `curl`).
+- The binary does embed an update checker (`api.github.com/.../releases/latest`) and `update` / `install` subcommands for its own MCP-server workflow. Draft never runs the server or those subcommands.
+- Draft uses the network exactly once, in `fetch-memory-engine.sh`, to download the release archive.
 
 Draft invokes it only through `codebase-memory-mcp cli <tool>` with JSON args on stdin (see `_lib.sh:memory_cli`). It is never given credentials and never writes into your source tree.
 
