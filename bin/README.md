@@ -42,7 +42,7 @@ Shell helpers under `scripts/tools/` drive the engine via its CLI
 (`codebase-memory-mcp cli <tool>`, JSON args on stdin) and shape results into Draft's
 contracts — see `hotspot-rank.sh`, `cycle-detect.sh`, `mermaid-from-graph.sh`,
 and `verify-graph-binary.sh`. The shared wrappers (`memory_cli`,
-`memory_ensure_index`, `memory_project_for_repo`) live in `_lib.sh`.
+`memory_ensure_index`, `memory_index_bounded`) live in `_lib.sh`.
 
 ## Snapshot artifacts
 
@@ -97,7 +97,7 @@ Three supported postures, in increasing strictness:
 
 The dependency is bounded by design, which is what makes this survivable:
 
-- **The interface is small.** Draft consumes a documented CLI (`cli <tool>`, JSON on stdin), not a library. The entire coupling lives in `scripts/tools/_lib.sh` (`memory_cli`, `memory_ensure_index`, `memory_project_for_repo`) and `_graph_queries.sh`. Swapping engines means reimplementing those, not rewriting skills.
+- **The interface is small.** Draft consumes a documented CLI (`cli <tool>`, JSON on stdin), not a library. The entire coupling lives in `scripts/tools/_lib.sh` (`memory_cli`, `memory_ensure_index`, `memory_index_bounded`) and `_graph_queries.sh`. Swapping engines means reimplementing those, not rewriting skills.
 - **Skills never call the engine directly.** They call `graph-*.sh` wrappers, all of which already fail loud with `source: "unavailable"`. An engine that disappears degrades the product; it does not break it.
 - **Pinning buys time.** A stalled upstream keeps working at the pinned version; only new language support would be lost.
 - **The graph contract is replaceable.** The queries are ordinary Cypher-shaped structural lookups (callers, callees, fan-in, cycles, routes) over a tree-sitter/LSP index — reproducible on another indexer.

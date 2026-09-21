@@ -261,16 +261,6 @@ memory_cli() {
     fi
 }
 
-# Resolve the engine's project name for a repository absolute path via list_projects.
-# Echoes the project name, or nothing if the repo has not been indexed yet.
-memory_project_for_repo() {
-    local repo_abs="$1"
-    command -v jq >/dev/null 2>&1 || return 1
-    memory_cli list_projects '{}' 2>/dev/null \
-        | jq -r --arg p "$repo_abs" '.projects[]? | select(.root_path == $p) | .name' 2>/dev/null \
-        | head -1
-}
-
 # Total physical RAM in MB (portable). Echoes a positive integer, or nothing.
 _total_ram_mb() {
     if [[ -r /proc/meminfo ]]; then
@@ -342,18 +332,19 @@ memory_index_bounded() {
     fi
 }
 
-# Ensure a repository is indexed in the engine; echo its project name.
-# Indexes on demand when absent. Returns 1 if the engine is unavailable.
+# Bring a repository's engine index up to date; echo its project name.
+# Always re-indexes: the engine indexes incrementally (content-based, git-aware),
+# so an unchanged repo costs ~0.1 s. Indexing only when the project was absent
+# left every live query answering from the first index ever taken — a symbol
+# added since stayed invisible while the result still said status:"ok".
+# Returns 1 if the engine is unavailable.
 memory_ensure_index() {
     local repo_abs="$1"
     [[ -n "${MEMORY_BIN:-}" ]] || return 1
     command -v jq >/dev/null 2>&1 || return 1
     local proj
-    proj="$(memory_project_for_repo "$repo_abs" 2>/dev/null || true)"
-    if [[ -z "$proj" ]]; then
-        proj="$(memory_index_bounded "$repo_abs" \
-            | jq -r '.project // empty' 2>/dev/null || true)"
-    fi
+    proj="$(memory_index_bounded "$repo_abs" \
+        | jq -r '.project // empty' 2>/dev/null || true)"
     [[ -n "$proj" ]] || return 1
     printf '%s' "$proj"
 }

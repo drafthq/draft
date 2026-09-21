@@ -18476,7 +18476,7 @@ The engine indexes C/C++, Go, Python, TypeScript/JS, and more (tree-sitter, 159 
 | No engine resolvable (or `DRAFT_MEMORY_DISABLE=1`) | Skip graph indexing in init; all skills proceed without graph data; tools emit `source: unavailable` |
 | Engine present but a query fails, or returns shapeless `{}` | Treat as unavailable — never as a true-negative empty result; skills proceed without graph data |
 | `draft/graph/schema.yaml` exists | Engine is wired — use live query tools as needed during the run |
-| Engine index out of date | The engine indexes incrementally (content-based, git-aware) on each query, so it self-freshens. Re-run `graph-snapshot.sh` (or init) to force a reindex and refresh the marker. |
+| Engine index out of date | Every wrapper re-indexes incrementally (content-based, git-aware) before it queries — ~0.1 s on an unchanged repo — so live answers track the working tree, including the run's own edits. `graph-snapshot.sh` (or init) also refreshes the `schema.yaml` marker. |
 
 </core-file>
 

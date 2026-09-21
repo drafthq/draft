@@ -23,6 +23,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   retokened);
   new social preview.
 
+### Fixed
+
+- **Live graph queries answered from a stale index.** The `graph-*.sh`
+  wrappers indexed a repo only the first time they saw it, so every later
+  query — including blast radius computed right after the agent's own edits —
+  came from the original index while still reporting `status:"ok"`. Wrappers
+  now re-index incrementally before querying (~0.1 s on an unchanged repo).
+  `memory_project_for_repo` is removed.
+
 ## [4.0.0] - 2026-09-03
 
 ### Changed

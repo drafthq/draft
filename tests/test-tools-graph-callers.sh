@@ -51,6 +51,28 @@ if command -v jq >/dev/null 2>&1; then
     out4="$(DRAFT_MEMORY_BIN="$MOCK" "$TOOL" --repo "$FIXTURE" --symbol foo --prod-only)"
     assert "--prod-only resolves (source=memory-graph)" \
         "$(echo "$out4" | jq -e '.source == "memory-graph"' >/dev/null 2>&1 && echo true || echo false)"
+
+    # --- An already-indexed repo is refreshed before the live query ---
+    # Querying the first index ever taken answered post-edit questions from the
+    # pre-edit graph while still reporting status:"ok".
+    FRESH_MOCK="$FIXTURE/freshbin/codebase-memory-mcp"
+    mkdir -p "$FIXTURE/freshbin"
+    cat > "$FRESH_MOCK" <<'MOCK'
+#!/usr/bin/env bash
+if [[ "$1" == "--version" ]]; then echo "codebase-memory-mcp 0.0.0-mock"; exit 0; fi
+echo "$2" >> "$CALLS_LOG"
+case "$2" in
+  list_projects)    printf '{"projects":[{"name":"known","root_path":"%s"}]}\n' "$REPO_UNDER_TEST" ;;
+  index_repository) echo '{"project":"known","status":"indexed"}' ;;
+  query_graph)      echo '{"columns":["caller","file"],"rows":[["bar","a.sh"]],"total":1}' ;;
+  *) echo '{}' ;;
+esac
+MOCK
+    chmod +x "$FRESH_MOCK"
+    CALLS_LOG="$FIXTURE/fresh-calls.log" REPO_UNDER_TEST="$FIXTURE" DRAFT_MEMORY_BIN="$FRESH_MOCK" \
+        "$TOOL" --repo "$FIXTURE" --symbol foo >/dev/null 2>&1 || true
+    assert "already-indexed repo is re-indexed before querying" \
+        "$([[ "$(grep -m1 -xE 'index_repository|query_graph' "$FIXTURE/fresh-calls.log" 2>/dev/null)" == "index_repository" ]] && echo true || echo false)"
 fi
 
 # --- gq_escape unit checks: quotes AND backslashes must be escaped ---
