@@ -68,23 +68,11 @@ OUT="${OUT_DIR:-$REPO_ABS/draft/graph}"
 find_memory_bin "$REPO_ABS" "$SELF_REPO" || { echo "graph engine unavailable — nothing written" >&2; exit 2; }
 command -v jq >/dev/null 2>&1 || { echo "jq required" >&2; exit 2; }
 
-# Index on demand; this is the valuable side-effect — it ensures the engine holds
-# a current index of the repo so live queries resolve.
+# Refresh the engine index (incremental; indexes from scratch when absent). This is
+# the valuable side-effect — live queries resolve against a current index. A failed
+# refresh writes nothing: a fresh `generated_at` over a frozen index would lie.
 PROJECT="$(memory_ensure_index "$REPO_ABS" || true)"
-[[ -n "$PROJECT" ]] || { echo "could not index repo — nothing written" >&2; exit 2; }
-
-# ...then ALWAYS re-index. memory_ensure_index calls index_repository only when the
-# project is ABSENT — correct for the graph-*.sh query wrappers, which must stay
-# cheap — so on an already-indexed repo this tool used to write a gate marker with a
-# fresh `generated_at` over a frozen index: a deleted symbol stayed resolvable, a new
-# one never appeared, and nothing in the output said so. Refreshing is this tool's
-# entire job. The engine indexes incrementally, so the repeat call is cheap.
-REFRESHED="$(memory_index_bounded "$REPO_ABS" 2>/dev/null | jq -r '.project // empty' 2>/dev/null || true)"
-if [[ -z "$REFRESHED" ]]; then
-    echo "index refresh failed — nothing written" >&2
-    exit 2
-fi
-PROJECT="$REFRESHED"
+[[ -n "$PROJECT" ]] || { echo "index refresh failed — nothing written" >&2; exit 2; }
 
 mkdir -p "$OUT"
 

@@ -52,17 +52,17 @@ if command -v jq >/dev/null 2>&1; then
     assert "draft/graph holds only schema.yaml" \
         "$([[ "$(find "$FIXTURE/graph" -type f | wc -l | tr -d ' ')" == "1" ]] && echo true || echo false)"
 
-    # An ALREADY-INDEXED repo must still be re-indexed. memory_ensure_index only
-    # calls index_repository when the project is absent, so this tool used to write
-    # a gate marker with a fresh generated_at over a frozen index — deleted symbols
-    # stayed resolvable and new ones never appeared, silently.
+    # An ALREADY-INDEXED repo must still be re-indexed. This tool once indexed only
+    # when the project was absent, writing a gate marker with a fresh generated_at
+    # over a frozen index — deleted symbols stayed resolvable and new ones never
+    # appeared, silently.
     REIDX_DIR="$(mktemp -d)"
     CALLS="$REIDX_DIR/calls.log"
     REIDX_MOCK="$REIDX_DIR/codebase-memory-mcp"
     cat > "$REIDX_MOCK" <<'MOCK'
 #!/usr/bin/env bash
-# Mock whose list_projects already knows this repo, so the "absent" branch of
-# memory_ensure_index cannot fire. Records every cli tool it is asked for.
+# Mock whose list_projects already knows this repo. Records every cli tool it is
+# asked for.
 if [[ "$1" == "--version" ]]; then echo "codebase-memory-mcp 0.0.0-mock"; exit 0; fi
 [[ "$1" == "cli" ]] || { echo '{}'; exit 0; }
 echo "$2" >> "$CALLS_LOG"
@@ -87,6 +87,8 @@ MOCK
         "$([[ "$reidx_rc" == "0" ]] && echo true || echo false)"
     assert "already-indexed repo is re-indexed (index_repository invoked)" \
         "$(grep -qx 'index_repository' "$CALLS" && echo true || echo false)"
+    assert "one snapshot run indexes exactly once" \
+        "$([[ "$(grep -cx 'index_repository' "$CALLS")" == "1" ]] && echo true || echo false)"
     rm -rf "$REIDX_DIR"
 
     FAIL_DIR="$(mktemp -d)"

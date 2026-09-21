@@ -31,6 +31,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   came from the original index while still reporting `status:"ok"`. Wrappers
   now re-index incrementally before querying (~0.1 s on an unchanged repo).
   `memory_project_for_repo` is removed.
+- **`graph-snapshot.sh` indexed twice per run.** The explicit refresh it ran
+  after `memory_ensure_index` is gone now that the latter always refreshes.
 
 ## [4.0.0] - 2026-09-03
 
