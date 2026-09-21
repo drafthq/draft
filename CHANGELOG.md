@@ -110,6 +110,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   pinned 0.9.0: `<>`/`!=`/`<=`/`>=`, `coalesce()`, variable-length patterns and
   `WITH` aggregation now work; path variables still fail; multi-pattern joins
   parse but ignore `RETURN`/`LIMIT`; and `LIMIT` applies before `DISTINCT`.
+- **`build-book.sh` reverted the website redesign.** The redesign edited the
+  generated book pages by hand, so every run of the generator rewrote all 25
+  of them back to the old light default, `theme-color`, fonts, and theme
+  script. Both templates now emit the redesign's markup, and
+  `test-web-consistency.sh` builds the book into a scratch copy and requires
+  the output to match the committed pages (the landing page's `REV` line and
+  the sitemap's `lastmod` dates excepted, as they vary per release and run).
 
 ## [4.0.0] - 2026-09-03
 
