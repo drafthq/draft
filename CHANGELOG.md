@@ -39,6 +39,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   sub-module (double index, self-referencing `root-link.json`) and
   `graph-preflight.sh` warned "not at the git root". Paths now resolve with
   `pwd -P`.
+- **Two repos could share one engine index.** The engine derives project names
+  by flattening `/` to `-`, so `/x/a-b/c` and `/x/a/b-c` mapped to the same
+  database and each index overwrote the other. `memory_ensure_index` now names
+  the project explicitly: a repo the engine already knows keeps its name, a new
+  one gets `<basename>-<sha8 of its path>`.
 
 ## [4.0.0] - 2026-09-03
 

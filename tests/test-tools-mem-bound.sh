@@ -72,6 +72,30 @@ MOCK
     [[ "$(cat "$CAPTURE_FILE.argc" 2>/dev/null)" == "2" ]] \
         && assert "engine args go on stdin, not as a deprecated positional JSON arg" "true" \
         || assert "engine args go on stdin, not as a deprecated positional JSON arg" "false"
+
+    # memory_ensure_index names the project explicitly. The engine derives names by
+    # flattening '/' to '-', so /x/a-b/c and /x/a/b-c shared one DB and each index
+    # overwrote the other. A repo the engine already knows keeps its name; a new one
+    # gets <basename>-<sha8 of path>, which no other path can derive.
+    NAME_MOCK="$CAPTURE_DIR/named/codebase-memory-mcp"
+    mkdir -p "$CAPTURE_DIR/named"
+    cat > "$NAME_MOCK" <<'MOCK'
+#!/usr/bin/env bash
+case "$2" in
+  list_projects)    printf '{"projects":[{"name":"known-name","root_path":"/x/known"},{"name":"x-a-b-c","root_path":"/x/a-b/c"}]}\n' ;;
+  index_repository) cat > "$CAPTURE_FILE"; echo '{"project":"whatever"}' ;;
+  *) echo '{}' ;;
+esac
+MOCK
+    chmod +x "$NAME_MOCK"
+    MEMORY_BIN="$NAME_MOCK" memory_ensure_index /x/known </dev/null >/dev/null 2>&1 || true
+    [[ "$(jq -r '.name' "$CAPTURE_FILE" 2>/dev/null)" == "known-name" ]] \
+        && assert "known repo is re-indexed under its existing project name" "true" \
+        || assert "known repo is re-indexed under its existing project name" "false"
+    MEMORY_BIN="$NAME_MOCK" memory_ensure_index /x/a/b-c </dev/null >/dev/null 2>&1 || true
+    [[ "$(jq -r '.name' "$CAPTURE_FILE" 2>/dev/null)" =~ ^b-c-[0-9a-f]{8}$ ]] \
+        && assert "new repo gets a path-hashed name, not a colliding derived one" "true" \
+        || assert "new repo gets a path-hashed name, not a colliding derived one" "false"
 fi
 
 finish_test "mem-bound"

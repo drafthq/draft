@@ -306,13 +306,15 @@ _can_cgroup_bound() {
 # from a started scope to an unbounded run — a bounded OOM fails the index
 # cleanly (host stays alive) rather than re-triggering the hang.
 # Echoes the engine's JSON result on stdout (same contract as memory_cli).
+# Usage: memory_index_bounded <repo-abs> [project-name]
 memory_index_bounded() {
-    local repo_abs="$1"
+    local repo_abs="$1" name="${2:-}"
     # Payload built with jq (never string concatenation) so a repo path
     # containing a `"` or `\` can never corrupt the JSON sent to the engine.
     command -v jq >/dev/null 2>&1 || return 1
     local json
-    json="$(jq -n --arg r "$repo_abs" '{repo_path:$r}')" || return 1
+    json="$(jq -n --arg r "$repo_abs" --arg n "$name" \
+        '{repo_path:$r} + (if $n == "" then {} else {name:$n} end)')" || return 1
     export CBM_WORKERS="${CBM_WORKERS:-4}"
     local total pct
     total="$(_total_ram_mb)"
@@ -337,13 +339,24 @@ memory_index_bounded() {
 # so an unchanged repo costs ~0.1 s. Indexing only when the project was absent
 # left every live query answering from the first index ever taken — a symbol
 # added since stayed invisible while the result still said status:"ok".
+#
+# The project is named explicitly: the engine derives names by flattening '/' to
+# '-', so /x/a-b/c and /x/a/b-c shared one DB and each index overwrote the other.
+# A repo the engine already knows keeps its name (no forced full re-index); a new
+# one gets <basename>-<sha8 of its path>, which no other path can derive.
 # Returns 1 if the engine is unavailable.
 memory_ensure_index() {
     local repo_abs="$1"
     [[ -n "${MEMORY_BIN:-}" ]] || return 1
     command -v jq >/dev/null 2>&1 || return 1
-    local proj
-    proj="$(memory_index_bounded "$repo_abs" \
+    local proj name
+    name="$(memory_cli list_projects '{}' \
+        | jq -r --arg p "$repo_abs" 'first(.projects[]? | select(.root_path == $p) | .name) // empty' 2>/dev/null || true)"
+    if [[ -z "$name" ]]; then
+        name="$(printf '%s' "$repo_abs" | { sha256sum 2>/dev/null || shasum -a 256; } | cut -c1-8)"
+        name="$(basename "$repo_abs")-$name"
+    fi
+    proj="$(memory_index_bounded "$repo_abs" "$name" \
         | jq -r '.project // empty' 2>/dev/null || true)"
     [[ -n "$proj" ]] || return 1
     printf '%s' "$proj"
