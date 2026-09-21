@@ -298,11 +298,13 @@ _can_cgroup_bound() {
 
 # Index a repository under a memory bound. The codebase-memory-mcp engine
 # self-budgets ~50% of *physical* RAM and is not cgroup-aware, so a first index
-# of a huge repo can exhaust the host (the original 30 GB hang). On Linux we
-# confine it to a transient cgroup scope sized to DRAFT_INDEX_MEM_PCT (default
-# 25) of total RAM; CBM_WORKERS caps the engine's parallel working set so the
-# throttle has less transient pressure to absorb. Where cgroup v2 + systemd-run
-# are unavailable (e.g. macOS) the worker cap is the only bound. Never falls back
+# of a huge repo can exhaust the host (the original 30 GB hang). The engine's
+# own budget (CBM_MEM_BUDGET_MB) is set to DRAFT_INDEX_MEM_PCT (default 25) of
+# total RAM unless the user chose one; on Linux the process is also confined to
+# a transient cgroup scope of that size. CBM_WORKERS caps the engine's parallel
+# working set so the throttle has less transient pressure to absorb. Where cgroup
+# v2 + systemd-run are unavailable (e.g. macOS) the budget and worker cap are the
+# bound. Never falls back
 # from a started scope to an unbounded run — a bounded OOM fails the index
 # cleanly (host stays alive) rather than re-triggering the hang.
 # Echoes the engine's JSON result on stdout (same contract as memory_cli).
@@ -319,6 +321,7 @@ memory_index_bounded() {
     local total pct
     total="$(_total_ram_mb)"
     pct="${DRAFT_INDEX_MEM_PCT:-25}"
+    [[ "${total:-0}" -gt 0 ]] && export CBM_MEM_BUDGET_MB="${CBM_MEM_BUDGET_MB:-$(( total * pct / 100 ))}"
     if [[ "${total:-0}" -gt 0 ]] && _can_cgroup_bound; then
         local high_arg max_arg
         read -r high_arg max_arg <<< "$(_mem_bound_args "$total" "$pct")"

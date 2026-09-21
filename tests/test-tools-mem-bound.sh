@@ -73,6 +73,22 @@ MOCK
         && assert "engine args go on stdin, not as a deprecated positional JSON arg" "true" \
         || assert "engine args go on stdin, not as a deprecated positional JSON arg" "false"
 
+    # The engine budgets ~50% of physical RAM on its own. Where no cgroup scope is
+    # available (macOS) its CBM_MEM_BUDGET_MB is the only real bound, so it is set
+    # to the same DRAFT_INDEX_MEM_PCT share — unless the user already chose one.
+    BUDGET_MOCK="$CAPTURE_DIR/budget/codebase-memory-mcp"
+    mkdir -p "$CAPTURE_DIR/budget"
+    printf '#!/usr/bin/env bash\nprintf "%%s" "${CBM_MEM_BUDGET_MB:-}" > "$CAPTURE_FILE.budget"\necho "{}"\n' > "$BUDGET_MOCK"
+    chmod +x "$BUDGET_MOCK"
+    ( unset CBM_MEM_BUDGET_MB; MEMORY_BIN="$BUDGET_MOCK" memory_index_bounded /x/r </dev/null >/dev/null 2>&1 ) || true
+    [[ "$(cat "$CAPTURE_FILE.budget" 2>/dev/null)" == "$(( ram * 25 / 100 ))" ]] \
+        && assert "engine memory budget defaults to 25% of RAM" "true" \
+        || assert "engine memory budget defaults to 25% of RAM" "false"
+    ( CBM_MEM_BUDGET_MB=123 MEMORY_BIN="$BUDGET_MOCK" memory_index_bounded /x/r </dev/null >/dev/null 2>&1 ) || true
+    [[ "$(cat "$CAPTURE_FILE.budget" 2>/dev/null)" == "123" ]] \
+        && assert "a user-set CBM_MEM_BUDGET_MB is kept" "true" \
+        || assert "a user-set CBM_MEM_BUDGET_MB is kept" "false"
+
     # memory_ensure_index names the project explicitly. The engine derives names by
     # flattening '/' to '-', so /x/a-b/c and /x/a/b-c shared one DB and each index
     # overwrote the other. A repo the engine already knows keeps its name; a new one

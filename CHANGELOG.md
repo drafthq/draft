@@ -71,6 +71,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   nothing flagged an off-pin engine resolved from `$PATH`. It now reinstalls on
   a version mismatch, and `verify-graph-binary.sh` (new `version` /
   `pinned_version` JSON fields) and `graph-preflight.sh` warn on drift.
+- **Indexing had no real memory bound outside Linux cgroups.** The engine
+  budgets ~50% of physical RAM unless told otherwise, and on macOS the worker
+  cap was the only limit. `memory_index_bounded` now sets the engine's own
+  `CBM_MEM_BUDGET_MB` to `DRAFT_INDEX_MEM_PCT` (default 25%) of RAM unless the
+  user set one.
 - **Cypher dialect guidance described engine 0.8.x.** Re-verified against the
   pinned 0.9.0: `<>`/`!=`/`<=`/`>=`, `coalesce()`, variable-length patterns and
   `WITH` aggregation now work; path variables still fail; multi-pattern joins
