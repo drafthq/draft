@@ -86,6 +86,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `stats.modules` / `stats.go_functions` / `stats.proto_rpcs`, a leftover of
   the retired fat snapshot. It now uses the live `graph-arch.sh` metrics, the
   same ones `/draft:init` Step 1.4.5 already used.
+- **Docs told agents to call the engine binary directly.** `graph-query.md`
+  sent `search_code` / `trace_path` lookups to raw `codebase-memory-mcp cli`,
+  contradicting `bin/README.md`'s "skills never call the engine directly" and
+  skipping engine resolution, the pre-query refresh, and the fail-loud
+  contract. They now go through `graph-query.sh --tool`, which already
+  allow-listed those tools; `graph-preflight.sh`'s next-step hint does too.
 - **Cypher dialect guidance described engine 0.8.x.** Re-verified against the
   pinned 0.9.0: `<>`/`!=`/`<=`/`>=`, `coalesce()`, variable-length patterns and
   `WITH` aggregation now work; path variables still fail; multi-pattern joins

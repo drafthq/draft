@@ -259,8 +259,7 @@ cat <<EOF
 
 Next step (when ready, from the git root):
   scripts/tools/graph-init.sh --scope . --json &     # or: /draft:init --graph-only
-  ${ENGINE:-codebase-memory-mcp} cli list_projects '{}'
-  ${ENGINE:-codebase-memory-mcp} cli index_status '{"project":"<name>"}'
+  scripts/tools/graph-query.sh --repo . --tool index_status
 EOF
 hr
 exit "$VEXIT"

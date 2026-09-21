@@ -52,7 +52,7 @@ and `verify-graph-binary.sh`. The shared wrappers (`memory_cli`,
 |----------|---------|
 | `schema.yaml` | Engine metadata and point-of-index node/edge counts (gates graph use). No machine- or run-specific fields, so it only changes when the engine or the codebase does. |
 
-Structural graph data (architecture, hotspots, module deps, service routes) is queried **live** from the `codebase-memory-mcp` engine — either via the wrapper scripts under `scripts/tools/` (`graph-callers.sh`, `graph-impact.sh`, `hotspot-rank.sh`, `cycle-detect.sh`, `mermaid-from-graph.sh`) or directly with `codebase-memory-mcp cli <tool> '<json>'`.
+Structural graph data (architecture, hotspots, module deps, service routes) is queried **live** from the `codebase-memory-mcp` engine — either via the wrapper scripts under `scripts/tools/` (`graph-callers.sh`, `graph-impact.sh`, `hotspot-rank.sh`, `cycle-detect.sh`, `mermaid-from-graph.sh`), or, for any other read-only engine tool, `graph-query.sh --tool <name> --json '{...}'`.
 
 ## Offline / air-gapped distributions
 

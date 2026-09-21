@@ -115,7 +115,7 @@ DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}
 | `bash "$DRAFT_TOOLS/graph-query.sh" (--cypher STR \| --tool NAME --json '{...}')` | generic read-only passthrough | `{source:"unavailable"}`, exit 2 |
 | `bash "$DRAFT_TOOLS/graph-traces.sh" ingest --file F --experimental` | runtime traces (experimental write) | `{source:"unavailable"}`, exit 2 |
 
-For lower-level modes, call the engine directly: `codebase-memory-mcp cli <tool> '<json>'` (see the tool list in [bin/README.md](../../bin/README.md)).
+For an engine tool without a dedicated wrapper, use the read-only passthrough `graph-query.sh --repo . --tool <name> --json '{...}'` (project injected, write tools refused, `source:"unavailable"` on failure). Never call the engine binary directly — that skips engine resolution, the index refresh before each query, and the fail-loud contract.
 
 ### Capability wrappers & dialect limits (graph-tooling-v2)
 
@@ -199,13 +199,13 @@ The only committed file is the gate marker:
 |------|------|
 | `draft/graph/schema.yaml` | Engine metadata and point-of-index counts (provenance, not authoritative). Carries **no graph data**. Its presence is the **gate** (see Pre-Check) — it signals the engine is wired for this repo. Written by `scripts/tools/graph-snapshot.sh`. |
 
-All structural data is obtained live by shelling out to the engine — either through the query-tool wrappers under `scripts/tools/` or directly via `codebase-memory-mcp cli <tool> '<json>'`. The shell tools auto-index the repo into the engine's own cache on demand, so no committed files are required.
+All structural data is obtained live through the query-tool wrappers under `scripts/tools/`; `graph-query.sh --tool` covers every read-only engine tool that has no dedicated wrapper. The wrappers refresh the repo's index in the engine's own cache before each query, so no committed files are required.
 
 ### How skills query (engine is the interface; jq is optional)
 
-- **The engine is the query.** `codebase-memory-mcp cli <tool> '<json>'` (and the wrappers that call it) is how you ask — it takes JSON args and returns JSON. There is no other query surface.
+- **The engine is the query; the wrappers are the interface.** Every wrapper drives the engine's CLI and returns JSON. There is no other query surface.
 - **Prefer the wrappers — they resolve the engine for you.** `graph-arch.sh` (architecture view: packages/routes/layers/hotspots), `graph-callers.sh`, `hotspot-rank.sh`, `graph-impact.sh`, `cycle-detect.sh`, `mermaid-from-graph.sh` return already-shaped JSON. The engine binary is usually **not on `$PATH`** (it lives under `~/.cache/draft/bin/`); the wrappers locate it via `_lib.sh:find_memory_bin`, so a skill using a wrapper needs no resolution step.
-- **Raw `codebase-memory-mcp cli` requires resolving the binary first** (it is not on `$PATH`): `CM="${DRAFT_MEMORY_BIN:-$HOME/.cache/draft/bin/codebase-memory-mcp}"; "$CM" cli <tool> '<json>'`. Reach for this only for tools without a wrapper (`search_graph`, `search_code`, `trace_path`).
+- **Tools without a dedicated wrapper go through `graph-query.sh`:** `"$DRAFT_TOOLS/graph-query.sh" --repo . --tool search_code --json '{"pattern":"..."}'` (likewise `trace_path`, `get_graph_schema`, `index_status`). `search_graph` has its own wrapper, `graph-search.sh`.
 - **`jq` is not a query tool — it only trims output.** Reach for it solely to slice a *large* response (chiefly the `get_architecture` blob) down to the field you need, for token economy. The agent can read raw JSON directly; jq is an optimization, not a requirement. Don't pipe wrapper output through jq unless you genuinely need a sub-field.
 
 The engine uses a **unified, language-agnostic** node model — `Function`, `Method`, `Class`, `Module`, `File`, `Folder`, `Route`, `Section`, `Variable` (language is inferred from file extension) — and edges `CALLS`, `DEFINES`, `CONTAINS_FILE`, `IMPORTS`, `HTTP_CALLS`, `FILE_CHANGES_WITH`, `SEMANTICALLY_RELATED`, `SIMILAR_TO`. Each node carries `file_path` + `start_line`/`end_line` and rich `properties` (complexity, signature, parent_class), and the engine exposes full-text (`search_code`) and semantic search — none of which a committed snapshot reproduced.

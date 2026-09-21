@@ -125,7 +125,7 @@ cat > "$OUT/schema.yaml" <<EOF
 # Draft graph gate marker — written by scripts/tools/graph-snapshot.sh
 # Draft is engine-only: this file carries NO graph data. Its presence signals that
 # the local codebase-memory-mcp engine is wired for this repo. Query the engine
-# live via the graph-*.sh wrappers (or \`codebase-memory-mcp cli <tool>\`).
+# live via the graph-*.sh wrappers (graph-query.sh --tool covers the rest).
 # Counts below are point-of-index provenance; the live engine is authoritative.
 engine: codebase-memory-mcp
 engine_version: "$VER_Y"
