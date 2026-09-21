@@ -130,8 +130,10 @@ echo ""
 echo "## Book generator matches the committed pages"
 # The book pages are generated, but a design sweep edits the committed HTML by
 # hand; if the generator is not updated too, its next run silently reverts the
-# sweep. Build into a scratch copy and compare the pages byte for byte (the
-# sitemap is excluded: its lastmod is stamped with the run date).
+# sweep. Build into a scratch copy and compare the pages byte for byte. Two
+# run-dependent values are left out: the sitemap (lastmod is the run date) and
+# the landing page's REV line (package.json's version, which `npm version`
+# bumps without regenerating the book).
 book_tmp="$(mktemp -d)"
 mkdir -p "$book_tmp/scripts/tools"
 cp scripts/build-book.sh "$book_tmp/scripts/"
@@ -142,9 +144,9 @@ cp -R web "$book_tmp/"
 # only counts when the build itself succeeded.
 book_rc=0
 bash "$book_tmp/scripts/build-book.sh" >/dev/null 2>&1 || book_rc=$?
-book_drift="$(diff -rq web/book "$book_tmp/web/book" 2>&1 || true)"
+book_drift="$(diff -r -I 'class="book-rev"' web/book "$book_tmp/web/book" 2>&1 || true)"
 rm -rf "$book_tmp"
-[[ -z "$book_drift" ]] || echo "$book_drift" | sed 's/^/   /' | head -5
+[[ -z "$book_drift" ]] || echo "$book_drift" | sed -n '1,5s/^/   /p'
 assert "build-book.sh runs and reproduces the committed book pages (exit $book_rc)" \
     "$([[ "$book_rc" -eq 0 && -z "$book_drift" ]] && echo true || echo false)"
 
