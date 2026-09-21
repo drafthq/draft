@@ -123,8 +123,9 @@ All Cypher lives in `scripts/tools/_graph_queries.sh` (the single source of quer
 truth). Wrappers are thin arg-parse → builder → fail-loud JSON. Three contracts
 matter when consuming them:
 
-**Fail-loud status.** Symbol-scoped wrappers (`graph-callers`, `graph-snippet`,
-`graph-tests --symbol`, `graph-hierarchy --symbol/--derived`, `graph-errors`)
+**Fail-loud status.** Symbol-scoped wrappers (`graph-callers`, `graph-impact`,
+`graph-snippet`, `graph-tests --symbol`, `graph-hierarchy --symbol/--derived`,
+`graph-errors`)
 emit a `status` field that distinguishes the three real outcomes — never read a
 bare `[]` as a confirmed true negative:
 
@@ -224,11 +225,11 @@ Output: `{symbol, callers[{name, file}], source}`. Use when enumerating call sit
 ### Impact — blast radius of a file or symbol
 
 ```bash
-"$DRAFT_TOOLS/graph-impact.sh" --repo . --file <path>      # changed-file impact (working-tree diff)
-"$DRAFT_TOOLS/graph-impact.sh" --repo . --symbol <name>    # transitive callers of a function
+"$DRAFT_TOOLS/graph-impact.sh" --repo . --file <path>      # dependents of a file: its symbols' callers + its importers
+"$DRAFT_TOOLS/graph-impact.sh" --repo . --symbol <name>    # dependents (transitive callers) of a function
 ```
 
-Output: `{target, kind, impacted[{name, file, hop}], source}`. Use when sizing risk before modifying a file or symbol, especially high-fan-in hotspots.
+Output: `{target, kind, impacted[{name, file, qualified, hop}], downstream_files, affected_modules, max_depth, by_category{code,test}, status, truncated, source}`. `impacted` lists each dependent once at its nearest hop (default depth 3), capped at 200 with `truncated:true`; the aggregates always cover the full set. `status` is `ok`, `no-edges` (target known, nothing depends on it), or `no-match` (target unknown to the graph — check the path). Use when sizing risk before modifying a file or symbol, especially high-fan-in hotspots.
 
 ### Hotspots — fan-in ranking
 

@@ -671,7 +671,7 @@ After a phase passes review, refresh `metadata.json.impact` so future tracks can
    "$DRAFT_TOOLS/graph-impact.sh" --repo . --file <path>
    ```
 
-   Aggregate across all files: `downstream_files` = total unique downstream files (deduped), `downstream_modules` = union of `affected_modules`, `max_depth` = max across queries, `by_category` = sum of each query's `by_category`. If the graph is absent, leave these fields as zeros / empty arrays — the snapshot still records the directly-touched files.
+   Aggregate across all files: `downstream_files` = count of the union of each query's `downstream_files` array, `downstream_modules` = union of `affected_modules`, `max_depth` = max across queries, `by_category` = sum of each query's `by_category`. If the graph is absent, leave these fields as zeros / empty arrays — the snapshot still records the directly-touched files.
 
 3. **Write metadata.json** with the populated `impact` block and `computed_at` set to the current timestamp.
 

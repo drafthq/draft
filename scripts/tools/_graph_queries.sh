@@ -68,6 +68,15 @@ gq_q_derived_sym()       { printf "MATCH (c)-[:INHERITS]->(p) WHERE p.name='%s' 
 gq_q_raises()            { printf "MATCH (f {name:'%s'})-[:RAISES|THROWS]->(e) RETURN e.name AS error, e.qualified_name AS qualified LIMIT 200" "$1"; }
 gq_q_raisers()           { printf "MATCH (f)-[:RAISES|THROWS]->(e {name:'%s'}) RETURN f.qualified_name AS raiser, f.file_path AS file LIMIT 200" "$1"; }
 gq_q_node_props()        { printf "MATCH (f) RETURN f.qualified_name AS q, f.complexity AS c, f.cognitive AS cog, f.is_entry_point AS ep LIMIT 10000"; }
+# Dependents at exactly $2 CALLS hops (one query per depth: path variables are
+# unsupported, so the hop count comes from the fixed depth). Raw rows, no
+# DISTINCT — LIMIT applies before DISTINCT, so only a raw row count at the limit
+# reveals truncation. The file form skips callers inside the target file itself.
+GQ_DEP_LIMIT=5000
+gq_q_dependents_file()   { printf "MATCH (a)-[:CALLS*%s..%s]->(b) WHERE b.file_path = '%s' AND a.file_path <> '%s' RETURN a.qualified_name AS q, a.name AS name, a.file_path AS file, a.is_test AS test LIMIT %s" "$2" "$2" "$1" "$1" "$GQ_DEP_LIMIT"; }
+gq_q_dependents_symbol() { printf "MATCH (a)-[:CALLS*%s..%s]->(b {name:'%s'}) WHERE a.name <> '%s' RETURN a.qualified_name AS q, a.name AS name, a.file_path AS file, a.is_test AS test LIMIT %s" "$2" "$2" "$1" "$1" "$GQ_DEP_LIMIT"; }
+gq_q_importers()         { printf "MATCH (a)-[:IMPORTS]->(b) WHERE b.file_path = '%s' AND a.file_path <> '%s' RETURN a.file_path AS file LIMIT %s" "$1" "$1" "$GQ_DEP_LIMIT"; }
+gq_q_file_exists()       { printf "MATCH (f) WHERE f.file_path = '%s' RETURN f.file_path AS file LIMIT 1" "$1"; }
 gq_q_risk()              { printf "MATCH (f) WHERE f.unguarded_recursion=true OR f.alloc_in_loop=true OR f.recursion_in_loop=true OR f.linear_scan_in_loop=true RETURN f.qualified_name AS symbol, f.file_path AS file, f.complexity AS complexity, f.unguarded_recursion AS unguarded_recursion, f.alloc_in_loop AS alloc_in_loop, f.recursion_in_loop AS recursion_in_loop, f.linear_scan_in_loop AS linear_scan_in_loop LIMIT 200"; }
 
 # ── Runner + classifier ──

@@ -22,6 +22,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (the 404 gets the nav only; the book keeps its own reader chrome,
   retokened);
   new social preview.
+- **`graph-impact.sh` measures blast radius.** `--file` used to return only the
+  symbols inside the file, each twice, and only when the working tree changed
+  it — an unchanged file came back as an empty success, and `--file lib.sh` also
+  matched `_lib.sh`. It now returns the file's dependents: callers of anything
+  defined in it (up to `--depth`, default 3) plus the files that import it.
+  `--symbol` entries now carry the caller's file path (it was always `""`).
+  Both kinds add `downstream_files`, `affected_modules`, `max_depth`,
+  `by_category` — the fields `/draft:implement`'s impact snapshot already
+  aggregated — plus a fail-loud `status` (`ok` / `no-edges` / `no-match`) and
+  `truncated` (the `impacted` list is capped at 200; aggregates stay complete).
 
 ### Fixed
 
