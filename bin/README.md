@@ -17,7 +17,7 @@ This installs the binary to the **Draft-managed location**:
 ~/.cache/draft/bin/codebase-memory-mcp
 ```
 
-The fetch script picks the right release archive for the host OS/arch, verifies its SHA-256 against the published `checksums.txt`, extracts it, and installs it there. Downloads pin `curl --proto '=https' --proto-redir '=https'` so a compromised redirect cannot downgrade to HTTP. `draft install claude-code` / `draft install cursor` run this automatically (best-effort, network-gated); skip it with `--no-graph`.
+The fetch script picks the right release archive for the host OS/arch, verifies its SHA-256 (against hashes pinned in the script for the default version, else against the release's `checksums.txt`), extracts it, and installs it there. An existing install is kept only when its version matches the requested one, so a pin bump upgrades it. Downloads pin `curl --proto '=https' --proto-redir '=https'` so a compromised redirect cannot downgrade to HTTP. `draft install claude-code` / `draft install cursor` run this automatically (best-effort, network-gated); skip it with `--no-graph`.
 
 ## Resolution order
 
@@ -68,14 +68,14 @@ Draft's differentiator depends on a binary published by a third party ([DeusData
 
 | Property | Status |
 |---|---|
-| Version pinned | Yes — `DEFAULT_VERSION` in `scripts/fetch-memory-engine.sh`. Bumps are deliberate commits, never floating. `CMM_VERSION` overrides per-install. |
-| SHA-256 verified | Yes when the release publishes `checksums.txt` and lists the archive. A **mismatch is always fatal.** |
-| Missing checksum | **Warns and installs by default.** Set `DRAFT_STRICT_VERIFY=1` to make an unverifiable download fatal instead. |
+| Version pinned | Yes — `DEFAULT_VERSION` in `scripts/fetch-memory-engine.sh`. Bumps are deliberate commits, never floating. `CMM_VERSION` overrides per-install. An install at another version is replaced on the next fetch, and `verify-graph-binary.sh` / `graph-preflight.sh` warn when the resolved engine (e.g. one on `$PATH`) is off-pin. |
+| SHA-256 verified | Yes. The default version's four platform archives are checked against hashes **pinned in the script** (a replaced release asset fails even if the release's own `checksums.txt` agrees). Other versions are checked against the release's `checksums.txt` when it lists the archive. A **mismatch is always fatal.** |
+| Missing checksum | Applies only to non-default versions: **warns and installs by default.** Set `DRAFT_STRICT_VERIFY=1` to make an unverifiable download fatal instead. |
 | Signature / attestation | **No.** There is no code signing or SLSA provenance today. Verification is checksum-only. |
 | Source available | Yes — the engine is open source at [DeusData/codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp). |
 | Reproducible build | Not verified by Draft. We check the archive matches the publisher's checksum, not that the checksum matches the source. |
 
-Be explicit about the residual risk: a checksum proves the download matches what the publisher released. It does not prove the publisher released what the source says.
+Be explicit about the residual risk: a pinned checksum proves the download matches what the publisher released when Draft pinned it. It does not prove the publisher released what the source says.
 
 ### What the engine does at runtime
 

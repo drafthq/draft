@@ -53,6 +53,7 @@ assert "JSON reports engine found" "$(echo "$out" | grep -q '"found": true' && e
 assert "JSON verdict is GO or GO_WITH_CAUTION" \
   "$(echo "$out" | grep -qE '"verdict": "GO(_WITH_CAUTION)?"' && echo true || echo false)"
 assert "JSON counts the python file" "$(echo "$out" | grep -q '"tracked_files": 1' && echo true || echo false)"
+assert "Off-pin engine version is a warning" "$(echo "$out" | grep -q 'differs from the pinned' && echo true || echo false)"
 
 # A symlink to the git root is still the git root (git reports the physical path).
 ln -s "$REPOG" "$FIXTURE/repolink"

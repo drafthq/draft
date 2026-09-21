@@ -44,9 +44,15 @@ while [[ $# -gt 0 ]]; do
 done
 
 BIN_PATH="$DEST/codebase-memory-mcp"
+# Keep an existing install only at the requested version, so a pin bump upgrades
+# it. "latest" cannot be compared offline; any existing binary satisfies it.
 if [[ -x "$BIN_PATH" && $FORCE -eq 0 ]]; then
-  echo "codebase-memory-mcp already installed at $BIN_PATH ($("$BIN_PATH" --version 2>/dev/null || echo unknown))"
-  exit 0
+  have="$("$BIN_PATH" --version 2>/dev/null | awk '{print $NF}' || true)"
+  if [[ "$VERSION" == "latest" || "$have" == "${VERSION#v}" ]]; then
+    echo "codebase-memory-mcp already installed at $BIN_PATH (${have:-unknown})"
+    exit 0
+  fi
+  echo "Installed engine is ${have:-unknown}; replacing it with ${VERSION}."
 fi
 
 # --- Detect OS / arch (mirrors the engine's own install.sh naming) ---
@@ -89,6 +95,28 @@ fi
 # A mismatch is always fatal. An *absent* checksum is fatal only under
 # DRAFT_STRICT_VERIFY=1 — otherwise it warns, so that a release without a
 # checksums.txt does not brick the install for everyone.
+#
+# checksums.txt ships in the same release as the archive, so it proves only that
+# the download is intact: a replaced release asset passes it. The pinned
+# version's archives are checked against SHA-256 values recorded here instead
+# (copied from its checksums.txt when the pin was bumped) — update them with
+# DEFAULT_VERSION.
+pinned_sha256() {
+  [[ "$VERSION" == "$DEFAULT_VERSION" ]] || return 0
+  case "$1" in
+    codebase-memory-mcp-darwin-amd64.tar.gz) echo 6af3d02a27f589901fa763d3971089337bc8c9838bbed5d0cf543ca9f1a9e543 ;;
+    codebase-memory-mcp-darwin-arm64.tar.gz) echo faa02f0404230c451a9812230394481948f80183801fa5bf67044b41c2f25ed4 ;;
+    codebase-memory-mcp-linux-amd64-portable.tar.gz) echo 8459d5c9d1457f2c82de3de307ffc7641ecbba2dde893427be1e62eca8ef9b25 ;;
+    codebase-memory-mcp-linux-arm64-portable.tar.gz) echo b0a43fdaf534073c16707d72726b73b149d4c1212034b281ee8b7b2dac755107 ;;
+  esac
+}
+sha256_of() {
+  if command -v sha256sum >/dev/null 2>&1; then
+    sha256sum "$1" | awk '{print $1}'
+  else
+    shasum -a 256 "$1" | awk '{print $1}'
+  fi
+}
 STRICT="${DRAFT_STRICT_VERIFY:-0}"
 unverified() {
   if [[ "$STRICT" == "1" ]]; then
@@ -98,14 +126,18 @@ unverified() {
   echo "  warning: $1 — skipping verification (set DRAFT_STRICT_VERIFY=1 to make this fatal)" >&2
 }
 
-if curl -fsSL --proto '=https' --proto-redir '=https' --max-time 60 -o "$TMP/checksums.txt" "$BASE/checksums.txt" 2>/dev/null; then
+pinned="$(pinned_sha256 "$ARCHIVE")"
+if [[ -n "$pinned" ]]; then
+  actual="$(sha256_of "$TMP/$ARCHIVE")"
+  if [[ "$pinned" != "$actual" ]]; then
+    echo "error: $ARCHIVE does not match the SHA-256 pinned for $VERSION (expected $pinned, got $actual)" >&2
+    exit 2
+  fi
+  echo "  checksum OK (pinned $pinned)"
+elif curl -fsSL --proto '=https' --proto-redir '=https' --max-time 60 -o "$TMP/checksums.txt" "$BASE/checksums.txt" 2>/dev/null; then
   expected="$(grep "  $ARCHIVE\$" "$TMP/checksums.txt" 2>/dev/null | awk '{print $1}' | head -1 || true)"
   if [[ -n "$expected" ]]; then
-    if command -v sha256sum >/dev/null 2>&1; then
-      actual="$(sha256sum "$TMP/$ARCHIVE" | awk '{print $1}')"
-    else
-      actual="$(shasum -a 256 "$TMP/$ARCHIVE" | awk '{print $1}')"
-    fi
+    actual="$(sha256_of "$TMP/$ARCHIVE")"
     if [[ "$expected" != "$actual" ]]; then
       echo "error: checksum mismatch for $ARCHIVE (expected $expected, got $actual)" >&2
       exit 2

@@ -168,6 +168,10 @@ if find_memory_bin "$REPO_ABS" "$SELF_REPO"; then
   ENGINE_FOUND=true
   VER="$("$ENGINE" --version 2>/dev/null | head -1 || echo '?')"
   ok "Engine: $ENGINE ($VER)"
+  PINNED="$(sed -n 's/^DEFAULT_VERSION="v\{0,1\}\([^"]*\)".*/\1/p' "$SELF_REPO/scripts/fetch-memory-engine.sh" 2>/dev/null | head -1)"
+  if [[ -n "$PINNED" && "${VER##* }" != "$PINNED" ]]; then
+    warn "Engine version ${VER##* } differs from the pinned $PINNED the graph tools are verified against — scripts/fetch-memory-engine.sh --force"
+  fi
   # Numeric-only: the value is emitted bare into the --json report, so a
   # non-numeric field (engine output format drift) would produce invalid JSON.
   LIMIT="$("$ENGINE" config list 2>/dev/null | awk '/auto_index_limit/{print $3}' || true)"

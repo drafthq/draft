@@ -62,6 +62,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Enrichment scanned every node under `LIMIT 10000`, so on bigger graphs a
   hotspot past the window got zeros while `enrichment` still said `ok`. It now
   queries the hotspot symbols by name.
+- **The engine download trusted the release it came from.** `checksums.txt`
+  ships in the same GitHub release as the archive, so a replaced release asset
+  passed verification. The pinned version's four platform archives are now
+  checked against SHA-256 values recorded in `fetch-memory-engine.sh`.
+- **The pinned engine version was never enforced.** The fetch script exited
+  early for any binary already installed, so a pin bump never upgraded it, and
+  nothing flagged an off-pin engine resolved from `$PATH`. It now reinstalls on
+  a version mismatch, and `verify-graph-binary.sh` (new `version` /
+  `pinned_version` JSON fields) and `graph-preflight.sh` warn on drift.
 - **Cypher dialect guidance described engine 0.8.x.** Re-verified against the
   pinned 0.9.0: `<>`/`!=`/`<=`/`>=`, `coalesce()`, variable-length patterns and
   `WITH` aggregation now work; path variables still fail; multi-pattern joins
