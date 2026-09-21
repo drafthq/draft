@@ -44,6 +44,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   database and each index overwrote the other. `memory_ensure_index` now names
   the project explicitly: a repo the engine already knows keeps its name, a new
   one gets `<basename>-<sha8 of its path>`.
+- **Cypher dialect guidance described engine 0.8.x.** Re-verified against the
+  pinned 0.9.0: `<>`/`!=`/`<=`/`>=`, `coalesce()`, variable-length patterns and
+  `WITH` aggregation now work; path variables still fail; multi-pattern joins
+  parse but ignore `RETURN`/`LIMIT`; and `LIMIT` applies before `DISTINCT`.
 
 ## [4.0.0] - 2026-09-03
 

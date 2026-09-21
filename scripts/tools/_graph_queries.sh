@@ -7,16 +7,20 @@
 # here, not a hunt across N scripts (the Phase 0 :Function bug was duplicated
 # across two files precisely because the Cypher was inlined).
 #
-# Dialect notes (engine v0.8.x, verified live against this engine):
-#   SAFE   : fixed-length patterns, single/multi-hop explicit patterns, `=`, `<`,
-#            `STARTS WITH`, `NOT x STARTS WITH`, `AND`, `OR`, relationship-type
-#            alternation `[:A|B]`, simple `count(x)`.
-#   UNSAFE : coalesce(), `<>` / `!=` / `<=` / `>=`, `NOT EXISTS(...)`,
-#            `NOT (pattern)`, `WITH`-grouping aggregation, multi-pattern joins,
-#            and comparing one property against another (`a.x < b.x` — the
-#            parser wants a literal on the right and fails with "expected value
-#            at pos N"). `<` against a literal is fine.
-#            Every builder below stays inside the SAFE set.
+# Dialect notes (engine v0.9.0, verified live against this engine):
+#   SAFE   : `=`, `<>`/`!=`, `<`, `>`, `<=`, `>=` against a literal; `STARTS WITH`,
+#            `NOT x STARTS WITH`, `AND`, `OR`; explicit and variable-length
+#            patterns (`[:R*1..3]`, fixed depth `[:R*2..2]`); relationship-type
+#            alternation `[:A|B]`; `coalesce()`; `DISTINCT`; `count(x)`,
+#            `count(DISTINCT x)`; `WITH`-grouping aggregation.
+#   UNSAFE : comparing one property against another (`a.x < b.x`, `a.x = b.x` —
+#            the parser wants a literal on the right: "expected value at pos N"),
+#            `NOT EXISTS(...)`, `NOT (pattern)`, path variables (`p=(...)`,
+#            `length(p)`), and multi-pattern joins (`MATCH (a)…, (b)…` parse but
+#            ignore RETURN and LIMIT).
+#   GOTCHA : LIMIT applies before DISTINCT, so `RETURN DISTINCT … LIMIT n` can
+#            return fewer than n rows while more exist — judge truncation on raw
+#            rows. Every builder below stays inside the SAFE set.
 #
 # Label-agnostic on name matches: code units are :Method ⪢ :Function in OO repos;
 # pinning :Function silently returns [] (the graph-tooling-v2 Phase 0 bug). CALLS

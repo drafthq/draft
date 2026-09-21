@@ -4,7 +4,7 @@
 # graph-tooling-v2 Phase 6. Wraps the engine's ingest_traces to close the
 # static/dynamic gap — dynamic dispatch the static graph misses (e.g. closures,
 # reflection, virtual calls). This is a WRITE path and is gated behind
-# --experimental. NOTE: in engine v0.8.x ingest_traces is accepted but runtime
+# --experimental. NOTE: in engine v0.9.0 ingest_traces is accepted but runtime
 # edge creation is "not yet implemented" — the engine returns its status verbatim.
 #
 # Usage:
@@ -39,7 +39,7 @@ Flags:
   --experimental  Required acknowledgement — this is a write/experimental path.
   --help          Show this help.
 
-NOTE: engine v0.8.x accepts traces but runtime edge creation is not yet
+NOTE: engine v0.9.0 accepts traces but runtime edge creation is not yet
 implemented; the engine's status is returned verbatim.
 
 Output: raw engine JSON; {"source":"unavailable"} (exit 2) when unavailable.

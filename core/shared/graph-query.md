@@ -137,7 +137,7 @@ bare `[]` as a confirmed true negative:
 
 **Shapeless JSON is unavailable.** `gq_run` requires `has("rows") and (.rows|type=="array")`. A bare `{}` (or any object without a `.rows` array) is not a measured empty result — wrappers emit `source:"unavailable"` and a non-zero exit. Do not read `{}` as "no callers / no cycles / no edges". `graph-impact`, `graph-callers`, and `mermaid-from-graph` also require their tool-shaped object; a failed snapshot refresh does not rewrite `schema.yaml`.
 
-**Verified engine param shapes** (engine v0.8.x — the runtime source of truth is
+**Verified engine param shapes** (engine v0.9.0 — the runtime source of truth is
 `get_graph_schema`; do not hardcode a property set):
 
 ```bash
@@ -150,13 +150,18 @@ get_graph_schema '{"project":P}'    # → {node_labels:[{label,count,properties}
 
 **Cypher dialect — keep queries inside the SAFE set:**
 
-- ✅ SAFE: fixed-length patterns, single/multi-hop explicit patterns, `=`, `<`,
-  `STARTS WITH`, `NOT x STARTS WITH`, `AND`, `OR`, relationship-type alternation
-  `[:A|B]`, simple `count(x)`.
-- ❌ UNSAFE (rejected or silently empty): `coalesce()`, `<>` / `!=` / `<=` / `>=`,
-  `NOT EXISTS(...)`, `NOT (pattern)`, `WITH`-grouping aggregation, multi-pattern
-  joins. `graph-query.sh --cypher` returns the engine's raw error, not a silent
+- ✅ SAFE: `=`, `<>`/`!=`, `<`, `>`, `<=`, `>=` against a literal; `STARTS WITH`,
+  `NOT x STARTS WITH`, `AND`, `OR`; explicit and variable-length patterns
+  (`[:R*1..3]`, fixed depth `[:R*2..2]`); relationship-type alternation `[:A|B]`;
+  `coalesce()`; `DISTINCT`; `count(x)`, `count(DISTINCT x)`; `WITH`-grouping
+  aggregation.
+- ❌ UNSAFE: comparing one property against another (`a.x < b.x`), `NOT EXISTS(...)`,
+  `NOT (pattern)`, path variables (`p=(...)`, `length(p)`) — all rejected; and
+  multi-pattern joins (`MATCH (a)…, (b)…`), which parse but ignore `RETURN` and
+  `LIMIT`. `graph-query.sh --cypher` returns the engine's raw error, not a silent
   empty — but the builders never emit these forms.
+- ⚠️ `LIMIT` applies before `DISTINCT`: `RETURN DISTINCT … LIMIT n` can return
+  fewer than n rows while more exist. Judge truncation on raw rows.
 
 **Caveats consumers must respect:**
 
