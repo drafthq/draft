@@ -96,6 +96,31 @@ EMPTYMOCK
         "$([[ "$rc4" == "2" ]] && echo true || echo false)"
     assert "Shapeless {} reports source=unavailable" \
         "$(echo "$out4" | jq -e '.source == "unavailable"' >/dev/null 2>&1 && echo true || echo false)"
+
+    # A 3-cycle matches once per rotation, and a self-loop matches the 3-node
+    # pattern as (x, x, x) — both came back as extra "cycles". The 2-node query
+    # likewise returns each pair in both orders plus self-loops.
+    ROT="$FIXTURE/rotbin/codebase-memory-mcp"
+    mkdir -p "$FIXTURE/rotbin"
+    cat > "$ROT" <<'ROTMOCK'
+#!/usr/bin/env bash
+if [[ "$1" == "--version" ]]; then echo "codebase-memory-mcp 0.0.0-mock"; exit 0; fi
+case "$2" in
+  list_projects)    echo '{"projects":[]}' ;;
+  index_repository) echo '{"project":"mock","status":"indexed"}' ;;
+  query_graph)
+    if jq -r .query | grep -q '(c)-\[:CALLS\]->(a)'; then
+      echo '{"rows":[["fb","fc","fa"],["fa","fb","fc"],["fc","fa","fb"],["x","x","x"],["p","p","q"]]}'
+    else
+      echo '{"rows":[["m","n"],["n","m"],["s","s"]]}'
+    fi ;;
+  *) echo '{}' ;;
+esac
+ROTMOCK
+    chmod +x "$ROT"
+    out5="$(DRAFT_MEMORY_BIN="$ROT" "$TOOL" --repo "$FIXTURE" 2>/dev/null || true)"
+    assert "Each cycle is reported once, rotated to start at its smallest member" \
+        "$(echo "$out5" | jq -e '.cycles == [["m","n"],["fa","fb","fc"]]' >/dev/null 2>&1 && echo true || echo false)"
 fi
 
 

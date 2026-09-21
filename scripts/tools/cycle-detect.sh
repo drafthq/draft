@@ -69,15 +69,19 @@ graph_bootstrap "$REPO" || unavailable
 R2="$(gq_run "$PROJECT" "$(gq_q_cycles2)")" || unavailable
 R3="$(gq_run "$PROJECT" "$(gq_q_cycles3)")" || unavailable
 
-# Self-loops and duplicate orderings are filtered here rather than in Cypher:
-# the engine rejects `a.x < b.x`, which is what the query used to rely on.
-# A 2-cycle comes back twice (A,B and B,A), hence the doubled LIMIT upstream.
+# Degenerate rows and duplicate rotations are filtered here rather than in
+# Cypher: the engine rejects `a.x < b.x`, which is what the query used to rely on.
+# A cycle comes back once per rotation (a 2-cycle as A,B and B,A — hence the
+# doubled LIMIT upstream), and a self-loop also matches both patterns with a
+# repeated node, e.g. (x, x, x). Drop rows that repeat a node, rotate each to
+# start at its smallest member, and keep one of each.
 jq -n --argjson r2 "$R2" --argjson r3 "$R3" '
+    def cycles: map(select((unique | length) == length)
+                    | (indices(min)[0]) as $i | .[$i:] + .[:$i]) | unique;
     ( ((($r2.rows) // []) | length) >= 200
       or ((($r3.rows) // []) | length) >= 100 ) as $trunc
-    | ( ($r2.rows // []) | map(select(.[0] != .[1])) | unique_by(sort) ) as $two
     | {
-        cycles: ($two + ($r3.rows // [])),
+        cycles: ((($r2.rows // []) | cycles) + (($r3.rows // []) | cycles)),
         truncated: $trunc,
         source: "memory-graph"
       }'

@@ -54,6 +54,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   database and each index overwrote the other. `memory_ensure_index` now names
   the project explicitly: a repo the engine already knows keeps its name, a new
   one gets `<basename>-<sha8 of its path>`.
+- **`cycle-detect.sh` over-reported cycles.** Each 3-cycle came back once per
+  rotation, and a self-loop matched the 3-node pattern as `(x, x, x)` — the
+  only "cycle" it reported for Draft itself. Rows that repeat a node are
+  dropped and each cycle is reported once, rotated to its smallest member.
 - **Cypher dialect guidance described engine 0.8.x.** Re-verified against the
   pinned 0.9.0: `<>`/`!=`/`<=`/`>=`, `coalesce()`, variable-length patterns and
   `WITH` aggregation now work; path variables still fail; multi-pattern joins
