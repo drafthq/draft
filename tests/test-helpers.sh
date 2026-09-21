@@ -10,6 +10,10 @@ set -euo pipefail
 PASS=0
 FAIL=0
 
+# A tool run without DRAFT_MEMORY_BIN resolves any installed engine; keep its
+# index writes out of the user's real ~/.cache/codebase-memory-mcp.
+export CBM_CACHE_DIR="${CBM_CACHE_DIR:-${TMPDIR:-/tmp}/draft-tests-engine-cache}"
+
 assert() {
     local description="$1"
     local result="$2"
