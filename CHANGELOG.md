@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.0] - 2026-09-21
+
 ### Changed
 
 - **Website redesigned around the graph.** getdraft.dev ships dark by
@@ -43,6 +45,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   resolves; a new CI job fetches the pinned engine and runs it. Every other
   graph suite uses a mock. Against the pre-fix tools it fails 8 of 12.
 
+### Removed
+
+- **`schema.yaml` fields `project`, `generated_at`, `changed_files`,
+  `impacted_symbols`, and `root-link.json`'s `root_project`.** The committed
+  marker churned per machine and per run: a path-derived engine project name,
+  a timestamp, and the indexer's working-tree delta (still printed, no longer
+  committed). It keeps the engine, its version, and the point-of-index counts.
+- **`memory_project_for_repo`** (`scripts/tools/_lib.sh`). `memory_ensure_index`
+  now looks the project up itself and always refreshes the index.
+
 ### Fixed
 
 - **Live graph queries answered from a stale index.** The `graph-*.sh`
@@ -51,6 +63,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   came from the original index while still reporting `status:"ok"`. Wrappers
   now re-index incrementally before querying (~0.1 s on an unchanged repo).
   `memory_project_for_repo` is removed.
+- **Every engine call used a calling convention the engine is removing.**
+  codebase-memory-mcp 0.9.0 deprecates raw JSON as a positional `cli`
+  argument ("will be removed in a future release"), and Draft discarded the
+  warning with stderr. Arguments now go on stdin, so the next engine bump
+  cannot break every wrapper at once.
+- **The test suite wrote into the real engine cache.** `test-tools-graph-query.sh`
+  ran without a mock engine, so on any machine with the engine installed it
+  indexed each throwaway fixture into `~/.cache/codebase-memory-mcp` and left
+  it there. Tests now keep the engine off and default `CBM_CACHE_DIR` to a
+  temp directory.
 - **`graph-snapshot.sh` indexed twice per run.** The explicit refresh it ran
   after `memory_ensure_index` is gone now that the latter always refreshes.
 - **Symlinked repo paths broke root detection.** Graph tools resolved the repo
@@ -86,11 +108,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   cap was the only limit. `memory_index_bounded` now sets the engine's own
   `CBM_MEM_BUDGET_MB` to `DRAFT_INDEX_MEM_PCT` (default 25%) of RAM unless the
   user set one.
-- **The committed `schema.yaml` churned per machine and per run.** It carried
-  the path-derived engine project name, a `generated_at` timestamp, and the
-  indexer's working-tree delta. Those are gone (the delta is still printed);
-  the marker keeps the engine, its version, and the point-of-index counts.
-  `root-link.json` drops the `root_project` it copied from there.
 - **The `.ai-context.md` tier formula read fields that no longer exist.**
   `core/shared/condensation.md` computed the tier from `schema.yaml`
   `stats.modules` / `stats.go_functions` / `stats.proto_rpcs`, a leftover of
