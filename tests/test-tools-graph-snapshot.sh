@@ -44,6 +44,11 @@ if command -v jq >/dev/null 2>&1; then
         "$(grep -q 'access: engine-live' "$FIXTURE/graph/schema.yaml" && echo true || echo false)"
     assert "schema.yaml records index provenance counts" \
         "$(grep -q 'indexed_nodes:' "$FIXTURE/graph/schema.yaml" && echo true || echo false)"
+    # The marker is committed: a path-derived project name, a timestamp, and the
+    # indexer's working-tree delta differ per machine and per run, so they churn
+    # the file without describing the codebase.
+    assert "schema.yaml carries no machine- or run-specific fields" \
+        "$(grep -qE '^(project|generated_at|changed_files|impacted_symbols):' "$FIXTURE/graph/schema.yaml" && echo false || echo true)"
     # Engine-only: NO committed graph data is written, and stale fat-snapshot artifacts are pruned.
     assert "no architecture.json" "$([[ ! -f "$FIXTURE/graph/architecture.json" ]] && echo true || echo false)"
     assert "no hotspots.jsonl" "$([[ ! -f "$FIXTURE/graph/hotspots.jsonl" ]] && echo true || echo false)"

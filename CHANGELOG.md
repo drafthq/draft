@@ -76,6 +76,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   cap was the only limit. `memory_index_bounded` now sets the engine's own
   `CBM_MEM_BUDGET_MB` to `DRAFT_INDEX_MEM_PCT` (default 25%) of RAM unless the
   user set one.
+- **The committed `schema.yaml` churned per machine and per run.** It carried
+  the path-derived engine project name, a `generated_at` timestamp, and the
+  indexer's working-tree delta. Those are gone (the delta is still printed);
+  the marker keeps the engine, its version, and the point-of-index counts.
+  `root-link.json` drops the `root_project` it copied from there.
 - **Cypher dialect guidance described engine 0.8.x.** Re-verified against the
   pinned 0.9.0: `<>`/`!=`/`<=`/`>=`, `coalesce()`, variable-length patterns and
   `WITH` aggregation now work; path variables still fail; multi-pattern joins

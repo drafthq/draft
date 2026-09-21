@@ -168,7 +168,7 @@ Always produced (mode-independent):
 - **`.ai-profile.md`** — Ultra-compact 20-50 line always-injected profile (derived from .ai-context.md)
 - **`tracks/`** + **`tracks.md`** — Individual feature/fix tracks with `spec.md`, `plan.md`, `metadata.json` (includes `impact` block: files_touched, modules_touched, downstream_files, by_category)
 - **`.state/`** — Freshness hashes, signal classification, run memory for incremental refresh
-- **`graph/`** — Holds only `schema.yaml` (gate marker: engine + project metadata, point-of-index counts; `access: engine-live`). All structural graph data is queried live from the `codebase-memory-mcp` engine via the `scripts/tools/graph-*.sh` wrappers.
+- **`graph/`** — Holds only `schema.yaml` (gate marker: engine metadata, point-of-index counts; `access: engine-live`). All structural graph data is queried live from the `codebase-memory-mcp` engine via the `scripts/tools/graph-*.sh` wrappers.
 
 Packaging differs by mode:
 

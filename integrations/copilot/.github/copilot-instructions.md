@@ -17030,7 +17030,7 @@ If `draft/graph/schema.yaml` exists, the project has automated graph analysis da
 
 | File | Purpose | Content |
 |------|---------|---------|
-| `draft/graph/schema.yaml` | Gate marker (engine + project metadata + point-of-index counts); presence gates graph use | YAML, ~15 lines |
+| `draft/graph/schema.yaml` | Gate marker (engine metadata + point-of-index counts); presence gates graph use | YAML, ~10 lines |
 
 Note: `.ai-context.md` embeds a condensed graph summary (`GRAPH:MODULES`, `GRAPH:HOTSPOTS`, `GRAPH:CYCLES`) for first-pass structural ground truth. Deep structural data is queried live from the engine (see Live structural queries below).
 
@@ -18298,7 +18298,7 @@ The only committed file is the gate marker:
 
 | File | Role |
 |------|------|
-| `draft/graph/schema.yaml` | Engine + project metadata and point-of-index counts (provenance, not authoritative). Carries **no graph data**. Its presence is the **gate** (see Pre-Check) — it signals the engine is wired for this repo. Written by `scripts/tools/graph-snapshot.sh`. |
+| `draft/graph/schema.yaml` | Engine metadata and point-of-index counts (provenance, not authoritative). Carries **no graph data**. Its presence is the **gate** (see Pre-Check) — it signals the engine is wired for this repo. Written by `scripts/tools/graph-snapshot.sh`. |
 
 All structural data is obtained live by shelling out to the engine — either through the query-tool wrappers under `scripts/tools/` or directly via `codebase-memory-mcp cli <tool> '<json>'`. The shell tools auto-index the repo into the engine's own cache on demand, so no committed files are required.
 
@@ -18441,7 +18441,7 @@ Unlocks any edge type or node property without a purpose-built wrapper. Write ve
 "$DRAFT_TOOLS/graph-snapshot.sh" --repo .
 ```
 
-Indexes the repo into the engine and writes the `draft/graph/schema.yaml` gate marker (now including the `detect_changes` delta: `changed_files`/`impacted_symbols`). It writes **no** graph data. Run during `draft init` and `draft graph`, or whenever the index should be refreshed.
+Indexes the repo into the engine and writes the `draft/graph/schema.yaml` gate marker, and prints the `detect_changes` delta (`changed_files`/`impacted_symbols`) without committing it. It writes **no** graph data. Run during `draft init` and `draft graph`, or whenever the index should be refreshed.
 
 ## Finding the Engine (Resolution + Usage Report)
 

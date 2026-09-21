@@ -11,7 +11,7 @@
 # truth; the engine is the structural index over it.
 #
 # Writes one file under <repo>/draft/graph/:
-#   schema.yaml   engine + project metadata + index counts. Its presence is the
+#   schema.yaml   engine metadata + index counts. Its presence is the
 #                 GATE that tells skills the graph engine is wired for this repo
 #                 (see core/shared/graph-query.md Pre-Check). It carries no graph
 #                 data — every structural query goes to the live engine.
@@ -108,16 +108,17 @@ VER="$("$MEMORY_BIN" --version 2>/dev/null | awk '{print $NF}' || echo unknown)"
 
 # Incremental-refresh provenance (graph-tooling-v2 Phase 5): the engine indexes
 # incrementally (content-based, git-aware), so re-indexing only touches changed
-# files. detect_changes reports that working-tree delta — recorded as provenance
-# and echoed so a refresh shows what moved. Best-effort: never aborts the write.
+# files. detect_changes reports that working-tree delta — echoed so a refresh
+# shows what moved, but kept out of the committed marker (it differs per machine
+# and per run, like the path-derived project name and a timestamp would).
+# Best-effort: never aborts the write.
 CHANGES_JSON="$(memory_cli detect_changes "$(jq -n --arg p "$PROJECT" '{project:$p}')" 2>/dev/null || echo '{}')"
 echo "$CHANGES_JSON" | jq -e . >/dev/null 2>&1 || CHANGES_JSON='{}'
 CHANGED_FILES="$(echo "$CHANGES_JSON" | jq -r '.changed_count // (.changed_files | length?) // 0' 2>/dev/null || echo 0)"
 IMPACTED="$(echo "$CHANGES_JSON" | jq -r '(.impacted_symbols | length?) // 0' 2>/dev/null || echo 0)"
 
-# YAML double-quoted scalars: escape backslashes then quotes so an unusual
-# project name or engine version string can never corrupt the marker.
-PROJECT_Y="${PROJECT//\\/\\\\}"; PROJECT_Y="${PROJECT_Y//\"/\\\"}"
+# YAML double-quoted scalar: escape backslashes then quotes so an unusual
+# engine version string can never corrupt the marker.
 VER_Y="${VER//\\/\\\\}"; VER_Y="${VER_Y//\"/\\\"}"
 
 cat > "$OUT/schema.yaml" <<EOF
@@ -128,12 +129,8 @@ cat > "$OUT/schema.yaml" <<EOF
 # Counts below are point-of-index provenance; the live engine is authoritative.
 engine: codebase-memory-mcp
 engine_version: "$VER_Y"
-project: "$PROJECT_Y"
-generated_at: "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 indexed_nodes: $NODES
 indexed_edges: $EDGES
-changed_files: $CHANGED_FILES
-impacted_symbols: $IMPACTED
 access: engine-live
 EOF
 

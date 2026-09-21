@@ -127,22 +127,17 @@ write_root_link() {
     local status="$1"
     local mod_graph="$SCOPE_ABS/draft/graph"
     mkdir -p "$mod_graph"
-    local rel root_project="unknown" root_commit ts schema="$ROOT_ABS/draft/graph/schema.yaml"
+    local rel root_commit ts
     rel="$(root_link_relpath)"
-    if [[ -f "$schema" ]]; then
-        root_project="$(grep -m1 '^project:' "$schema" 2>/dev/null | sed 's/^project:[[:space:]]*//; s/^"//; s/"$//' || true)"
-        [[ -n "$root_project" ]] || root_project="unknown"
-    fi
     root_commit="$(git -C "$ROOT_ABS" rev-parse --verify --quiet HEAD 2>/dev/null || echo none)"
     ts="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-    # Every interpolated value goes through json_escape: a repo path or engine
-    # project name carrying a quote or backslash would otherwise emit a
-    # root-link.json that no consumer can parse.
+    # Every interpolated value goes through json_escape: a repo path carrying a
+    # quote or backslash would otherwise emit a root-link.json that no consumer
+    # can parse.
     cat > "$mod_graph/root-link.json" <<EOF
 {
   "root_graph": "$(json_escape "$rel")",
   "root_abs": "$(json_escape "$ROOT_ABS/draft/graph")",
-  "root_project": "$(json_escape "${root_project:-unknown}")",
   "root_commit": "$(json_escape "$root_commit")",
   "status": "$(json_escape "$status")",
   "linked_at": "$ts",

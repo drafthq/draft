@@ -131,7 +131,7 @@
                 <h2>What Draft Does Instead</h2>
                 <p>Draft installs <a href="https://github.com/DeusData/codebase-memory-mcp">codebase-memory-mcp</a>, a single-binary engine (tree-sitter + LSP across 159 languages, 100% local). You run it once during <code>/draft:init</code> or <code>/draft:graph</code> to index the repo. From that point on, skills and shell helpers query the engine live &mdash; no snapshot files committed, no data going stale between commits:</p>
 <pre><code>draft/graph/
-└── schema.yaml              # gate marker: engine + project metadata, counts
+└── schema.yaml              # gate marker: engine metadata, counts
                              # (access: engine-live — all other data queried from engine)
 </code></pre>
                 <p>The engine holds the graph. <code>draft/graph/schema.yaml</code> is the only committed artifact &mdash; a tiny gate marker that confirms the engine has indexed the repo and records provenance counts. All structural queries go directly to the engine at call time.</p>
