@@ -1,10 +1,13 @@
 # Continuous integration for the plugin itself.
 #
-# Three jobs, in rough order of how they have actually broken:
+# Four jobs, in rough order of how they have actually broken:
 #   install-path  — the clone-then-install sequence a new user runs. In v2.8.3 a
 #                   670 MB blob in HEAD stalled this step with no error message
 #                   and no test caught it.
 #   test          — the bash suites (`make test`).
+#   engine-smoke  — the graph wrappers against the real, pinned engine. Every
+#                   other graph suite uses a mock, which is how a stale Cypher
+#                   dialect list and double-counted cycles went unnoticed.
 #   lint          — shellcheck + markdownlint.
 name: CI
 
@@ -81,6 +84,24 @@ jobs:
             git diff --stat -- integrations/
             exit 1
           fi
+
+  engine-smoke:
+    name: Graph engine smoke test (real engine)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Fetch the pinned engine (SHA-256 pinned in the script)
+        run: bash scripts/fetch-memory-engine.sh
+
+      # The smoke suite skips when no engine resolves; --strict makes a failed
+      # fetch fail the job instead of passing it vacuously.
+      - name: Engine resolves
+        run: bash scripts/tools/verify-graph-binary.sh --strict
+
+      - name: Smoke test
+        run: ./tests/test-engine-smoke.sh
 
   lint:
     name: Lint

@@ -57,6 +57,7 @@ TEST_SCRIPTS = \
 	./tests/test-tools-graph-risk.sh \
 	./tests/test-tools-graph-traces.sh \
 	./tests/test-tools-graph-labels.sh \
+	./tests/test-engine-smoke.sh \
 	./tests/test-tools-fix-whitespace.sh \
 	./tests/test-tools-validate-frontmatter.sh \
 	./tests/test-tools-check-scope-conflicts.sh \

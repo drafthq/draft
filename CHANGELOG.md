@@ -33,6 +33,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   aggregated — plus a fail-loud `status` (`ok` / `no-edges` / `no-match`) and
   `truncated` (the `impacted` list is capped at 200; aggregates stay complete).
 
+### Added
+
+- **Real-engine graph smoke test.** `tests/test-engine-smoke.sh` drives the
+  wrappers against the actual `codebase-memory-mcp` binary over a small
+  fixture, in an isolated engine cache: callers, freshness after an edit, file
+  and symbol impact, cycles, hotspots, the dialect, the calling convention,
+  the snapshot marker, and the pinned version. It skips when no engine
+  resolves; a new CI job fetches the pinned engine and runs it. Every other
+  graph suite uses a mock. Against the pre-fix tools it fails 8 of 12.
+
 ### Fixed
 
 - **Live graph queries answered from a stale index.** The `graph-*.sh`

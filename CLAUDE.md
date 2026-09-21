@@ -13,7 +13,7 @@ Draft also ships a **knowledge graph engine** — `codebase-memory-mcp`, fetched
 ```bash
 make build              # Generate integration files from skills
 make build-integrations # Same as above (explicit target)
-make test               # Run all 82 test suites (skills, build, tools)
+make test               # Run all 83 test suites (skills, build, tools)
 make lint               # Run shellcheck + markdownlint
 make clean              # Remove generated integrations
 
@@ -83,7 +83,7 @@ The build script (`scripts/build-integrations.sh`) reads `SKILL_ORDER`, `CORE_FI
 
 | Workflow | Trigger | Does |
 |---|---|---|
-| `ci.yml` | push to `main`, PRs | Install path (repo-size gate + clean-clone smoke test), `make test` + integrations-freshness, lint (shellcheck and markdownlint, both blocking) |
+| `ci.yml` | push to `main`, PRs | Install path (repo-size gate + clean-clone smoke test), `make test` + integrations-freshness, graph smoke test against the real pinned engine, lint (shellcheck and markdownlint, both blocking) |
 | `release.yml` | `vX.Y.Z` tag push | Verifies tag matches `package.json`, extracts notes via `scripts/release-notes.sh`, publishes the GitHub Release |
 | `pages.yml` | push touching `web/` | Deploys the site |
 
