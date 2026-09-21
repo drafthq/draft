@@ -67,7 +67,8 @@ gq_q_inherits_sym()      { printf "MATCH (c)-[:INHERITS]->(p) WHERE c.name='%s' 
 gq_q_derived_sym()       { printf "MATCH (c)-[:INHERITS]->(p) WHERE p.name='%s' RETURN c.qualified_name AS child, p.qualified_name AS parent LIMIT 200" "$1"; }
 gq_q_raises()            { printf "MATCH (f {name:'%s'})-[:RAISES|THROWS]->(e) RETURN e.name AS error, e.qualified_name AS qualified LIMIT 200" "$1"; }
 gq_q_raisers()           { printf "MATCH (f)-[:RAISES|THROWS]->(e {name:'%s'}) RETURN f.qualified_name AS raiser, f.file_path AS file LIMIT 200" "$1"; }
-gq_q_node_props()        { printf "MATCH (f) RETURN f.qualified_name AS q, f.complexity AS c, f.cognitive AS cog, f.is_entry_point AS ep LIMIT 10000"; }
+# $1 = comma-separated list of pre-escaped, single-quoted qualified names.
+gq_q_node_props()        { printf "MATCH (f) WHERE f.qualified_name IN [%s] RETURN f.qualified_name AS q, f.complexity AS c, f.cognitive AS cog, f.is_entry_point AS ep LIMIT 1000" "$1"; }
 # Dependents at exactly $2 CALLS hops (one query per depth: path variables are
 # unsupported, so the hop count comes from the fixed depth). Raw rows, no
 # DISTINCT — LIMIT applies before DISTINCT, so only a raw row count at the limit

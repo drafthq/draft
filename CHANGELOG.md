@@ -58,6 +58,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   rotation, and a self-loop matched the 3-node pattern as `(x, x, x)` — the
   only "cycle" it reported for Draft itself. Rows that repeat a node are
   dropped and each cycle is reported once, rotated to its smallest member.
+- **`hotspot-rank.sh` could score large-repo hotspots as complexity 0.**
+  Enrichment scanned every node under `LIMIT 10000`, so on bigger graphs a
+  hotspot past the window got zeros while `enrichment` still said `ok`. It now
+  queries the hotspot symbols by name.
 - **Cypher dialect guidance described engine 0.8.x.** Re-verified against the
   pinned 0.9.0: `<>`/`!=`/`<=`/`>=`, `coalesce()`, variable-length patterns and
   `WITH` aggregation now work; path variables still fail; multi-pattern joins
