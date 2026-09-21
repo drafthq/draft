@@ -33,6 +33,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `memory_project_for_repo` is removed.
 - **`graph-snapshot.sh` indexed twice per run.** The explicit refresh it ran
   after `memory_ensure_index` is gone now that the latter always refreshes.
+- **Symlinked repo paths broke root detection.** Graph tools resolved the repo
+  with a logical `pwd` while git reports the physical toplevel, so
+  `graph-init.sh` run through a symlink to the root treated the root as its own
+  sub-module (double index, self-referencing `root-link.json`) and
+  `graph-preflight.sh` warned "not at the git root". Paths now resolve with
+  `pwd -P`.
 
 ## [4.0.0] - 2026-09-03
 

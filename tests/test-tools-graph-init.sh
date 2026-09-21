@@ -73,6 +73,22 @@ if command -v jq >/dev/null 2>&1 && command -v git >/dev/null 2>&1; then
     assert "Module-only marks link pending" \
         "$(jq -e '.status == "pending"' "$MO/pkg/x/draft/graph/root-link.json" >/dev/null 2>&1 && echo true || echo false)"
     rm -rf "$MO"
+
+    # --- Root reached through a symlink is still the root ---
+    # git reports the physical toplevel; a logical scope path never matched it, so
+    # the root was treated as its own sub-module and linked to itself.
+    SL="$(mktemp -d)"; SL="$(cd "$SL" && pwd -P)"
+    mkdir -p "$SL/real"
+    git -C "$SL/real" init -q
+    ln -s "$SL/real" "$SL/link"
+    set +e
+    DRAFT_MEMORY_BIN="$MOCK" "$TOOL" --scope "$SL/link" --no-fetch --json >"$SL/out.json" 2>/dev/null
+    set -e
+    assert "Symlinked root init reports is_root=1" \
+        "$(jq -e '.is_root == 1' "$SL/out.json" >/dev/null 2>&1 && echo true || echo false)"
+    assert "Symlinked root init writes NO root-link.json" \
+        "$([[ ! -f "$SL/real/draft/graph/root-link.json" ]] && echo true || echo false)"
+    rm -rf "$SL"
 fi
 
 echo ""

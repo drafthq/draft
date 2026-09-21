@@ -61,7 +61,7 @@ done
 
 [[ -d "$REPO" ]] || { echo "ERROR: --repo '$REPO' is not a directory" >&2; exit 1; }
 
-REPO_ABS="$(cd "$REPO" && pwd)"
+REPO_ABS="$(cd "$REPO" && pwd -P)"
 SELF_REPO="$(cd "$TOOLS_DIR/../.." && pwd)"
 OUT="${OUT_DIR:-$REPO_ABS/draft/graph}"
 

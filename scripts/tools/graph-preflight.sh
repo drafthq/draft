@@ -47,7 +47,7 @@ while [[ $# -gt 0 ]]; do
 done
 REPO="${REPO:-.}"
 [[ -d "$REPO" ]] || { echo "ERROR: '$REPO' is not a directory" >&2; exit 2; }
-REPO_ABS="$(cd "$REPO" && pwd)"
+REPO_ABS="$(cd "$REPO" && pwd -P)"
 
 # --- formatting (color only on a tty, and never in --json) ---
 if [[ -t 1 && "$JSON_MODE" -eq 0 ]]; then B=$'\e[1m'; G=$'\e[32m'; Y=$'\e[33m'; R=$'\e[31m'; D=$'\e[0m'; else B=""; G=""; Y=""; R=""; D=""; fi

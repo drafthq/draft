@@ -62,7 +62,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 [[ -d "$SCOPE" ]] || { echo "ERROR: --scope '$SCOPE' is not a directory" >&2; exit 1; }
-SCOPE_ABS="$(cd "$SCOPE" && pwd)"
+SCOPE_ABS="$(cd "$SCOPE" && pwd -P)"
 SELF_REPO="$(cd "$TOOLS_DIR/../.." && pwd)"
 
 # --- Resolve ROOT (bounded by the git toplevel; never escapes the repo) ---
