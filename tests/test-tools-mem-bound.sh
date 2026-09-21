@@ -47,9 +47,11 @@ if command -v jq >/dev/null 2>&1; then
     MOCK_BIN="$CAPTURE_DIR/codebase-memory-mcp"
     cat > "$MOCK_BIN" <<'MOCK'
 #!/usr/bin/env bash
-# Captures the JSON payload memory_index_bounded passes to `cli index_repository`.
+# Captures the JSON payload memory_index_bounded sends to `cli index_repository`
+# (on stdin) and the argv count, which must carry no positional JSON.
 if [[ "$1" == "cli" && "$2" == "index_repository" ]]; then
-    printf '%s' "$3" > "$CAPTURE_FILE"
+    cat > "$CAPTURE_FILE"
+    printf '%s' "$#" > "$CAPTURE_FILE.argc"
     echo '{"project":"mock"}'
     exit 0
 fi
@@ -57,7 +59,7 @@ echo '{}'
 MOCK
     chmod +x "$MOCK_BIN"
     export CAPTURE_FILE
-    MEMORY_BIN="$MOCK_BIN" memory_index_bounded 'weird"repo\path' >/dev/null 2>&1 || true
+    MEMORY_BIN="$MOCK_BIN" memory_index_bounded 'weird"repo\path' </dev/null >/dev/null 2>&1 || true
     payload="$(cat "$CAPTURE_FILE" 2>/dev/null || echo '')"
     [[ -n "$payload" ]] && echo "$payload" | jq -e . >/dev/null 2>&1 \
         && assert "index payload is valid JSON for a path with a quote and backslash" "true" \
@@ -65,6 +67,11 @@ MOCK
     [[ "$(echo "$payload" | jq -r '.repo_path' 2>/dev/null)" == 'weird"repo\path' ]] \
         && assert "index payload preserves the raw repo_path value" "true" \
         || assert "index payload preserves the raw repo_path value" "false"
+    # The engine deprecated positional raw-JSON args ("will be removed in a future
+    # release"); the payload must travel on stdin so an engine upgrade cannot break it.
+    [[ "$(cat "$CAPTURE_FILE.argc" 2>/dev/null)" == "2" ]] \
+        && assert "engine args go on stdin, not as a deprecated positional JSON arg" "true" \
+        || assert "engine args go on stdin, not as a deprecated positional JSON arg" "false"
 fi
 
 finish_test "mem-bound"

@@ -245,6 +245,8 @@ graph_bootstrap() {
 
 # Run a codebase-memory-mcp CLI tool. Echoes the JSON result (stdout); the engine's
 # `level=...` log lines go to stderr and are discarded unless DRAFT_MEMORY_DEBUG is set.
+# Args travel on stdin: the engine deprecated positional raw JSON (0.9.0 warns it
+# "will be removed in a future release"), and that warning lands in the discarded stderr.
 # Usage: memory_cli <tool> [json-args]
 memory_cli() {
     local tool="$1"
@@ -253,9 +255,9 @@ memory_cli() {
         return 1
     fi
     if [[ -n "${DRAFT_MEMORY_DEBUG:-}" ]]; then
-        "$MEMORY_BIN" cli "$tool" "$args"
+        "$MEMORY_BIN" cli "$tool" <<< "$args"
     else
-        "$MEMORY_BIN" cli "$tool" "$args" 2>/dev/null
+        "$MEMORY_BIN" cli "$tool" <<< "$args" 2>/dev/null
     fi
 }
 
@@ -330,10 +332,10 @@ memory_index_bounded() {
         read -r high_arg max_arg <<< "$(_mem_bound_args "$total" "$pct")"
         if [[ -n "${DRAFT_MEMORY_DEBUG:-}" ]]; then
             systemd-run --user --scope -q -p "$high_arg" -p "$max_arg" \
-                -- "$MEMORY_BIN" cli index_repository "$json"
+                -- "$MEMORY_BIN" cli index_repository <<< "$json"
         else
             systemd-run --user --scope -q -p "$high_arg" -p "$max_arg" \
-                -- "$MEMORY_BIN" cli index_repository "$json" 2>/dev/null
+                -- "$MEMORY_BIN" cli index_repository <<< "$json" 2>/dev/null
         fi
     else
         memory_cli index_repository "$json"

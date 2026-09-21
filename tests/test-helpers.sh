@@ -30,7 +30,7 @@ finish_test() {
 }
 
 # Write a mock codebase-memory-mcp engine to $1 and echo its path.
-# The mock answers `--version` and `cli <tool> <json>` with deterministic JSON,
+# The mock answers `--version` and `cli <tool>` with deterministic JSON,
 # so graph-engine tools can be exercised in CI without the real binary.
 make_mock_memory_engine() {
     local dir="$1"
