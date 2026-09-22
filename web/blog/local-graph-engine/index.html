@@ -166,7 +166,7 @@
                 <p>The graph engine is one local process reading your source files.</p>
 
                 <h3>3. Always-Fresh, Never-Stale Context</h3>
-                <p>Because the graph is queried live from the local engine rather than read from a committed snapshot, it is <strong>always current</strong>. Re-indexing is fast and deterministic &mdash; run <code>/draft:graph</code> after a refactor and every subsequent query reflects the new structure immediately.</p>
+                <p>Because the graph is queried live from the local engine rather than read from a committed snapshot, it is <strong>always current</strong>. Every query re-indexes incrementally first &mdash; about a tenth of a second when nothing changed &mdash; so it reflects edits made seconds ago, uncommitted ones included. There is no refresh step to remember.</p>
                 <p>Committed snapshots went stale on the very next commit and duplicated what the engine already serves precisely on demand. The engine-only model eliminates that entire class of drift.</p>
 
                 <h3>4. Blast-Radius Queries Before You Edit</h3>
@@ -176,8 +176,13 @@
 <pre><code>{
   "target": "auth/auth.h",
   "kind": "file",
-  "impacted": [{"name": "...", "file": "...", "hop": 1}],
-  "by_category": {"code": 31, "test": 12, "doc": 3, "config": 1},
+  "impacted": [{"name": "...", "file": "...", "qualified": "...", "hop": 1}],
+  "downstream_files": ["..."],
+  "affected_modules": ["auth", "api", "tests"],
+  "max_depth": 3,
+  "by_category": {"code": 31, "test": 12},
+  "status": "ok",
+  "truncated": false,
   "source": "memory-graph"
 }</code></pre>
                 <p>The AI assistant &mdash; and you &mdash; now know exactly how many tests to update, which docs go stale, which configs ship the change. <strong>No "I think this might be safe."</strong></p>

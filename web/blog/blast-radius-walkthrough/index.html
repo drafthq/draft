@@ -147,6 +147,7 @@ log lines are unstructured and missing actor identity.
                 <p>Most AI assistants ignore this kind of signal. The Draft skill stops and waits.</p>
 
                 <h2>Step 2: The Impact Query &mdash; What Actually Breaks</h2>
+                <blockquote><strong>Updated for Draft 5.0.0 (2026-09-21).</strong> This walkthrough shows the graph tooling as it was in May 2026. <code>graph-impact.sh</code> now returns <code>{target, kind, impacted[{name, file, qualified, hop}], downstream_files, affected_modules, max_depth, by_category{code, test}, status, truncated, source}</code>: dependents found through calls and imports, so doc and config files no longer appear in the blast radius, and <code>files_by_depth</code> / <code>warning</code> are gone. Hotspot rank is now fan-in plus measured complexity. The reasoning below is unchanged; the field names are not. See the <a href="../../changelog/">changelog</a>.</blockquote>
                 <p>Run the suggested command:</p>
 <pre><code>scripts/tools/graph-impact.sh --file internal/db/transaction.go</code></pre>
                 <p>Output (trimmed for the post):</p>
