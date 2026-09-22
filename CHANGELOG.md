@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.2] - 2026-09-21
+
 ### Fixed
 
 - **The README described the graph tools as they were before 5.0.** Impact
