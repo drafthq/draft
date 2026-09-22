@@ -17,6 +17,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `test-version-sync.sh` now fails on a site label that drifts from
   `package.json`.
 
+### Fixed
+
+- **The landing page's graph demos showed the retired engine's output.** The
+  playground promised the engine's real output schema, but all six fixtures
+  used the old shapes (file-level hotspots, module cycles, `files_by_depth`,
+  doc/config buckets); they now match each wrapper's 5.0 output. The hero
+  ledger shows `code · test` only, as `by_category` does. The engine blog post
+  no longer tells readers to run `/draft:graph` for fresh results, and the May
+  walkthrough carries a note on the changed output. CONTRIBUTING's CI table,
+  the architecture template's module count, and the fetch script's header
+  are corrected too.
+
 ## [5.0.0] - 2026-09-21
 
 ### Changed
