@@ -28,6 +28,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   walkthrough carries a note on the changed output. CONTRIBUTING's CI table,
   the architecture template's module count, and the fetch script's header
   are corrected too.
+- **The landing-page hero overflowed on phones.** Below 1100px the hero grid
+  switched to a `1fr` track, whose minimum is its content's width, and the
+  install chip's no-wrap command held that at ~430px — so on a 390px screen
+  the tagline, install chip, stats row, and Impact Console were cut off at the
+  right edge. The track is now `minmax(0, 1fr)` and the command truncates with
+  an ellipsis beside its Copy button.
 
 ## [5.0.0] - 2026-09-21
 
