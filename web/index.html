@@ -352,13 +352,12 @@
                             <span class="ledger-file" id="ledger-target">src/auth/login.ts</span>
                         </div>
                         <div class="ledger-row" data-depth="1" id="ledger-d1">
-                            <span class="ledger-key">depth 1 <b id="ledger-n1">5</b></span>
+                            <span class="ledger-key">depth 1 <b id="ledger-n1">4</b></span>
                             <ul id="ledger-l1">
                                 <li>api/session/route.ts</li>
                                 <li>api/auth/[...nextauth]/route.ts</li>
                                 <li>pages/login.tsx</li>
                                 <li>tests/auth/login.spec.ts</li>
-                                <li class="more">+1 more</li>
                             </ul>
                         </div>
                         <div class="ledger-row" data-depth="2" id="ledger-d2">
@@ -372,9 +371,9 @@
                     </div>
                 </div>
                 <div class="console-foot">
-                    <span><b id="cf-files">6</b> files</span>
-                    <span><b id="cf-modules">4</b> modules</span>
-                    <span class="cf-cats">code <b id="cf-code">3</b> &middot; test <b id="cf-test">2</b> &middot; doc <b id="cf-doc">1</b> &middot; config <b id="cf-config">0</b></span>
+                    <span><b id="cf-files">5</b> files</span>
+                    <span><b id="cf-modules">3</b> modules</span>
+                    <span class="cf-cats">code <b id="cf-code">3</b> &middot; test <b id="cf-test">2</b></span>
                 </div>
             </div>
         </div>
@@ -498,7 +497,7 @@
                     </button>
                     <button type="button" class="playground-tab" id="tab-pg-cycles" data-tab="cycles" role="tab" aria-selected="false" aria-controls="playground-panel" tabindex="-1">
                         <span class="playground-tab-label">cycles</span>
-                        <span class="playground-tab-hint">Circular deps</span>
+                        <span class="playground-tab-hint">Call cycles</span>
                     </button>
                     <button type="button" class="playground-tab" id="tab-pg-modules" data-tab="modules" role="tab" aria-selected="false" aria-controls="playground-panel" tabindex="-1">
                         <span class="playground-tab-label">modules</span>
@@ -513,7 +512,7 @@
                 <div class="playground-pane" role="tabpanel" id="playground-panel" aria-labelledby="tab-pg-impact">
                     <div class="playground-prompt">
                         <span class="playground-prompt-cursor">$</span>
-                        <code class="playground-prompt-cmd" id="playground-cmd">graph-impact --file core/methodology.md</code>
+                        <code class="playground-prompt-cmd" id="playground-cmd">graph-impact --file src/lib/auth/jwt.ts</code>
                     </div>
                     <pre class="playground-output" id="playground-output" aria-live="polite"></pre>
                 </div>

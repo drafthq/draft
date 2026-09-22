@@ -5,7 +5,9 @@
    module. Every few seconds one file is "changed": its blast
    radius ripples outward depth by depth along real edges, and
    the ledger prints what graph-impact would print — files by
-   depth, modules reached, and the code/test/doc/config split.
+   depth, modules reached, and the code/test split. Docs sit in the
+   graph but never light up: graph-impact follows calls and imports,
+   and a markdown file makes neither.
    The numbers come from a BFS over the graph, not from copy.
    ============================================================ */
 
@@ -120,10 +122,7 @@
         'tests/e2e/checkout.spec.ts': ['src/pages/checkout.tsx'],
         'tests/lib/db.spec.ts': ['src/lib/db/client.ts'],
         'tests/components/UserMenu.spec.tsx': ['src/components/UserMenu.tsx'],
-        'tests/api/payments.spec.ts': ['src/api/payments/charge.ts', 'src/api/payments/webhook.ts'],
-        'docs/runbooks/auth-incident.md': ['src/auth/login.ts', 'src/middleware/requireAuth.ts'],
-        'docs/api/payments.md': ['src/api/payments/charge.ts'],
-        'README.md': ['next.config.ts']
+        'tests/api/payments.spec.ts': ['src/api/payments/charge.ts', 'src/api/payments/webhook.ts']
     };
 
     /* Files whose change we simulate, in order. */
@@ -194,7 +193,7 @@
         cmd: $('console-cmd'), target: $('ledger-target'),
         rows: [1, 2, 3].map(function (d) { return { row: $('ledger-d' + d), n: $('ledger-n' + d), list: $('ledger-l' + d) }; }),
         files: $('cf-files'), modules: $('cf-modules'),
-        code: $('cf-code'), test: $('cf-test'), doc: $('cf-doc'), config: $('cf-config')
+        code: $('cf-code'), test: $('cf-test')
     };
 
     function short(p) { return p.replace(/^src\//, ''); }
@@ -207,7 +206,7 @@
             el.cmd.appendChild(b);
         }
         if (el.target) el.target.textContent = target;
-        var files = 0, mods = {}, cats = { code: 0, test: 0, doc: 0, config: 0 };
+        var files = 0, mods = {}, cats = { code: 0, test: 0 };
         for (var d = 1; d <= 3; d++) {
             var list = res.levels[d] || [];
             var r = el.rows[d - 1];
@@ -225,11 +224,12 @@
                 more.textContent = '+' + (list.length - 4) + ' more';
                 r.list.appendChild(more);
             }
-            list.forEach(function (p) { files++; mods[byPath[p].mod] = 1; cats[byPath[p].cat]++; });
+            /* graph-impact's by_category is {code, test}: config sources count as code */
+            list.forEach(function (p) { files++; mods[byPath[p].mod] = 1; cats[byPath[p].cat === 'test' ? 'test' : 'code']++; });
         }
         if (el.files) el.files.textContent = files;
         if (el.modules) el.modules.textContent = Object.keys(mods).length;
-        ['code', 'test', 'doc', 'config'].forEach(function (k) { if (el[k]) el[k].textContent = cats[k]; });
+        ['code', 'test'].forEach(function (k) { if (el[k]) el[k].textContent = cats[k]; });
     }
 
     function setRowState(stage) {
