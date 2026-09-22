@@ -20440,7 +20440,7 @@ graph:
     cpp: "{high}"
     go: "{approximate | high}"
   stats:
-    modules: "{N from schema.yaml}"
+    modules: "{N from engine: get_architecture .packages}"
     edges: "{total_edges from engine: get_architecture .edges}"
     hotspots: "{N}"
   notes: "{explicit fidelity summary from engine: get_architecture .languages/.packages}"

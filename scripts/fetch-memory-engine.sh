@@ -3,8 +3,9 @@
 #
 # The engine is the codebase-memory-mcp single static binary. This script fetches
 # the release archive for the host OS/arch from GitHub Releases, verifies its
-# SHA-256 against the published checksums.txt, extracts it, and installs the
-# binary to the Draft-managed location (~/.cache/draft/bin/codebase-memory-mcp),
+# SHA-256 (against hashes pinned below for the default version, else against the
+# release's checksums.txt), extracts it, and installs the binary to the
+# Draft-managed location (~/.cache/draft/bin/codebase-memory-mcp),
 # which scripts/tools/_lib.sh:find_memory_bin resolves.
 #
 # Pinned by default for reproducibility; override with CMM_VERSION (a tag, e.g.
