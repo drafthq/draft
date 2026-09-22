@@ -155,7 +155,7 @@ git push --follow-tags origin main
 npm publish
 ```
 
-The npm `version` lifecycle hook runs `scripts/sync-version.sh`, which propagates the new version into `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`, then `git add`s them — so all three land in the bump commit atomically (the website no longer carries a version label). Release *copy* (headlines, dates, changelog prose) stays hand-written. `tests/test-version-sync.sh` (in `make test`) fails CI if any consumer drifts from `package.json`; run `bash scripts/sync-version.sh` to fix.
+The npm `version` lifecycle hook runs `scripts/sync-version.sh --stage`, which propagates the new version into `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `.cursor-plugin/plugin.json`, and the website's version labels (the nav version pill on every page, the landing hero's REV, the book landing's REV), then `git add`s exactly those files — so they all land in the bump commit atomically. Release *copy* (headlines, dates, changelog prose, the site changelog's Latest entry) stays hand-written. `tests/test-version-sync.sh` (in `make test`) fails CI if any consumer drifts from `package.json`; run `bash scripts/sync-version.sh` to fix.
 
 ## End-User Context
 

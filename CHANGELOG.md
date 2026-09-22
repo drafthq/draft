@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`npm version` now bumps the website's version labels too.**
+  `sync-version.sh` rewrites the nav version pill on every page that carries
+  one, the landing hero's REV, and the book landing's REV, found by CSS class
+  so new pages are covered automatically; the hook stages exactly those files
+  with the manifests (`--stage`). 5.0.0 needed those 15 labels edited by hand.
+  `test-version-sync.sh` now fails on a site label that drifts from
+  `package.json`.
+
 ## [5.0.0] - 2026-09-21
 
 ### Changed

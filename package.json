@@ -25,7 +25,7 @@
   ],
   "scripts": {
     "test": "bash tests/test-cli.sh",
-    "version": "bash scripts/sync-version.sh && git add .claude-plugin/plugin.json .claude-plugin/marketplace.json .cursor-plugin/plugin.json",
+    "version": "bash scripts/sync-version.sh --stage",
     "prepublishOnly": "bash scripts/build-integrations.sh"
   },
   "repository": {
