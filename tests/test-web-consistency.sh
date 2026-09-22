@@ -8,6 +8,7 @@
 # - Pages that render the shared nav load the script that drives it
 # - Every internal link and in-page anchor resolves
 # - Every shipped script parses
+# - scripts/build-book.sh reproduces the committed book pages
 #
 # Why: the site is plain HTML deployed straight from web/ on push. Design
 # changes are applied to ~40 pages by hand, and a page missed by such a
@@ -124,5 +125,29 @@ for script in web/js/*.js web/book/js/*.js; do
     node --check "$script" 2>/dev/null || { js_ok=false; echo "   syntax error: $script"; }
 done
 assert "every shipped script passes node --check" "$js_ok"
+
+echo ""
+echo "## Book generator matches the committed pages"
+# The book pages are generated, but a design sweep edits the committed HTML by
+# hand; if the generator is not updated too, its next run silently reverts the
+# sweep. Build into a scratch copy and compare the pages byte for byte. Two
+# run-dependent values are left out: the sitemap (lastmod is the run date) and
+# the landing page's REV line (package.json's version, which `npm version`
+# bumps without regenerating the book).
+book_tmp="$(mktemp -d)"
+mkdir -p "$book_tmp/scripts/tools"
+cp scripts/build-book.sh "$book_tmp/scripts/"
+cp scripts/tools/_lib.sh "$book_tmp/scripts/tools/"
+cp package.json "$book_tmp/"
+cp -R web "$book_tmp/"
+# A build that fails before writing leaves the copy untouched, so an empty diff
+# only counts when the build itself succeeded.
+book_rc=0
+bash "$book_tmp/scripts/build-book.sh" >/dev/null 2>&1 || book_rc=$?
+book_drift="$(diff -r -I 'class="book-rev"' web/book "$book_tmp/web/book" 2>&1 || true)"
+rm -rf "$book_tmp"
+[[ -z "$book_drift" ]] || echo "$book_drift" | sed -n '1,5s/^/   /p'
+assert "build-book.sh runs and reproduces the committed book pages (exit $book_rc)" \
+    "$([[ "$book_rc" -eq 0 && -z "$book_drift" ]] && echo true || echo false)"
 
 finish_test "website consistency"

@@ -44,6 +44,11 @@ if command -v jq >/dev/null 2>&1; then
         "$(grep -q 'access: engine-live' "$FIXTURE/graph/schema.yaml" && echo true || echo false)"
     assert "schema.yaml records index provenance counts" \
         "$(grep -q 'indexed_nodes:' "$FIXTURE/graph/schema.yaml" && echo true || echo false)"
+    # The marker is committed: a path-derived project name, a timestamp, and the
+    # indexer's working-tree delta differ per machine and per run, so they churn
+    # the file without describing the codebase.
+    assert "schema.yaml carries no machine- or run-specific fields" \
+        "$(grep -qE '^(project|generated_at|changed_files|impacted_symbols):' "$FIXTURE/graph/schema.yaml" && echo false || echo true)"
     # Engine-only: NO committed graph data is written, and stale fat-snapshot artifacts are pruned.
     assert "no architecture.json" "$([[ ! -f "$FIXTURE/graph/architecture.json" ]] && echo true || echo false)"
     assert "no hotspots.jsonl" "$([[ ! -f "$FIXTURE/graph/hotspots.jsonl" ]] && echo true || echo false)"
@@ -52,17 +57,17 @@ if command -v jq >/dev/null 2>&1; then
     assert "draft/graph holds only schema.yaml" \
         "$([[ "$(find "$FIXTURE/graph" -type f | wc -l | tr -d ' ')" == "1" ]] && echo true || echo false)"
 
-    # An ALREADY-INDEXED repo must still be re-indexed. memory_ensure_index only
-    # calls index_repository when the project is absent, so this tool used to write
-    # a gate marker with a fresh generated_at over a frozen index — deleted symbols
-    # stayed resolvable and new ones never appeared, silently.
+    # An ALREADY-INDEXED repo must still be re-indexed. This tool once indexed only
+    # when the project was absent, writing a gate marker with a fresh generated_at
+    # over a frozen index — deleted symbols stayed resolvable and new ones never
+    # appeared, silently.
     REIDX_DIR="$(mktemp -d)"
     CALLS="$REIDX_DIR/calls.log"
     REIDX_MOCK="$REIDX_DIR/codebase-memory-mcp"
     cat > "$REIDX_MOCK" <<'MOCK'
 #!/usr/bin/env bash
-# Mock whose list_projects already knows this repo, so the "absent" branch of
-# memory_ensure_index cannot fire. Records every cli tool it is asked for.
+# Mock whose list_projects already knows this repo. Records every cli tool it is
+# asked for.
 if [[ "$1" == "--version" ]]; then echo "codebase-memory-mcp 0.0.0-mock"; exit 0; fi
 [[ "$1" == "cli" ]] || { echo '{}'; exit 0; }
 echo "$2" >> "$CALLS_LOG"
@@ -87,6 +92,8 @@ MOCK
         "$([[ "$reidx_rc" == "0" ]] && echo true || echo false)"
     assert "already-indexed repo is re-indexed (index_repository invoked)" \
         "$(grep -qx 'index_repository' "$CALLS" && echo true || echo false)"
+    assert "one snapshot run indexes exactly once" \
+        "$([[ "$(grep -cx 'index_repository' "$CALLS")" == "1" ]] && echo true || echo false)"
     rm -rf "$REIDX_DIR"
 
     FAIL_DIR="$(mktemp -d)"

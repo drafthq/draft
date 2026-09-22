@@ -25,6 +25,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
     passing, corroborated evidence. Evidence recorded before the current HEAD is
     stale and does not clear the gate.
 
+## [5.0.2] - 2026-09-21
+
+### Fixed
+
+- **The README described the graph tools as they were before 5.0.** Impact
+  analysis listed doc/config buckets and "tests/docs/configs" (it reports
+  dependents through calls and imports, split code/test), the call graph
+  claimed confidence signals it does not emit, and hotspot ranking and
+  indexing understated what they do. It now describes the fail-loud callers
+  status, dependents-by-hop impact, fan-in-plus-complexity hotspots,
+  refresh-before-query indexing, and the pinned-hash engine install.
+
+## [5.0.1] - 2026-09-21
+
+### Changed
+
+- **`npm version` now bumps the website's version labels too.**
+  `sync-version.sh` rewrites the nav version pill on every page that carries
+  one, the landing hero's REV, and the book landing's REV, found by CSS class
+  so new pages are covered automatically; the hook stages exactly those files
+  with the manifests (`--stage`). 5.0.0 needed those 15 labels edited by hand.
+  `test-version-sync.sh` now fails on a site label that drifts from
+  `package.json`.
+
+### Fixed
+
+- **The landing page's graph demos showed the retired engine's output.** The
+  playground promised the engine's real output schema, but all six fixtures
+  used the old shapes (file-level hotspots, module cycles, `files_by_depth`,
+  doc/config buckets); they now match each wrapper's 5.0 output. The hero
+  ledger shows `code · test` only, as `by_category` does. The engine blog post
+  no longer tells readers to run `/draft:graph` for fresh results, and the May
+  walkthrough carries a note on the changed output. CONTRIBUTING's CI table,
+  the architecture template's module count, and the fetch script's header
+  are corrected too.
+- **The landing-page hero overflowed on phones.** Below 1100px the hero grid
+  switched to a `1fr` track, whose minimum is its content's width, and the
+  install chip's no-wrap command held that at ~430px — so on a 390px screen
+  the tagline, install chip, stats row, and Impact Console were cut off at the
+  right edge. The track is now `minmax(0, 1fr)` and the command truncates with
+  an ellipsis beside its Copy button.
+
+## [5.0.0] - 2026-09-21
+
 ### Changed
 
 - **Website redesigned around the graph.** getdraft.dev ships dark by
@@ -40,6 +84,116 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (the 404 gets the nav only; the book keeps its own reader chrome,
   retokened);
   new social preview.
+- **`graph-impact.sh` measures blast radius.** `--file` used to return only the
+  symbols inside the file, each twice, and only when the working tree changed
+  it — an unchanged file came back as an empty success, and `--file lib.sh` also
+  matched `_lib.sh`. It now returns the file's dependents: callers of anything
+  defined in it (up to `--depth`, default 3) plus the files that import it.
+  `--symbol` entries now carry the caller's file path (it was always `""`).
+  Both kinds add `downstream_files`, `affected_modules`, `max_depth`,
+  `by_category` — the fields `/draft:implement`'s impact snapshot already
+  aggregated — plus a fail-loud `status` (`ok` / `no-edges` / `no-match`) and
+  `truncated` (the `impacted` list is capped at 200; aggregates stay complete).
+
+### Added
+
+- **Real-engine graph smoke test.** `tests/test-engine-smoke.sh` drives the
+  wrappers against the actual `codebase-memory-mcp` binary over a small
+  fixture, in an isolated engine cache: callers, freshness after an edit, file
+  and symbol impact, cycles, hotspots, the dialect, the calling convention,
+  the snapshot marker, and the pinned version. It skips when no engine
+  resolves; a new CI job fetches the pinned engine and runs it. Every other
+  graph suite uses a mock. Against the pre-fix tools it fails 8 of 12.
+
+### Removed
+
+- **`schema.yaml` fields `project`, `generated_at`, `changed_files`,
+  `impacted_symbols`, and `root-link.json`'s `root_project`.** The committed
+  marker churned per machine and per run: a path-derived engine project name,
+  a timestamp, and the indexer's working-tree delta (still printed, no longer
+  committed). It keeps the engine, its version, and the point-of-index counts.
+- **`memory_project_for_repo`** (`scripts/tools/_lib.sh`). `memory_ensure_index`
+  now looks the project up itself and always refreshes the index.
+
+### Fixed
+
+- **Live graph queries answered from a stale index.** The `graph-*.sh`
+  wrappers indexed a repo only the first time they saw it, so every later
+  query — including blast radius computed right after the agent's own edits —
+  came from the original index while still reporting `status:"ok"`. Wrappers
+  now re-index incrementally before querying (~0.1 s on an unchanged repo).
+  `memory_project_for_repo` is removed.
+- **Every engine call used a calling convention the engine is removing.**
+  codebase-memory-mcp 0.9.0 deprecates raw JSON as a positional `cli`
+  argument ("will be removed in a future release"), and Draft discarded the
+  warning with stderr. Arguments now go on stdin, so the next engine bump
+  cannot break every wrapper at once.
+- **The test suite wrote into the real engine cache.** `test-tools-graph-query.sh`
+  ran without a mock engine, so on any machine with the engine installed it
+  indexed each throwaway fixture into `~/.cache/codebase-memory-mcp` and left
+  it there. Tests now keep the engine off and default `CBM_CACHE_DIR` to a
+  temp directory.
+- **`graph-snapshot.sh` indexed twice per run.** The explicit refresh it ran
+  after `memory_ensure_index` is gone now that the latter always refreshes.
+- **Symlinked repo paths broke root detection.** Graph tools resolved the repo
+  with a logical `pwd` while git reports the physical toplevel, so
+  `graph-init.sh` run through a symlink to the root treated the root as its own
+  sub-module (double index, self-referencing `root-link.json`) and
+  `graph-preflight.sh` warned "not at the git root". Paths now resolve with
+  `pwd -P`.
+- **Two repos could share one engine index.** The engine derives project names
+  by flattening `/` to `-`, so `/x/a-b/c` and `/x/a/b-c` mapped to the same
+  database and each index overwrote the other. `memory_ensure_index` now names
+  the project explicitly: a repo the engine already knows keeps its name, a new
+  one gets `<basename>-<sha8 of its path>`.
+- **`cycle-detect.sh` over-reported cycles.** Each 3-cycle came back once per
+  rotation, and a self-loop matched the 3-node pattern as `(x, x, x)` — the
+  only "cycle" it reported for Draft itself. Rows that repeat a node are
+  dropped and each cycle is reported once, rotated to its smallest member.
+- **`hotspot-rank.sh` could score large-repo hotspots as complexity 0.**
+  Enrichment scanned every node under `LIMIT 10000`, so on bigger graphs a
+  hotspot past the window got zeros while `enrichment` still said `ok`. It now
+  queries the hotspot symbols by name.
+- **The engine download trusted the release it came from.** `checksums.txt`
+  ships in the same GitHub release as the archive, so a replaced release asset
+  passed verification. The pinned version's four platform archives are now
+  checked against SHA-256 values recorded in `fetch-memory-engine.sh`.
+- **The pinned engine version was never enforced.** The fetch script exited
+  early for any binary already installed, so a pin bump never upgraded it, and
+  nothing flagged an off-pin engine resolved from `$PATH`. It now reinstalls on
+  a version mismatch, and `verify-graph-binary.sh` (new `version` /
+  `pinned_version` JSON fields) and `graph-preflight.sh` warn on drift.
+- **Indexing had no real memory bound outside Linux cgroups.** The engine
+  budgets ~50% of physical RAM unless told otherwise, and on macOS the worker
+  cap was the only limit. `memory_index_bounded` now sets the engine's own
+  `CBM_MEM_BUDGET_MB` to `DRAFT_INDEX_MEM_PCT` (default 25%) of RAM unless the
+  user set one.
+- **The `.ai-context.md` tier formula read fields that no longer exist.**
+  `core/shared/condensation.md` computed the tier from `schema.yaml`
+  `stats.modules` / `stats.go_functions` / `stats.proto_rpcs`, a leftover of
+  the retired fat snapshot. It now uses the live `graph-arch.sh` metrics, the
+  same ones `/draft:init` Step 1.4.5 already used.
+- **Docs told agents to call the engine binary directly.** `graph-query.md`
+  sent `search_code` / `trace_path` lookups to raw `codebase-memory-mcp cli`,
+  contradicting `bin/README.md`'s "skills never call the engine directly" and
+  skipping engine resolution, the pre-query refresh, and the fail-loud
+  contract. They now go through `graph-query.sh --tool`, which already
+  allow-listed those tools; `graph-preflight.sh`'s next-step hint does too.
+- **`bin/README.md` overstated the engine's network silence.** "No outbound
+  calls" holds for the `cli` mode Draft uses (verified under `strace`), but the
+  binary embeds an update checker for its MCP-server mode. The claim is now
+  scoped, and the checker is disclosed.
+- **Cypher dialect guidance described engine 0.8.x.** Re-verified against the
+  pinned 0.9.0: `<>`/`!=`/`<=`/`>=`, `coalesce()`, variable-length patterns and
+  `WITH` aggregation now work; path variables still fail; multi-pattern joins
+  parse but ignore `RETURN`/`LIMIT`; and `LIMIT` applies before `DISTINCT`.
+- **`build-book.sh` reverted the website redesign.** The redesign edited the
+  generated book pages by hand, so every run of the generator rewrote all 25
+  of them back to the old light default, `theme-color`, fonts, and theme
+  script. Both templates now emit the redesign's markup, and
+  `test-web-consistency.sh` builds the book into a scratch copy and requires
+  the output to match the committed pages (the landing page's `REV` line and
+  the sitemap's `lastmod` dates excepted, as they vary per release and run).
 
 ## [4.0.0] - 2026-09-03
 

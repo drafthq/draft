@@ -71,7 +71,7 @@ If `draft/graph/schema.yaml` exists, the project has automated graph analysis da
 
 | File | Purpose | Content |
 |------|---------|---------|
-| `draft/graph/schema.yaml` | Gate marker (engine + project metadata + point-of-index counts); presence gates graph use | YAML, ~15 lines |
+| `draft/graph/schema.yaml` | Gate marker (engine metadata + point-of-index counts); presence gates graph use | YAML, ~10 lines |
 
 Note: `.ai-context.md` embeds a condensed graph summary (`GRAPH:MODULES`, `GRAPH:HOTSPOTS`, `GRAPH:CYCLES`) for first-pass structural ground truth. Deep structural data is queried live from the engine (see Live structural queries below).
 

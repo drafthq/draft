@@ -24,7 +24,7 @@ Any skill that mutates `architecture.md` should execute this subroutine afterwar
 | Input | Path | Description |
 |-------|------|-------------|
 | architecture.md | `draft/architecture.md` | Comprehensive human-readable engineering reference (source of truth) |
-| schema.yaml | `draft/graph/schema.yaml` | Graph metrics for tier computation (optional — skip if absent) |
+| Architecture view | `scripts/tools/graph-arch.sh --repo .` | Live graph metrics for tier computation (optional — skip when `draft/graph/schema.yaml` is absent) |
 
 ## Outputs
 
@@ -37,11 +37,12 @@ Any skill that mutates `architecture.md` should execute this subroutine afterwar
 
 ## Target Size
 
-Compute tier from `draft/graph/schema.yaml` after graph build:
+Compute tier from the live architecture view (the same metrics as `/draft:init` Step 1.4.5 — `schema.yaml` carries only counts, not these):
 
-  M = stats.modules
-  F = stats.go_functions + stats.py_functions
-  P = stats.proto_rpcs
+  ARCH=$("$DRAFT_TOOLS/graph-arch.sh" --repo .)                       (DRAFT_TOOLS: resolver below)
+  M = $ARCH | jq '.packages | length'                                                              (modules)
+  F = $ARCH | jq '[.node_labels[] | select(.label=="Function" or .label=="Method") | .count] | add // 0'  (functions + methods)
+  P = $ARCH | jq '.routes | length'                                                                (routes / RPCs)
 
 | Tier | Label | Condition | Budget |
 |------|--------|----------------------------------------|---------------|
@@ -51,7 +52,7 @@ Compute tier from `draft/graph/schema.yaml` after graph build:
 | 4 | large | M≤100 AND F≤5000 AND P≤500 | 400–600 lines |
 | 5 | XL | M>100 OR F>5000 OR P>500 | 600–900 lines |
 
-If `schema.yaml` does not exist: default to tier 2 (180–280 lines).
+If `schema.yaml` does not exist (no graph) or `graph-arch.sh` reports `source: unavailable`: default to tier 2 (180–280 lines).
 
 - Below tier minimum: incomplete condensation — ensure all sections are represented
 - Above tier maximum: insufficient compression — apply prioritization rules below
@@ -171,7 +172,7 @@ Before writing `draft/.ai-context.md`, verify:
 - [ ] No references to `architecture.md` (file must be self-contained)
 - [ ] All invariants from architecture.md are preserved
 - [ ] Extension cookbooks are complete (an agent can follow them without other files)
-- [ ] Output is within tier budget bounds (compute from schema.yaml or default tier 2)
+- [ ] Output is within tier budget bounds (compute from `graph-arch.sh` or default tier 2)
 - [ ] GRAPH:HOTSPOTS present (or note "No hotspot data available" if graph absent)
 - [ ] GRAPH:CYCLES present ("None ✓" or cycle list; or note if graph absent)
 - [ ] GRAPH:MODULE-HOTSPOTS present for tier ≥ 3 (or note if no hotspot data)

@@ -14,6 +14,10 @@ echo ""
 FIXTURE="$(mktemp -d)"
 trap 'rm -rf "$FIXTURE"' EXIT
 
+# The guard tests below run with no engine: a read that clears the guard must
+# reach "unavailable", never a real installed engine (which would index FIXTURE).
+export DRAFT_MEMORY_DISABLE=1
+
 # --- Invocation error: neither --cypher nor --tool ---
 set +e
 "$TOOL" --repo "$FIXTURE" >/dev/null 2>&1; rc=$?
@@ -132,6 +136,7 @@ if command -v jq >/dev/null 2>&1; then
         "$(echo "$out" | jq -e '.source == "unavailable"' >/dev/null 2>&1 && echo true || echo false)"
 
     # --- Happy path via mock engine ---
+    unset DRAFT_MEMORY_DISABLE
     MOCK="$(make_mock_memory_engine "$FIXTURE/mockbin")"
     out2="$(DRAFT_MEMORY_BIN="$MOCK" "$TOOL" --repo "$FIXTURE" --cypher 'MATCH (n) RETURN n LIMIT 1')"
     assert "Mock cypher returns rows" \

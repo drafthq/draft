@@ -1,9 +1,9 @@
 /* ============================================================
    Playground — interactive graph query demo (pre-rendered)
    ============================================================
-   Tab-switcher with 6 fixtures showing real-shaped JSON output
-   from each graph query mode. No live engine; output is static
-   but accurate per core/shared/graph-query.md schema.
+   Tab-switcher with 6 fixtures showing each wrapper's real output
+   shape (scripts/tools/*.sh, as of Draft 5.0.0). No live engine; the
+   data is illustrative, the fields and structure are exact.
    ============================================================ */
 (function () {
     'use strict';
@@ -14,139 +14,283 @@
        schema; the data is illustrative. */
     var fixtures = {
         impact: {
-            cmd: 'graph-impact --file src/auth/login.ts',
+            cmd: "graph-impact --file src/lib/auth/jwt.ts",
             json: {
-                target: 'src/auth/login.ts',
-                impact: {
-                    files: 47,
-                    modules: 6,
-                    affected_modules: ['api', 'middleware', 'pages', 'lib', 'components', 'tests'],
-                    by_category: { code: 22, test: 14, doc: 6, config: 5 },
-                    files_by_depth: {
-                        '1': [
-                            'src/api/session/route.ts',
-                            'src/api/auth/[...nextauth]/route.ts',
-                            'src/middleware/requireAuth.ts',
-                            'src/lib/auth/jwt.ts'
-                        ],
-                        '2': [
-                            'src/pages/dashboard.tsx',
-                            'src/pages/account/settings.tsx',
-                            'src/components/UserMenu.tsx',
-                            'tests/auth/login.spec.ts'
-                        ],
-                        '3': [
-                            'tests/e2e/checkout.spec.ts',
-                            'docs/runbooks/auth-incident.md'
-                        ]
+                "target": "src/lib/auth/jwt.ts",
+                "kind": "file",
+                "impacted": [
+                    {
+                        "name": "handleLogin",
+                        "file": "src/api/auth/login.ts",
+                        "qualified": "webapp-3f9c1a7e.src.api.auth.login.handleLogin",
+                        "hop": 1
+                    },
+                    {
+                        "name": "refreshSession",
+                        "file": "src/api/session/route.ts",
+                        "qualified": "webapp-3f9c1a7e.src.api.session.route.refreshSession",
+                        "hop": 1
+                    },
+                    {
+                        "name": "src/api/session/route.ts",
+                        "file": "src/api/session/route.ts",
+                        "qualified": "",
+                        "hop": 1
+                    },
+                    {
+                        "name": "getCurrentUser",
+                        "file": "src/lib/server/getCurrentUser.ts",
+                        "qualified": "webapp-3f9c1a7e.src.lib.server.getCurrentUser.getCurrentUser",
+                        "hop": 1
+                    },
+                    {
+                        "name": "requireAuth",
+                        "file": "src/middleware/requireAuth.ts",
+                        "qualified": "webapp-3f9c1a7e.src.middleware.requireAuth.requireAuth",
+                        "hop": 1
+                    },
+                    {
+                        "name": "GET",
+                        "file": "src/api/users/[id]/route.ts",
+                        "qualified": "webapp-3f9c1a7e.src.api.users.[id].route.GET",
+                        "hop": 2
+                    },
+                    {
+                        "name": "DashboardPage",
+                        "file": "src/pages/dashboard.tsx",
+                        "qualified": "webapp-3f9c1a7e.src.pages.dashboard.DashboardPage",
+                        "hop": 2
+                    },
+                    {
+                        "name": "loginAs",
+                        "file": "tests/helpers/auth.ts",
+                        "qualified": "webapp-3f9c1a7e.tests.helpers.auth.loginAs",
+                        "hop": 2
+                    },
+                    {
+                        "name": "checkoutFlow",
+                        "file": "tests/e2e/checkout.spec.ts",
+                        "qualified": "webapp-3f9c1a7e.tests.e2e.checkout.spec.checkoutFlow",
+                        "hop": 3
                     }
+                ],
+                "downstream_files": [
+                    "src/api/auth/login.ts",
+                    "src/api/session/route.ts",
+                    "src/api/users/[id]/route.ts",
+                    "src/lib/server/getCurrentUser.ts",
+                    "src/middleware/requireAuth.ts",
+                    "src/pages/dashboard.tsx",
+                    "tests/e2e/checkout.spec.ts",
+                    "tests/helpers/auth.ts"
+                ],
+                "affected_modules": [
+                    "src",
+                    "tests"
+                ],
+                "max_depth": 3,
+                "by_category": {
+                    "code": 6,
+                    "test": 2
                 },
-                warning: 'High blast radius: 47 files affected. Consider scoping the change or coordinating with the API and payments teams.'
+                "status": "ok",
+                "truncated": false,
+                "source": "memory-graph"
             }
         },
         callers: {
-            cmd: 'graph-callers --symbol verifyJWT',
+            cmd: "graph-callers --symbol verifyJWT",
             json: {
-                target: 'verifyJWT',
-                callers: [
-                    { func: 'requireAuth',     file: 'src/middleware/requireAuth.ts',          module: 'middleware', line: 24, kind: 'ts-call', confidence: 'direct' },
-                    { func: 'authenticate',    file: 'src/api/session/route.ts',               module: 'api',        line: 41, kind: 'ts-call', confidence: 'direct' },
-                    { func: 'refreshSession',  file: 'src/api/session/route.ts',               module: 'api',        line: 87, kind: 'ts-call', confidence: 'direct' },
-                    { func: 'getCurrentUser',  file: 'src/lib/server/getCurrentUser.ts',       module: 'lib',        line: 18, kind: 'ts-call', confidence: 'direct' },
-                    { func: 'checkApiKey',     file: 'src/api/webhooks/stripe.ts',             module: 'api',        line: 12, kind: 'ts-call', confidence: 'inferred' }
+                "symbol": "verifyJWT",
+                "callers": [
+                    {
+                        "name": "handleLogin",
+                        "file": "src/api/auth/login.ts",
+                        "qualified": ""
+                    },
+                    {
+                        "name": "refreshSession",
+                        "file": "src/api/session/route.ts",
+                        "qualified": ""
+                    },
+                    {
+                        "name": "getCurrentUser",
+                        "file": "src/lib/server/getCurrentUser.ts",
+                        "qualified": ""
+                    },
+                    {
+                        "name": "requireAuth",
+                        "file": "src/middleware/requireAuth.ts",
+                        "qualified": ""
+                    }
                 ],
-                total: 5,
-                by_module: { middleware: 1, api: 3, lib: 1 },
-                note: 'intra-file call edges only; cross-file resolution requires type information'
+                "status": "ok",
+                "source": "memory-graph"
             }
         },
         hotspots: {
-            cmd: 'hotspot-rank --top 10',
+            cmd: "hotspot-rank --top 6",
             json: {
-                hotspots: [
-                    { id: 'src/lib/db/connection.ts',          module: 'lib',         lines:  624, fanIn: 38 },
-                    { id: 'src/api/users/[id]/route.ts',       module: 'api',         lines:  892, fanIn: 24 },
-                    { id: 'src/lib/auth/jwt.ts',               module: 'lib',         lines:  411, fanIn: 22 },
-                    { id: 'src/middleware/requireAuth.ts',     module: 'middleware',  lines:  287, fanIn: 19 },
-                    { id: 'src/lib/payments/stripe.ts',        module: 'lib',         lines:  738, fanIn: 17 },
-                    { id: 'src/components/Layout.tsx',         module: 'components',  lines:  512, fanIn: 16 },
-                    { id: 'src/lib/server/getCurrentUser.ts',  module: 'lib',         lines:  198, fanIn: 14 },
-                    { id: 'src/api/checkout/route.ts',         module: 'api',         lines: 1043, fanIn: 11 }
-                ]
+                "hotspots": [
+                    {
+                        "id": "webapp-3f9c1a7e.src.lib.db.connection.query",
+                        "name": "query",
+                        "fanIn": 38,
+                        "score": 43,
+                        "complexity": 3,
+                        "cognitive": 2,
+                        "isEntryPoint": false
+                    },
+                    {
+                        "id": "webapp-3f9c1a7e.src.lib.payments.stripe.chargeCard",
+                        "name": "chargeCard",
+                        "fanIn": 12,
+                        "score": 41,
+                        "complexity": 11,
+                        "cognitive": 18,
+                        "isEntryPoint": false
+                    },
+                    {
+                        "id": "webapp-3f9c1a7e.src.middleware.requireAuth.requireAuth",
+                        "name": "requireAuth",
+                        "fanIn": 19,
+                        "score": 32,
+                        "complexity": 6,
+                        "cognitive": 7,
+                        "isEntryPoint": false
+                    },
+                    {
+                        "id": "webapp-3f9c1a7e.src.lib.auth.jwt.verifyJWT",
+                        "name": "verifyJWT",
+                        "fanIn": 22,
+                        "score": 29,
+                        "complexity": 4,
+                        "cognitive": 3,
+                        "isEntryPoint": false
+                    },
+                    {
+                        "id": "webapp-3f9c1a7e.src.lib.server.getCurrentUser.getCurrentUser",
+                        "name": "getCurrentUser",
+                        "fanIn": 14,
+                        "score": 19,
+                        "complexity": 3,
+                        "cognitive": 2,
+                        "isEntryPoint": false
+                    },
+                    {
+                        "id": "webapp-3f9c1a7e.src.components.Layout.Layout",
+                        "name": "Layout",
+                        "fanIn": 16,
+                        "score": 19,
+                        "complexity": 2,
+                        "cognitive": 1,
+                        "isEntryPoint": false
+                    }
+                ],
+                "enrichment": "ok",
+                "source": "memory-graph"
             }
         },
         cycles: {
-            cmd: 'cycle-detect',
+            cmd: "cycle-detect",
             json: {
-                cycles: [
-                    ['lib', 'api', 'lib'],
-                    ['components', 'lib', 'utils', 'components']
+                "cycles": [
+                    [
+                        "webapp-3f9c1a7e.src.lib.cart.applyDiscount",
+                        "webapp-3f9c1a7e.src.lib.cart.recalcTotal"
+                    ],
+                    [
+                        "webapp-3f9c1a7e.src.api.orders.createOrder",
+                        "webapp-3f9c1a7e.src.lib.inventory.reserveStock",
+                        "webapp-3f9c1a7e.src.lib.orders.retryOrder"
+                    ]
                 ],
-                count: 2,
-                warning: '2 circular dependency cycle(s) detected. These indicate tight coupling.'
+                "truncated": false,
+                "source": "memory-graph"
             }
         },
         modules: {
-            cmd: 'graph-arch --repo .',
+            cmd: "graph-arch --repo . | jq '{project, total_nodes, total_edges, packages, layers}'",
             json: {
-                modules: [
-                    { kind: 'node', id: 'src',         sizeKB: 1284 },
-                    { kind: 'node', id: 'lib',         sizeKB:  712 },
-                    { kind: 'node', id: 'api',         sizeKB:  504 },
-                    { kind: 'node', id: 'components',  sizeKB:  486 },
-                    { kind: 'node', id: 'middleware',  sizeKB:   94 },
-                    { kind: 'node', id: 'pages',       sizeKB:  318 },
-                    { kind: 'node', id: 'tests',       sizeKB:  442 }
+                "project": "webapp-3f9c1a7e",
+                "total_nodes": 4812,
+                "total_edges": 11390,
+                "packages": [
+                    {
+                        "name": "lib",
+                        "node_count": 1204,
+                        "fan_in": 41,
+                        "fan_out": 6
+                    },
+                    {
+                        "name": "tests",
+                        "node_count": 1012,
+                        "fan_in": 0,
+                        "fan_out": 33
+                    },
+                    {
+                        "name": "api",
+                        "node_count": 836,
+                        "fan_in": 9,
+                        "fan_out": 27
+                    },
+                    {
+                        "name": "components",
+                        "node_count": 692,
+                        "fan_in": 18,
+                        "fan_out": 11
+                    },
+                    {
+                        "name": "pages",
+                        "node_count": 311,
+                        "fan_in": 0,
+                        "fan_out": 24
+                    },
+                    {
+                        "name": "middleware",
+                        "node_count": 88,
+                        "fan_in": 12,
+                        "fan_out": 4
+                    }
                 ],
-                dependencies: [
-                    { kind: 'edge', source: 'pages',       target: 'components', weight: 124 },
-                    { kind: 'edge', source: 'api',         target: 'lib',        weight: 218 },
-                    { kind: 'edge', source: 'middleware',  target: 'lib',        weight:  47 },
-                    { kind: 'edge', source: 'components',  target: 'lib',        weight:  91 },
-                    { kind: 'edge', source: 'pages',       target: 'lib',        weight:  62 },
-                    { kind: 'edge', source: 'tests',       target: 'lib',        weight: 156 },
-                    { kind: 'edge', source: 'tests',       target: 'api',        weight:  88 }
-                ],
-                cycles: [],
-                summary: {
-                    modules: 7,
-                    edges:   7,
-                    cycles:  0,
-                    hub_modules: [
-                        { module: 'lib',        dependents_weight: 574 },
-                        { module: 'components', dependents_weight: 124 },
-                        { module: 'api',        dependents_weight:  88 }
-                    ]
-                }
+                "layers": [
+                    {
+                        "name": "lib",
+                        "layer": "core",
+                        "reason": "fan-in=41, fan-out=6"
+                    },
+                    {
+                        "name": "middleware",
+                        "layer": "core",
+                        "reason": "fan-in=12, fan-out=4"
+                    },
+                    {
+                        "name": "components",
+                        "layer": "internal",
+                        "reason": "fan-in=18, fan-out=11"
+                    },
+                    {
+                        "name": "api",
+                        "layer": "api",
+                        "reason": "fan-in=9, fan-out=27"
+                    },
+                    {
+                        "name": "pages",
+                        "layer": "entry",
+                        "reason": "fan-in=0, fan-out=24"
+                    },
+                    {
+                        "name": "tests",
+                        "layer": "entry",
+                        "reason": "fan-in=0, fan-out=33"
+                    }
+                ]
             }
         },
         mermaid: {
             cmd: 'mermaid-from-graph --diagram module-deps',
-            // Mermaid mode emits markdown text, not JSON. Show a fenced block.
-            text:
-                '## Module Dependencies\n\n' +
-                '```mermaid\n' +
-                'graph LR\n' +
-                '    pages --> components\n' +
-                '    pages --> lib\n' +
-                '    api --> lib\n' +
-                '    middleware --> lib\n' +
-                '    components --> lib\n' +
-                '    tests --> lib\n' +
-                '    tests --> api\n' +
-                '    classDef hub fill:#7c3aed,stroke:#5b21b6,color:#fff\n' +
-                '    class lib hub\n' +
-                '```\n\n' +
-                '## API Surface\n\n' +
-                '```mermaid\n' +
-                'graph TD\n' +
-                '    Client -->|POST /auth/login| login[login.ts]\n' +
-                '    Client -->|GET /api/users/:id| users[users/route.ts]\n' +
-                '    Client -->|POST /api/checkout| checkout[checkout/route.ts]\n' +
-                '    login --> jwt[lib/auth/jwt.ts]\n' +
-                '    users --> db[lib/db/connection.ts]\n' +
-                '    checkout --> stripe[lib/payments/stripe.ts]\n' +
-                '```\n'
+            // Mermaid mode emits markdown text, not JSON. Show the fenced block.
+            text: "```mermaid\nflowchart LR\n    \"src/api/auth/login.ts\" --> \"src/lib/auth/jwt.ts\"\n    \"src/middleware/requireAuth.ts\" --> \"src/lib/auth/jwt.ts\"\n    \"src/lib/server/getCurrentUser.ts\" --> \"src/lib/auth/jwt.ts\"\n    \"src/api/session/route.ts\" --> \"src/middleware/requireAuth.ts\"\n    \"src/pages/dashboard.tsx\" --> \"src/lib/server/getCurrentUser.ts\"\n    \"src/api/users/[id]/route.ts\" --> \"src/lib/db/connection.ts\"\n```\n"
         }
     };
 

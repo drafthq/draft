@@ -17,7 +17,7 @@ This installs the binary to the **Draft-managed location**:
 ~/.cache/draft/bin/codebase-memory-mcp
 ```
 
-The fetch script picks the right release archive for the host OS/arch, verifies its SHA-256 against the published `checksums.txt`, extracts it, and installs it there. Downloads pin `curl --proto '=https' --proto-redir '=https'` so a compromised redirect cannot downgrade to HTTP. `draft install claude-code` / `draft install cursor` run this automatically (best-effort, network-gated); skip it with `--no-graph`.
+The fetch script picks the right release archive for the host OS/arch, verifies its SHA-256 (against hashes pinned in the script for the default version, else against the release's `checksums.txt`), extracts it, and installs it there. An existing install is kept only when its version matches the requested one, so a pin bump upgrades it. Downloads pin `curl --proto '=https' --proto-redir '=https'` so a compromised redirect cannot downgrade to HTTP. `draft install claude-code` / `draft install cursor` run this automatically (best-effort, network-gated); skip it with `--no-graph`.
 
 ## Resolution order
 
@@ -39,10 +39,10 @@ Set `DRAFT_MEMORY_DISABLE=1` to force the engine off. All graph-backed skills an
 ## How tools use it
 
 Shell helpers under `scripts/tools/` drive the engine via its CLI
-(`codebase-memory-mcp cli <tool> '<json>'`) and shape results into Draft's
+(`codebase-memory-mcp cli <tool>`, JSON args on stdin) and shape results into Draft's
 contracts — see `hotspot-rank.sh`, `cycle-detect.sh`, `mermaid-from-graph.sh`,
 and `verify-graph-binary.sh`. The shared wrappers (`memory_cli`,
-`memory_ensure_index`, `memory_project_for_repo`) live in `_lib.sh`.
+`memory_ensure_index`, `memory_index_bounded`) live in `_lib.sh`.
 
 ## Snapshot artifacts
 
@@ -50,9 +50,9 @@ and `verify-graph-binary.sh`. The shared wrappers (`memory_cli`,
 
 | Artifact | Content |
 |----------|---------|
-| `schema.yaml` | Engine + project metadata, node/edge counts, point-of-index counts (gates graph use). |
+| `schema.yaml` | Engine metadata and point-of-index node/edge counts (gates graph use). No machine- or run-specific fields, so it only changes when the engine or the codebase does. |
 
-Structural graph data (architecture, hotspots, module deps, service routes) is queried **live** from the `codebase-memory-mcp` engine — either via the wrapper scripts under `scripts/tools/` (`graph-callers.sh`, `graph-impact.sh`, `hotspot-rank.sh`, `cycle-detect.sh`, `mermaid-from-graph.sh`) or directly with `codebase-memory-mcp cli <tool> '<json>'`.
+Structural graph data (architecture, hotspots, module deps, service routes) is queried **live** from the `codebase-memory-mcp` engine — either via the wrapper scripts under `scripts/tools/` (`graph-callers.sh`, `graph-impact.sh`, `hotspot-rank.sh`, `cycle-detect.sh`, `mermaid-from-graph.sh`), or, for any other read-only engine tool, `graph-query.sh --tool <name> --json '{...}'`.
 
 ## Offline / air-gapped distributions
 
@@ -68,22 +68,23 @@ Draft's differentiator depends on a binary published by a third party ([DeusData
 
 | Property | Status |
 |---|---|
-| Version pinned | Yes — `DEFAULT_VERSION` in `scripts/fetch-memory-engine.sh`. Bumps are deliberate commits, never floating. `CMM_VERSION` overrides per-install. |
-| SHA-256 verified | Yes when the release publishes `checksums.txt` and lists the archive. A **mismatch is always fatal.** |
-| Missing checksum | **Warns and installs by default.** Set `DRAFT_STRICT_VERIFY=1` to make an unverifiable download fatal instead. |
+| Version pinned | Yes — `DEFAULT_VERSION` in `scripts/fetch-memory-engine.sh`. Bumps are deliberate commits, never floating. `CMM_VERSION` overrides per-install. An install at another version is replaced on the next fetch, and `verify-graph-binary.sh` / `graph-preflight.sh` warn when the resolved engine (e.g. one on `$PATH`) is off-pin. |
+| SHA-256 verified | Yes. The default version's four platform archives are checked against hashes **pinned in the script** (a replaced release asset fails even if the release's own `checksums.txt` agrees). Other versions are checked against the release's `checksums.txt` when it lists the archive. A **mismatch is always fatal.** |
+| Missing checksum | Applies only to non-default versions: **warns and installs by default.** Set `DRAFT_STRICT_VERIFY=1` to make an unverifiable download fatal instead. |
 | Signature / attestation | **No.** There is no code signing or SLSA provenance today. Verification is checksum-only. |
 | Source available | Yes — the engine is open source at [DeusData/codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp). |
 | Reproducible build | Not verified by Draft. We check the archive matches the publisher's checksum, not that the checksum matches the source. |
 
-Be explicit about the residual risk: a checksum proves the download matches what the publisher released. It does not prove the publisher released what the source says.
+Be explicit about the residual risk: a pinned checksum proves the download matches what the publisher released when Draft pinned it. It does not prove the publisher released what the source says.
 
 ### What the engine does at runtime
 
 - Reads the repository you point it at and writes a SQLite graph under its own cache.
-- Runs entirely locally. No API key, no telemetry endpoint, no outbound calls during indexing or querying.
-- Network is used exactly once, by `fetch-memory-engine.sh`, to download the release archive.
+- Runs entirely locally as Draft invokes it (`cli` mode). No API key, no telemetry endpoint, no outbound calls during indexing or querying — verified under `strace` for `index_repository` and queries on 0.9.0 (zero `connect()` calls, no spawned `curl`).
+- The binary does embed an update checker (`api.github.com/.../releases/latest`) and `update` / `install` subcommands for its own MCP-server workflow. Draft never runs the server or those subcommands.
+- Draft uses the network exactly once, in `fetch-memory-engine.sh`, to download the release archive.
 
-Draft invokes it only through `codebase-memory-mcp cli <tool> '<json>'` (see `_lib.sh:memory_cli`). It is never given credentials and never writes into your source tree.
+Draft invokes it only through `codebase-memory-mcp cli <tool>` with JSON args on stdin (see `_lib.sh:memory_cli`). It is never given credentials and never writes into your source tree.
 
 ### If you cannot run an unvetted binary
 
@@ -97,7 +98,7 @@ Three supported postures, in increasing strictness:
 
 The dependency is bounded by design, which is what makes this survivable:
 
-- **The interface is small.** Draft consumes a documented CLI (`cli <tool> '<json>'`), not a library. The entire coupling lives in `scripts/tools/_lib.sh` (`memory_cli`, `memory_ensure_index`, `memory_project_for_repo`) and `_graph_queries.sh`. Swapping engines means reimplementing those, not rewriting skills.
+- **The interface is small.** Draft consumes a documented CLI (`cli <tool>`, JSON on stdin), not a library. The entire coupling lives in `scripts/tools/_lib.sh` (`memory_cli`, `memory_ensure_index`, `memory_index_bounded`) and `_graph_queries.sh`. Swapping engines means reimplementing those, not rewriting skills.
 - **Skills never call the engine directly.** They call `graph-*.sh` wrappers, all of which already fail loud with `source: "unavailable"`. An engine that disappears degrades the product; it does not break it.
 - **Pinning buys time.** A stalled upstream keeps working at the pinned version; only new language support would be lost.
 - **The graph contract is replaceable.** The queries are ordinary Cypher-shaped structural lookups (callers, callees, fan-in, cycles, routes) over a tree-sitter/LSP index — reproducible on another indexer.

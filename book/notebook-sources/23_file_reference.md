@@ -28,7 +28,7 @@ The knowledge graph directory. Contains only a single committed file — all str
 
 | File | Purpose | Lifecycle |
 |------|---------|-----------|
-| `schema.yaml` | Gate marker. Contains engine metadata, project identity, and point-of-index counts. The `access: engine-live` field signals that structural data must be queried from the engine, not read from committed files. | Written by `/draft:init`; updated on refresh. |
+| `schema.yaml` | Gate marker. Contains engine metadata and point-of-index counts. The `access: engine-live` field signals that structural data must be queried from the engine, not read from committed files. | Written by `/draft:init`; updated on refresh. |
 | `root-link.json` | Present only in sub-module `draft/graph/` directories. Points to the root graph location for cross-module queries. | Written by `/draft:init` when run inside a monorepo sub-module. |
 
 ## draft/.state/

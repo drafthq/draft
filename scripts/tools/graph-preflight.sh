@@ -47,7 +47,7 @@ while [[ $# -gt 0 ]]; do
 done
 REPO="${REPO:-.}"
 [[ -d "$REPO" ]] || { echo "ERROR: '$REPO' is not a directory" >&2; exit 2; }
-REPO_ABS="$(cd "$REPO" && pwd)"
+REPO_ABS="$(cd "$REPO" && pwd -P)"
 
 # --- formatting (color only on a tty, and never in --json) ---
 if [[ -t 1 && "$JSON_MODE" -eq 0 ]]; then B=$'\e[1m'; G=$'\e[32m'; Y=$'\e[33m'; R=$'\e[31m'; D=$'\e[0m'; else B=""; G=""; Y=""; R=""; D=""; fi
@@ -168,6 +168,10 @@ if find_memory_bin "$REPO_ABS" "$SELF_REPO"; then
   ENGINE_FOUND=true
   VER="$("$ENGINE" --version 2>/dev/null | head -1 || echo '?')"
   ok "Engine: $ENGINE ($VER)"
+  PINNED="$(sed -n 's/^DEFAULT_VERSION="v\{0,1\}\([^"]*\)".*/\1/p' "$SELF_REPO/scripts/fetch-memory-engine.sh" 2>/dev/null | head -1)"
+  if [[ -n "$PINNED" && "${VER##* }" != "$PINNED" ]]; then
+    warn "Engine version ${VER##* } differs from the pinned $PINNED the graph tools are verified against — scripts/fetch-memory-engine.sh --force"
+  fi
   # Numeric-only: the value is emitted bare into the --json report, so a
   # non-numeric field (engine output format drift) would produce invalid JSON.
   LIMIT="$("$ENGINE" config list 2>/dev/null | awk '/auto_index_limit/{print $3}' || true)"
@@ -255,8 +259,7 @@ cat <<EOF
 
 Next step (when ready, from the git root):
   scripts/tools/graph-init.sh --scope . --json &     # or: /draft:init --graph-only
-  ${ENGINE:-codebase-memory-mcp} cli list_projects '{}'
-  ${ENGINE:-codebase-memory-mcp} cli index_status '{"project":"<name>"}'
+  scripts/tools/graph-query.sh --repo . --tool index_status
 EOF
 hr
 exit "$VEXIT"

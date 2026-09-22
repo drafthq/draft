@@ -79,7 +79,16 @@ echo "$ARCH_JSON" | jq -e . >/dev/null 2>&1 || unavailable
 # and still reported source:"memory-graph", so a fan-in-only ranking was
 # indistinguishable from a fully measured one. Record the outcome instead, and
 # omit the fields rather than emitting measurements that were never taken.
-if PROPS_JSON="$(gq_run "$PROJECT" "$(gq_q_node_props)")"; then
+# Ask for the hotspots by name: a capped scan of every node missed hotspots past
+# the window on large repos and scored them 0 under enrichment "ok".
+NAMES=""
+while IFS= read -r q; do
+    NAMES+="${NAMES:+,}'$(gq_escape "$q")'"
+done < <(jq -r '(.hotspots // [])[].qualified_name // empty' <<< "$ARCH_JSON")
+if [[ -z "$NAMES" ]]; then
+    PROPS_JSON='{"rows":[]}'
+    ENRICHMENT="ok"
+elif PROPS_JSON="$(gq_run "$PROJECT" "$(gq_q_node_props "$NAMES")")"; then
     ENRICHMENT="ok"
 else
     PROPS_JSON='{"rows":[]}'

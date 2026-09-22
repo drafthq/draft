@@ -10,6 +10,10 @@ set -euo pipefail
 PASS=0
 FAIL=0
 
+# A tool run without DRAFT_MEMORY_BIN resolves any installed engine; keep its
+# index writes out of the user's real ~/.cache/codebase-memory-mcp.
+export CBM_CACHE_DIR="${CBM_CACHE_DIR:-${TMPDIR:-/tmp}/draft-tests-engine-cache}"
+
 assert() {
     local description="$1"
     local result="$2"
@@ -30,7 +34,7 @@ finish_test() {
 }
 
 # Write a mock codebase-memory-mcp engine to $1 and echo its path.
-# The mock answers `--version` and `cli <tool> <json>` with deterministic JSON,
+# The mock answers `--version` and `cli <tool>` with deterministic JSON,
 # so graph-engine tools can be exercised in CI without the real binary.
 make_mock_memory_engine() {
     local dir="$1"

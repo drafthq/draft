@@ -130,7 +130,7 @@ run_fetch() {  # run_fetch <dest-suffix> [env assignments...]
     local suffix="$1"; shift
     rm -rf "$tmp/dest-$suffix"
     set +e
-    env "$@" CMM_DOWNLOAD_URL="https://localhost:$port" CURL_CA_BUNDLE="$tmp/tls/cert.pem" \
+    env CMM_VERSION=v0.0.0-test "$@" CMM_DOWNLOAD_URL="https://localhost:$port" CURL_CA_BUNDLE="$tmp/tls/cert.pem" \
         "$FETCH" --dest "$tmp/dest-$suffix" --force >"$tmp/$suffix.log" 2>&1
     local rc=$?
     set -e
@@ -196,6 +196,38 @@ assert "installed binary is executable" \
 rc="$(run_fetch strictok DRAFT_STRICT_VERIFY=1)"
 assert "strict mode accepts a verified archive (exit $rc)" \
     "$([[ "$rc" -eq 0 ]] && echo true || echo false)"
+
+echo ""
+echo "## Pinned SHA-256 for the default version"
+# checksums.txt ships in the same release as the archive, so a replaced release
+# passes it. The pinned version's archives are checked against hashes recorded
+# in this repo instead — even when the served checksums.txt agrees.
+assert "every platform archive of DEFAULT_VERSION has a pinned SHA-256" \
+    "$([[ "$(grep -cE '^ *codebase-memory-mcp-(darwin-(amd64|arm64)|linux-(amd64|arm64)-portable)\.tar\.gz\) echo [0-9a-f]{64} ;;' "$FETCH")" == "4" ]] && echo true || echo false)"
+rc="$(run_fetch pinned CMM_VERSION="$pinned")"
+assert "an archive that differs from the pinned hash is refused, checksums.txt notwithstanding (exit $rc)" \
+    "$([[ "$rc" -eq 2 ]] && echo true || echo false)"
+assert "refusal names the pinned hash" \
+    "$(grep -q 'does not match the SHA-256 pinned' "$tmp/pinned.log" && echo true || echo false)"
+assert "nothing installed on a pinned-hash mismatch" \
+    "$([[ ! -e "$tmp/dest-pinned/codebase-memory-mcp" ]] && echo true || echo false)"
+
+echo ""
+echo "## Existing install is kept only at the requested version"
+# The early exit used to fire for any binary at the destination, so a pin bump
+# never upgraded an existing install.
+noforce() {  # noforce <dest-suffix> <version>
+    set +e
+    env CMM_VERSION="$2" CMM_DOWNLOAD_URL="https://localhost:$port" CURL_CA_BUNDLE="$tmp/tls/cert.pem" \
+        "$FETCH" --dest "$tmp/dest-$1" >"$tmp/$1-noforce.log" 2>&1
+    set -e
+}
+noforce ok v0.0.0-test
+assert "same version already installed → no download" \
+    "$(grep -q 'already installed' "$tmp/ok-noforce.log" && ! grep -q 'Fetching' "$tmp/ok-noforce.log" && echo true || echo false)"
+noforce ok v0.0.1-test
+assert "different version installed → re-fetched" \
+    "$(grep -q 'Fetching' "$tmp/ok-noforce.log" && echo true || echo false)"
 
 echo ""
 echo "## Trust story is documented"

@@ -113,6 +113,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    min-width: 0;
 }
 .hero-install code .hl { color: var(--accent-cyan); }
 
@@ -372,7 +373,7 @@
 
 /* ---- Responsive ------------------------------------------ */
 @media (max-width: 1100px) {
-    .hero-content { grid-template-columns: 1fr; gap: 2.5rem; }
+    .hero-content { grid-template-columns: minmax(0, 1fr); gap: 2.5rem; }
     .hero-h1 { max-width: none; }
     .hero-console { max-width: 900px; }
     .platform-band .hero-extras { margin-left: 0; }

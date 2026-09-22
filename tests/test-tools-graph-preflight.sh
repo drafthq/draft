@@ -53,6 +53,12 @@ assert "JSON reports engine found" "$(echo "$out" | grep -q '"found": true' && e
 assert "JSON verdict is GO or GO_WITH_CAUTION" \
   "$(echo "$out" | grep -qE '"verdict": "GO(_WITH_CAUTION)?"' && echo true || echo false)"
 assert "JSON counts the python file" "$(echo "$out" | grep -q '"tracked_files": 1' && echo true || echo false)"
+assert "Off-pin engine version is a warning" "$(echo "$out" | grep -q 'differs from the pinned' && echo true || echo false)"
+
+# A symlink to the git root is still the git root (git reports the physical path).
+ln -s "$REPOG" "$FIXTURE/repolink"
+out="$(DRAFT_MEMORY_BIN="$MOCK" "$TOOL" --json "$FIXTURE/repolink" 2>/dev/null)" || true
+assert "Symlinked git root reports at_git_root true" "$(echo "$out" | grep -q '"at_git_root": true' && echo true || echo false)"
 
 # --- Test 5: JSON is parseable when jq is available ---
 if command -v jq >/dev/null 2>&1; then

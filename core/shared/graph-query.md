@@ -115,7 +115,7 @@ DRAFT_TOOLS="${DRAFT_PLUGIN_ROOT:-$(cat ~/.cache/draft/plugin-root 2>/dev/null)}
 | `bash "$DRAFT_TOOLS/graph-query.sh" (--cypher STR \| --tool NAME --json '{...}')` | generic read-only passthrough | `{source:"unavailable"}`, exit 2 |
 | `bash "$DRAFT_TOOLS/graph-traces.sh" ingest --file F --experimental` | runtime traces (experimental write) | `{source:"unavailable"}`, exit 2 |
 
-For lower-level modes, call the engine directly: `codebase-memory-mcp cli <tool> '<json>'` (see the tool list in [bin/README.md](../../bin/README.md)).
+For an engine tool without a dedicated wrapper, use the read-only passthrough `graph-query.sh --repo . --tool <name> --json '{...}'` (project injected, write tools refused, `source:"unavailable"` on failure). Never call the engine binary directly — that skips engine resolution, the index refresh before each query, and the fail-loud contract.
 
 ### Capability wrappers & dialect limits (graph-tooling-v2)
 
@@ -123,8 +123,9 @@ All Cypher lives in `scripts/tools/_graph_queries.sh` (the single source of quer
 truth). Wrappers are thin arg-parse → builder → fail-loud JSON. Three contracts
 matter when consuming them:
 
-**Fail-loud status.** Symbol-scoped wrappers (`graph-callers`, `graph-snippet`,
-`graph-tests --symbol`, `graph-hierarchy --symbol/--derived`, `graph-errors`)
+**Fail-loud status.** Symbol-scoped wrappers (`graph-callers`, `graph-impact`,
+`graph-snippet`, `graph-tests --symbol`, `graph-hierarchy --symbol/--derived`,
+`graph-errors`)
 emit a `status` field that distinguishes the three real outcomes — never read a
 bare `[]` as a confirmed true negative:
 
@@ -137,7 +138,7 @@ bare `[]` as a confirmed true negative:
 
 **Shapeless JSON is unavailable.** `gq_run` requires `has("rows") and (.rows|type=="array")`. A bare `{}` (or any object without a `.rows` array) is not a measured empty result — wrappers emit `source:"unavailable"` and a non-zero exit. Do not read `{}` as "no callers / no cycles / no edges". `graph-impact`, `graph-callers`, and `mermaid-from-graph` also require their tool-shaped object; a failed snapshot refresh does not rewrite `schema.yaml`.
 
-**Verified engine param shapes** (engine v0.8.x — the runtime source of truth is
+**Verified engine param shapes** (engine v0.9.0 — the runtime source of truth is
 `get_graph_schema`; do not hardcode a property set):
 
 ```bash
@@ -150,13 +151,18 @@ get_graph_schema '{"project":P}'    # → {node_labels:[{label,count,properties}
 
 **Cypher dialect — keep queries inside the SAFE set:**
 
-- ✅ SAFE: fixed-length patterns, single/multi-hop explicit patterns, `=`, `<`,
-  `STARTS WITH`, `NOT x STARTS WITH`, `AND`, `OR`, relationship-type alternation
-  `[:A|B]`, simple `count(x)`.
-- ❌ UNSAFE (rejected or silently empty): `coalesce()`, `<>` / `!=` / `<=` / `>=`,
-  `NOT EXISTS(...)`, `NOT (pattern)`, `WITH`-grouping aggregation, multi-pattern
-  joins. `graph-query.sh --cypher` returns the engine's raw error, not a silent
+- ✅ SAFE: `=`, `<>`/`!=`, `<`, `>`, `<=`, `>=` against a literal; `STARTS WITH`,
+  `NOT x STARTS WITH`, `AND`, `OR`; explicit and variable-length patterns
+  (`[:R*1..3]`, fixed depth `[:R*2..2]`); relationship-type alternation `[:A|B]`;
+  `coalesce()`; `DISTINCT`; `count(x)`, `count(DISTINCT x)`; `WITH`-grouping
+  aggregation.
+- ❌ UNSAFE: comparing one property against another (`a.x < b.x`), `NOT EXISTS(...)`,
+  `NOT (pattern)`, path variables (`p=(...)`, `length(p)`) — all rejected; and
+  multi-pattern joins (`MATCH (a)…, (b)…`), which parse but ignore `RETURN` and
+  `LIMIT`. `graph-query.sh --cypher` returns the engine's raw error, not a silent
   empty — but the builders never emit these forms.
+- ⚠️ `LIMIT` applies before `DISTINCT`: `RETURN DISTINCT … LIMIT n` can return
+  fewer than n rows while more exist. Judge truncation on raw rows.
 
 **Caveats consumers must respect:**
 
@@ -191,15 +197,15 @@ The only committed file is the gate marker:
 
 | File | Role |
 |------|------|
-| `draft/graph/schema.yaml` | Engine + project metadata and point-of-index counts (provenance, not authoritative). Carries **no graph data**. Its presence is the **gate** (see Pre-Check) — it signals the engine is wired for this repo. Written by `scripts/tools/graph-snapshot.sh`. |
+| `draft/graph/schema.yaml` | Engine metadata and point-of-index counts (provenance, not authoritative). Carries **no graph data**. Its presence is the **gate** (see Pre-Check) — it signals the engine is wired for this repo. Written by `scripts/tools/graph-snapshot.sh`. |
 
-All structural data is obtained live by shelling out to the engine — either through the query-tool wrappers under `scripts/tools/` or directly via `codebase-memory-mcp cli <tool> '<json>'`. The shell tools auto-index the repo into the engine's own cache on demand, so no committed files are required.
+All structural data is obtained live through the query-tool wrappers under `scripts/tools/`; `graph-query.sh --tool` covers every read-only engine tool that has no dedicated wrapper. The wrappers refresh the repo's index in the engine's own cache before each query, so no committed files are required.
 
 ### How skills query (engine is the interface; jq is optional)
 
-- **The engine is the query.** `codebase-memory-mcp cli <tool> '<json>'` (and the wrappers that call it) is how you ask — it takes JSON args and returns JSON. There is no other query surface.
+- **The engine is the query; the wrappers are the interface.** Every wrapper drives the engine's CLI and returns JSON. There is no other query surface.
 - **Prefer the wrappers — they resolve the engine for you.** `graph-arch.sh` (architecture view: packages/routes/layers/hotspots), `graph-callers.sh`, `hotspot-rank.sh`, `graph-impact.sh`, `cycle-detect.sh`, `mermaid-from-graph.sh` return already-shaped JSON. The engine binary is usually **not on `$PATH`** (it lives under `~/.cache/draft/bin/`); the wrappers locate it via `_lib.sh:find_memory_bin`, so a skill using a wrapper needs no resolution step.
-- **Raw `codebase-memory-mcp cli` requires resolving the binary first** (it is not on `$PATH`): `CM="${DRAFT_MEMORY_BIN:-$HOME/.cache/draft/bin/codebase-memory-mcp}"; "$CM" cli <tool> '<json>'`. Reach for this only for tools without a wrapper (`search_graph`, `search_code`, `trace_path`).
+- **Tools without a dedicated wrapper go through `graph-query.sh`:** `"$DRAFT_TOOLS/graph-query.sh" --repo . --tool search_code --json '{"pattern":"..."}'` (likewise `trace_path`, `get_graph_schema`, `index_status`). `search_graph` has its own wrapper, `graph-search.sh`.
 - **`jq` is not a query tool — it only trims output.** Reach for it solely to slice a *large* response (chiefly the `get_architecture` blob) down to the field you need, for token economy. The agent can read raw JSON directly; jq is an optimization, not a requirement. Don't pipe wrapper output through jq unless you genuinely need a sub-field.
 
 The engine uses a **unified, language-agnostic** node model — `Function`, `Method`, `Class`, `Module`, `File`, `Folder`, `Route`, `Section`, `Variable` (language is inferred from file extension) — and edges `CALLS`, `DEFINES`, `CONTAINS_FILE`, `IMPORTS`, `HTTP_CALLS`, `FILE_CHANGES_WITH`, `SEMANTICALLY_RELATED`, `SIMILAR_TO`. Each node carries `file_path` + `start_line`/`end_line` and rich `properties` (complexity, signature, parent_class), and the engine exposes full-text (`search_code`) and semantic search — none of which a committed snapshot reproduced.
@@ -219,11 +225,11 @@ Output: `{symbol, callers[{name, file}], source}`. Use when enumerating call sit
 ### Impact — blast radius of a file or symbol
 
 ```bash
-"$DRAFT_TOOLS/graph-impact.sh" --repo . --file <path>      # changed-file impact (working-tree diff)
-"$DRAFT_TOOLS/graph-impact.sh" --repo . --symbol <name>    # transitive callers of a function
+"$DRAFT_TOOLS/graph-impact.sh" --repo . --file <path>      # dependents of a file: its symbols' callers + its importers
+"$DRAFT_TOOLS/graph-impact.sh" --repo . --symbol <name>    # dependents (transitive callers) of a function
 ```
 
-Output: `{target, kind, impacted[{name, file, hop}], source}`. Use when sizing risk before modifying a file or symbol, especially high-fan-in hotspots.
+Output: `{target, kind, impacted[{name, file, qualified, hop}], downstream_files, affected_modules, max_depth, by_category{code,test}, status, truncated, source}`. `impacted` lists each dependent once at its nearest hop (default depth 3), capped at 200 with `truncated:true`; the aggregates always cover the full set. `status` is `ok`, `no-edges` (target known, nothing depends on it), or `no-match` (target unknown to the graph — check the path). Use when sizing risk before modifying a file or symbol, especially high-fan-in hotspots.
 
 ### Hotspots — fan-in ranking
 
@@ -334,7 +340,7 @@ Unlocks any edge type or node property without a purpose-built wrapper. Write ve
 "$DRAFT_TOOLS/graph-snapshot.sh" --repo .
 ```
 
-Indexes the repo into the engine and writes the `draft/graph/schema.yaml` gate marker (now including the `detect_changes` delta: `changed_files`/`impacted_symbols`). It writes **no** graph data. Run during `/draft:init` and `/draft:graph`, or whenever the index should be refreshed.
+Indexes the repo into the engine and writes the `draft/graph/schema.yaml` gate marker, and prints the `detect_changes` delta (`changed_files`/`impacted_symbols`) without committing it. It writes **no** graph data. Run during `/draft:init` and `/draft:graph`, or whenever the index should be refreshed.
 
 ## Finding the Engine (Resolution + Usage Report)
 
@@ -375,4 +381,4 @@ The engine indexes C/C++, Go, Python, TypeScript/JS, and more (tree-sitter, 159 
 | No engine resolvable (or `DRAFT_MEMORY_DISABLE=1`) | Skip graph indexing in init; all skills proceed without graph data; tools emit `source: unavailable` |
 | Engine present but a query fails, or returns shapeless `{}` | Treat as unavailable — never as a true-negative empty result; skills proceed without graph data |
 | `draft/graph/schema.yaml` exists | Engine is wired — use live query tools as needed during the run |
-| Engine index out of date | The engine indexes incrementally (content-based, git-aware) on each query, so it self-freshens. Re-run `graph-snapshot.sh` (or init) to force a reindex and refresh the marker. |
+| Engine index out of date | Every wrapper re-indexes incrementally (content-based, git-aware) before it queries — ~0.1 s on an unchanged repo — so live answers track the working tree, including the run's own edits. `graph-snapshot.sh` (or init) also refreshes the `schema.yaml` marker. |

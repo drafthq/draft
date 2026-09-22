@@ -13,7 +13,7 @@ Draft also ships a **knowledge graph engine** — `codebase-memory-mcp`, fetched
 ```bash
 make build              # Generate integration files from skills
 make build-integrations # Same as above (explicit target)
-make test               # Run all 82 test suites (skills, build, tools)
+make test               # Run all 83 test suites (skills, build, tools)
 make lint               # Run shellcheck + markdownlint
 make clean              # Remove generated integrations
 
@@ -83,7 +83,7 @@ The build script (`scripts/build-integrations.sh`) reads `SKILL_ORDER`, `CORE_FI
 
 | Workflow | Trigger | Does |
 |---|---|---|
-| `ci.yml` | push to `main`, PRs | Install path (repo-size gate + clean-clone smoke test), `make test` + integrations-freshness, lint (shellcheck and markdownlint, both blocking) |
+| `ci.yml` | push to `main`, PRs | Install path (repo-size gate + clean-clone smoke test), `make test` + integrations-freshness, graph smoke test against the real pinned engine, lint (shellcheck and markdownlint, both blocking) |
 | `release.yml` | `vX.Y.Z` tag push | Verifies tag matches `package.json`, extracts notes via `scripts/release-notes.sh`, publishes the GitHub Release |
 | `pages.yml` | push touching `web/` | Deploys the site |
 
@@ -155,7 +155,7 @@ git push --follow-tags origin main
 npm publish
 ```
 
-The npm `version` lifecycle hook runs `scripts/sync-version.sh`, which propagates the new version into `.claude-plugin/plugin.json` and `.claude-plugin/marketplace.json`, then `git add`s them — so all three land in the bump commit atomically (the website no longer carries a version label). Release *copy* (headlines, dates, changelog prose) stays hand-written. `tests/test-version-sync.sh` (in `make test`) fails CI if any consumer drifts from `package.json`; run `bash scripts/sync-version.sh` to fix.
+The npm `version` lifecycle hook runs `scripts/sync-version.sh --stage`, which propagates the new version into `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `.cursor-plugin/plugin.json`, and the website's version labels (the nav version pill on every page, the landing hero's REV, the book landing's REV), then `git add`s exactly those files — so they all land in the bump commit atomically. Release *copy* (headlines, dates, changelog prose, the site changelog's Latest entry) stays hand-written. `tests/test-version-sync.sh` (in `make test`) fails CI if any consumer drifts from `package.json`; run `bash scripts/sync-version.sh` to fix.
 
 ## End-User Context
 
@@ -168,7 +168,7 @@ Always produced (mode-independent):
 - **`.ai-profile.md`** — Ultra-compact 20-50 line always-injected profile (derived from .ai-context.md)
 - **`tracks/`** + **`tracks.md`** — Individual feature/fix tracks with `spec.md`, `plan.md`, `metadata.json` (includes `impact` block: files_touched, modules_touched, downstream_files, by_category)
 - **`.state/`** — Freshness hashes, signal classification, run memory for incremental refresh
-- **`graph/`** — Holds only `schema.yaml` (gate marker: engine + project metadata, point-of-index counts; `access: engine-live`). All structural graph data is queried live from the `codebase-memory-mcp` engine via the `scripts/tools/graph-*.sh` wrappers.
+- **`graph/`** — Holds only `schema.yaml` (gate marker: engine metadata, point-of-index counts; `access: engine-live`). All structural graph data is queried live from the `codebase-memory-mcp` engine via the `scripts/tools/graph-*.sh` wrappers.
 
 Packaging differs by mode:
 

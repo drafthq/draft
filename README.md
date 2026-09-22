@@ -132,7 +132,7 @@ curl -o .gemini.md https://raw.githubusercontent.com/drafthq/draft/main/integrat
 | **`/draft:init`** | Index the repo once. Adds blast radius, caller lookup, hotspot ranking, and cycle detection to every later review. |
 | **`/draft:new-track`** | Turn an idea into a spec + plan before any code is written. |
 | **`/draft:implement`** | Execute the plan task-by-task under TDD with verification gates. |
-| **`/draft:graph`** | Build or refresh the knowledge-graph snapshot on its own. |
+| **`/draft:graph`** | Build the knowledge-graph index on its own (queries keep it fresh after that). |
 
 That is the whole loop. 28 more specialist commands — bug hunting, ACID audits, ADRs, tech debt, incident response, Jira, coverage, standups — sit behind five intent routers (`/draft:plan`, `/draft:discover`, `/draft:ops`, `/draft:docs`, `/draft:jira`).
 
@@ -142,22 +142,23 @@ That is the whole loop. 28 more specialist commands — bug hunting, ACID audits
 
 ## Built-in Code Intelligence
 
-Draft is powered by a **local knowledge graph engine** ([codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp)) that gives every command precise structural context — module boundaries, call graphs, dependencies, hotspots. It's 100% local (no API key, no SaaS), fetched during `draft install` (best-effort; `--no-graph` to skip), with first-use fetch as a fallback.
+Draft is powered by a **local knowledge graph engine** ([codebase-memory-mcp](https://github.com/DeusData/codebase-memory-mcp)) that gives every command precise structural context — module boundaries, call graphs, dependencies, hotspots. It's 100% local (no API key, no SaaS), fetched during `draft install` (best-effort; `--no-graph` to skip), with first-use fetch as a fallback. The pinned engine release is SHA-256-checked against hashes recorded in this repo before it installs ([trust story](bin/README.md#trust-story)).
 
 ```bash
-/draft:graph                                  # build / refresh the snapshot
+/draft:graph                                  # index the repo, write the gate marker
 scripts/tools/graph-impact.sh --file src/auth/login.go
-# → blast radius: which files, which symbols, which tests/docs/configs
+# → blast radius: every caller of the file's symbols (up to 3 hops) and every
+#   file that imports it, with downstream files, modules, and the code/test split
 ```
 
 | Capability | What it provides |
 |---|---|
 | **Multi-language extraction** | Tree-sitter + LSP-grade resolution across 159 languages, 100% local |
-| **Call graph** | Callers/callees with confidence signals so review/bughunt can weight findings |
-| **Impact analysis** | Blast-radius with file-class dimension (code/test/doc/config) — answers *"what breaks if I change this?"* |
+| **Call graph** | Callers of any symbol, with a fail-loud status that tells "no callers" apart from "unknown symbol", so review/bughunt never read a miss as a clean result |
+| **Impact analysis** | Everything that depends on a file or symbol through calls and imports, by hop, with downstream files, affected modules, and the code/test split — answers *"what breaks if I change this?"* |
 | **Cycle detection** | Flags circular call dependencies before they bite |
-| **Hotspot ranking** | Fan-in score so high-risk symbols get extra scrutiny |
-| **Incremental indexing** | git-aware, content-based; only changed code re-indexes |
+| **Hotspot ranking** | Fan-in plus measured complexity, so high-risk symbols get extra scrutiny |
+| **Incremental indexing** | git-aware, content-based; every query refreshes the index first (~0.1 s when nothing changed), so answers include your uncommitted edits |
 | **Track impact memory** | `metadata.json.impact` snapshots each completed track's blast radius — `/draft:new-track` flags overlap with recent work |
 
 The graph powers `/draft:graph` and `/draft:impact`, enriches `/draft:bughunt` and `/draft:review`, and is consumed by skills via `core/shared/graph-query.md`. The engine is installed via [`scripts/fetch-memory-engine.sh`](scripts/fetch-memory-engine.sh); the deterministic shell helpers live under [`scripts/tools/`](scripts/tools/).

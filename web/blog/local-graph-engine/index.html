@@ -87,7 +87,7 @@
             <a href="../../blog/" class="active">Blog</a>
         </div>
         <div class="nav-actions" id="nav-actions">
-            <a href="../../changelog/" class="nav-version" title="Release notes">v4.0.0</a>
+            <a href="../../changelog/" class="nav-version" title="Release notes">v5.0.2</a>
             <a href="https://github.com/drafthq/draft" target="_blank" rel="noopener noreferrer" class="nav-github">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
                 Star on GitHub
@@ -131,7 +131,7 @@
                 <h2>What Draft Does Instead</h2>
                 <p>Draft installs <a href="https://github.com/DeusData/codebase-memory-mcp">codebase-memory-mcp</a>, a single-binary engine (tree-sitter + LSP across 159 languages, 100% local). You run it once during <code>/draft:init</code> or <code>/draft:graph</code> to index the repo. From that point on, skills and shell helpers query the engine live &mdash; no snapshot files committed, no data going stale between commits:</p>
 <pre><code>draft/graph/
-└── schema.yaml              # gate marker: engine + project metadata, counts
+└── schema.yaml              # gate marker: engine metadata, counts
                              # (access: engine-live — all other data queried from engine)
 </code></pre>
                 <p>The engine holds the graph. <code>draft/graph/schema.yaml</code> is the only committed artifact &mdash; a tiny gate marker that confirms the engine has indexed the repo and records provenance counts. All structural queries go directly to the engine at call time.</p>
@@ -166,7 +166,7 @@
                 <p>The graph engine is one local process reading your source files.</p>
 
                 <h3>3. Always-Fresh, Never-Stale Context</h3>
-                <p>Because the graph is queried live from the local engine rather than read from a committed snapshot, it is <strong>always current</strong>. Re-indexing is fast and deterministic &mdash; run <code>/draft:graph</code> after a refactor and every subsequent query reflects the new structure immediately.</p>
+                <p>Because the graph is queried live from the local engine rather than read from a committed snapshot, it is <strong>always current</strong>. Every query re-indexes incrementally first &mdash; about a tenth of a second when nothing changed &mdash; so it reflects edits made seconds ago, uncommitted ones included. There is no refresh step to remember.</p>
                 <p>Committed snapshots went stale on the very next commit and duplicated what the engine already serves precisely on demand. The engine-only model eliminates that entire class of drift.</p>
 
                 <h3>4. Blast-Radius Queries Before You Edit</h3>
@@ -176,8 +176,13 @@
 <pre><code>{
   "target": "auth/auth.h",
   "kind": "file",
-  "impacted": [{"name": "...", "file": "...", "hop": 1}],
-  "by_category": {"code": 31, "test": 12, "doc": 3, "config": 1},
+  "impacted": [{"name": "...", "file": "...", "qualified": "...", "hop": 1}],
+  "downstream_files": ["..."],
+  "affected_modules": ["auth", "api", "tests"],
+  "max_depth": 3,
+  "by_category": {"code": 31, "test": 12},
+  "status": "ok",
+  "truncated": false,
   "source": "memory-graph"
 }</code></pre>
                 <p>The AI assistant &mdash; and you &mdash; now know exactly how many tests to update, which docs go stale, which configs ship the change. <strong>No "I think this might be safe."</strong></p>

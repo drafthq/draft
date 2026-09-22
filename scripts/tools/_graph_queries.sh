@@ -7,16 +7,20 @@
 # here, not a hunt across N scripts (the Phase 0 :Function bug was duplicated
 # across two files precisely because the Cypher was inlined).
 #
-# Dialect notes (engine v0.8.x, verified live against this engine):
-#   SAFE   : fixed-length patterns, single/multi-hop explicit patterns, `=`, `<`,
-#            `STARTS WITH`, `NOT x STARTS WITH`, `AND`, `OR`, relationship-type
-#            alternation `[:A|B]`, simple `count(x)`.
-#   UNSAFE : coalesce(), `<>` / `!=` / `<=` / `>=`, `NOT EXISTS(...)`,
-#            `NOT (pattern)`, `WITH`-grouping aggregation, multi-pattern joins,
-#            and comparing one property against another (`a.x < b.x` — the
-#            parser wants a literal on the right and fails with "expected value
-#            at pos N"). `<` against a literal is fine.
-#            Every builder below stays inside the SAFE set.
+# Dialect notes (engine v0.9.0, verified live against this engine):
+#   SAFE   : `=`, `<>`/`!=`, `<`, `>`, `<=`, `>=` against a literal; `STARTS WITH`,
+#            `NOT x STARTS WITH`, `AND`, `OR`; explicit and variable-length
+#            patterns (`[:R*1..3]`, fixed depth `[:R*2..2]`); relationship-type
+#            alternation `[:A|B]`; `coalesce()`; `DISTINCT`; `count(x)`,
+#            `count(DISTINCT x)`; `WITH`-grouping aggregation.
+#   UNSAFE : comparing one property against another (`a.x < b.x`, `a.x = b.x` —
+#            the parser wants a literal on the right: "expected value at pos N"),
+#            `NOT EXISTS(...)`, `NOT (pattern)`, path variables (`p=(...)`,
+#            `length(p)`), and multi-pattern joins (`MATCH (a)…, (b)…` parse but
+#            ignore RETURN and LIMIT).
+#   GOTCHA : LIMIT applies before DISTINCT, so `RETURN DISTINCT … LIMIT n` can
+#            return fewer than n rows while more exist — judge truncation on raw
+#            rows. Every builder below stays inside the SAFE set.
 #
 # Label-agnostic on name matches: code units are :Method ⪢ :Function in OO repos;
 # pinning :Function silently returns [] (the graph-tooling-v2 Phase 0 bug). CALLS
@@ -63,7 +67,17 @@ gq_q_inherits_sym()      { printf "MATCH (c)-[:INHERITS]->(p) WHERE c.name='%s' 
 gq_q_derived_sym()       { printf "MATCH (c)-[:INHERITS]->(p) WHERE p.name='%s' RETURN c.qualified_name AS child, p.qualified_name AS parent LIMIT 200" "$1"; }
 gq_q_raises()            { printf "MATCH (f {name:'%s'})-[:RAISES|THROWS]->(e) RETURN e.name AS error, e.qualified_name AS qualified LIMIT 200" "$1"; }
 gq_q_raisers()           { printf "MATCH (f)-[:RAISES|THROWS]->(e {name:'%s'}) RETURN f.qualified_name AS raiser, f.file_path AS file LIMIT 200" "$1"; }
-gq_q_node_props()        { printf "MATCH (f) RETURN f.qualified_name AS q, f.complexity AS c, f.cognitive AS cog, f.is_entry_point AS ep LIMIT 10000"; }
+# $1 = comma-separated list of pre-escaped, single-quoted qualified names.
+gq_q_node_props()        { printf "MATCH (f) WHERE f.qualified_name IN [%s] RETURN f.qualified_name AS q, f.complexity AS c, f.cognitive AS cog, f.is_entry_point AS ep LIMIT 1000" "$1"; }
+# Dependents at exactly $2 CALLS hops (one query per depth: path variables are
+# unsupported, so the hop count comes from the fixed depth). Raw rows, no
+# DISTINCT — LIMIT applies before DISTINCT, so only a raw row count at the limit
+# reveals truncation. The file form skips callers inside the target file itself.
+GQ_DEP_LIMIT=5000
+gq_q_dependents_file()   { printf "MATCH (a)-[:CALLS*%s..%s]->(b) WHERE b.file_path = '%s' AND a.file_path <> '%s' RETURN a.qualified_name AS q, a.name AS name, a.file_path AS file, a.is_test AS test LIMIT %s" "$2" "$2" "$1" "$1" "$GQ_DEP_LIMIT"; }
+gq_q_dependents_symbol() { printf "MATCH (a)-[:CALLS*%s..%s]->(b {name:'%s'}) WHERE a.name <> '%s' RETURN a.qualified_name AS q, a.name AS name, a.file_path AS file, a.is_test AS test LIMIT %s" "$2" "$2" "$1" "$1" "$GQ_DEP_LIMIT"; }
+gq_q_importers()         { printf "MATCH (a)-[:IMPORTS]->(b) WHERE b.file_path = '%s' AND a.file_path <> '%s' RETURN a.file_path AS file LIMIT %s" "$1" "$1" "$GQ_DEP_LIMIT"; }
+gq_q_file_exists()       { printf "MATCH (f) WHERE f.file_path = '%s' RETURN f.file_path AS file LIMIT 1" "$1"; }
 gq_q_risk()              { printf "MATCH (f) WHERE f.unguarded_recursion=true OR f.alloc_in_loop=true OR f.recursion_in_loop=true OR f.linear_scan_in_loop=true RETURN f.qualified_name AS symbol, f.file_path AS file, f.complexity AS complexity, f.unguarded_recursion AS unguarded_recursion, f.alloc_in_loop AS alloc_in_loop, f.recursion_in_loop AS recursion_in_loop, f.linear_scan_in_loop AS linear_scan_in_loop LIMIT 200"; }
 
 # ── Runner + classifier ──

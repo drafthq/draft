@@ -11,7 +11,7 @@
 # truth; the engine is the structural index over it.
 #
 # Writes one file under <repo>/draft/graph/:
-#   schema.yaml   engine + project metadata + index counts. Its presence is the
+#   schema.yaml   engine metadata + index counts. Its presence is the
 #                 GATE that tells skills the graph engine is wired for this repo
 #                 (see core/shared/graph-query.md Pre-Check). It carries no graph
 #                 data — every structural query goes to the live engine.
@@ -61,30 +61,18 @@ done
 
 [[ -d "$REPO" ]] || { echo "ERROR: --repo '$REPO' is not a directory" >&2; exit 1; }
 
-REPO_ABS="$(cd "$REPO" && pwd)"
+REPO_ABS="$(cd "$REPO" && pwd -P)"
 SELF_REPO="$(cd "$TOOLS_DIR/../.." && pwd)"
 OUT="${OUT_DIR:-$REPO_ABS/draft/graph}"
 
 find_memory_bin "$REPO_ABS" "$SELF_REPO" || { echo "graph engine unavailable — nothing written" >&2; exit 2; }
 command -v jq >/dev/null 2>&1 || { echo "jq required" >&2; exit 2; }
 
-# Index on demand; this is the valuable side-effect — it ensures the engine holds
-# a current index of the repo so live queries resolve.
+# Refresh the engine index (incremental; indexes from scratch when absent). This is
+# the valuable side-effect — live queries resolve against a current index. A failed
+# refresh writes nothing: a fresh `generated_at` over a frozen index would lie.
 PROJECT="$(memory_ensure_index "$REPO_ABS" || true)"
-[[ -n "$PROJECT" ]] || { echo "could not index repo — nothing written" >&2; exit 2; }
-
-# ...then ALWAYS re-index. memory_ensure_index calls index_repository only when the
-# project is ABSENT — correct for the graph-*.sh query wrappers, which must stay
-# cheap — so on an already-indexed repo this tool used to write a gate marker with a
-# fresh `generated_at` over a frozen index: a deleted symbol stayed resolvable, a new
-# one never appeared, and nothing in the output said so. Refreshing is this tool's
-# entire job. The engine indexes incrementally, so the repeat call is cheap.
-REFRESHED="$(memory_index_bounded "$REPO_ABS" 2>/dev/null | jq -r '.project // empty' 2>/dev/null || true)"
-if [[ -z "$REFRESHED" ]]; then
-    echo "index refresh failed — nothing written" >&2
-    exit 2
-fi
-PROJECT="$REFRESHED"
+[[ -n "$PROJECT" ]] || { echo "index refresh failed — nothing written" >&2; exit 2; }
 
 mkdir -p "$OUT"
 
@@ -120,32 +108,29 @@ VER="$("$MEMORY_BIN" --version 2>/dev/null | awk '{print $NF}' || echo unknown)"
 
 # Incremental-refresh provenance (graph-tooling-v2 Phase 5): the engine indexes
 # incrementally (content-based, git-aware), so re-indexing only touches changed
-# files. detect_changes reports that working-tree delta — recorded as provenance
-# and echoed so a refresh shows what moved. Best-effort: never aborts the write.
+# files. detect_changes reports that working-tree delta — echoed so a refresh
+# shows what moved, but kept out of the committed marker (it differs per machine
+# and per run, like the path-derived project name and a timestamp would).
+# Best-effort: never aborts the write.
 CHANGES_JSON="$(memory_cli detect_changes "$(jq -n --arg p "$PROJECT" '{project:$p}')" 2>/dev/null || echo '{}')"
 echo "$CHANGES_JSON" | jq -e . >/dev/null 2>&1 || CHANGES_JSON='{}'
 CHANGED_FILES="$(echo "$CHANGES_JSON" | jq -r '.changed_count // (.changed_files | length?) // 0' 2>/dev/null || echo 0)"
 IMPACTED="$(echo "$CHANGES_JSON" | jq -r '(.impacted_symbols | length?) // 0' 2>/dev/null || echo 0)"
 
-# YAML double-quoted scalars: escape backslashes then quotes so an unusual
-# project name or engine version string can never corrupt the marker.
-PROJECT_Y="${PROJECT//\\/\\\\}"; PROJECT_Y="${PROJECT_Y//\"/\\\"}"
+# YAML double-quoted scalar: escape backslashes then quotes so an unusual
+# engine version string can never corrupt the marker.
 VER_Y="${VER//\\/\\\\}"; VER_Y="${VER_Y//\"/\\\"}"
 
 cat > "$OUT/schema.yaml" <<EOF
 # Draft graph gate marker — written by scripts/tools/graph-snapshot.sh
 # Draft is engine-only: this file carries NO graph data. Its presence signals that
 # the local codebase-memory-mcp engine is wired for this repo. Query the engine
-# live via the graph-*.sh wrappers (or \`codebase-memory-mcp cli <tool>\`).
+# live via the graph-*.sh wrappers (graph-query.sh --tool covers the rest).
 # Counts below are point-of-index provenance; the live engine is authoritative.
 engine: codebase-memory-mcp
 engine_version: "$VER_Y"
-project: "$PROJECT_Y"
-generated_at: "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 indexed_nodes: $NODES
 indexed_edges: $EDGES
-changed_files: $CHANGED_FILES
-impacted_symbols: $IMPACTED
 access: engine-live
 EOF
 

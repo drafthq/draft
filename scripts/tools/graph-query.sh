@@ -12,11 +12,12 @@
 #                                a `query` field in --json is scanned for write
 #                                verbs exactly like --cypher.
 #
-# Dialect limits (engine v0.8.x — see _graph_queries.sh for the full list):
-#   SAFE   : fixed-length patterns, `=`, `<`, `STARTS WITH`, `NOT x STARTS WITH`,
-#            `AND`, `OR`, rel-type alternation `[:A|B]`, `count(x)`.
-#   UNSAFE : coalesce(), `<>`/`!=`/`<=`/`>=`, NOT EXISTS(...), NOT (pattern),
-#            WITH-grouping aggregation, multi-pattern joins.
+# Dialect limits (engine v0.9.0 — see _graph_queries.sh for the full list):
+#   SAFE   : comparisons against a literal, `STARTS WITH`, `AND`/`OR`,
+#            variable-length `[:R*1..3]`, rel-type alternation `[:A|B]`,
+#            `coalesce()`, `DISTINCT`, `count(...)`, WITH-aggregation.
+#   UNSAFE : property-to-property comparison, NOT EXISTS(...), NOT (pattern),
+#            path variables, multi-pattern joins. LIMIT applies before DISTINCT.
 # Passthrough returns the engine's raw error, not a silent empty result.
 #
 # Usage:
@@ -52,8 +53,8 @@ Flags:
                  `query` field is write-verb checked like --cypher.
   --help         Show this help.
 
-Dialect: avoid coalesce(), <>, NOT EXISTS, NOT(pattern), WITH-aggregation,
-multi-pattern joins. Use =, <, STARTS WITH, AND/OR, [:A|B] alternation.
+Dialect: avoid property-to-property comparison, NOT EXISTS, NOT(pattern), path
+variables, multi-pattern joins. LIMIT applies before DISTINCT.
 
 Output: raw engine JSON on success; {"source":"unavailable"} (exit 2) when the
 engine is unavailable; exit 1 on invocation error or a rejected write verb.

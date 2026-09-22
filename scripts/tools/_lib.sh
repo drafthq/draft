@@ -235,7 +235,7 @@ find_memory_bin() {
 # its own unavailable-JSON shape (the shapes differ per tool).
 graph_bootstrap() {
     local repo="$1" self_repo
-    REPO_ABS="$(cd "$repo" 2>/dev/null && pwd)" || return 1
+    REPO_ABS="$(cd "$repo" 2>/dev/null && pwd -P)" || return 1
     self_repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
     find_memory_bin "$REPO_ABS" "$self_repo" || return 1
     command -v jq >/dev/null 2>&1 || return 1
@@ -245,6 +245,8 @@ graph_bootstrap() {
 
 # Run a codebase-memory-mcp CLI tool. Echoes the JSON result (stdout); the engine's
 # `level=...` log lines go to stderr and are discarded unless DRAFT_MEMORY_DEBUG is set.
+# Args travel on stdin: the engine deprecated positional raw JSON (0.9.0 warns it
+# "will be removed in a future release"), and that warning lands in the discarded stderr.
 # Usage: memory_cli <tool> [json-args]
 memory_cli() {
     local tool="$1"
@@ -253,20 +255,10 @@ memory_cli() {
         return 1
     fi
     if [[ -n "${DRAFT_MEMORY_DEBUG:-}" ]]; then
-        "$MEMORY_BIN" cli "$tool" "$args"
+        "$MEMORY_BIN" cli "$tool" <<< "$args"
     else
-        "$MEMORY_BIN" cli "$tool" "$args" 2>/dev/null
+        "$MEMORY_BIN" cli "$tool" <<< "$args" 2>/dev/null
     fi
-}
-
-# Resolve the engine's project name for a repository absolute path via list_projects.
-# Echoes the project name, or nothing if the repo has not been indexed yet.
-memory_project_for_repo() {
-    local repo_abs="$1"
-    command -v jq >/dev/null 2>&1 || return 1
-    memory_cli list_projects '{}' 2>/dev/null \
-        | jq -r --arg p "$repo_abs" '.projects[]? | select(.root_path == $p) | .name' 2>/dev/null \
-        | head -1
 }
 
 # Total physical RAM in MB (portable). Echoes a positive integer, or nothing.
@@ -306,52 +298,69 @@ _can_cgroup_bound() {
 
 # Index a repository under a memory bound. The codebase-memory-mcp engine
 # self-budgets ~50% of *physical* RAM and is not cgroup-aware, so a first index
-# of a huge repo can exhaust the host (the original 30 GB hang). On Linux we
-# confine it to a transient cgroup scope sized to DRAFT_INDEX_MEM_PCT (default
-# 25) of total RAM; CBM_WORKERS caps the engine's parallel working set so the
-# throttle has less transient pressure to absorb. Where cgroup v2 + systemd-run
-# are unavailable (e.g. macOS) the worker cap is the only bound. Never falls back
+# of a huge repo can exhaust the host (the original 30 GB hang). The engine's
+# own budget (CBM_MEM_BUDGET_MB) is set to DRAFT_INDEX_MEM_PCT (default 25) of
+# total RAM unless the user chose one; on Linux the process is also confined to
+# a transient cgroup scope of that size. CBM_WORKERS caps the engine's parallel
+# working set so the throttle has less transient pressure to absorb. Where cgroup
+# v2 + systemd-run are unavailable (e.g. macOS) the budget and worker cap are the
+# bound. Never falls back
 # from a started scope to an unbounded run — a bounded OOM fails the index
 # cleanly (host stays alive) rather than re-triggering the hang.
 # Echoes the engine's JSON result on stdout (same contract as memory_cli).
+# Usage: memory_index_bounded <repo-abs> [project-name]
 memory_index_bounded() {
-    local repo_abs="$1"
+    local repo_abs="$1" name="${2:-}"
     # Payload built with jq (never string concatenation) so a repo path
     # containing a `"` or `\` can never corrupt the JSON sent to the engine.
     command -v jq >/dev/null 2>&1 || return 1
     local json
-    json="$(jq -n --arg r "$repo_abs" '{repo_path:$r}')" || return 1
+    json="$(jq -n --arg r "$repo_abs" --arg n "$name" \
+        '{repo_path:$r} + (if $n == "" then {} else {name:$n} end)')" || return 1
     export CBM_WORKERS="${CBM_WORKERS:-4}"
     local total pct
     total="$(_total_ram_mb)"
     pct="${DRAFT_INDEX_MEM_PCT:-25}"
+    [[ "${total:-0}" -gt 0 ]] && export CBM_MEM_BUDGET_MB="${CBM_MEM_BUDGET_MB:-$(( total * pct / 100 ))}"
     if [[ "${total:-0}" -gt 0 ]] && _can_cgroup_bound; then
         local high_arg max_arg
         read -r high_arg max_arg <<< "$(_mem_bound_args "$total" "$pct")"
         if [[ -n "${DRAFT_MEMORY_DEBUG:-}" ]]; then
             systemd-run --user --scope -q -p "$high_arg" -p "$max_arg" \
-                -- "$MEMORY_BIN" cli index_repository "$json"
+                -- "$MEMORY_BIN" cli index_repository <<< "$json"
         else
             systemd-run --user --scope -q -p "$high_arg" -p "$max_arg" \
-                -- "$MEMORY_BIN" cli index_repository "$json" 2>/dev/null
+                -- "$MEMORY_BIN" cli index_repository <<< "$json" 2>/dev/null
         fi
     else
         memory_cli index_repository "$json"
     fi
 }
 
-# Ensure a repository is indexed in the engine; echo its project name.
-# Indexes on demand when absent. Returns 1 if the engine is unavailable.
+# Bring a repository's engine index up to date; echo its project name.
+# Always re-indexes: the engine indexes incrementally (content-based, git-aware),
+# so an unchanged repo costs ~0.1 s. Indexing only when the project was absent
+# left every live query answering from the first index ever taken — a symbol
+# added since stayed invisible while the result still said status:"ok".
+#
+# The project is named explicitly: the engine derives names by flattening '/' to
+# '-', so /x/a-b/c and /x/a/b-c shared one DB and each index overwrote the other.
+# A repo the engine already knows keeps its name (no forced full re-index); a new
+# one gets <basename>-<sha8 of its path>, which no other path can derive.
+# Returns 1 if the engine is unavailable.
 memory_ensure_index() {
     local repo_abs="$1"
     [[ -n "${MEMORY_BIN:-}" ]] || return 1
     command -v jq >/dev/null 2>&1 || return 1
-    local proj
-    proj="$(memory_project_for_repo "$repo_abs" 2>/dev/null || true)"
-    if [[ -z "$proj" ]]; then
-        proj="$(memory_index_bounded "$repo_abs" \
-            | jq -r '.project // empty' 2>/dev/null || true)"
+    local proj name
+    name="$(memory_cli list_projects '{}' \
+        | jq -r --arg p "$repo_abs" 'first(.projects[]? | select(.root_path == $p) | .name) // empty' 2>/dev/null || true)"
+    if [[ -z "$name" ]]; then
+        name="$(printf '%s' "$repo_abs" | { sha256sum 2>/dev/null || shasum -a 256; } | cut -c1-8)"
+        name="$(basename "$repo_abs")-$name"
     fi
+    proj="$(memory_index_bounded "$repo_abs" "$name" \
+        | jq -r '.project // empty' 2>/dev/null || true)"
     [[ -n "$proj" ]] || return 1
     printf '%s' "$proj"
 }

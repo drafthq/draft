@@ -32,7 +32,7 @@ If no root graph exists yet, the root link points to a pending state and falls b
 
 The knowledge graph itself is engine-only. The `codebase-memory-mcp` engine (by DeusData, 159 languages, 100% local) maintains the structural graph in-process. No `architecture.json`, `hotspots.jsonl`, or `*.mermaid` files are committed to the repository.
 
-The only committed file in `draft/graph/` is `schema.yaml` — a gate marker containing engine metadata, project identity, and point-of-index counts. Its `access: engine-live` field signals that structural data is queried live from the engine, not read from committed files.
+The only committed file in `draft/graph/` is `schema.yaml` — a gate marker containing engine metadata and point-of-index counts. Its `access: engine-live` field signals that structural data is queried live from the engine, not read from committed files.
 
 ## Flags
 

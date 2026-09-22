@@ -137,12 +137,24 @@ fi
 
 STATUS="ok"
 
+# The wrappers are verified against the pinned DEFAULT_VERSION. Another version
+# (e.g. a global install on PATH, which outranks the managed one) stays usable,
+# but may speak a different dialect or CLI — say so rather than run it silently.
+VERSION="$("$MEMORY_BIN" --version 2>/dev/null | awk '{print $NF}')"
+PINNED="$(sed -n 's/^DEFAULT_VERSION="v\{0,1\}\([^"]*\)".*/\1/p' "$SELF_REPO/scripts/fetch-memory-engine.sh" 2>/dev/null | head -1)"
+if [[ -n "$PINNED" && "$VERSION" != "$PINNED" ]]; then
+  echo "WARNING: engine version $VERSION differs from the pinned $PINNED that Draft's graph tools are verified against." >&2
+  echo "         Install the pinned engine: scripts/fetch-memory-engine.sh --force" >&2
+fi
+
 if [[ $EMIT_JSON -eq 1 ]]; then
-  printf '{"status":"%s","engine_bin":"%s","source":"%s","arch":"%s"}\n' \
-    "$(json_escape "$STATUS")" "$(json_escape "$MEMORY_BIN")" "$(json_escape "$SOURCE")" "$(json_escape "$ARCH")"
+  printf '{"status":"%s","engine_bin":"%s","source":"%s","arch":"%s","version":"%s","pinned_version":"%s"}\n' \
+    "$(json_escape "$STATUS")" "$(json_escape "$MEMORY_BIN")" "$(json_escape "$SOURCE")" "$(json_escape "$ARCH")" \
+    "$(json_escape "$VERSION")" "$(json_escape "$PINNED")"
 else
   echo "Draft graph engine: $MEMORY_BIN"
   echo "  source: $SOURCE (arch=$ARCH)"
+  echo "  version: $VERSION (pinned: ${PINNED:-unknown})"
   echo "  status: $STATUS"
 fi
 

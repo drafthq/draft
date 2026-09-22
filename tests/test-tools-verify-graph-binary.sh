@@ -56,6 +56,24 @@ rc=$?
 set -e
 assert "Strict + no engine → exit 2" "$([[ "$rc" == "2" ]] && echo true || echo false)"
 
+# --- Test 6: version drift from the pinned engine is reported, not silent ---
+# The wrappers are verified against DEFAULT_VERSION; any other engine (e.g. a
+# global one on PATH, which outranks the managed install) may speak a different
+# dialect or CLI.
+PINNED="$(sed -n 's/^DEFAULT_VERSION="v\{0,1\}\([^"]*\)".*/\1/p' "$ROOT_DIR/scripts/fetch-memory-engine.sh")"
+out="$(DRAFT_MEMORY_BIN="$MOCK" "$TOOL" --repo "$FIXTURE" --json 2>"$FIXTURE/drift.err")" || true
+assert "JSON reports the engine and pinned versions" \
+    "$(echo "$out" | jq -e --arg p "$PINNED" '.version == "0.0.0-mock" and .pinned_version == $p' >/dev/null 2>&1 && echo true || echo false)"
+assert "Off-pin engine warns on stderr" \
+    "$(grep -q "differs from the pinned $PINNED" "$FIXTURE/drift.err" && echo true || echo false)"
+PINMOCK="$FIXTURE/pinbin/codebase-memory-mcp"
+mkdir -p "$FIXTURE/pinbin"
+printf '#!/usr/bin/env bash\necho "codebase-memory-mcp %s"\n' "$PINNED" > "$PINMOCK"
+chmod +x "$PINMOCK"
+DRAFT_MEMORY_BIN="$PINMOCK" "$TOOL" --repo "$FIXTURE" --json >/dev/null 2>"$FIXTURE/pin.err" || true
+assert "On-pin engine does not warn" \
+    "$([[ ! -s "$FIXTURE/pin.err" ]] && echo true || echo false)"
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed ==="
 exit "$FAIL"

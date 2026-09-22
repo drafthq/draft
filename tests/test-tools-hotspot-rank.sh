@@ -95,6 +95,32 @@ SHAPEMOCK
     shapeless="$(DRAFT_MEMORY_BIN="$SHAPE" "$TOOL" --repo "$FIXTURE")"
     assert "Shapeless {} props query is enrichment=unavailable, not ok" \
         "$(echo "$shapeless" | jq -e '.enrichment == "unavailable"' >/dev/null 2>&1 && echo true || echo false)"
+
+    # Enrichment must ask for the hotspots themselves. A capped scan of every node
+    # (LIMIT 10000) silently skipped hotspots past the window on large repos,
+    # scoring them complexity 0 under enrichment:"ok".
+    SCOPED="$FIXTURE/scopedbin/codebase-memory-mcp"
+    mkdir -p "$FIXTURE/scopedbin"
+    cat > "$SCOPED" <<'SCOPEDMOCK'
+#!/usr/bin/env bash
+if [[ "$1" == "--version" ]]; then echo "codebase-memory-mcp 0.0.0-mock"; exit 0; fi
+case "$2" in
+  list_projects)    echo '{"projects":[]}' ;;
+  index_repository) echo '{"project":"mock","status":"indexed"}' ;;
+  get_architecture) echo '{"hotspots":[{"name":"far","qualified_name":"mock.far","fan_in":5}],"routes":[]}' ;;
+  query_graph)
+    if jq -r .query | grep -q "'mock.far'"; then
+      echo '{"rows":[["mock.far","9","4","false"]]}'
+    else
+      echo '{"rows":[["mock.other","1","1","false"]]}'   # the window never reaches mock.far
+    fi ;;
+  *) echo '{}' ;;
+esac
+SCOPEDMOCK
+    chmod +x "$SCOPED"
+    scoped="$(DRAFT_MEMORY_BIN="$SCOPED" "$TOOL" --repo "$FIXTURE" 2>/dev/null || true)"
+    assert "Enrichment queries the hotspot symbols directly" \
+        "$(echo "$scoped" | jq -e '.hotspots[0].complexity == 9 and .hotspots[0].cognitive == 4' >/dev/null 2>&1 && echo true || echo false)"
 fi
 
 echo ""

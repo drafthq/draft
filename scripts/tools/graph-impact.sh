@@ -1,24 +1,28 @@
 #!/usr/bin/env bash
 # graph-impact.sh — blast radius for a file or symbol, from the knowledge graph.
 #
-# Replaces `graph --query --file <path> --mode impact`. Backed by the
-# codebase-memory-mcp engine: combines detect_changes (git-diff → impacted
-# symbols, when querying the working tree) with trace_path callers for a named
-# function (transitive upstream dependents).
+# Everything that depends on the target, up to --depth CALLS hops: callers of the
+# symbol, or callers of anything defined in the file plus the files that import
+# it. Callers inside the target file are not downstream and are skipped.
 #
 # Usage:
 #   scripts/tools/graph-impact.sh --repo DIR (--file PATH | --symbol NAME) [--depth N]
 #
-# Output: JSON {target, kind, impacted:[{name,file,qualified,hop}], source}.
-#   `file` is always a path (empty when the engine carries none); the qualified
-#   name has its own field rather than being emitted as if it were a path.
+# Output: JSON {target, kind, impacted:[{name,file,qualified,hop}], downstream_files,
+#   affected_modules, max_depth, by_category:{code,test}, status, truncated, source}.
+#   `impacted` lists each dependent once at its nearest hop, capped at 200; the
+#   aggregates always cover the full set. `truncated` is true when the list was
+#   capped or the engine row limit was hit. A module is a file's top-level path
+#   segment ("." for root files), as in classify-files.sh.
+#   status = ok | no-edges (target known, nothing depends on it) | no-match
+#            (target unknown to the graph)
 #   source = "memory-graph" | "unavailable"
 #
 # Exit codes: 0 OK, 1 invocation error, 2 graph engine unavailable.
 set -euo pipefail
 
-# shellcheck source=_lib.sh
-source "$(dirname "${BASH_SOURCE[0]}")/_lib.sh"
+# shellcheck source=_graph_queries.sh
+source "$(dirname "${BASH_SOURCE[0]}")/_graph_queries.sh"
 
 REPO="."
 FILE=""
@@ -34,12 +38,13 @@ Usage:
 
 Flags:
   --repo DIR     Repository root (default: cwd).
-  --file PATH    Size impact of a changed file (uses git working-tree diff).
-  --symbol NAME  Transitive callers of a function (default depth 3).
-  --depth N      Caller traversal depth for --symbol (default: 3).
+  --file PATH    Dependents of a file (repo-relative, ./-prefixed, or absolute).
+  --symbol NAME  Dependents (transitive callers) of a function.
+  --depth N      Caller traversal depth (default: 3).
   --help         Show this help.
 
-Output: JSON {target, kind, impacted, source}. Exit 2 when engine unavailable.
+Output: JSON {target, kind, impacted, downstream_files, affected_modules,
+max_depth, by_category, status, truncated, source}. Exit 2 when engine unavailable.
 EOF
 }
 
@@ -70,29 +75,50 @@ if [[ -n "$SYMBOL" ]]; then TARGET="$SYMBOL"; KIND="symbol"; else TARGET="$FILE"
 graph_bootstrap "$REPO" || unavailable "$TARGET" "$KIND"
 
 if [[ -n "$SYMBOL" ]]; then
-    # direction:"both" is the reliable form (the "callers" value returns empty in this engine);
-    # we read the .callers array from it. Payload built with jq so a quote in
-    # --symbol can never corrupt the JSON; an engine failure is unavailable,
-    # never a fabricated empty-impact success.
-    PAYLOAD="$(jq -n --arg p "$PROJECT" --arg f "$SYMBOL" --argjson d "$DEPTH" \
-        '{project:$p, function_name:$f, depth:$d, direction:"both"}')"
-    RES="$(memory_cli trace_path "$PAYLOAD" 2>/dev/null || true)"
-    echo "$RES" | jq -e 'has("callers") and (.callers | type == "array")' >/dev/null 2>&1 \
-        || unavailable "$TARGET" "$KIND"
-    echo "$RES" | jq --arg t "$TARGET" '
-        {target:$t, kind:"symbol",
-         impacted: [ (.callers // [])[] | {name:.name, file:(.file_path // ""), qualified:(.qualified_name // ""), hop:(.hop // 1)} ],
-         source:"memory-graph"}'
+    T_ESC="$(gq_escape "$SYMBOL")"
+    DEPENDENTS=gq_q_dependents_symbol; EXISTS=gq_q_exists
 else
-    # File impact: detect_changes maps the working-tree diff to impacted symbols.
-    PAYLOAD="$(jq -n --arg p "$PROJECT" '{project:$p}')"
-    RES="$(memory_cli detect_changes "$PAYLOAD" 2>/dev/null || true)"
-    echo "$RES" | jq -e 'has("impacted_symbols") and (.impacted_symbols | type == "array")' >/dev/null 2>&1 \
-        || unavailable "$TARGET" "$KIND"
-    echo "$RES" | jq --arg t "$TARGET" '
-        {target:$t, kind:"file",
-         impacted: [ (.impacted_symbols // [])[]
-                     | select((.file // "") | endswith($t) or (. == $t))
-                     | {name:.name, file:(.file // ""), hop:1} ],
-         source:"memory-graph"}'
+    # The graph keys files by repo-relative path.
+    REL="${FILE#"$REPO_ABS"/}"; REL="${REL#./}"
+    T_ESC="$(gq_escape "$REL")"
+    DEPENDENTS=gq_q_dependents_file; EXISTS=gq_q_file_exists
 fi
+
+# Accumulate {q,name,file,test,hop} JSONL in a temp file: the row sets of a hot
+# target can exceed argv limits.
+ROWS="$(mktemp)"
+trap 'rm -f "$ROWS"' EXIT
+TRUNC=false
+for ((k = 1; k <= DEPTH; k++)); do
+    R="$(gq_run "$PROJECT" "$("$DEPENDENTS" "$T_ESC" "$k")")" || unavailable "$TARGET" "$KIND"
+    [[ "$(gq_rows_len "$R")" -lt "$GQ_DEP_LIMIT" ]] || TRUNC=true
+    jq -c --argjson k "$k" '.rows[] | {q:(.[0] // ""), name:(.[1] // ""), file:(.[2] // ""),
+        test:((.[3] | tostring) == "true"), hop:$k}' <<< "$R" >> "$ROWS"
+done
+if [[ -n "$FILE" ]]; then
+    R="$(gq_run "$PROJECT" "$(gq_q_importers "$T_ESC")")" || unavailable "$TARGET" "$KIND"
+    [[ "$(gq_rows_len "$R")" -lt "$GQ_DEP_LIMIT" ]] || TRUNC=true
+    jq -c '.rows[] | {q:"", name:.[0], file:.[0], test:false, hop:1}' <<< "$R" >> "$ROWS"
+fi
+
+# Nothing depends on it: a true negative only if the graph knows the target.
+STATUS=ok
+if [[ ! -s "$ROWS" ]]; then
+    EX="$(gq_run "$PROJECT" "$("$EXISTS" "$T_ESC")")" || unavailable "$TARGET" "$KIND"
+    if [[ "$(gq_rows_len "$EX")" -gt 0 ]]; then STATUS=no-edges; else STATUS=no-match; fi
+fi
+
+jq -s --arg t "$TARGET" --arg kind "$KIND" --arg status "$STATUS" --argjson trunc "$TRUNC" '
+    (group_by([.q, .file]) | map(min_by(.hop))) as $u
+    | ($u | map(.file) | map(select(. != "")) | unique) as $files
+    | ($u | map(select(.test) | .file) | unique) as $tests
+    | {target:$t, kind:$kind,
+       impacted: ($u | sort_by(.hop, .file, .name) | .[:200]
+                  | map({name, file, qualified:.q, hop})),
+       downstream_files: $files,
+       affected_modules: ($files | map(if test("/") then split("/")[0] else "." end) | unique),
+       max_depth: ($u | map(.hop) | max // 0),
+       by_category: {code: ($files - $tests | length), test: ($tests | length)},
+       status: $status,
+       truncated: ($trunc or ($u | length) > 200),
+       source: "memory-graph"}' "$ROWS"

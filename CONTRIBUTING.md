@@ -82,7 +82,8 @@ ci(workflows): add shellcheck to CI pipeline
 | Job | Checks | Blocking |
 |---|---|---|
 | **Install path** | `check-repo-size.sh` (tree at HEAD under the size cap) and `install-smoke-test.sh` (shallow clone → manifest discovery → per-host `--dry-run` install) | Yes |
-| **Test suites** | `make test` (81 suites), plus a check that `integrations/` matches a fresh `make build` | Yes |
+| **Test suites** | `make test` (83 suites), plus a check that `integrations/` matches a fresh `make build` | Yes |
+| **Engine smoke** | Fetches the pinned `codebase-memory-mcp` (SHA-256 checked), requires it to resolve (`verify-graph-binary.sh --strict`), and runs `tests/test-engine-smoke.sh` against it | Yes |
 | **Lint** | shellcheck over `scripts/` and `tests/` | Yes |
 | **Lint** | markdownlint over `**/*.md` | Yes — the tree is clean, so anything it reports is yours |
 
