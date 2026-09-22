@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **The README described the graph tools as they were before 5.0.** Impact
+  analysis listed doc/config buckets and "tests/docs/configs" (it reports
+  dependents through calls and imports, split code/test), the call graph
+  claimed confidence signals it does not emit, and hotspot ranking and
+  indexing understated what they do. It now describes the fail-loud callers
+  status, dependents-by-hop impact, fan-in-plus-complexity hotspots,
+  refresh-before-query indexing, and the pinned-hash engine install.
+
 ## [5.0.1] - 2026-09-21
 
 ### Changed
