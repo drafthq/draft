@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Blog post: "The Graph Said 'ok'. It Was Wrong."** The seven silent-wrong
+  graph bugs fixed across 4.0 and 5.0, the `ok` / `no-edges` / `no-match` /
+  `unavailable` contract that replaced them, why the mocked suites missed them,
+  and six rules for tools agents trust. Listed on the blog index, RSS feed, and
+  sitemap.
+
 ## [5.0.2] - 2026-09-21
 
 ### Fixed
