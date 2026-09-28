@@ -188,7 +188,7 @@ scan_one_track() {
 
     # 5. Plan staleness vs HLD/LLD (WS-6).
     if [[ -f "$track_dir/plan.md" ]]; then
-        local plan_ts hld_ts lld_ts
+        local plan_ts="" hld_ts="" lld_ts=""
         plan_ts="$(get_yaml_field "$track_dir/plan.md" "generated_at" || true)"
         [[ -f "$track_dir/hld.md" ]] && hld_ts="$(get_yaml_field "$track_dir/hld.md" "generated_at" || true)"
         [[ -f "$track_dir/lld.md" ]] && lld_ts="$(get_yaml_field "$track_dir/lld.md" "generated_at" || true)"

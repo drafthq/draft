@@ -112,6 +112,27 @@ rc=$?
 set -e
 assert "5 TBDs under configured cap 5 → exit 0" "$([[ "$rc" == "0" ]] && echo true || echo false)"
 
+# --- Regression: plan.md without hld.md/lld.md must be clean, not a crash ---
+# (the staleness check declared hld_ts/lld_ts without a value and only assigned
+# them when the sibling existed, so set -u killed the script: "unbound variable".)
+mkdir -p "$FIXTURE/tracks/plan-only"
+cat > "$FIXTURE/tracks/plan-only/metadata.json" <<'EOF'
+{ "id": "plan-only", "status": "draft" }
+EOF
+cat > "$FIXTURE/tracks/plan-only/plan.md" <<'EOF'
+---
+generated_at: 2026-01-01T00:00:00Z
+---
+# Plan
+EOF
+set +e
+plan_only_out="$("$TOOL" "$FIXTURE/tracks/plan-only" 2>&1)"
+rc=$?
+set -e
+assert "plan.md without hld/lld → exit 0" "$([[ "$rc" == "0" ]] && echo true || echo false)"
+assert "plan.md without hld/lld → no unbound-variable crash" \
+    "$(echo "$plan_only_out" | grep -q 'unbound variable' && echo false || echo true)"
+
 # --- JSON mode ---
 output="$("$TOOL" --json "$FIXTURE/tracks/clean" 2>&1)"
 assert "JSON mode emits violation_count key" \

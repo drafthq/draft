@@ -15,6 +15,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and six rules for tools agents trust. Listed on the blog index, RSS feed, and
   sitemap.
 
+### Fixed
+
+- **`fix-whitespace.sh` truncated Markdown files to one byte on macOS.** Its
+  trailing-blank-line collapse used a GNU-only `sed` construct; BSD `sed`
+  rejected it, the empty output was written back over the file, and the run
+  still reported success. Decompose's cleanup step and condensation
+  (`architecture.md`, `.ai-context.md`, `.ai-profile.md`) both call it. The
+  collapse is now portable `awk`, and the tool refuses to replace a file that
+  has content with whitespace-only output.
+- **`check-track-hygiene.sh` crashed on any track with a `plan.md` but no
+  `hld.md` or `lld.md`** — `unbound variable`, on every platform. The
+  plan-staleness check now treats a missing sibling as nothing to compare.
+
 ## [5.0.2] - 2026-09-21
 
 ### Fixed
