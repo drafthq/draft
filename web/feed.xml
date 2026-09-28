@@ -7,13 +7,23 @@
     <description>A comprehensive guide to Draft's Context-Driven Development methodology. 22 chapters and 2 appendices covering specs, plans, TDD enforcement, 3-stage code review, 14-dimension bug hunting, and ACID audits for AI coding agents. Written by Mayur Pise.</description>
     <language>en-us</language>
     <managingEditor>mayur@getdraft.dev (Mayur Pise)</managingEditor>
-    <lastBuildDate>Sat, 20 Jun 2026 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Wed, 23 Sep 2026 00:00:00 +0000</lastBuildDate>
     <atom:link href="https://getdraft.dev/feed.xml" rel="self" type="application/rss+xml"/>
     <image>
       <url>https://getdraft.dev/social-preview.png</url>
       <title>Draft -- Context-Driven Development</title>
       <link>https://getdraft.dev</link>
     </image>
+
+    <item>
+      <title>The Graph Said "ok". It Was Wrong.</title>
+      <link>https://getdraft.dev/blog/status-ok-was-wrong/</link>
+      <description>An AI agent can't tell a wrong answer from a right one when both come back as valid JSON with status "ok". Draft 5.0 fixed seven ways its code-graph tools returned confident, wrong results -- a stale index, file blast radius that returned the file's own symbols, empty objects read as "no callers", hotspots scored as complexity 0 past a row limit, cycles counted per rotation, colliding project indexes, and an unenforced engine pin. The pattern behind them, the fail-loud contract that replaced them, why mocked tests missed all of it, and six rules for tools agents trust.</description>
+      <author>mayur@getdraft.dev (Mayur Pise)</author>
+      <pubDate>Wed, 23 Sep 2026 00:00:00 +0000</pubDate>
+      <guid>https://getdraft.dev/blog/status-ok-was-wrong/</guid>
+      <category>Blog</category>
+    </item>
 
     <item>
       <title>Vibe-Coding Doesn't Scale. Context-Driven Development Does.</title>

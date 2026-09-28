@@ -73,6 +73,12 @@
         <priority>0.7</priority>
     </url>
     <url>
+        <loc>https://getdraft.dev/blog/status-ok-was-wrong/</loc>
+        <lastmod>2026-09-23</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>0.7</priority>
+    </url>
+    <url>
         <loc>https://getdraft.dev/blog/vibe-coding-doesnt-scale/</loc>
         <lastmod>2026-09-03</lastmod>
         <changefreq>monthly</changefreq>
