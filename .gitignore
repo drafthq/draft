@@ -62,3 +62,5 @@ docs/internal/
 INDUSTRY_REVIEW.md
 RECOMMENDATIONS.md
 codebase_researcher.md
+
+.env
