@@ -84,7 +84,7 @@ The build script (`scripts/build-integrations.sh`) reads `SKILL_ORDER`, `CORE_FI
 | Workflow | Trigger | Does |
 |---|---|---|
 | `ci.yml` | push to `main`, PRs | Install path (repo-size gate + clean-clone smoke test), `make test` + integrations-freshness, graph smoke test against the real pinned engine, lint (shellcheck and markdownlint, both blocking) |
-| `release.yml` | `vX.Y.Z` tag push | Verifies tag matches `package.json`, extracts notes via `scripts/release-notes.sh`, publishes the GitHub Release |
+| `release.yml` | `vX.Y.Z` tag push | Verifies tag matches `package.json`, extracts notes via `scripts/release-notes.sh`, publishes the GitHub Release, then publishes to npm (tag pushes only; needs the `NPM_TOKEN` secret) |
 | `pages.yml` | push touching `web/` | Deploys the site |
 
 The repo-size gate exists because `plugin marketplace add` git-clones this repo — anything in HEAD is downloaded before install can proceed. Never commit large assets; attach them to a Release.
@@ -151,9 +151,10 @@ The build script transforms skill content for platform compatibility:
 
 ```bash
 npm version <patch|minor|major|x.y.z>   # writes package.json, runs the `version` hook
-git push --follow-tags origin main
-npm publish
+git push --follow-tags origin main      # the tag push publishes the GitHub Release and npm
 ```
+
+Do not run `npm publish` by hand: `release.yml` publishes from a clean checkout of the tag, so the tarball matches the tag and carries no untracked build leftovers.
 
 The npm `version` lifecycle hook runs `scripts/sync-version.sh --stage`, which propagates the new version into `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json`, `.cursor-plugin/plugin.json`, and the website's version labels (the nav version pill on every page, the landing hero's REV, the book landing's REV), then `git add`s exactly those files — so they all land in the bump commit atomically. Release *copy* (headlines, dates, changelog prose, the site changelog's Latest entry) stays hand-written. `tests/test-version-sync.sh` (in `make test`) fails CI if any consumer drifts from `package.json`; run `bash scripts/sync-version.sh` to fix.
 

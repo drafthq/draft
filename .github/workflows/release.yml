@@ -1,9 +1,11 @@
-# Publishes a GitHub Release for every pushed vX.Y.Z tag.
+# Publishes a GitHub Release and the npm package for every pushed vX.Y.Z tag.
 #
 # Tags alone are invisible on the repo landing page — a visitor sees "no
 # releases" regardless of how many tags exist. This closes the gap so the
 # release history matches the changelog automatically, with no manual step to
-# forget.
+# forget. The npm publish was a manual step and was forgotten for 5.0.0 and
+# 5.0.2; it needs the NPM_TOKEN repository secret, an npm token that can
+# publish @drafthq/draft without a one-time password.
 name: Release
 
 on:
@@ -94,3 +96,19 @@ jobs:
               --notes-file release-notes.md \
               --verify-tag
           fi
+
+      # Tag pushes only: a workflow_dispatch for an old tag must not publish that
+      # version to npm, where it would become `latest`.
+      - name: Publish to npm
+        if: github.event_name == 'push'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          VERSION: ${{ steps.meta.outputs.version }}
+        run: |
+          name="$(node -p "require('./package.json').name")"
+          if npm view "$name@$VERSION" version >/dev/null 2>&1; then
+            echo "$name@$VERSION is already on npm; skipping."
+            exit 0
+          fi
+          echo '//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}' > "$RUNNER_TEMP/.npmrc"
+          npm publish --userconfig "$RUNNER_TEMP/.npmrc"

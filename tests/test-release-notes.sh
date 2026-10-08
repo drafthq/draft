@@ -27,6 +27,8 @@ echo ""
 assert "script is executable" "$([[ -x "$TOOL" ]] && echo true || echo false)"
 assert "release workflow treats release-notes.sh exit 2 as a hard failure" \
     "$(grep -A 20 'Extract release notes' "$ROOT_DIR/.github/workflows/release.yml" | grep -q 'release-notes.sh failed' && echo true || echo false)"
+assert "release workflow publishes to npm only on tag pushes" \
+    "$(grep -A 1 'name: Publish to npm' "$ROOT_DIR/.github/workflows/release.yml" | grep -q "if: github.event_name == 'push'" && echo true || echo false)"
 
 echo "## Version listing"
 mapfile -t versions < <("$TOOL" --list)

@@ -102,11 +102,10 @@ The size cap exists because `plugin marketplace add` git-clones this repository:
 
 ```bash
 npm version <patch|minor|major>     # syncs the plugin manifests via the version hook
-git push --follow-tags origin main  # the tag push publishes a GitHub Release
-npm publish
+git push --follow-tags origin main  # the tag push publishes a GitHub Release and npm
 ```
 
-Pushing a `vX.Y.Z` tag triggers `.github/workflows/release.yml`, which verifies the tag matches `package.json`, extracts that version's section from `CHANGELOG.md` via `scripts/release-notes.sh`, and publishes the Release. Write the changelog entry *before* tagging — the Release notes come from it.
+Pushing a `vX.Y.Z` tag triggers `.github/workflows/release.yml`, which verifies the tag matches `package.json`, extracts that version's section from `CHANGELOG.md` via `scripts/release-notes.sh`, publishes the Release, then publishes the package to npm from a clean checkout of the tag (skipped if that version is already on npm). Do not run `npm publish` by hand. The npm step needs the `NPM_TOKEN` repository secret: an npm token that can publish `@drafthq/draft` without a one-time password. Write the changelog entry *before* tagging — the Release notes come from it.
 
 Preview what a Release will say:
 

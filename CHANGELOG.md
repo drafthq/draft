@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **A release tag push now publishes to npm.** `.github/workflows/release.yml`
+  runs `npm publish` after the GitHub Release, from a clean checkout of the
+  tag, and skips a version already on npm. The manual step it replaces was
+  missed for 5.0.0 and 5.0.2, and a hand publish from a working checkout could
+  ship untracked build leftovers. A manual re-run for an old tag still only
+  refreshes the GitHub Release. Needs the `NPM_TOKEN` repository secret.
+
 ## [5.0.3] - 2026-10-07
 
 ### Fixed
