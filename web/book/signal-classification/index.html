@@ -385,7 +385,7 @@
     </div>
 
     <h2>Signal-to-Context Mapping</h2>
-    <p>Signals do not just determine section depth in <code>architecture.md</code>. They flow through the entire context pipeline. When architecture is condensed into <code>.ai-context.md</code>, sections that received deep treatment produce more detailed entries. Sections that were skipped are absent from the condensed output. This means the 200-400 line AI context file is automatically tuned to your project's actual architectural concerns.</p>
+    <p>Signals do not just determine section depth in <code>architecture.md</code>. They flow through the entire context pipeline. When architecture is condensed into <code>.ai-context.md</code>, sections that received deep treatment produce more detailed entries. Sections that were skipped are absent from the condensed output. This means the AI context file (100-900 lines, scaled to repo size) is automatically tuned to your project's actual architectural concerns.</p>
 
     <p>The signal state is also persisted to <code>draft/.state/signals.json</code> for incremental refresh tracking. On subsequent runs of <code>/draft:init refresh</code>, Draft re-classifies signals and compares against the stored baseline:</p>
 

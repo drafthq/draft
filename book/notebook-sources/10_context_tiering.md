@@ -26,7 +26,7 @@ When.ai-profile.mddoes not exist, Draft skips Tier 0 and proceeds directly to lo
 
 ## Tier 1: The AI Context
 
-The filedraft/.ai-context.mdis the working memory of the system. At 200 to 400 lines, it is token-optimized and self-contained: module boundaries, dependencies, invariants, interface contracts, data flows, error handling patterns, concurrency rules, implementation catalogs, extension cookbooks, testing strategy, and a project glossary. It is loaded for most tasks — any command that modifies code or analyzes quality.
+The filedraft/.ai-context.mdis the working memory of the system. At 100 to 900 lines, scaled to the size of the repo, it is token-optimized and self-contained: module boundaries, dependencies, invariants, interface contracts, data flows, error handling patterns, concurrency rules, implementation catalogs, extension cookbooks, testing strategy, and a project glossary. It is loaded for most tasks — any command that modifies code or analyzes quality.
 
 This file isderivedfromarchitecture.md, not written directly. Draft's condensation subroutine compresses the full engineering reference into a format designed for AI consumption: terse headings, structured sections, no prose where a table will do.
 

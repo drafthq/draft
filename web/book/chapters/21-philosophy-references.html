@@ -212,7 +212,7 @@
     <p>Draft's current architecture treats context as static documents that are loaded at invocation time. The methodology works because those documents are comprehensive enough to constrain most decisions. But the trajectory points toward richer context systems:</p>
 
     <ul>
-        <li><strong>Tiered context loading</strong> &mdash; Draft already implements three tiers (<code>.ai-profile.md</code> at 20-50 lines, <code>.ai-context.md</code> at 200-400 lines, <code>architecture.md</code> at full size). Future iterations may add relevance scoring that loads only the sections needed for a specific task.</li>
+        <li><strong>Tiered context loading</strong> &mdash; Draft already implements three tiers (<code>.ai-profile.md</code> at 20-50 lines, <code>.ai-context.md</code> at 100-900 lines scaled to repo size, <code>architecture.md</code> at full size). Future iterations may add relevance scoring that loads only the sections needed for a specific task.</li>
         <li><strong>Cross-session memory</strong> &mdash; Draft's <code>.state/run-memory.json</code> already provides continuity data across sessions. The natural extension is richer state that captures what was tried, what failed, and what patterns were learned during development.</li>
         <li><strong>Team-scale context</strong> &mdash; Scope-aware <code>/draft:init</code> federates sub-modules into a unified system view via <code>root-link.json</code>. Future work may extend this to team-level conventions, cross-team dependency negotiation, and organizational standards enforcement.</li>
     </ul>

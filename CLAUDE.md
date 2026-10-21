@@ -173,7 +173,7 @@ Always produced (mode-independent):
 
 Packaging differs by mode:
 
-- **`monolith`** (tier 1–2 default) — **`architecture.md`** is the source of truth (10-section graph-primary reference with Mermaid); **`.ai-context.md`** is the token-optimized 200-400 line AI context derived from it.
+- **`monolith`** (tier 1–2 default) — **`architecture.md`** is the source of truth (10-section graph-primary reference with Mermaid); **`.ai-context.md`** is the token-optimized AI context derived from it, sized by repo tier (100–900 lines).
 - **`okf`** (tier 3+ default) — **`wiki/`** is the source of truth (OKF concept taxonomy, one concept per file); **`.ai-context.md`** is the index root (Synopsis + Concept Map); **`architecture.md`** is a generated rendered view of the bundle; **`wiki/web/index.html`** is an optional offline viewer. See `skills/init/references/okf-emitter.md`.
 
 Status markers in tracks: `[ ]` Pending, `[~]` In Progress, `[x]` Completed, `[!]` Blocked

@@ -1131,7 +1131,7 @@ The graph is symmetric (root spine + per-module snapshots, linked); only the **p
 
 **Authoritative procedure:** [core/shared/condensation.md](../../core/shared/condensation.md). Git state lives in `draft/metadata.json` only — do not copy `git.*` into `.ai-context.md` frontmatter.
 
-Generate `draft/.ai-context.md` — a **machine-optimized** context file for AI/LLM consumption (200-400 lines).
+Generate `draft/.ai-context.md` — a **machine-optimized** context file for AI/LLM consumption (`monolith` mode: line budget set by the repo tier from Step 1.4.5, 100-900 lines, or 180-280 when no graph is available per `core/shared/condensation.md`; in `okf` mode the index root's synopsis is 150-250 lines per `references/okf-emitter.md`).
 
 ### Design Principles
 
@@ -1406,7 +1406,7 @@ Verify before writing:
 - [ ] Agent knows V1/V2 boundary (if applicable)
 - [ ] No prose paragraphs (all structured data)
 - [ ] No references to architecture.md
-- [ ] 200-400 lines total
+- [ ] Line count within the tier budget (`monolith`: Step 1.4.5 table, 100-900 lines; 180-280 without a graph per `core/shared/condensation.md`. `okf`: synopsis 150-250 lines per `references/okf-emitter.md`)
 
 ---
 
@@ -1820,7 +1820,7 @@ Created:
 
 - draft/index.md (plain docs index — navigable table of contents for the draft/ bundle)
 - draft/.ai-profile.md (20-50 lines — ultra-compact always-injected profile, Tier 0)
-- draft/.ai-context.md (200-400 lines — token-optimized AI context, self-contained, Tier 1)
+- draft/.ai-context.md (100-900 lines scaled to repo size — token-optimized AI context, self-contained, Tier 1)
 - draft/architecture.md (comprehensive human-readable engineering reference, Tier 2)
 - draft/product.md
 - draft/tech-stack.md

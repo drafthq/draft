@@ -20,7 +20,7 @@
                 <polygon points="280,75 440,75 500,145 220,145" fill="#7c3aed" filter="url(#shadow4)"/>
                 <text x="360" y="117" text-anchor="middle" fill="#fff" font-size="12" font-weight="700">Tier 1</text>
                 <text x="520" y="105" fill="#7c3aed" font-size="11" font-weight="600">.ai-context.md</text>
-                <text x="520" y="120" fill="#718096" font-size="10">200-400 lines | Most tasks</text>
+                <text x="520" y="120" fill="#718096" font-size="10">100-900 lines | Most tasks</text>
                 <text x="520" y="135" fill="#718096" font-size="10">Relevance-scored sections</text>
                 <!-- Tier 2 (bottom, largest) -->
                 <polygon points="220,150 500,150 570,220 150,220" fill="#059669" filter="url(#shadow4)"/>
@@ -39,7 +39,7 @@
     <p>Draft organizes your project context into three tiers, each optimized for a different level of task complexity:</p>
 
     <pre><code>Tier 0: .ai-profile.md     (20-50 lines)   — Always loaded. RAM-equivalent.
-Tier 1: .ai-context.md     (200-400 lines) — Loaded for most tasks. Working memory.
+Tier 1: .ai-context.md     (100-900 lines) — Loaded for most tasks. Working memory.
 Tier 2: architecture.md    (full document)  — Loaded for deep analysis. Long-term storage.
         .state/facts.json  (atomic facts)   — Queried by relevance. Fact-level precision.</code></pre>
 
@@ -81,7 +81,7 @@ Build: `npm run build` | Test: `npm test` | Lint: `npm run lint`
     <p>When <code>.ai-profile.md</code> does not exist, Draft skips Tier 0 and proceeds directly to loading Tier 1 context. No crash, no error &mdash; graceful degradation.</p>
 
     <h2>Tier 1: The AI Context</h2>
-    <p>The file <code>draft/.ai-context.md</code> is the working memory of the system. At 200 to 400 lines, it is token-optimized and self-contained: module boundaries, dependencies, invariants, interface contracts, data flows, error handling patterns, concurrency rules, implementation catalogs, extension cookbooks, testing strategy, and a project glossary. It is loaded for most tasks &mdash; any command that modifies code or analyzes quality.</p>
+    <p>The file <code>draft/.ai-context.md</code> is the working memory of the system. At 100 to 900 lines, scaled to the size of the repo, it is token-optimized and self-contained: module boundaries, dependencies, invariants, interface contracts, data flows, error handling patterns, concurrency rules, implementation catalogs, extension cookbooks, testing strategy, and a project glossary. It is loaded for most tasks &mdash; any command that modifies code or analyzes quality.</p>
 
     <p>This file is <strong>derived</strong> from <code>architecture.md</code>, not written directly. Draft's condensation subroutine compresses the full engineering reference into a format designed for AI consumption: terse headings, structured sections, no prose where a table will do.</p>
 

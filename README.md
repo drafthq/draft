@@ -231,7 +231,7 @@ AI tools are fast but unstructured. Draft applies Context-Driven Development to 
 product.md       →  "Build a task manager"
 tech-stack.md    →  "React, TypeScript, Tailwind"
 architecture.md  →  Comprehensive: 10-section graph-primary engineering reference, Mermaid diagrams (source of truth). Mature brownfield projects with strong existing agent docs (CLAUDE.md, INVARIANTS.md, etc.) receive early Context Quality Audit, graph fidelity dashboard, and explicit Relationship + Gaps sections (no blind duplication).
-.ai-context.md   →  200-400 lines: condensed from architecture.md (token-optimized AI context)
+.ai-context.md   →  100-900 lines (scaled to repo size): condensed from architecture.md (token-optimized AI context)
 .state/          →  freshness hashes, signal classification, run memory (incremental refresh)
 spec.md          →  "Add drag-and-drop reordering"
 plan.md          →  "Phase 1: sortable, Phase 2: persist"

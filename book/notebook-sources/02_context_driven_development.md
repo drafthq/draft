@@ -36,7 +36,7 @@ The source of truth. A comprehensive 10-section engineering reference generated 
 
 What it locks in:module boundaries, interaction contracts, data flow patterns, invariants. The AI cannot violate your architecture because the architecture is explicitly documented with every component, every interface, and every constraint.
 
-architecture.mdis the primary artifact — comprehensive, human-readable, designed for engineers. From it, Draft derives two token-optimized documents:.ai-context.md(200-400 lines for AI consumption) and.ai-profile.md(20-50 lines, always loaded). The source of truth is never the condensed version.
+architecture.mdis the primary artifact — comprehensive, human-readable, designed for engineers. From it, Draft derives two token-optimized documents:.ai-context.md(100-900 lines, scaled to repo size, for AI consumption) and.ai-profile.md(20-50 lines, always loaded). The source of truth is never the condensed version.
 
 ### spec.md — What (Specific)
 
@@ -62,7 +62,7 @@ Think of it as the AI equivalent of a developer's muscle memory — the things y
 
 ### Tier 1: Working Memory
 
-.ai-context.mdis a 200-400 line token-optimized document derived fromarchitecture.md. It contains 15+ mandatory sections: architecture overview, invariants, interface contracts, data flows, concurrency rules, error handling patterns, implementation catalogs, extension cookbooks, testing strategy, and a glossary. It is loaded for any task that involves writing or modifying code.
+.ai-context.mdis a 100-900 line token-optimized document (scaled to repo size) derived fromarchitecture.md. It contains 15+ mandatory sections: architecture overview, invariants, interface contracts, data flows, concurrency rules, error handling patterns, implementation catalogs, extension cookbooks, testing strategy, and a glossary. It is loaded for any task that involves writing or modifying code.
 
 This is where the AI gets enough context to make correct decisions without the full weight of the architecture document.
 

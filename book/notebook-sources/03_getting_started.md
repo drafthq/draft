@@ -100,7 +100,7 @@ Every section uses real data from your codebase — actual code snippets, real m
 
 ### .ai-context.md (Token-Optimized AI Context)
 
-A 200-400 line document derived fromarchitecture.md. It contains 15+ mandatory sections condensed for AI consumption: architecture overview, invariants, interface contracts, data flows, concurrency rules, error handling patterns, implementation catalogs, extension cookbooks, testing strategy, and glossary. This is what Draft commands load when implementing features.
+A 100-900 line document (scaled to repo size) derived fromarchitecture.md. It contains 15+ mandatory sections condensed for AI consumption: architecture overview, invariants, interface contracts, data flows, concurrency rules, error handling patterns, implementation catalogs, extension cookbooks, testing strategy, and glossary. This is what Draft commands load when implementing features.
 
 ### .ai-profile.md (Always-On Profile)
 

@@ -344,7 +344,7 @@ plan.md             &rarr;  "Phase 1: sortable list, Phase 2: persistence"</code
 
     <div class="callout callout-concept">
         <div class="callout-title">Source of Truth vs. Derived Documents</div>
-        <p><code>architecture.md</code> is the primary artifact &mdash; comprehensive, human-readable, designed for engineers. From it, Draft derives two token-optimized documents: <code>.ai-context.md</code> (200-400 lines for AI consumption) and <code>.ai-profile.md</code> (20-50 lines, always loaded). The source of truth is never the condensed version.</p>
+        <p><code>architecture.md</code> is the primary artifact &mdash; comprehensive, human-readable, designed for engineers. From it, Draft derives two token-optimized documents: <code>.ai-context.md</code> (100-900 lines, scaled to repo size, for AI consumption) and <code>.ai-profile.md</code> (20-50 lines, always loaded). The source of truth is never the condensed version.</p>
     </div>
 
     <h3>spec.md &mdash; What (Specific)</h3>
@@ -359,7 +359,7 @@ plan.md             &rarr;  "Phase 1: sortable list, Phase 2: persistence"</code
     <p>Not every task needs every document. Loading full architecture documentation to fix a typo wastes tokens and increases the chance of hallucination. Draft uses a three-tier context system inspired by computer memory architecture:</p>
 
     <pre><code>Tier 0: .ai-profile.md     (20-50 lines)    &mdash; Always loaded. RAM equivalent.
-Tier 1: .ai-context.md     (200-400 lines)  &mdash; Loaded for most tasks. Working memory.
+Tier 1: .ai-context.md     (100-900 lines)  &mdash; Loaded for most tasks. Working memory.
 Tier 2: architecture.md    (full document)   &mdash; Loaded for deep analysis. Long-term storage.</code></pre>
 
     <h3>Tier 0: The Always-On Profile</h3>
@@ -367,7 +367,7 @@ Tier 2: architecture.md    (full document)   &mdash; Loaded for deep analysis. L
     <p>Think of it as the AI equivalent of a developer's muscle memory &mdash; the things you know about a project without having to look them up.</p>
 
     <h3>Tier 1: Working Memory</h3>
-    <p><code>.ai-context.md</code> is a 200-400 line token-optimized document derived from <code>architecture.md</code>. It contains 15+ mandatory sections: architecture overview, invariants, interface contracts, data flows, concurrency rules, error handling patterns, implementation catalogs, extension cookbooks, testing strategy, and a glossary. It is loaded for any task that involves writing or modifying code.</p>
+    <p><code>.ai-context.md</code> is a 100-900 line token-optimized document (scaled to repo size) derived from <code>architecture.md</code>. It contains 15+ mandatory sections: architecture overview, invariants, interface contracts, data flows, concurrency rules, error handling patterns, implementation catalogs, extension cookbooks, testing strategy, and a glossary. It is loaded for any task that involves writing or modifying code.</p>
     <p>This is where the AI gets enough context to make correct decisions without the full weight of the architecture document.</p>
 
     <h3>Tier 2: Long-Term Storage</h3>

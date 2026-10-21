@@ -159,7 +159,7 @@ Draft solves this through Context-Driven Development: structured documents that 
 product.md          → "Build a task manager for developers"
 tech-stack.md       → "Use React, TypeScript, Tailwind"
 architecture.md     → "Express API → Service layer → Prisma ORM → PostgreSQL"
-  .ai-context.md    → Token-optimized condensed version (200-400 lines)
+  .ai-context.md    → Token-optimized condensed version (100-900 lines, scaled to repo size)
   .ai-profile.md    → Ultra-compact always-on profile (20-50 lines)
 spec.md             → "Add drag-and-drop reordering"
 plan.md             → "Phase 1: sortable list, Phase 2: persistence"
@@ -169,7 +169,7 @@ Each layer narrows the solution space. By the time AI writes code, most decision
 ### Context Tiering
 Three-tier context system inspired by memory architecture:
 - **Layer 0: .ai-profile.md** (20-50 lines) — Always loaded. RAM-equivalent.
-- **Layer 1: .ai-context.md** (200-400 lines) — Loaded for most tasks. Working memory.
+- **Layer 1: .ai-context.md** (100-900 lines, scaled to repo size) — Loaded for most tasks. Working memory.
 - **Layer 2: architecture.md** (full document) — Loaded for deep analysis. Long-term storage.
 
 Simple tasks only need Layer 0. Implementation tasks load Layer 0 + relevant sections of Layer 1. Deep reviews access all layers.
@@ -181,7 +181,7 @@ When users run `/draft:init`, it creates a `draft/` directory in their project:
 ```
 draft/
   architecture.md       — Graph-primary high-signal engineering reference (10 focused sections: Graph Health & Fidelity Dashboard first, Critical Invariants with provenance, Core Flows & State Machines, Module/Dependency Map, Concurrency/Ownership, Error & Failure Catalog, Data Truth Sources, Extension Patterns, Coverage Gaps, Relationship to Other Docs). Graph is the structural spine; explicit fidelity declarations and provenance on all claims.
-  .ai-context.md        — Token-optimized 200-400 line AI context (derived from architecture.md)
+  .ai-context.md        — Token-optimized AI context, 100-900 lines by repo size (derived from architecture.md)
   .ai-profile.md        — Ultra-compact 20-50 line always-injected profile
   product.md            — Users, goals, success criteria, guidelines
   tech-stack.md         — Languages, frameworks, patterns, accepted dependencies

@@ -66,7 +66,7 @@ Draft solves this through **Context-Driven Development**: structured documents t
 | `tech-stack.md` | Languages, frameworks, patterns, accepted patterns | AI introducing random dependencies |
 | `architecture.md` | **Graph-primary source of truth.** Focused high-signal engineering reference (Graph Health & Fidelity Dashboard first, then 9 critical sections with explicit provenance/fidelity tags, coverage gaps, and relationship to existing high-quality docs). | Engineers needing onboarding documentation |
 | `.ai-profile.md` | **Derived from .ai-context.md.** 20-50 lines, ultra-compact always-injected project profile. Contains: language, framework, database, auth, API style, critical invariants, safety rules, active tracks, recent changes. Auto-refreshed on mutations. | AI needing full context for simple tasks |
-| `.ai-context.md` | **Derived from architecture.md via condensation.** 200-400 lines, token-optimized, self-contained AI context. Pulls core operational models, invariants with provenance, graph-derived structures, and extension patterns. Auto-refreshed on mutations. | AI re-analyzing codebase every session |
+| `.ai-context.md` | **Derived from architecture.md via condensation.** 100-900 lines scaled to repo size, token-optimized, self-contained AI context. Pulls core operational models, invariants with provenance, graph-derived structures, and extension patterns. Auto-refreshed on mutations. | AI re-analyzing codebase every session |
 | `workflow.md` | TDD preference, commit style, review process | AI skipping tests or making giant commits |
 | `guardrails.md` | Hard guardrails, learned conventions, learned anti-patterns. Entries include dual-layer timestamps (`discovered_at`, `established_at`, `last_verified_at`, `last_active_at`) for temporal reasoning. | AI repeating false positives or missing known-bad patterns |
 | `spec.md` | Acceptance criteria for a specific track | Scope creep, gold-plating |
@@ -96,7 +96,7 @@ Draft uses a layered context system inspired by memory tiering — see `core/sha
 
 ```text
 Layer 0: .ai-profile.md (20-50 lines) — Always loaded. Minimum project context.
-Layer 1: .ai-context.md (200-400 lines) — Base context: boundaries, invariants, flows.
+Layer 1: .ai-context.md (100-900 lines, scaled to repo size) — Base context: boundaries, invariants, flows.
 Layer 1.5: draft/graph/*.jsonl — Structural graph (when available).
 Layer 2: draft/.state/facts.json — Fact-level precision (queried by relevance).
 ```
@@ -355,7 +355,7 @@ Located in `draft/` of the target project:
 | `product.md` | Product vision, users, goals, guidelines (optional section) |
 | `tech-stack.md` | Languages, frameworks, patterns, accepted patterns |
 | `architecture.md` | **Graph-primary source of truth.** Focused high-signal reference (Graph Health & Fidelity Dashboard + 9 critical sections with provenance/fidelity tags, gaps, and relationship to existing docs). |
-| `.ai-context.md` | **Derived via condensation.** 200-400 lines, token-optimized AI context pulling operational models, invariants with provenance, and graph structures from the primary architecture.md. |
+| `.ai-context.md` | **Derived via condensation.** 100-900 lines scaled to repo size, token-optimized AI context pulling operational models, invariants with provenance, and graph structures from the primary architecture.md. |
 | `workflow.md` | TDD preferences, commit strategy, validation config |
 | `guardrails.md` | Hard guardrails, learned conventions, learned anti-patterns |
 | `jira.md` | Jira project configuration (optional) |
@@ -430,7 +430,7 @@ Draft auto-classifies the project:
 
    **Phase 5: Synthesis** — Cross-reference, completeness validation, pattern identification, diagram generation.
 
-   This produces `draft/architecture.md` (comprehensive human-readable reference), `draft/.ai-context.md` (200-400 line token-optimized context), and `draft/.ai-profile.md` (20-50 line ultra-compact always-on profile). All three become persistent context — every future track references them instead of re-analyzing the codebase.
+   This produces `draft/architecture.md` (comprehensive human-readable reference), `draft/.ai-context.md` (token-optimized context, 100-900 lines scaled to repo size), and `draft/.ai-profile.md` (20-50 line ultra-compact always-on profile). All three become persistent context — every future track references them instead of re-analyzing the codebase.
 
 3. **Fact extraction** — Extracts atomic architectural facts into `draft/.state/facts.json` with dual-layer timestamps (`discovered_at`, `established_at`, `last_verified_at`, `last_active_at`), relationship edges (`updates`, `extends`, `derives`), and per-fact confidence scoring. Enables granular change tracking and contradiction detection on refresh.
 

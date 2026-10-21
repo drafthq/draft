@@ -224,7 +224,7 @@
                 <text x="180" y="30" fill="#2563eb" font-size="14" font-weight="700">draft/</text>
                 <!-- Main files -->
                 <text x="200" y="52" fill="#718096" font-size="12">&#9500;&#9472;</text><text x="220" y="52" fill="#1a1a2e" font-size="12" font-weight="600">architecture.md</text><text x="395" y="52" fill="#718096" font-size="10">Graph-primary (fidelity first)</text>
-                <text x="200" y="72" fill="#718096" font-size="12">&#9500;&#9472;</text><text x="220" y="72" fill="#1a1a2e" font-size="12">.ai-context.md</text><text x="395" y="72" fill="#718096" font-size="10">Token-optimized (200-400 lines)</text>
+                <text x="200" y="72" fill="#718096" font-size="12">&#9500;&#9472;</text><text x="220" y="72" fill="#1a1a2e" font-size="12">.ai-context.md</text><text x="395" y="72" fill="#718096" font-size="10">Token-optimized (100-900 lines)</text>
                 <text x="200" y="92" fill="#718096" font-size="12">&#9500;&#9472;</text><text x="220" y="92" fill="#1a1a2e" font-size="12">.ai-profile.md</text><text x="395" y="92" fill="#718096" font-size="10">Always loaded (20-50 lines)</text>
                 <text x="200" y="112" fill="#718096" font-size="12">&#9500;&#9472;</text><text x="220" y="112" fill="#1a1a2e" font-size="12">product.md</text><text x="395" y="112" fill="#718096" font-size="10">Vision, users, goals</text>
                 <text x="200" y="132" fill="#718096" font-size="12">&#9500;&#9472;</text><text x="220" y="132" fill="#1a1a2e" font-size="12">tech-stack.md</text><text x="395" y="132" fill="#718096" font-size="10">Languages, frameworks, patterns</text>
@@ -433,7 +433,7 @@ $ curl -o .gemini.md https://raw.githubusercontent.com/drafthq/draft/main/integr
     </div>
 
     <h3>.ai-context.md (Token-Optimized AI Context)</h3>
-    <p>A 200-400 line document derived from <code>architecture.md</code>. It contains 15+ mandatory sections condensed for AI consumption: architecture overview, invariants, interface contracts, data flows, concurrency rules, error handling patterns, implementation catalogs, extension cookbooks, testing strategy, and glossary. This is what Draft commands load when implementing features.</p>
+    <p>A 100-900 line document (scaled to repo size) derived from <code>architecture.md</code>. It contains 15+ mandatory sections condensed for AI consumption: architecture overview, invariants, interface contracts, data flows, concurrency rules, error handling patterns, implementation catalogs, extension cookbooks, testing strategy, and glossary. This is what Draft commands load when implementing features.</p>
 
     <h3>.ai-profile.md (Always-On Profile)</h3>
     <p>A 20-50 line ultra-compact profile that is injected into every AI interaction. Contains: language, framework, database, auth mechanism, API style, critical invariants, safety rules, active tracks, and recent changes. Even a simple task like "fix this typo" gets basic project awareness.</p>
@@ -472,7 +472,7 @@ $ curl -o .gemini.md https://raw.githubusercontent.com/drafthq/draft/main/integr
         <div class="callout-title">The draft/ Directory</div>
         <pre><code>draft/
 &boxvr;&boxh; architecture.md      # 10-section graph-primary engineering reference (source of truth)
-&boxvr;&boxh; .ai-context.md       # 200-400 lines, token-optimized (derived)
+&boxvr;&boxh; .ai-context.md       # 100-900 lines, token-optimized (derived)
 &boxvr;&boxh; .ai-profile.md       # 20-50 lines, always loaded (derived)
 &boxvr;&boxh; product.md           # Product vision and goals
 &boxvr;&boxh; tech-stack.md        # Languages, frameworks, patterns

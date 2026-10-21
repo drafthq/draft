@@ -68,7 +68,7 @@ Signal classification integrates with the Adaptive Sections system. If your code
 
 ## Signal-to-Context Mapping
 
-Signals do not just determine section depth inarchitecture.md. They flow through the entire context pipeline. When architecture is condensed into.ai-context.md, sections that received deep treatment produce more detailed entries. Sections that were skipped are absent from the condensed output. This means the 200-400 line AI context file is automatically tuned to your project's actual architectural concerns.
+Signals do not just determine section depth inarchitecture.md. They flow through the entire context pipeline. When architecture is condensed into.ai-context.md, sections that received deep treatment produce more detailed entries. Sections that were skipped are absent from the condensed output. This means the AI context file (100-900 lines, scaled to repo size) is automatically tuned to your project's actual architectural concerns.
 
 The signal state is also persisted todraft/.state/signals.jsonfor incremental refresh tracking. On subsequent runs of/draft:init refresh, Draft re-classifies signals and compares against the stored baseline:
 

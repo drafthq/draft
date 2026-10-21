@@ -16,6 +16,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ship untracked build leftovers. A manual re-run for an old tag still only
   refreshes the GitHub Release. Needs the `NPM_TOKEN` repository secret.
 
+### Fixed
+
+- **`/draft:init` asked for a 200-400 line `.ai-context.md` while sizing it
+  by tier.** The generate step and the output checklist still said 200-400
+  lines, contradicting the Step 1.4.5 tier table (100-900 lines; 180-280
+  without a graph) that condensation already follows, so a micro or XL repo
+  failed init's own checklist. The methodology, skill, generated
+  integrations, README, website, and book now all describe the tier-scaled
+  budget.
+
 ## [5.0.3] - 2026-10-07
 
 ### Fixed

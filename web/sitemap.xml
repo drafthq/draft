@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
         <loc>https://getdraft.dev/</loc>
-        <lastmod>2026-09-03</lastmod>
+        <lastmod>2026-10-20</lastmod>
         <changefreq>weekly</changefreq>
         <priority>1.0</priority>
     </url>
@@ -92,13 +92,13 @@
     </url>
     <url>
         <loc>https://getdraft.dev/book/context-driven-development/</loc>
-        <lastmod>2026-09-03</lastmod>
+        <lastmod>2026-10-20</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
     <url>
         <loc>https://getdraft.dev/book/getting-started/</loc>
-        <lastmod>2026-09-03</lastmod>
+        <lastmod>2026-10-20</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.8</priority>
     </url>
@@ -140,7 +140,7 @@
     </url>
     <url>
         <loc>https://getdraft.dev/book/context-tiering/</loc>
-        <lastmod>2026-09-03</lastmod>
+        <lastmod>2026-10-20</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
@@ -152,7 +152,7 @@
     </url>
     <url>
         <loc>https://getdraft.dev/book/signal-classification/</loc>
-        <lastmod>2026-09-03</lastmod>
+        <lastmod>2026-10-20</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.6</priority>
     </url>
@@ -206,7 +206,7 @@
     </url>
     <url>
         <loc>https://getdraft.dev/book/philosophy-references/</loc>
-        <lastmod>2026-09-03</lastmod>
+        <lastmod>2026-10-20</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.5</priority>
     </url>
@@ -218,7 +218,7 @@
     </url>
     <url>
         <loc>https://getdraft.dev/book/file-reference/</loc>
-        <lastmod>2026-09-03</lastmod>
+        <lastmod>2026-10-20</lastmod>
         <changefreq>monthly</changefreq>
         <priority>0.7</priority>
     </url>
