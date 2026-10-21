@@ -30,7 +30,7 @@
       "headline": "I Replaced Kiro With a Free Plugin — Here's What Happened",
       "description": "Amazon's Kiro and Draft both solve the same problem. The similarities end there. The honest comparison.",
       "datePublished": "2026-04-20",
-      "dateModified": "2026-04-20",
+      "dateModified": "2026-10-21",
       "url": "https://getdraft.dev/blog/replaced-kiro-with-free-plugin/",
       "author": { "@type": "Person", "name": "Mayur Pise", "url": "https://github.com/mayurpise" },
       "publisher": { "@type": "Organization", "name": "Draft", "url": "https://getdraft.dev" },
@@ -111,6 +111,7 @@
             </header>
 
             <div class="post-body">
+                <blockquote><strong>Updated October 2026.</strong> Kiro has shipped a lot since this was written. It is generally available with a free tier, runs as a CLI and a web app as well as the IDE, connects to JetBrains and Zed over ACP, and has added subagents and property-based tests generated from specs. The pricing, lock-in, and codebase-analysis sections below are corrected to match, along with Draft's own <code>architecture.md</code> and <code>.ai-context.md</code> sizes.</blockquote>
                 <h2>The Problem Both Tools Solve</h2>
                 <p>If you've used Cursor, Copilot, or Claude Code for anything beyond a toy project, you know the pattern:</p>
                 <ol>
@@ -130,7 +131,7 @@
                     <li><strong>Autopilot mode</strong> &mdash; runs multi-step tasks without per-step confirmation</li>
                     <li><strong>Agent hooks</strong> &mdash; file save triggers auto-testing, auto-docs, credential scanning</li>
                     <li><strong>Visual IDE</strong> &mdash; it's a VS Code fork with integrated visual diffs and multimodal chat</li>
-                    <li><strong>Bidirectional spec sync</strong> &mdash; edit code and specs update; edit specs and tasks regenerate</li>
+                    <li><strong>Spec sync</strong> &mdash; after you edit specs or code, one Sync Files action refreshes the task list and marks finished tasks complete</li>
                 </ul>
                 <p>If you want a polished IDE experience with real-time automation, Kiro delivers. It's a good product.</p>
                 <p>But when I dug into what I actually need for production work &mdash; brownfield codebases, enterprise requirements, team workflows &mdash; the gaps became clear.</p>
@@ -138,7 +139,7 @@
                 <h2>What Made Me Switch</h2>
 
                 <h3>1. No Bug Hunting</h3>
-                <p>Kiro doesn't have a standalone bug hunting capability. You can ask the chat to "find bugs," but that's ad-hoc prompting &mdash; not systematic analysis.</p>
+                <p>Kiro doesn't have a standalone bug hunting capability. You can ask the chat to "find bugs," but that's ad-hoc prompting &mdash; not systematic analysis. Its Bugfix Specs start from a bug you already know about, and its property-based tests check code against the spec; neither goes looking for bugs you haven't found.</p>
                 <p>Draft's <code>/draft:bughunt</code> analyzes code across <strong>14 dimensions</strong>: correctness, reliability, security, performance, UI responsiveness, concurrency, state management, API contracts, accessibility, configuration, tests, dependency/supply chain security, algorithmic complexity, and i18n/l10n. Each finding has a severity level, confidence score, file:line location, and suggested fix. It generates regression tests.</p>
                 <p>This isn't a nice-to-have. On my last project, bughunt caught a race condition in a payment processing service that would have caused double-charges under concurrent requests. That single catch paid for the time I spent setting up Draft.</p>
 
@@ -165,8 +166,8 @@
 
                 <h3>4. No Architecture Discovery</h3>
                 <p>This is the biggest gap.</p>
-                <p>When you point Kiro at an existing codebase, it generates a design doc with data flows and interfaces. Useful, but shallow.</p>
-                <p>Draft's <code>/draft:init</code> performs a <strong>5-phase deep analysis</strong> that produces a 30-45 page <code>architecture.md</code> with:</p>
+                <p>When you point Kiro at an existing codebase, it can generate three steering docs (<code>product.md</code>, <code>tech.md</code>, <code>structure.md</code>), and each feature spec gets a design doc with data flows and interfaces. Useful, but shallow.</p>
+                <p>Draft's <code>/draft:init</code> performs a <strong>5-phase deep analysis</strong> that produces a 10-section <code>architecture.md</code> with:</p>
                 <ul>
                     <li>Mermaid diagrams of actual system structure</li>
                     <li>Data state machines per domain object</li>
@@ -175,10 +176,10 @@
                     <li>Critical invariants with enforcement locations</li>
                     <li>Extension cookbooks ("how to add a new endpoint" &mdash; file by file)</li>
                 </ul>
-                <p>From this, it derives <code>.ai-context.md</code> &mdash; a 200-400 line, token-optimized file that any AI tool can consume. <strong>One file gives the AI complete system understanding.</strong> No more spending 50+ file reads per session re-discovering your architecture.</p>
+                <p>From this, it derives <code>.ai-context.md</code> &mdash; a token-optimized file sized to the repo (100-900 lines by tier) that any AI tool can consume. <strong>One file gives the AI complete system understanding.</strong> No more spending 50+ file reads per session re-discovering your architecture.</p>
 
-                <h3>5. IDE Lock-in</h3>
-                <p>Kiro is a VS Code fork. To use it, you adopt a new IDE. Your existing VS Code extensions might work, but you're now dependent on Amazon maintaining compatibility.</p>
+                <h3>5. Platform Lock-in</h3>
+                <p>Kiro started as a VS Code fork. It now also runs as a CLI, as a web app, and inside JetBrains and Zed over ACP &mdash; but every one of those surfaces runs Kiro's agent on a Kiro plan. Switching AI vendors still means leaving Kiro.</p>
                 <p>Draft is a plugin. It runs inside:</p>
                 <ul>
                     <li><strong>Claude Code</strong> &mdash; native plugin, 30-second install</li>
@@ -191,7 +192,7 @@
                 <p>Switch AI tools anytime. Your specs, plans, and architecture docs are plain markdown in your repo. They go with you.</p>
 
                 <h3>6. The Price</h3>
-                <p>Kiro is in free preview now, but the pricing is published: <strong>$19/mo (Pro)</strong> or <strong>$39/mo (Pro+)</strong>.</p>
+                <p>Kiro is generally available with a free tier of 50 credits, then <strong>$20/mo (Pro)</strong>, <strong>$40/mo (Pro+)</strong>, <strong>$100/mo (Pro Max)</strong>, or <strong>$200/mo (Power)</strong>. Extra credits are $0.04 each.</p>
                 <p>Draft is <strong>free</strong>. MIT licensed. Open source. The only cost is the host tool you're already paying for (Claude Code, Copilot, etc.).</p>
 
                 <h2>What I Lost</h2>
@@ -238,7 +239,7 @@ npx @drafthq/draft install claude-code
 # Point it at your existing codebase:
 /draft:init
 
-# Watch it generate architecture.md — a 30-45 page
+# Watch it generate architecture.md — a 10-section
 # analysis of how your system actually works.
 
 # Then run:

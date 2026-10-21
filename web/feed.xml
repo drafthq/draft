@@ -58,7 +58,7 @@
     <item>
       <title>The Tool Tax: How Claude Code, Cursor, Copilot, and Codex Handle 200 MCP Tools</title>
       <link>https://getdraft.dev/blog/mcp-tool-discovery/</link>
-      <description>Loading every MCP tool schema upfront costs 50-140K tokens and breaks selection accuracy past 30-50 visible tools. The four major coding agents converged on the same architectural pattern -- defer schemas, expand on demand -- but shipped four incompatible implementations. One still hasn't shipped at all. A 2026 field comparison of Claude Code, Cursor, GitHub Copilot, and OpenAI Codex CLI.</description>
+      <description>Loading every MCP tool schema upfront costs 50-140K tokens and breaks selection accuracy past 30-50 visible tools. The four major coding agents converged on the same architectural pattern -- defer schemas, expand on demand -- but shipped four incompatible implementations, each gated on different models. A 2026 field comparison (updated October 2026) of Claude Code, Cursor, GitHub Copilot, and OpenAI Codex CLI.</description>
       <author>mayur@getdraft.dev (Mayur Pise)</author>
       <pubDate>Mon, 11 May 2026 00:00:00 +0000</pubDate>
       <guid>https://getdraft.dev/blog/mcp-tool-discovery/</guid>

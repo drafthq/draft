@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Tool Tax: How Claude Code, Cursor, Copilot, and Codex Handle 200 MCP Tools — Draft Blog</title>
-    <meta name="description" content="A comparative look at dynamic MCP tool discovery across the four major coding agents in 2026. Same architectural pattern, four incompatible implementations, and one outlier still paying the full token bill on every turn.">
+    <meta name="description" content="A comparative look at dynamic MCP tool discovery across the four major coding agents in 2026. Same architectural pattern, four incompatible implementations, and defaults that depend on which model you run.">
     <meta name="author" content="Mayur Pise">
     <meta name="theme-color" content="#06080e">
     <meta name="keywords" content="mcp, model context protocol, claude code, cursor, github copilot, codex cli, tool discovery, tool search, virtual tools, dynamic context discovery, tool tax, agent context window">
     <meta name="robots" content="index, follow">
     <link rel="icon" type="image/svg+xml" href="../../favicon.svg">
     <meta property="og:title" content="The Tool Tax: How Claude Code, Cursor, Copilot, and Codex Handle 200 MCP Tools">
-    <meta property="og:description" content="Loading every MCP tool schema upfront costs 50–140K tokens. Three agents fixed it. One still hasn't. A 2026 field comparison.">
+    <meta property="og:description" content="Loading every MCP tool schema upfront costs 50–140K tokens. All four major agents now defer schemas on supported models — in four incompatible ways. A 2026 field comparison.">
     <meta property="og:type" content="article">
     <meta property="og:url" content="https://getdraft.dev/blog/mcp-tool-discovery/">
     <meta property="og:image" content="https://getdraft.dev/social-preview.png?v=400">
@@ -30,7 +30,7 @@
       "headline": "The Tool Tax: How Claude Code, Cursor, Copilot, and Codex Handle 200 MCP Tools",
       "description": "A comparative look at dynamic MCP tool discovery across the four major coding agents in 2026.",
       "datePublished": "2026-05-11",
-      "dateModified": "2026-05-11",
+      "dateModified": "2026-10-21",
       "url": "https://getdraft.dev/blog/mcp-tool-discovery/",
       "author": { "@type": "Person", "name": "Mayur Pise", "url": "https://github.com/mayurpise" },
       "publisher": { "@type": "Organization", "name": "Draft", "url": "https://getdraft.dev" },
@@ -107,13 +107,14 @@
             <header class="post-header">
                 <p class="post-meta"><time datetime="2026-05-11">May 11, 2026</time> &middot; 9 min read</p>
                 <h1>The Tool Tax: How Claude Code, Cursor, Copilot, and Codex Handle 200 MCP Tools</h1>
-                <p class="post-deck">The four major coding agents converged on the same architectural pattern for dynamic MCP tool discovery &mdash; and shipped four incompatible implementations. One of them still hasn't shipped at all. Here's what that costs in tokens, latency, and which workloads each agent can actually run.</p>
+                <p class="post-deck">The four major coding agents converged on the same architectural pattern for dynamic MCP tool discovery &mdash; and shipped four incompatible implementations, each gated on different models. Here's what that costs in tokens, latency, and which workloads each agent can actually run.</p>
             </header>
 
             <div class="post-body">
+                <blockquote><strong>Updated October 2026.</strong> Two corrections and a lot of movement since May. Codex CLI was already deferring MCP tools behind <code>tool_search</code> when this was published, and since v0.142 it defers every MCP tool on models that support search. VS Code issue #290356 was closed in January as fixed by virtual tools, and Copilot now uses tool search for Claude 4.5+ (rolling out to GPT-5.4+) and skips its 128-tool check for those models. Claude Code's tool search now covers Haiku 4.5+, gateways, and Vertex AI. On supported models, all four agents now load MCP schemas on demand; the sections below are corrected to match.</blockquote>
                 <h2>The Bottom Line</h2>
-                <p>It is now normal for a developer to wire 5&ndash;15 MCP servers into a coding agent, exposing 100&ndash;300 tools. Loading every tool schema upfront on every turn imposes a steep <strong>tool tax</strong>: 50&ndash;140K tokens of input, slower startup, degraded selection accuracy past ~30&ndash;50 visible tools, and &mdash; for some providers &mdash; hard rejection at 128 tools.</p>
-                <p>Claude Code, Cursor, OpenAI Codex CLI, and GitHub Copilot have all converged on the same architectural shape (defer schemas; load on demand) but ship four different implementations. The pattern is becoming industry standard. The interfaces are not interoperable. And the defaults differ enough to change which workloads each agent can actually handle without manual intervention.</p>
+                <p>It is now normal for a developer to wire 5&ndash;15 MCP servers into a coding agent, exposing 100&ndash;300 tools. Loading every tool schema upfront on every turn imposes a steep <strong>tool tax</strong>: 50&ndash;140K tokens of input, slower startup, degraded selection accuracy past ~30&ndash;50 visible tools, and &mdash; on models without tool search &mdash; hard rejection at Copilot's 128-tool ceiling.</p>
+                <p>Claude Code, Cursor, OpenAI Codex CLI, and GitHub Copilot have all converged on the same architectural shape (defer schemas; load on demand) but ship four different implementations. The pattern is becoming industry standard. The interfaces are not interoperable. And the defaults, and which models get them, differ enough to change which workloads each agent can actually handle without manual intervention.</p>
 
                 <table>
                     <thead>
@@ -127,8 +128,8 @@
                     <tbody>
                         <tr><td>Claude Code</td><td>API-native <code>tool_search_tool</code></td><td>On</td><td>~3&ndash;5K tokens</td></tr>
                         <tr><td>Cursor</td><td>Files synced to disk + grep</td><td>On</td><td>~2&ndash;4K tokens</td></tr>
-                        <tr><td>GitHub Copilot</td><td>"Virtual tools" embedding clusters</td><td>Threshold-gated</td><td>~5&ndash;10K, or fail at 128</td></tr>
-                        <tr><td>Codex CLI</td><td>None (manual allowlists only)</td><td>Eager</td><td>~50K tokens / turn</td></tr>
+                        <tr><td>GitHub Copilot</td><td>Tool search (newer models) + "virtual tools" embedding clusters</td><td>Model-gated; clusters above threshold</td><td>~5&ndash;10K; 128 cap on models without search</td></tr>
+                        <tr><td>Codex CLI</td><td>OpenAI <code>tool_search</code> (deferred MCP tools)</td><td>On for models with search; eager otherwise</td><td>Deferred with search; ~50K / turn without</td></tr>
                     </tbody>
                 </table>
 
@@ -143,18 +144,18 @@
                 <ol>
                     <li><strong>Context displacement.</strong> On a 200K-token window, eager loading consumes 25&ndash;70% of context before the agent reads a single file.</li>
                     <li><strong>Selection accuracy collapse.</strong> Models lose tool-selection accuracy past ~30&ndash;50 visible tools. With 200, they reliably pick the wrong tool or miss the right one.</li>
-                    <li><strong>Hard API limits.</strong> GPT-4.1 and current Copilot agent mode enforce a 128-tool ceiling. Requests above are rejected before execution.</li>
+                    <li><strong>Hard client limits.</strong> Copilot in VS Code rejects requests carrying more than 128 tools on models without tool search (GPT-4.1 among them). Virtual-tool grouping normally keeps requests under the cap; if grouping fails, the request is rejected before execution.</li>
                 </ol>
                 <p>The fix is structurally the same everywhere: keep a tiny persistent surface (a search tool, a file index, cluster summaries) and expand full schemas on demand. How each agent implements that is where it gets interesting.</p>
 
                 <h2>Claude Code: API-Native Tool Search</h2>
-                <p>Anthropic ships <code>tool_search_tool_regex_20251119</code> and <code>tool_search_tool_bm25_20251119</code> as first-class API features. In Claude Code, MCP tools are deferred and discovered on demand by default; the agent sees only the search tool plus any tools the user pinned. When the agent needs a capability, it issues a regex or BM25 query, the API returns 3&ndash;5 matching <code>tool_reference</code> blocks, and those expand into full schemas only at the moment of use.</p>
+                <p>Anthropic ships <code>tool_search_tool_regex_20251119</code> and <code>tool_search_tool_bm25_20251119</code> as first-class API features. In Claude Code, MCP tools are deferred and discovered on demand by default; at session start the agent sees tool names, server instructions, and the search tool, plus full schemas only for tools marked <code>alwaysLoad</code>. When the agent needs a capability, it issues a regex or BM25 query, the API returns matching <code>tool_reference</code> blocks (up to 5 by default; the limit is adjustable), and those expand into full schemas only at the moment of use.</p>
                 <p>Limits worth knowing:</p>
                 <ul>
                     <li>Catalog ceiling: 10,000 tools.</li>
-                    <li>Tool descriptions and server instructions truncated at 2KB each.</li>
-                    <li>Disabled by default on Vertex AI and on non-first-party proxy hosts (the <code>tool_search</code> beta header is not forwarded).</li>
-                    <li>Requires Sonnet 4+ or Opus 4+; Haiku models do not support tool search.</li>
+                    <li>Descriptions are capped: 4,096 characters for server instructions and upfront tools, 16,384 for tools loaded through search (raised from 2,048; override with <code>CLAUDE_CODE_MAX_MCP_DESCRIPTION_LENGTH</code>).</li>
+                    <li>On by default through gateways set with <code>ANTHROPIC_BASE_URL</code> (Claude Code retries without it if the gateway rejects it) and on Vertex AI for Claude 4.5-generation models and later. Azure-hosted Microsoft Foundry deployments reject it.</li>
+                    <li>Works on current models, including Haiku 4.5 and the Claude 5 family; older models fall back to loading tools upfront.</li>
                 </ul>
                 <p>For 200 tools, this collapses the upfront tool cost from ~50K to ~3&ndash;5K &mdash; a &gt;90% reduction. Anthropic's published figure is &gt;85% across typical multi-server setups.</p>
 
@@ -166,26 +167,29 @@
                 <h2>GitHub Copilot: Virtual Tools</h2>
                 <p>Copilot took a third path: embedding-guided clustering. The November 2025 blog post calls the system "virtual tools" &mdash; functionally similar tools are grouped using an internal embedding model and cosine similarity, with each cluster summarized by a single model call (cached locally). The agent sees the cluster summaries and expands a cluster only when its task matches.</p>
                 <p>In published benchmarks (SWE-Lancer, SWEbench-Verified), this approach improved success rates by 2&ndash;5 percentage points with both GPT-5 and Sonnet 4.5, and cut response latency by ~400ms.</p>
-                <p>Two important constraints:</p>
+                <p>Since then Copilot has added a second mechanism, and the conditions depend on the model:</p>
                 <ul>
-                    <li><strong>128-tool hard cap.</strong> Even with virtual tools enabled, VS Code 1.109 still enforces the 128-tool API limit at request time. Multi-MCP setups exceeding 128 are rejected before the agent can act, regardless of clustering. Open issue as of January 2026.</li>
-                    <li><strong>Threshold-gated.</strong> Virtual tools activate when <code>github.copilot.chat.virtualTools.threshold</code> is crossed; below threshold, tools are still loaded eagerly.</li>
+                    <li><strong>Tool search on newer models.</strong> VS Code 1.109 brought Anthropic's tool search to Copilot; it is on by default for Claude Sonnet 4.5+ and Opus 4.5+ and rolling out to GPT-5.4 and GPT-5.5, and 1.118 trimmed the always-loaded core to ~30 tools. For tool-search models, the 128-tool check is skipped.</li>
+                    <li><strong>128-tool cap for everything else.</strong> Models without tool search (GPT-4.1 included) still hit a 128-tool limit. Virtual-tool grouping keeps requests under it unless grouping fails &mdash; for example during an embeddings-service outage. VS Code issue #290356 was closed on that basis in January 2026.</li>
+                    <li><strong>Threshold-gated clustering.</strong> Virtual tools activate when the experimental <code>github.copilot.chat.virtualTools.threshold</code> setting (default 128) is crossed; below threshold, tools are still loaded eagerly.</li>
                 </ul>
+                <p>Copilot CLI followed in May 2026 with experimental tool search and deferred loading for MCP tools.</p>
 
-                <h2>OpenAI Codex CLI: No Dynamic Loading</h2>
-                <p>Codex CLI exposes MCP tools alongside built-ins on session start, with no deferral mechanism. The OpenAI API supports <code>tool_search</code> with <code>defer_loading: true</code> on GPT-5.4+, but Codex CLI does not wire it up to MCP tools as of the current release.</p>
-                <p>Available controls are static:</p>
+                <h2>OpenAI Codex CLI: Model-Gated Tool Search</h2>
+                <p>Codex CLI wires MCP tools to the OpenAI API's <code>tool_search</code> (<code>defer_loading: true</code>, GPT-5.4 and later). Since v0.142 it defers every MCP tool when the active model supports search; by v0.119 (April 2026) it already deferred them behind <code>tool_search</code> at 100+ tools or behind a feature flag. On models without search support, Codex still exposes every MCP tool on session start.</p>
+                <p>Static controls still matter:</p>
                 <ul>
                     <li><code>enabled_tools = [...]</code> and <code>disabled_tools = [...]</code> allow/deny lists per server</li>
                     <li><code>enabled = false</code> to disable a server without removing config</li>
-                    <li>Project-scoped <code>.codex/config.toml</code> for narrower scoping</li>
+                    <li>Project-scoped <code>.codex/config.toml</code> for narrower scoping (trusted projects only)</li>
+                    <li><code>mcp_optional_startup_grace_ms</code> (default 1000) bounds how long optional servers can delay startup</li>
                 </ul>
                 <p>Known scaling issues with many servers:</p>
                 <ul>
-                    <li>MCP startup and tool discovery sit on the first-turn critical path. One slow or unhealthy server can stall the session until timeout.</li>
-                    <li>Sub-agents inherit the full parent tool set with no scoping. On GPT-4.1 (128-tool API limit), spawning sub-agents in any environment with 150+ tools fails outright. Workarounds require disabling servers globally.</li>
+                    <li>MCP startup used to sit on the first-turn critical path. Since CLI 0.162.1, optional servers get a shared, bounded grace period, so one slow server no longer stalls the session; servers declared as explicit dependencies still wait.</li>
+                    <li>Sub-agents inherit the parent's MCP servers, and a custom agent file can't narrow them; per-agent MCP scoping is still an open issue (#20135).</li>
                 </ul>
-                <p>For 200 tools, Codex CLI pays the full ~50K-token cost on every turn. Across a 10-turn session, that's ~500K tokens of pure tool-definition overhead.</p>
+                <p>On a model without search support, 200 tools still cost the full ~50K tokens on every turn &mdash; ~500K tokens of pure tool-definition overhead across a 10-turn session. On a search-capable model, Codex lands in the same deferred band as the others.</p>
 
                 <h2>Token Economics At 200 Tools</h2>
                 <p>The following figures assume a representative MCP catalog with ~250 tokens per tool schema (conservative; verbose servers run 2&ndash;3&times; higher).</p>
@@ -202,22 +206,22 @@
                         <tr><td>Claude Code (tool_search on)</td><td>3&ndash;5K</td><td>3&ndash;5K + ~500 per expansion</td><td>30&ndash;50K</td></tr>
                         <tr><td>Cursor (DCD on)</td><td>2&ndash;4K</td><td>2&ndash;4K + ~400 per file read</td><td>20&ndash;40K</td></tr>
                         <tr><td>GitHub Copilot (virtual tools, &lt;128)</td><td>5&ndash;10K</td><td>5&ndash;10K + cluster expansions</td><td>50&ndash;100K</td></tr>
-                        <tr><td>Codex CLI (no deferral)</td><td>50K</td><td>50K</td><td>500K</td></tr>
+                        <tr><td>Codex CLI (model without search)</td><td>50K</td><td>50K</td><td>500K</td></tr>
                     </tbody>
                 </table>
-                <p>On a 200K-token window, Codex CLI consumes 25% of context before any work starts; with verbose servers, this rises to 70%. The other three agents leave essentially all of context available for the actual task. Over a multi-turn session, Codex's per-turn cost compounds linearly &mdash; what costs $X in the first turn costs ~$10X across ten turns.</p>
+                <p>On a 200K-token window, eager loading &mdash; Codex on a model without search, or any agent with deferral switched off &mdash; consumes 25% of context before any work starts; with verbose servers, this rises to 70%. The deferred paths leave essentially all of context available for the actual task. Over a multi-turn session, eager per-turn cost compounds linearly &mdash; what costs $X in the first turn costs ~$10X across ten turns.</p>
 
                 <h2>Practical Guidance</h2>
                 <p>For multi-MCP workloads (5+ servers, 100+ tools), agent choice materially affects what's possible:</p>
                 <ol>
-                    <li><strong>Verify defaults are active.</strong> Claude Code: confirm <code>ENABLE_TOOL_SEARCH</code> is not disabled (it silently turns off on proxies and Vertex AI). Copilot: set <code>github.copilot.chat.virtualTools.threshold</code> low enough to activate. Cursor: dynamic context discovery is on by default &mdash; no action needed.</li>
-                    <li><strong>For Codex CLI:</strong> scope aggressively with project-level <code>.codex/config.toml</code> and <code>enabled_tools</code> allowlists. Treat global MCP config as a superset; only enable per-project what each session actually needs. Expect 30&ndash;50 active tools max for healthy operation.</li>
-                    <li><strong>For Copilot at 128+ tools:</strong> the cap is enforced at the VS Code layer before the agent processes anything. Virtual tools clustering helps the model reason but does not bypass the API limit. Trim selected tools manually, or split work across sessions.</li>
-                    <li><strong>MCP server design:</strong> prefix tool names by server (<code>matrix_query_*</code>, <code>quality_metric_*</code>) so search and clustering have clean signal. Keep tool descriptions concise &mdash; Claude Code truncates anything past 2KB silently.</li>
+                    <li><strong>Verify defaults are active.</strong> Claude Code: tool search is on by default, gateways included; confirm <code>ENABLE_TOOL_SEARCH</code> is not <code>false</code> and <code>CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS</code> is unset (it forces tool search off); <code>auto</code> / <code>auto:N</code> defer only past a context threshold. Copilot: use a tool-search model (Claude Sonnet/Opus 4.5+, GPT-5.4+ as it rolls out); on other models, lower <code>github.copilot.chat.virtualTools.threshold</code> (default 128) to start clustering earlier. Cursor: dynamic context discovery is on by default &mdash; no action needed.</li>
+                    <li><strong>For Codex CLI:</strong> run a model that supports <code>tool_search</code> so MCP tools are deferred. Still scope with project-level <code>.codex/config.toml</code> and <code>enabled_tools</code> allowlists &mdash; sub-agents inherit every server. Treat global MCP config as a superset; on models without search, expect 30&ndash;50 active tools max for healthy operation.</li>
+                    <li><strong>For Copilot at 128+ tools on a model without tool search:</strong> the cap is enforced at the VS Code layer before the agent processes anything. Virtual-tool grouping keeps you under it unless grouping fails. Trim selected tools manually, split work across sessions, or switch to a tool-search model.</li>
+                    <li><strong>MCP server design:</strong> prefix tool names by server (<code>matrix_query_*</code>, <code>quality_metric_*</code>) so search and clustering have clean signal. Keep tool descriptions concise &mdash; Claude Code caps them at 4,096 characters for upfront tools and server instructions.</li>
                 </ol>
 
                 <h2>Where The Standard Is Heading</h2>
-                <p>All four implementations solve the same problem and converge on the same architectural shape: a small persistent surface (search tool, file index, cluster summaries) plus on-demand schema expansion. None of the wire formats interoperate. MCP itself ships <code>notifications/tools/list_changed</code> for dynamic catalogs but no standardized search/defer primitive that clients and servers agree on.</p>
+                <p>All four implementations solve the same problem and converge on the same architectural shape: a small persistent surface (search tool, file index, cluster summaries) plus on-demand schema expansion. None of the wire formats interoperate. As of the 2026-07-28 spec revision, MCP itself ships <code>notifications/tools/list_changed</code> for dynamic catalogs but no standardized search/defer primitive that clients and servers agree on. A Progressive Disclosure working group is now exploring grouping and tool search as extensions; nothing has shipped in the spec yet.</p>
                 <p>The pattern is industry-standard. The interface is not. Anthropic's <code>tool_search_tool_*</code>, OpenAI's <code>tool_search</code> + <code>defer_loading</code>, Cursor's file sync, and Copilot's virtual tools each remain vendor-specific. Until MCP adds a discovery primitive, each agent's behavior at scale will diverge in the ways documented here.</p>
 
                 <h2>The Draft Angle</h2>
@@ -230,9 +234,12 @@
                     <li>GitHub blog: "How we're making GitHub Copilot smarter with fewer tools" (November 2025)</li>
                     <li>OpenAI Developers: Codex CLI MCP reference, tool_search API guide</li>
                     <li>Real-world MCP tool-cost measurements: Scott Spence, October 2025</li>
-                    <li>VS Code issue #290356 (128-tool cap, January 2026)</li>
-                    <li>GitHub Copilot CLI issue #2992 (sub-agent tool scoping, April 2026)</li>
-                    <li>Codex CLI issue #21318 (MCP startup blocking, May 2026)</li>
+                    <li>VS Code issue #290356 (128-tool cap; closed as fixed by virtual tools, January 2026)</li>
+                    <li>VS Code release notes 1.109 and 1.118 (tool search, compact tool core)</li>
+                    <li>GitHub Copilot CLI issue #2992 (sub-agent tool scoping, April 2026) and changelog 1.0.49 (deferred MCP tools)</li>
+                    <li>Codex CLI release 0.119.0 and PR #29486 (MCP tools deferred under <code>tool_search</code>)</li>
+                    <li>Codex CLI issue #21318 (MCP startup blocking, May 2026; closed October 2026) and issue #20135 (per-agent MCP scoping)</li>
+                    <li>MCP specification 2026-07-28 changelog; Progressive Disclosure working group</li>
                 </ul>
             </div>
 
