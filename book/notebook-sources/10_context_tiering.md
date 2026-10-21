@@ -52,7 +52,7 @@ Four sections are always loaded regardless of task — thecontext floor:
 * FILES— where things live in the codebase
 Everything else is loaded conditionally. Working on an API change? LoadINTERFACES. Adding a new module? LoadGRAPH:COMPONENTSandGRAPH:DEPENDENCIES. Fixing a race condition? LoadCONCURRENCYandTHREADS. The scoring is not magic — it is a lookup table matching task characteristics to section relevance:
 
-Relevance scoring activates when three conditions hold: a specific track is active (hasspec.mdand/orplan.md),.ai-context.mdexists and exceeds 200 lines, and the command benefits from focused context (/draft:implement,/draft:bughunt,/draft:review). Commands that need the full picture —/draft:init,/draft:deep-review,/draft:decompose— bypass scoring and load everything.
+Relevance scoring activates when three conditions hold: a specific track is active (hasspec.mdand/orplan.md),.ai-context.mdexists and is above the tier-1 minimum of 100 lines, and the command benefits from focused context (/draft:implement,/draft:bughunt,/draft:review). Commands that need the full picture —/draft:init,/draft:deep-review,/draft:decompose— bypass scoring and load everything.
 
 ## The Fact Registry
 

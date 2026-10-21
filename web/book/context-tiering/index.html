@@ -375,7 +375,7 @@ coverage: `npm run coverage` | target: 80% line coverage</code></pre>
 | EXTEND:*             | Adding new implementations of existing patterns |
 | VOCAB                | Domain-specific tasks                           |</code></pre>
 
-    <p>Relevance scoring activates when three conditions hold: a specific track is active (has <code>spec.md</code> and/or <code>plan.md</code>), <code>.ai-context.md</code> exists and exceeds 200 lines, and the command benefits from focused context (<code>/draft:implement</code>, <code>/draft:bughunt</code>, <code>/draft:review</code>). Commands that need the full picture &mdash; <code>/draft:init</code>, <code>/draft:deep-review</code>, <code>/draft:decompose</code> &mdash; bypass scoring and load everything.</p>
+    <p>Relevance scoring activates when three conditions hold: a specific track is active (has <code>spec.md</code> and/or <code>plan.md</code>), <code>.ai-context.md</code> exists and is above the tier-1 minimum of 100 lines, and the command benefits from focused context (<code>/draft:implement</code>, <code>/draft:bughunt</code>, <code>/draft:review</code>). Commands that need the full picture &mdash; <code>/draft:init</code>, <code>/draft:deep-review</code>, <code>/draft:decompose</code> &mdash; bypass scoring and load everything.</p>
 
     <div class="figure">
         <div class="figure-content">

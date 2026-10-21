@@ -30,7 +30,7 @@
 `/draft:init` (5-phase analysis) emits:
 
 - `architecture.md` — 10-section, graph-primary, Mermaid as source of truth.
-- `.ai-context.md` — 200–400 lines, token-optimized, condensed standalone context.
+- `.ai-context.md` — tier-scaled (100–900 lines by repo size; see the init tier table), token-optimized, condensed standalone context.
 - `.state/` — freshness hashes, signal classification, run memory (drives `init refresh`).
 
 Consumers today: brownfield Context Quality Audit reads `architecture.md`; downstream commands and skills consume `.ai-context.md`; humans read both.
